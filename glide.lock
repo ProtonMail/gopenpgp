@@ -1,0 +1,26 @@
+hash: 217e5bc8c4d3160eeddd18dda7f8f8785f1b2b7f2ca58779b94ed8fd91ab226d
+updated: 2018-06-04T16:04:51.812734-07:00
+imports:
+- name: golang.org/x/crypto
+  version: d36f3ee340e0aa6549738d42e0cb9139c902d7fd
+  repo: https://github.com/ProtonMail/crypto.git
+  subpackages:
+  - bitcurves
+  - brainpool
+  - cast5
+  - curve25519
+  - ed25519
+  - ed25519/internal/edwards25519
+  - openpgp
+  - openpgp/aes/keywrap
+  - openpgp/armor
+  - openpgp/clearsign
+  - openpgp/ecdh
+  - openpgp/elgamal
+  - openpgp/errors
+  - openpgp/internal/algorithm
+  - openpgp/internal/ecc
+  - openpgp/internal/encoding
+  - openpgp/packet
+  - openpgp/s2k
+testImports: []
