@@ -8,17 +8,17 @@ import (
 	"golang.org/x/crypto/openpgp/armor"
 )
 
-// AromrType ...
-type AromrType string
+// ...Armor Type
+type ArmorType string
 
-func (at AromrType) string() string {
+func (at ArmorType) string() string {
 	return string(at)
 }
 
 const (
-	pgpMessageType      AromrType = "PGP MESSAGE"
-	pgpPublicBlockType  AromrType = "PGP PUBLIC KEY BLOCK"
-	pgpPrivateBlockType AromrType = "PGP PRIVATE KEY BLOCK"
+	pgpMessageType      ArmorType = "PGP MESSAGE"
+	pgpPublicBlockType  ArmorType = "PGP PUBLIC KEY BLOCK"
+	pgpPrivateBlockType ArmorType = "PGP PRIVATE KEY BLOCK"
 )
 
 // ArmorKey make bytes input key to armor format
