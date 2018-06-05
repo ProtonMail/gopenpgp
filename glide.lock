@@ -1,8 +1,8 @@
 hash: 217e5bc8c4d3160eeddd18dda7f8f8785f1b2b7f2ca58779b94ed8fd91ab226d
-updated: 2018-06-04T16:04:51.812734-07:00
+updated: 2018-06-05T11:36:14.582087-07:00
 imports:
 - name: golang.org/x/crypto
-  version: d36f3ee340e0aa6549738d42e0cb9139c902d7fd
+  version: 4dad02e057d03c4f12a519a73d4b4f1837de135d
   repo: https://github.com/ProtonMail/crypto.git
   subpackages:
   - bitcurves

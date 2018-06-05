@@ -151,10 +151,12 @@ func (o *OpenPGP) GenerateKey(userName string, domain string, passphrase string,
 	if len(userName) <= 0 {
 		return "", errors.New("Invalid user name format")
 	}
-	if len(domain) <= 0 {
-		return "", errors.New("Invalid domain")
+	var email = userName
+
+	if len(domain) > 0 {
+		email = email + "@" + domain
 	}
-	email := userName + "@" + domain
+
 	comments := ""
 	timeNow := func() time.Time {
 		return o.getNow()
