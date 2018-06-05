@@ -25,6 +25,10 @@ func (o *OpenPGP) SignTextDetached(plainText string, privateKey string, passphra
 	//sign with 0x01 text
 	var signEntity *openpgp.Entity
 
+	if trim {
+		plainText = trimNewlines(plainText)
+	}
+
 	signerReader := strings.NewReader(privateKey)
 	signerEntries, err := openpgp.ReadArmoredKeyRing(signerReader)
 	if err != nil {
@@ -65,6 +69,10 @@ func (o *OpenPGP) SignTextDetached(plainText string, privateKey string, passphra
 func (o *OpenPGP) SignTextDetachedBinKey(plainText string, privateKey []byte, passphrase string, trim bool) (string, error) {
 	//sign with 0x01
 	var signEntity *openpgp.Entity
+
+	if trim {
+		plainText = trimNewlines(plainText)
+	}
 
 	signerReader := bytes.NewReader(privateKey)
 	signerEntries, err := openpgp.ReadKeyRing(signerReader)
@@ -196,6 +204,8 @@ func (o *OpenPGP) VerifyTextSignDetached(signature string, plainText string, pub
 
 	signatureReader := strings.NewReader(signature)
 
+	plainText = trimNewlines(plainText)
+
 	origText := bytes.NewReader(bytes.NewBufferString(plainText).Bytes())
 
 	config := &packet.Config{}
@@ -230,7 +240,7 @@ func (o *OpenPGP) VerifyTextSignDetachedBinKey(signature string, plainText strin
 	}
 
 	signatureReader := strings.NewReader(signature)
-
+	plainText = trimNewlines(plainText)
 	origText := bytes.NewReader(bytes.NewBufferString(plainText).Bytes())
 	config := &packet.Config{}
 	if verifyTime > 0 {

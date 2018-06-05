@@ -227,6 +227,9 @@ func (o *OpenPGP) EncryptMessage(plainText string, publicKey string, privateKey 
 // passphrase : optional required when you pass the private key and this passphrase must could decrypt the private key
 func (o *OpenPGP) EncryptMessageBinKey(plainText string, publicKey []byte, privateKey string, passphrase string, trim bool) (string, error) {
 
+	if trim {
+		plainText = trimNewlines(plainText)
+	}
 	var outBuf bytes.Buffer
 	w, err := armor.Encode(&outBuf, pgpMessageType, armorHeader)
 	if err != nil {

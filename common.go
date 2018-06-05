@@ -1,5 +1,9 @@
 package pm
 
+import (
+	"regexp"
+)
+
 var armorHeader = map[string]string{
 	"Version": "OpenPGP Golang 0.0.1 (" + Version() + ")",
 	"Comment": "https://protonmail.com",
@@ -20,4 +24,9 @@ type Address struct {
 	// #optional
 	// address_name : string;
 	keys []Key
+}
+
+func trimNewlines(input string) string {
+	var re = regexp.MustCompile(`(?m)[ \t]*$`)
+	return re.ReplaceAllString(input, "")
 }
