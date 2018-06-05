@@ -6,19 +6,18 @@ import (
 
 // UpdateTime update cached time
 func (o *OpenPGP) UpdateTime(newTime int64) {
-	o.lastestServerTime = newTime
+	o.latestServerTime = newTime
 }
 
 //GetTime get latest cached time
 func (o *OpenPGP) GetTime() int64 {
-	return o.lastestServerTime
+	return o.latestServerTime
 }
 
 func (o *OpenPGP) getNow() time.Time {
 
-	if o.lastestServerTime > 0 {
-		tm := time.Unix(o.lastestServerTime, 0)
-		return tm
+	if o.latestServerTime > 0 {
+		return time.Unix(o.latestServerTime, 0)
 	}
 
 	return time.Now()

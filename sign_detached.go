@@ -45,7 +45,7 @@ func (o *OpenPGP) SignTextDetached(plainText string, privateKey string, passphra
 	}
 
 	if signEntity == nil {
-		return "", errors.New("cannot sign message, singer key is not unlocked")
+		return "", errors.New("cannot sign message, signer key is not unlocked")
 	}
 
 	config := &packet.Config{DefaultCipher: packet.CipherAES256}

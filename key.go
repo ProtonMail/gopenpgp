@@ -190,7 +190,7 @@ func (o *OpenPGP) GenerateKey(userName string, domain string, passphrase string,
 		return "", err
 	}
 	serialized := w.Bytes()
-	return ArmorWithType(serialized, pgpPrivateBlockType.string())
+	return ArmorWithType(serialized, pgpPrivateBlockType)
 }
 
 // UpdatePrivateKeyPassphrase ...
@@ -235,7 +235,7 @@ func (o *OpenPGP) UpdatePrivateKeyPassphrase(privateKey string, oldPassphrase st
 	}
 
 	serialized := w.Bytes()
-	return ArmorWithType(serialized, pgpPrivateBlockType.string())
+	return ArmorWithType(serialized, pgpPrivateBlockType)
 }
 
 // PublicKey get a public key from a private key
@@ -251,7 +251,7 @@ func PublicKey(privateKey string) (string, error) {
 		e.Serialize(&outBuf)
 	}
 
-	outString, err := ArmorKey(outBuf.Bytes())
+	outString, err := ArmorWithType(outBuf.Bytes(), pgpPublicBlockType)
 	if err != nil {
 		return "", nil
 	}

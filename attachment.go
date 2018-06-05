@@ -14,7 +14,7 @@ import (
 func (o *OpenPGP) EncryptAttachmentBinKey(plainData []byte, fileName string, publicKey []byte) (*EncryptedSplit, error) {
 
 	var outBuf bytes.Buffer
-	w, err := armor.Encode(&outBuf, pgpMessageType.string(), armorHeader)
+	w, err := armor.Encode(&outBuf, pgpMessageType, armorHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -35,12 +35,12 @@ func (o *OpenPGP) EncryptAttachmentBinKey(plainData []byte, fileName string, pub
 	ew.Close()
 	w.Close()
 
-	splited, err := SeparateKeyAndData(outBuf.String())
+	split, err := SeparateKeyAndData(outBuf.String())
 	if err != nil {
 		return nil, err
 	}
-	splited.Algo = "aes256"
-	return splited, nil
+	split.Algo = "aes256"
+	return split, nil
 }
 
 //EncryptAttachment ...
@@ -109,7 +109,7 @@ func (o *OpenPGP) DecryptAttachment(keyPacket []byte, dataPacket []byte, private
 func (o *OpenPGP) EncryptAttachmentWithPassword(plainData []byte, password string) (string, error) {
 
 	var outBuf bytes.Buffer
-	w, err := armor.Encode(&outBuf, pgpMessageType.string(), armorHeader)
+	w, err := armor.Encode(&outBuf, pgpMessageType, armorHeader)
 	if err != nil {
 		return "", err
 	}

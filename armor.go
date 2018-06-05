@@ -8,23 +8,11 @@ import (
 	"golang.org/x/crypto/openpgp/armor"
 )
 
-// ...Armor Type
-type ArmorType string
-
-func (at ArmorType) string() string {
-	return string(at)
-}
-
 const (
-	pgpMessageType      ArmorType = "PGP MESSAGE"
-	pgpPublicBlockType  ArmorType = "PGP PUBLIC KEY BLOCK"
-	pgpPrivateBlockType ArmorType = "PGP PRIVATE KEY BLOCK"
+	pgpMessageType      string = "PGP MESSAGE"
+	pgpPublicBlockType  string = "PGP PUBLIC KEY BLOCK"
+	pgpPrivateBlockType string = "PGP PRIVATE KEY BLOCK"
 )
-
-// ArmorKey make bytes input key to armor format
-func ArmorKey(input []byte) (string, error) {
-	return ArmorWithType(input, pgpPublicBlockType.string())
-}
 
 // ArmorWithType make bytes input to armor format
 func ArmorWithType(input []byte, armorType string) (string, error) {

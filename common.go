@@ -1,7 +1,7 @@
 package pm
 
 var armorHeader = map[string]string{
-	"Version": "OpenPGP Mobile 0.0.1 (" + Version() + ")",
+	"Version": "OpenPGP Golang 0.0.1 (" + Version() + ")",
 	"Comment": "https://protonmail.com",
 }
 

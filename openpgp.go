@@ -1,12 +1,11 @@
 package pm
 
-// OpenPGP strutature to manager mutiple address keys and user keys
+// OpenPGP structure to manage mutiple address keys and user keys
 type OpenPGP struct {
-	// key ring not in used
 	addresses []*Address
 
-	//lastestServerTime unix time cache
-	lastestServerTime int64
+	//latestServerTime unix time cache
+	latestServerTime int64
 }
 
 // //AddAddress add a new address to key ring

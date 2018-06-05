@@ -220,7 +220,7 @@ func (o *OpenPGP) EncryptMessage(plainText string, publicKey string, privateKey 
 func (o *OpenPGP) EncryptMessageBinKey(plainText string, publicKey []byte, privateKey string, passphrase string, trim bool) (string, error) {
 
 	var outBuf bytes.Buffer
-	w, err := armor.Encode(&outBuf, pgpMessageType.string(), armorHeader)
+	w, err := armor.Encode(&outBuf, pgpMessageType, armorHeader)
 	if err != nil {
 		return "", err
 	}
@@ -272,7 +272,7 @@ func (o *OpenPGP) EncryptMessageBinKey(plainText string, publicKey []byte, priva
 func (o *OpenPGP) EncryptMessageWithPassword(plainText string, password string) (string, error) {
 
 	var outBuf bytes.Buffer
-	w, err := armor.Encode(&outBuf, pgpMessageType.string(), armorHeader)
+	w, err := armor.Encode(&outBuf, pgpMessageType, armorHeader)
 	if err != nil {
 		return "", err
 	}

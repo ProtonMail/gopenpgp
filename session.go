@@ -198,7 +198,7 @@ func GetSessionFromSymmetricPacket(keyPackage []byte, password string) (*Session
 			if err == nil {
 				return &SessionSplit{
 					Session: key,
-					Algo:    getAlog(cipherFunc),
+					Algo:    getAlgo(cipherFunc),
 				}, nil
 			}
 
@@ -240,7 +240,7 @@ var symKeyAlgos = map[string]packet.CipherFunction{
 	"aes256": packet.CipherAES256,
 }
 
-// Get this's cipher function.
+// Get cipher function.
 func cipherFunc(algo string) packet.CipherFunction {
 	cf, ok := symKeyAlgos[algo]
 	if ok {
@@ -253,15 +253,12 @@ func getSessionSplit(ek *packet.EncryptedKey) (*SessionSplit, error) {
 	if ek == nil {
 		return nil, errors.New("can't decrypt key packet")
 	}
-	var algo string
+	algo := "aes256"
 	for k, v := range symKeyAlgos {
 		if v == ek.CipherFunc {
 			algo = k
 			break
 		}
-	}
-	if algo == "" {
-		algo = "aes256"
 	}
 
 	return &SessionSplit{
@@ -270,16 +267,13 @@ func getSessionSplit(ek *packet.EncryptedKey) (*SessionSplit, error) {
 	}, nil
 }
 
-func getAlog(cipher packet.CipherFunction) string {
-	var algo string
+func getAlgo(cipher packet.CipherFunction) string {
+	algo := "aes256"
 	for k, v := range symKeyAlgos {
 		if v == cipher {
 			algo = k
 			break
 		}
-	}
-	if algo == "" {
-		algo = "aes256"
 	}
 
 	return algo
@@ -318,7 +312,7 @@ func SeparateKeyAndData(encrypted string) (*EncryptedSplit, error) {
 	//kr *KeyRing, r io.Reader) (key *SymmetricKey, symEncryptedData []byte,
 	packets := packet.NewReader(encryptedReader)
 
-	outSplt := &EncryptedSplit{}
+	outSplit := &EncryptedSplit{}
 
 	// Save encrypted key and signature apart
 	var ek *packet.EncryptedKey
@@ -350,15 +344,15 @@ func SeparateKeyAndData(encrypted string) (*EncryptedSplit, error) {
 			symEncryptedData = append(symEncryptedData, byte(1))
 			symEncryptedData = append(symEncryptedData, packetContents...)
 
-			outSplt.DataPacket = symEncryptedData
+			outSplit.DataPacket = symEncryptedData
 			break
 
 		}
 	}
 
-	var buff bytes.Buffer
-	ek.Serialize(&buff)
-	outSplt.KeyPacket = buff.Bytes()
+	var buf bytes.Buffer
+	ek.Serialize(&buf)
+	outSplit.KeyPacket = buf.Bytes()
 
-	return outSplt, err
+	return outSplit, err
 }
