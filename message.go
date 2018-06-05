@@ -27,7 +27,7 @@ func (o *OpenPGP) DecryptMessage(encryptedText string, privateKey string, passph
 
 // DecryptMessageBinKey decrypt encrypted message use private key (bytes )
 // encryptedText : string armored encrypted
-// privateKey : unarmored private use to decrypt message
+// privateKey : unarmored private use to decrypt message could be mutiple keys
 // passphrase : match with private key to decrypt message
 func (o *OpenPGP) DecryptMessageBinKey(encryptedText string, privateKey []byte, passphrase string) (string, error) {
 	privKey := bytes.NewReader(privateKey)
@@ -69,9 +69,9 @@ func (o *OpenPGP) DecryptMessageBinKey(encryptedText string, privateKey []byte, 
 	return string(b), nil
 }
 
-// encryptedText string, privateKey string, passphrase string) (string, error)
-// decrypt_message_verify_single_key(private_key: string, passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
-// decrypt_message_verify(passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
+// DecryptMessageVerifyPrivbinkeys decrypt message and verify the signature
+// veriferKey string: armored verifier keys
+// privateKey []byte: unarmored private key to decrypt. could be mutiple
 func (o *OpenPGP) DecryptMessageVerifyPrivbinkeys(encryptedText string, veriferKey string, privateKeys []byte, passphrase string, verifyTime int64) (*DecryptSignedVerify, error) {
 
 	if len(veriferKey) > 0 {
@@ -84,16 +84,16 @@ func (o *OpenPGP) DecryptMessageVerifyPrivbinkeys(encryptedText string, veriferK
 	return o.decryptMessageVerifyAllBin(encryptedText, nil, privateKeys, passphrase, verifyTime)
 }
 
-// encryptedText string, privateKey string, passphrase string) (string, error)
-// decrypt_message_verify_single_key(private_key: string, passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
-// decrypt_message_verify(passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
+// DecryptMessageVerifyBinKeyPrivbinkeys decrypt message and verify the signature
+// veriferKey []byte: unarmored verifier keys
+// privateKey []byte: unarmored private key to decrypt. could be mutiple
 func (o *OpenPGP) DecryptMessageVerifyBinKeyPrivbinkeys(encryptedText string, veriferKey []byte, privateKeys []byte, passphrase string, verifyTime int64) (*DecryptSignedVerify, error) {
 	return o.decryptMessageVerifyAllBin(encryptedText, veriferKey, privateKeys, passphrase, verifyTime)
 }
 
-// encryptedText string, privateKey string, passphrase string) (string, error)
-// decrypt_message_verify_single_key(private_key: string, passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
-// decrypt_message_verify(passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
+// DecryptMessageVerify decrypt message and verify the signature
+// veriferKey string: armored verifier keys
+// privateKey string: private to decrypt
 func (o *OpenPGP) DecryptMessageVerify(encryptedText string, veriferKey string, privateKey string, passphrase string, verifyTime int64) (*DecryptSignedVerify, error) {
 	if len(veriferKey) > 0 {
 		verifierRaw, err := UnArmor(veriferKey)
@@ -105,9 +105,9 @@ func (o *OpenPGP) DecryptMessageVerify(encryptedText string, veriferKey string, 
 	return o.DecryptMessageVerifyBinKey(encryptedText, nil, privateKey, passphrase, verifyTime)
 }
 
-// encryptedText string, privateKey string, passphrase string) (string, error)
-// decrypt_message_verify_single_key(private_key: string, passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
-// decrypt_message_verify(passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
+// DecryptMessageVerifyBinKey decrypt message and verify the signature
+// veriferKey []byte: unarmored verifier keys
+// privateKey string: private to decrypt
 func (o *OpenPGP) DecryptMessageVerifyBinKey(encryptedText string, veriferKey []byte, privateKey string, passphrase string, verifyTime int64) (*DecryptSignedVerify, error) {
 	privateKeyRaw, err := UnArmor(privateKey)
 	if err != nil {
@@ -116,7 +116,7 @@ func (o *OpenPGP) DecryptMessageVerifyBinKey(encryptedText string, veriferKey []
 	return o.decryptMessageVerifyAllBin(encryptedText, veriferKey, privateKeyRaw, passphrase, verifyTime)
 }
 
-// encryptedText string, privateKey string, passphrase string) (string, error)
+// decryptMessageVerifyAllBin
 // decrypt_message_verify_single_key(private_key: string, passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
 // decrypt_message_verify(passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
 func (o *OpenPGP) decryptMessageVerifyAllBin(encryptedText string, veriferKey []byte, privateKey []byte, passphrase string, verifyTime int64) (*DecryptSignedVerify, error) {
@@ -143,14 +143,15 @@ func (o *OpenPGP) decryptMessageVerifyAllBin(encryptedText string, veriferKey []
 	out := &DecryptSignedVerify{}
 	out.Verify = failed
 
+	var verifierEntries openpgp.EntityList
 	if len(veriferKey) > 0 {
 		verifierReader := bytes.NewReader(veriferKey)
-		verifierEnties, err := openpgp.ReadKeyRing(verifierReader)
+		verifierEntries, err = openpgp.ReadKeyRing(verifierReader)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, e := range verifierEnties {
+		for _, e := range verifierEntries {
 			privKeyEntries = append(privKeyEntries, e)
 		}
 	} else {
@@ -184,11 +185,18 @@ func (o *OpenPGP) decryptMessageVerifyAllBin(encryptedText string, veriferKey []
 	out.Plaintext = string(b)
 	if md.IsSigned {
 		if md.SignedBy != nil {
-			if md.SignatureError == nil {
-				out.Verify = ok
+			if verifierEntries != nil {
+				matches := verifierEntries.KeysById(md.SignedByKeyId)
+				if len(matches) > 0 {
+					if md.SignatureError == nil {
+						out.Verify = ok
+					} else {
+						out.Message = md.SignatureError.Error()
+						out.Verify = failed
+					}
+				}
 			} else {
-				out.Message = md.SignatureError.Error()
-				out.Verify = failed
+				out.Verify = noVerifier
 			}
 		} else {
 			out.Verify = noVerifier
@@ -212,7 +220,7 @@ func (o *OpenPGP) EncryptMessage(plainText string, publicKey string, privateKey 
 	return o.EncryptMessageBinKey(plainText, rawPubKey, privateKey, passphrase, trim)
 }
 
-// EncryptMessageBinKey encrypt message with public key, if pass private key and passphrase will also sign the message
+// EncryptMessageBinKey encrypt message with unarmored public key, if pass private key and passphrase will also sign the message
 // publicKey : bytes unarmored public key
 // plainText : the input
 // privateKey : optional required when you want to sign
@@ -268,7 +276,9 @@ func (o *OpenPGP) EncryptMessageBinKey(plainText string, publicKey []byte, priva
 	return outBuf.String(), nil
 }
 
-//EncryptMessageWithPassword ...
+//EncryptMessageWithPassword encrypt a plain text to pgp message with a password
+//plainText string: clear text
+//output string: armored pgp message
 func (o *OpenPGP) EncryptMessageWithPassword(plainText string, password string) (string, error) {
 
 	var outBuf bytes.Buffer
@@ -295,9 +305,10 @@ func (o *OpenPGP) EncryptMessageWithPassword(plainText string, password string) 
 	return outBuf.String(), nil
 }
 
-//DecryptMessageWithPassword ...
+//DecryptMessageWithPassword decrypt a pgp message with a password
+//encrypted string : armored pgp message
+//output string : clear text
 func (o *OpenPGP) DecryptMessageWithPassword(encrypted string, password string) (string, error) {
-
 	encryptedio, err := unArmor(encrypted)
 	if err != nil {
 		return "", err
