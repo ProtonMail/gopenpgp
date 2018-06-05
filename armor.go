@@ -14,6 +14,11 @@ const (
 	pgpPrivateBlockType string = "PGP PRIVATE KEY BLOCK"
 )
 
+// ArmorKey make bytes input key to armor format
+func ArmorKey(input []byte) (string, error) {
+	return ArmorWithType(input, pgpPublicBlockType)
+}
+
 // ArmorWithType make bytes input to armor format
 func ArmorWithType(input []byte, armorType string) (string, error) {
 	var b bytes.Buffer
