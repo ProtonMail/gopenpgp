@@ -261,6 +261,10 @@ func getSessionSplit(ek *packet.EncryptedKey) (*SessionSplit, error) {
 		}
 	}
 
+	if ek.Key == nil {
+		return nil, errors.New("can't decrypt key packet key is nil")
+	}
+
 	return &SessionSplit{
 		Session: ek.Key,
 		Algo:    algo,
