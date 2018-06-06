@@ -22,7 +22,7 @@ func ArmorKey(input []byte) (string, error) {
 // ArmorWithType make bytes input to armor format
 func ArmorWithType(input []byte, armorType string) (string, error) {
 	var b bytes.Buffer
-	w, err := armor.Encode(&b, armorType, nil)
+	w, err := armor.Encode(&b, armorType, armorHeader)
 	if err != nil {
 		return "", err
 	}

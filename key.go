@@ -2,6 +2,7 @@ package pm
 
 import (
 	"bytes"
+	"crypto"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -162,7 +163,13 @@ func (o *OpenPGP) GenerateKey(userName string, domain string, passphrase string,
 		return o.getNow()
 	}
 
-	cfg := &packet.Config{RSABits: bits, Time: timeNow}
+	cfg := &packet.Config{
+		RSABits:       bits,
+		Time:          timeNow,
+		DefaultHash:   crypto.SHA256,
+		DefaultCipher: packet.CipherAES256,
+	}
+
 	newEntity, err := openpgp.NewEntity(email, comments, email, cfg)
 	if err != nil {
 		return "", err
