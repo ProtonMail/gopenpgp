@@ -11,6 +11,7 @@ import (
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
+	"math/big"
 )
 
 //EncryptedSplit when encrypt attachemt
@@ -141,13 +142,8 @@ func (o *OpenPGP) IsKeyExpired(publicKey string) (bool, error) {
 	return o.IsKeyExpiredBin(rawPubKey)
 }
 
-// GenerateKey ...
-// disabled now, will enable later
-// #generat new key with email address. Fix the UserID issue in protonmail system. on Feb 28, 17
-// #static generate_key_with_email(email : string, passphrase : string, bits : i32) : open_pgp_key;
-// # generate new key
-// #static generate_new_key(user_id : string, email : string, passphrase : string, bits : i32) : open_pgp_key;
-func (o *OpenPGP) GenerateKey(userName string, domain string, passphrase string, keyType string, bits int) (string, error) {
+func (o *OpenPGP) generateKey(userName string, domain string, passphrase string, keyType string, bits int,
+	prime1 []byte, prime2 []byte, prime3 []byte, prime4 []byte) (string, error) {
 
 	if len(userName) <= 0 {
 		return "", errors.New("Invalid user name format")
@@ -164,10 +160,29 @@ func (o *OpenPGP) GenerateKey(userName string, domain string, passphrase string,
 	}
 
 	cfg := &packet.Config{
+		Algorithm: 	   packet.PubKeyAlgoRSA,
 		RSABits:       bits,
 		Time:          timeNow,
 		DefaultHash:   crypto.SHA256,
 		DefaultCipher: packet.CipherAES256,
+	}
+
+	if keyType == "x25519" {
+		cfg.Algorithm = packet.PubKeyAlgoEdDSA
+	}
+
+	if prime1 != nil && prime2 != nil && prime3 != nil && prime4 != nil {
+		var bigPrimes [4]*big.Int
+		bigPrimes[0] = new(big.Int)
+		bigPrimes[0].SetBytes(prime1)
+		bigPrimes[1] = new(big.Int)
+		bigPrimes[1].SetBytes(prime2)
+		bigPrimes[2] = new(big.Int)
+		bigPrimes[2].SetBytes(prime3)
+		bigPrimes[3] = new(big.Int)
+		bigPrimes[3].SetBytes(prime4)
+
+		cfg.RSAPrimes = bigPrimes[:]
 	}
 
 	newEntity, err := openpgp.NewEntity(email, comments, email, cfg)
@@ -178,6 +193,7 @@ func (o *OpenPGP) GenerateKey(userName string, domain string, passphrase string,
 	if err := newEntity.SelfSign(nil); err != nil {
 		return "", err
 	}
+
 
 	rawPwd := []byte(passphrase)
 	if newEntity.PrivateKey != nil && !newEntity.PrivateKey.Encrypted {
@@ -202,6 +218,20 @@ func (o *OpenPGP) GenerateKey(userName string, domain string, passphrase string,
 	return ArmorWithType(serialized, pgpPrivateBlockType)
 }
 
+func (o *OpenPGP) GenerateRSAKeyWithPrimes(userName string, domain string, passphrase string, bits int,
+	primeone []byte, primetwo []byte, primethree []byte, primefour []byte) (string, error)  {
+	return o.generateKey(userName, domain, passphrase, "rsa", bits, primeone, primetwo, primethree, primefour)
+}
+
+// GenerateKey ...
+// disabled now, will enable later
+// #generat new key with email address. Fix the UserID issue in protonmail system. on Feb 28, 17
+// #static generate_key_with_email(email : string, passphrase : string, bits : i32) : open_pgp_key;
+// # generate new key
+// #static generate_new_key(user_id : string, email : string, passphrase : string, bits : i32) : open_pgp_key;
+func (o *OpenPGP) GenerateKey(userName string, domain string, passphrase string, keyType string, bits int) (string, error) {
+	return o.generateKey(userName, domain, passphrase, keyType, bits, nil, nil, nil, nil)
+}
 // UpdatePrivateKeyPassphrase ...
 func (o *OpenPGP) UpdatePrivateKeyPassphrase(privateKey string, oldPassphrase string, newPassphrase string) (string, error) {
 
