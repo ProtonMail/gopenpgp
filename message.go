@@ -54,7 +54,9 @@ func (o *OpenPGP) DecryptMessageBinKey(encryptedText string, privateKey []byte, 
 		}
 	}
 
-	md, err := openpgp.ReadMessage(encryptedio.Body, privKeyEntries, nil, nil)
+	config := &packet.Config{ Time: o.getTimeGenerator() }
+
+	md, err := openpgp.ReadMessage(encryptedio.Body, privKeyEntries, nil, config)
 	if err != nil {
 		return "", err
 	}
@@ -163,7 +165,7 @@ func (o *OpenPGP) decryptMessageVerifyAllBin(encryptedText string, veriferKey []
 		return nil, err
 	}
 
-	config := &packet.Config{}
+	config := &packet.Config{ Time: o.getTimeGenerator() }
 	if verifyTime > 0 {
 		tm := time.Unix(verifyTime, 0)
 		config.Time = func() time.Time {
@@ -269,7 +271,7 @@ func (o *OpenPGP) EncryptMessageBinKey(plainText string, publicKey []byte, priva
 		}
 	}
 
-	config := &packet.Config{DefaultCipher: packet.CipherAES256}
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: o.getTimeGenerator() }
 
 	ew, err := openpgp.Encrypt(w, pubKeyEntries, signEntity, nil, config)
 
@@ -290,7 +292,8 @@ func (o *OpenPGP) EncryptMessageWithPassword(plainText string, password string) 
 		return "", err
 	}
 
-	plaintext, err := openpgp.SymmetricallyEncrypt(w, []byte(password), nil, nil)
+	config := &packet.Config{ Time: o.getTimeGenerator() }
+	plaintext, err := openpgp.SymmetricallyEncrypt(w, []byte(password), nil, config)
 	if err != nil {
 		return "", err
 	}
@@ -321,7 +324,8 @@ func (o *OpenPGP) DecryptMessageWithPassword(encrypted string, password string) 
 		return []byte(password), nil
 	}
 
-	md, err := openpgp.ReadMessage(encryptedio.Body, nil, prompt, nil)
+	config := &packet.Config{ Time: o.getTimeGenerator() }
+	md, err := openpgp.ReadMessage(encryptedio.Body, nil, prompt, config)
 	if err != nil {
 		return "", err
 	}
