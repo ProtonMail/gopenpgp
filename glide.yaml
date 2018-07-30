@@ -1,5 +1,5 @@
 package: pm
 import:
 - package: golang.org/x/crypto
-  version: master
+  version: v1.0.0
   repo: https://github.com/ProtonMail/crypto.git
