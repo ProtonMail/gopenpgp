@@ -30,3 +30,7 @@ func trimNewlines(input string) string {
 	var re = regexp.MustCompile(`(?m)[ \t]*$`)
 	return re.ReplaceAllString(input, "")
 }
+
+// Amount of seconds that a signature may be created after the verify time
+// Consistent with the 2 day slack allowed in the ProtonMail Email Parser
+var creationTimeOffset = int64(60 * 60 * 24 * 2)

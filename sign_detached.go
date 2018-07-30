@@ -9,6 +9,7 @@ import (
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/clearsign"
 	"golang.org/x/crypto/openpgp/packet"
+	errors2 "golang.org/x/crypto/openpgp/errors"
 )
 
 //ReadClearSignedMessage read clear message from a clearsign package
@@ -202,31 +203,11 @@ func (o *OpenPGP) VerifyTextSignDetached(signature string, plainText string, pub
 		return false, err
 	}
 
-	signatureReader := strings.NewReader(signature)
-
 	plainText = trimNewlines(plainText)
 
 	origText := bytes.NewReader(bytes.NewBufferString(plainText).Bytes())
 
-	config := &packet.Config{ Time: o.getTimeGenerator() }
-	if verifyTime > 0 {
-		tm := time.Unix(verifyTime, 0)
-		config.Time = func() time.Time {
-			return tm
-		}
-	}
-	signer, err := openpgp.CheckArmoredDetachedSignature(pubKeyEntries, origText, signatureReader, config)
-	if err != nil {
-		return false, err
-	}
-	if signer == nil {
-		return false, errors.New("signer is empty")
-	}
-	// if signer.PrimaryKey.KeyId != signed.PrimaryKey.KeyId {
-	// 	// t.Errorf("wrong signer got:%x want:%x", signer.PrimaryKey.KeyId, 0)
-	// 	return false, errors.New("signer is nil")
-	// }
-	return true, nil
+	return verifySignature(pubKeyEntries, origText, signature, verifyTime)
 }
 
 // VerifyTextSignDetachedBinKey ...
@@ -239,17 +220,40 @@ func (o *OpenPGP) VerifyTextSignDetachedBinKey(signature string, plainText strin
 		return false, err
 	}
 
-	signatureReader := strings.NewReader(signature)
 	plainText = trimNewlines(plainText)
 	origText := bytes.NewReader(bytes.NewBufferString(plainText).Bytes())
-	config := &packet.Config{ Time: o.getTimeGenerator() }
-	if verifyTime > 0 {
-		tm := time.Unix(verifyTime, 0)
+
+	return verifySignature(pubKeyEntries, origText, signature, verifyTime)
+}
+
+func verifySignature(pubKeyEntries openpgp.EntityList, origText *bytes.Reader, signature string, verifyTime int64) (bool, error) {
+	config := &packet.Config{}
+	if verifyTime == 0 {
 		config.Time = func() time.Time {
-			return tm
+			return time.Unix(0, 0)
+		}
+	} else {
+		config.Time = func() time.Time {
+			return time.Unix(verifyTime + creationTimeOffset, 0)
 		}
 	}
+	signatureReader := strings.NewReader(signature)
+
 	signer, err := openpgp.CheckArmoredDetachedSignature(pubKeyEntries, origText, signatureReader, config)
+
+	if err == errors2.ErrSignatureExpired && signer != nil {
+		if verifyTime > 0 {
+			// Maybe the creation time offset pushed it over the edge
+			// Retry with the actual verification time
+			config.Time = func() time.Time {
+				return time.Unix(verifyTime, 0)
+			}
+			signer, err = openpgp.CheckArmoredDetachedSignature(pubKeyEntries, origText, signatureReader, config)
+		} else {
+			// verifyTime = 0: time check disabled, everything is okay
+			err = nil
+		}
+	}
 	if err != nil {
 		return false, err
 	}
@@ -262,6 +266,7 @@ func (o *OpenPGP) VerifyTextSignDetachedBinKey(signature string, plainText strin
 	// }
 	return true, nil
 }
+
 
 // VerifyBinSignDetached ...
 func (o *OpenPGP) VerifyBinSignDetached(signature string, plainData []byte, publicKey string, verifyTime int64) (bool, error) {
@@ -273,28 +278,8 @@ func (o *OpenPGP) VerifyBinSignDetached(signature string, plainData []byte, publ
 		return false, err
 	}
 
-	signatureReader := strings.NewReader(signature)
-
 	origText := bytes.NewReader(plainData)
-	config := &packet.Config{ Time: o.getTimeGenerator() }
-	if verifyTime > 0 {
-		tm := time.Unix(verifyTime, 0)
-		config.Time = func() time.Time {
-			return tm
-		}
-	}
-	signer, err := openpgp.CheckArmoredDetachedSignature(pubKeyEntries, origText, signatureReader, config)
-	if err != nil {
-		return false, err
-	}
-	if signer == nil {
-		return false, errors.New("signer is empty")
-	}
-	// if signer.PrimaryKey.KeyId != signed.PrimaryKey.KeyId {
-	// 	// t.Errorf("wrong signer got:%x want:%x", signer.PrimaryKey.KeyId, 0)
-	// 	return false, errors.New("signer is nil")
-	// }
-	return true, nil
+	return verifySignature(pubKeyEntries, origText, signature, verifyTime)
 }
 
 // VerifyBinSignDetachedBinKey ...
@@ -306,27 +291,7 @@ func (o *OpenPGP) VerifyBinSignDetachedBinKey(signature string, plainData []byte
 		return false, err
 	}
 
-	signatureReader := strings.NewReader(signature)
-
 	origText := bytes.NewReader(plainData)
 
-	config := &packet.Config{ Time: o.getTimeGenerator() }
-	if verifyTime > 0 {
-		tm := time.Unix(verifyTime, 0)
-		config.Time = func() time.Time {
-			return tm
-		}
-	}
-	signer, err := openpgp.CheckArmoredDetachedSignature(pubKeyEntries, origText, signatureReader, config)
-	if err != nil {
-		return false, err
-	}
-	if signer == nil {
-		return false, errors.New("signer is empty")
-	}
-	// if signer.PrimaryKey.KeyId != signed.PrimaryKey.KeyId {
-	// 	// t.Errorf("wrong signer got:%x want:%x", signer.PrimaryKey.KeyId, 0)
-	// 	return false, errors.New("signer is nil")
-	// }
-	return true, nil
+	return verifySignature(pubKeyEntries, origText, signature, verifyTime)
 }
