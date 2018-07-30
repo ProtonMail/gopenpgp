@@ -52,7 +52,7 @@ func (o *OpenPGP) SignTextDetached(plainText string, privateKey string, passphra
 		return "", errors.New("cannot sign message, signer key is not unlocked")
 	}
 
-	config := &packet.Config{DefaultCipher: packet.CipherAES256}
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: o.getTimeGenerator() }
 
 	att := strings.NewReader(plainText)
 
@@ -97,7 +97,7 @@ func (o *OpenPGP) SignTextDetachedBinKey(plainText string, privateKey []byte, pa
 		return "", errors.New("cannot sign message, singer key is not unlocked")
 	}
 
-	config := &packet.Config{DefaultCipher: packet.CipherAES256}
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: o.getTimeGenerator() }
 
 	att := strings.NewReader(plainText)
 
@@ -138,7 +138,7 @@ func (o *OpenPGP) SignBinDetached(plainData []byte, privateKey string, passphras
 		return "", errors.New("cannot sign message, singer key is not unlocked")
 	}
 
-	config := &packet.Config{DefaultCipher: packet.CipherAES256}
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: o.getTimeGenerator() }
 
 	att := bytes.NewReader(plainData)
 
@@ -179,7 +179,7 @@ func (o *OpenPGP) SignBinDetachedBinKey(plainData []byte, privateKey []byte, pas
 		return "", errors.New("cannot sign message, singer key is not unlocked")
 	}
 
-	config := &packet.Config{DefaultCipher: packet.CipherAES256}
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: o.getTimeGenerator() }
 
 	att := bytes.NewReader(plainData)
 
@@ -208,7 +208,7 @@ func (o *OpenPGP) VerifyTextSignDetached(signature string, plainText string, pub
 
 	origText := bytes.NewReader(bytes.NewBufferString(plainText).Bytes())
 
-	config := &packet.Config{}
+	config := &packet.Config{ Time: o.getTimeGenerator() }
 	if verifyTime > 0 {
 		tm := time.Unix(verifyTime, 0)
 		config.Time = func() time.Time {
@@ -242,7 +242,7 @@ func (o *OpenPGP) VerifyTextSignDetachedBinKey(signature string, plainText strin
 	signatureReader := strings.NewReader(signature)
 	plainText = trimNewlines(plainText)
 	origText := bytes.NewReader(bytes.NewBufferString(plainText).Bytes())
-	config := &packet.Config{}
+	config := &packet.Config{ Time: o.getTimeGenerator() }
 	if verifyTime > 0 {
 		tm := time.Unix(verifyTime, 0)
 		config.Time = func() time.Time {
@@ -276,7 +276,7 @@ func (o *OpenPGP) VerifyBinSignDetached(signature string, plainData []byte, publ
 	signatureReader := strings.NewReader(signature)
 
 	origText := bytes.NewReader(plainData)
-	config := &packet.Config{}
+	config := &packet.Config{ Time: o.getTimeGenerator() }
 	if verifyTime > 0 {
 		tm := time.Unix(verifyTime, 0)
 		config.Time = func() time.Time {
@@ -310,7 +310,7 @@ func (o *OpenPGP) VerifyBinSignDetachedBinKey(signature string, plainData []byte
 
 	origText := bytes.NewReader(plainData)
 
-	config := &packet.Config{}
+	config := &packet.Config{ Time: o.getTimeGenerator() }
 	if verifyTime > 0 {
 		tm := time.Unix(verifyTime, 0)
 		config.Time = func() time.Time {

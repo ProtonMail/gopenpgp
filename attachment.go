@@ -27,7 +27,11 @@ func (o *OpenPGP) EncryptAttachmentBinKey(plainData []byte, fileName string, pub
 	hints := &openpgp.FileHints{
 		FileName: fileName,
 	}
-	config := &packet.Config{DefaultCipher: packet.CipherAES256}
+
+	config := &packet.Config{
+		DefaultCipher: packet.CipherAES256,
+		Time:          o.getTimeGenerator(),
+	}
 
 	ew, err := openpgp.Encrypt(w, pubKeyEntries, nil, hints, config)
 
@@ -82,7 +86,9 @@ func (o *OpenPGP) DecryptAttachmentBinKey(keyPacket []byte, dataPacket []byte, p
 
 	encryptedReader := io.MultiReader(keyReader, dataReader)
 
-	md, err := openpgp.ReadMessage(encryptedReader, privKeyEntries, nil, nil)
+	config := &packet.Config{ Time: o.getTimeGenerator() }
+
+	md, err := openpgp.ReadMessage(encryptedReader, privKeyEntries, nil, config)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +120,9 @@ func (o *OpenPGP) EncryptAttachmentWithPassword(plainData []byte, password strin
 		return "", err
 	}
 
-	plaintext, err := openpgp.SymmetricallyEncrypt(w, []byte(password), nil, nil)
+	config := &packet.Config{ Time: o.getTimeGenerator() }
+
+	plaintext, err := openpgp.SymmetricallyEncrypt(w, []byte(password), nil, config)
 	if err != nil {
 		return "", err
 	}
@@ -143,7 +151,9 @@ func (o *OpenPGP) DecryptAttachmentWithPassword(keyPacket []byte, dataPacket []b
 		return []byte(password), nil
 	}
 
-	md, err := openpgp.ReadMessage(encryptedReader, nil, prompt, nil)
+	config := &packet.Config{ Time: o.getTimeGenerator() }
+
+	md, err := openpgp.ReadMessage(encryptedReader, nil, prompt, config)
 	if err != nil {
 		return nil, err
 	}

@@ -155,14 +155,11 @@ func (o *OpenPGP) generateKey(userName string, domain string, passphrase string,
 	}
 
 	comments := ""
-	timeNow := func() time.Time {
-		return o.getNow()
-	}
 
 	cfg := &packet.Config{
 		Algorithm: 	   packet.PubKeyAlgoRSA,
 		RSABits:       bits,
-		Time:          timeNow,
+		Time:          o.getTimeGenerator(),
 		DefaultHash:   crypto.SHA256,
 		DefaultCipher: packet.CipherAES256,
 	}

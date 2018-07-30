@@ -1,11 +1,14 @@
 package pm
 
+import "time"
+
 // OpenPGP structure to manage mutiple address keys and user keys
 type OpenPGP struct {
 	addresses []*Address
 
 	//latestServerTime unix time cache
 	latestServerTime int64
+	latestClientTime time.Time
 }
 
 // //AddAddress add a new address to key ring
