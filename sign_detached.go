@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/openpgp/clearsign"
 	"golang.org/x/crypto/openpgp/packet"
 	errors2 "golang.org/x/crypto/openpgp/errors"
+	"io"
 )
 
 //ReadClearSignedMessage read clear message from a clearsign package
@@ -248,6 +249,8 @@ func verifySignature(pubKeyEntries openpgp.EntityList, origText *bytes.Reader, s
 			config.Time = func() time.Time {
 				return time.Unix(verifyTime, 0)
 			}
+
+			signatureReader.Seek(0, io.SeekStart)
 			signer, err = openpgp.CheckArmoredDetachedSignature(pubKeyEntries, origText, signatureReader, config)
 		} else {
 			// verifyTime = 0: time check disabled, everything is okay
