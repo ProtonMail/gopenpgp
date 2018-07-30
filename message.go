@@ -11,7 +11,9 @@ import (
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/packet"
-)
+	errors2 "golang.org/x/crypto/openpgp/errors"
+	"math"
+	)
 
 // DecryptMessage decrypt encrypted message use private key (string )
 // encryptedText : string armored encrypted
@@ -165,12 +167,9 @@ func (o *OpenPGP) decryptMessageVerifyAllBin(encryptedText string, veriferKey []
 		return nil, err
 	}
 
-	config := &packet.Config{ Time: o.getTimeGenerator() }
-	if verifyTime > 0 {
-		tm := time.Unix(verifyTime, 0)
-		config.Time = func() time.Time {
-			return tm
-		}
+	config := &packet.Config{}
+	config.Time = func() time.Time {
+		return time.Unix(0, 0)
 	}
 
 	md, err := openpgp.ReadMessage(encryptedio.Body, privKeyEntries, nil, config)
@@ -183,6 +182,8 @@ func (o *OpenPGP) decryptMessageVerifyAllBin(encryptedText string, veriferKey []
 	if err != nil {
 		return nil, err
 	}
+
+	processSignatureExpiration(md, verifyTime)
 
 	out.Plaintext = string(b)
 	if md.IsSigned {
@@ -207,6 +208,25 @@ func (o *OpenPGP) decryptMessageVerifyAllBin(encryptedText string, veriferKey []
 		out.Verify = notSigned
 	}
 	return out, nil
+}
+
+// Handle signature time verification manually, so we can add a margin to the creationTime check.
+func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
+	if md.SignatureError == errors2.ErrSignatureExpired {
+		if verifyTime > 0 {
+			created := md.Signature.CreationTime.Unix()
+			expires := int64(math.MaxInt64)
+			if md.Signature.KeyLifetimeSecs != nil {
+				expires = int64(*md.Signature.KeyLifetimeSecs) + created
+			}
+			if created - creationTimeOffset <= verifyTime && verifyTime <= expires {
+				md.SignatureError = nil
+			}
+		} else {
+			// verifyTime = 0: time check disabled, everything is okay
+			md.SignatureError = nil
+		}
+	}
 }
 
 // EncryptMessage encrypt message with public key, if pass private key and passphrase will also sign the message
