@@ -1,8 +1,10 @@
-hash: 217e5bc8c4d3160eeddd18dda7f8f8785f1b2b7f2ca58779b94ed8fd91ab226d
-updated: 2018-06-05T11:36:14.582087-07:00
+hash: 834f29378b80e2f7486b79420679fb1d854c16f2989574090ba80d322a7b71c5
+updated: 2018-09-02T14:56:08.452174+02:00
 imports:
+- name: github.com/Sirupsen/logrus
+  version: 78fa2915c1fa231f62e0438da493688c21ca678e
 - name: golang.org/x/crypto
-  version: 4dad02e057d03c4f12a519a73d4b4f1837de135d
+  version: 9e4251120d8c43f10024d798bc6dde21d40704a0
   repo: https://github.com/ProtonMail/crypto.git
   subpackages:
   - bitcurves
@@ -11,6 +13,8 @@ imports:
   - curve25519
   - ed25519
   - ed25519/internal/edwards25519
+  - internal/randutil
+  - internal/syscall/unix
   - openpgp
   - openpgp/aes/keywrap
   - openpgp/armor
@@ -23,4 +27,23 @@ imports:
   - openpgp/internal/encoding
   - openpgp/packet
   - openpgp/s2k
+  - rand
+  - rsa
+  - ssh/terminal
+- name: golang.org/x/sys
+  version: fa5fdf94c78965f1aa8423f0cc50b8b8d728b05a
+  subpackages:
+  - unix
+  - windows
+- name: golang.org/x/text
+  version: 6e3c4e7365ddcc329f090f96e4348398f6310088
+  subpackages:
+  - encoding
+  - encoding/charmap
+  - encoding/internal
+  - encoding/internal/identifier
+  - transform
+- name: mimeparser
+  version: f4de8a5a52ecd93189c785c7d87259ac637e1d7c
+  repo: git@gitlab.protontech.ch:ProtonMail/go-pm-mime.git
 testImports: []

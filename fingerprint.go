@@ -1,4 +1,4 @@
-package pm
+package pmcrypto
 
 import (
 	"bytes"

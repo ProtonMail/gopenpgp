@@ -1,4 +1,4 @@
-package pm
+package pmcrypto
 
 // Version get current lib version
 func Version() string {
