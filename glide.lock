@@ -1,5 +1,5 @@
-hash: 834f29378b80e2f7486b79420679fb1d854c16f2989574090ba80d322a7b71c5
-updated: 2018-09-02T14:56:08.452174+02:00
+hash: 4251e23b87e24d3580705ee49d6354cbd956d2ecc254bd9cb2037d5fd6f34d48
+updated: 2018-09-04T20:05:07.075614+02:00
 imports:
 - name: github.com/Sirupsen/logrus
   version: 78fa2915c1fa231f62e0438da493688c21ca678e
@@ -31,7 +31,7 @@ imports:
   - rsa
   - ssh/terminal
 - name: golang.org/x/sys
-  version: fa5fdf94c78965f1aa8423f0cc50b8b8d728b05a
+  version: 2b024373dcd9800f0cae693839fac6ede8d64a8c
   subpackages:
   - unix
   - windows
@@ -43,7 +43,7 @@ imports:
   - encoding/internal
   - encoding/internal/identifier
   - transform
-- name: mimeparser
-  version: f4de8a5a52ecd93189c785c7d87259ac637e1d7c
+- name: proton/pmmime
+  version: f64ddc9969090ae55c92712def8289587816dc11
   repo: git@gitlab.protontech.ch:ProtonMail/go-pm-mime.git
 testImports: []

@@ -3,5 +3,6 @@ import:
 - package: golang.org/x/crypto
   version: v1.0.0
   repo: https://github.com/ProtonMail/crypto.git
-- package: mimeparser
+- package: proton/pmmime
   repo: git@gitlab.protontech.ch:ProtonMail/go-pm-mime.git
+  version: feat/mimevisitor
