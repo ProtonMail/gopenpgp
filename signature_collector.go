@@ -45,6 +45,7 @@ func getRawMimePart(rawdata io.Reader, boundary string) (io.Reader, io.Reader) {
 			break
 		}
 	}
+	lineEndingLength := 0
 	for {
 		line, isPrefix, err := reader.ReadLine()
 		if err != nil {
@@ -53,20 +54,23 @@ func getRawMimePart(rawdata io.Reader, boundary string) (io.Reader, io.Reader) {
 		if bytes.HasPrefix(line, byteBoundary) {
 			break
 		}
+		lineEndingLength = 0
 		bodyBuffer.Write(line)
 		if !isPrefix {
 			reader.UnreadByte()
 			reader.UnreadByte()
 			token, _ := reader.ReadByte()
 			if token == '\r' {
+				lineEndingLength++
 				bodyBuffer.WriteByte(token)
 			}
+			lineEndingLength++
 			bodyBuffer.WriteByte(token)
 		}
 	}
 	ioutil.ReadAll(reader)
 	data := bodyBuffer.Bytes()
-	return tee, bytes.NewReader(data[0:len(data) - 1])
+	return tee, bytes.NewReader(data[0:len(data) - lineEndingLength])
 }
 
 func getMultipartParts(r io.Reader, params map[string]string) (parts []io.Reader, headers []textproto.MIMEHeader, err error) {
