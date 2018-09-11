@@ -2,21 +2,20 @@
 
 SCRIPT_LOCATION=$(cd $(dirname $0);echo $PWD)
 
-OUTPUT_PATH="bin"
+OUTPUT_PATH="dist"
 ANDROID_OUT=${OUTPUT_PATH}/"Android"
 IOS_OUT=${OUTPUT_PATH}/"iOS"
-
+mkdir -p $ANDROID_OUT
+mkdir -p $IOS_OUT
 # CHECK="${1-0}"
 # if [ ${CHECK} -eq "1" ]; then
 printf "\e[0;32mStart Building iOS framework .. Location: ${IOS_OUT} \033[0m\n\n"
 
-gomobile bind -target ios -o ${IOS_OUT}/PM.framework
-
+gomobile bind -target ios -o ${IOS_OUT}/pmcrypto.framework proton/pmcrypto/crypto proton/pmcrypto/armor proton/pmcrypto/constants proton/pmcrypto/key proton/pmcrypto/models
 
 printf "\e[0;32mStart Building Android lib .. Location: ${ANDROID_OUT} \033[0m\n\n"
 
-gomobile bind -target android -o ${ANDROID_OUT}/PM.aar
-
+gomobile bind -target android -javapkg com.proton.pmcrypto -o ${ANDROID_OUT}/pmcrypto.aar proton/pmcrypto/crypto proton/pmcrypto/armor proton/pmcrypto/constants proton/pmcrypto/key proton/pmcrypto/models
 
 printf "\e[0;32mInstalling frameworks. \033[0m\n\n"
 
