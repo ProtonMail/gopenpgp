@@ -29,57 +29,13 @@ func newSignatureCollector(targetAccepter pmmime.VisitAcceptor, keyring openpgp.
 	}
 }
 
-func getRawMimePart(rawdata io.Reader, boundary string) (io.Reader, io.Reader) {
-	b, _ := ioutil.ReadAll(rawdata)
-	tee := bytes.NewReader(b)
-
-	reader := bufio.NewReader(bytes.NewReader(b))
-	byteBoundary := []byte(boundary)
-	bodyBuffer := &bytes.Buffer{}
-	for {
-		line, _, err := reader.ReadLine()
-		if err != nil {
-			return tee, bytes.NewReader(bodyBuffer.Bytes())
-		}
-		if bytes.HasPrefix(line, byteBoundary) {
-			break
-		}
-	}
-	lineEndingLength := 0
-	for {
-		line, isPrefix, err := reader.ReadLine()
-		if err != nil {
-			return tee, bytes.NewReader(bodyBuffer.Bytes())
-		}
-		if bytes.HasPrefix(line, byteBoundary) {
-			break
-		}
-		lineEndingLength = 0
-		bodyBuffer.Write(line)
-		if !isPrefix {
-			reader.UnreadByte()
-			reader.UnreadByte()
-			token, _ := reader.ReadByte()
-			if token == '\r' {
-				lineEndingLength++
-				bodyBuffer.WriteByte(token)
-			}
-			lineEndingLength++
-			bodyBuffer.WriteByte(token)
-		}
-	}
-	ioutil.ReadAll(reader)
-	data := bodyBuffer.Bytes()
-	return tee, bytes.NewReader(data[0 : len(data)-lineEndingLength])
-}
-
 func (sc *SignatureCollector) Accept(part io.Reader, header textproto.MIMEHeader, hasPlainSibling bool, isFirst, isLast bool) (err error) {
 	parentMediaType, params, _ := mime.ParseMediaType(header.Get("Content-Type"))
 	if parentMediaType == "multipart/signed" {
-		newPart, rawBody := getRawMimePart(part, "--"+params["boundary"])
+		newPart, rawBody := pmmime.GetRawMimePart(part, "--"+params["boundary"])
 		var multiparts []io.Reader
 		var multipartHeaders []textproto.MIMEHeader
-		if multiparts, multipartHeaders, err = mime.GetMultipartParts(newPart, params); err != nil {
+		if multiparts, multipartHeaders, err = pmmime.GetMultipartParts(newPart, params); err != nil {
 			return
 		} else {
 			hasPlainChild := false
