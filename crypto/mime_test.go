@@ -1,10 +1,10 @@
 package crypto
 
 import (
-	"testing"
 	"fmt"
-				"io/ioutil"
-		"proton/pmcrypto/internal"
+	"io/ioutil"
+	"proton/pmcrypto/internal"
+	"testing"
 )
 
 const publicKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -235,7 +235,6 @@ z9GxJikRwscymWmXx2QsvhUiWeOJ05WwK+WAnKR1uVtkEJ9QJVe2chyuMORY
 -----END PGP PRIVATE KEY BLOCK-----
 `
 
-
 // define call back interface
 type Callbacks struct {
 }
@@ -259,9 +258,9 @@ func (t Callbacks) OnError(err error) {
 func TestDecrypt(t *testing.T) {
 	callbacks := Callbacks{}
 	o := PmCrypto{}
-	block, _ := internal.UnArmor(publicKey)
+	block, _ := internal.Unarmor(publicKey)
 	publicKeyUnarmored, _ := ioutil.ReadAll(block.Body)
-	block, _ = internal.UnArmor(privatekey)
+	block, _ = internal.Unarmor(privatekey)
 	privateKeyUnarmored, _ := ioutil.ReadAll(block.Body)
 	o.DecryptMIMEMessage(testMessage, publicKeyUnarmored, privateKeyUnarmored, privatekeypassword,
 		&callbacks, o.GetTime())
@@ -410,4 +409,3 @@ RIzX2CG47PuGl/uvImFW/Iw=
 		fmt.Println(attachment)
 	}
 }
-

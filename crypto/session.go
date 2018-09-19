@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-		"strings"
+	"strings"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
@@ -118,7 +118,7 @@ func (pm *PmCrypto) GetSessionFromKeyPacket(keyPackage []byte, privateKey string
 
 //KeyPacketWithPublicKey ...
 func (pm *PmCrypto) KeyPacketWithPublicKey(sessionSplit *models.SessionSplit, publicKey string) ([]byte, error) {
-	pubkeyRaw, err := armor.UnArmor(publicKey)
+	pubkeyRaw, err := armor.Unarmor(publicKey)
 	if err != nil {
 		return nil, err
 	}

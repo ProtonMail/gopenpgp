@@ -1,6 +1,5 @@
 package models
 
-
 //EncryptedSplit when encrypt attachemt
 type EncryptedSplit struct {
 	DataPacket []byte
@@ -8,7 +7,7 @@ type EncryptedSplit struct {
 	Algo       string
 }
 
-//SessionSplit splited session
+//SessionSplit split session
 type SessionSplit struct {
 	Session []byte
 	Algo    string
@@ -29,4 +28,3 @@ type DecryptSignedVerify struct {
 	//error message if verify failed
 	Message string
 }
-

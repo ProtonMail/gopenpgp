@@ -10,8 +10,8 @@ import (
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
-	"golang.org/x/crypto/openpgp/packet"
 	errors2 "golang.org/x/crypto/openpgp/errors"
+	"golang.org/x/crypto/openpgp/packet"
 	"math"
 	armorUtils "proton/pmcrypto/armor"
 	"proton/pmcrypto/internal"
@@ -23,7 +23,7 @@ import (
 // privateKey : armored private use to decrypt message
 // passphrase : match with private key to decrypt message
 func (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey string, passphrase string) (string, error) {
-	privKeyRaw, err := armorUtils.UnArmor(privateKey)
+	privKeyRaw, err := armorUtils.Unarmor(privateKey)
 	if err != nil {
 		return "", err
 	}
@@ -41,7 +41,7 @@ func (pm *PmCrypto) DecryptMessageBinKey(encryptedText string, privateKey []byte
 		return "", err
 	}
 
-	encryptedio, err := internal.UnArmor(encryptedText)
+	encryptedio, err := internal.Unarmor(encryptedText)
 	if err != nil {
 		return "", err
 	}
@@ -59,7 +59,7 @@ func (pm *PmCrypto) DecryptMessageBinKey(encryptedText string, privateKey []byte
 		}
 	}
 
-	config := &packet.Config{ Time: pm.getTimeGenerator() }
+	config := &packet.Config{Time: pm.getTimeGenerator()}
 
 	md, err := openpgp.ReadMessage(encryptedio.Body, privKeyEntries, nil, config)
 	if err != nil {
@@ -76,13 +76,13 @@ func (pm *PmCrypto) DecryptMessageBinKey(encryptedText string, privateKey []byte
 	return string(b), nil
 }
 
-// DecryptMessageVerifyPrivbinkeys decrypt message and verify the signature
-// veriferKey string: armored verifier keys
+// DecryptMessageVerifyPrivBinKeys decrypt message and verify the signature
+// verifierKey string: armored verifier keys
 // privateKey []byte: unarmored private key to decrypt. could be mutiple
-func (pm *PmCrypto) DecryptMessageVerifyPrivbinkeys(encryptedText string, veriferKey string, privateKeys []byte, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
+func (pm *PmCrypto) DecryptMessageVerifyPrivBinKeys(encryptedText string, verifierKey string, privateKeys []byte, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
 
-	if len(veriferKey) > 0 {
-		verifierRaw, err := armorUtils.UnArmor(veriferKey)
+	if len(verifierKey) > 0 {
+		verifierRaw, err := armorUtils.Unarmor(verifierKey)
 		if err != nil {
 			return nil, err
 		}
@@ -91,19 +91,19 @@ func (pm *PmCrypto) DecryptMessageVerifyPrivbinkeys(encryptedText string, verife
 	return pm.decryptMessageVerifyAllBin(encryptedText, nil, privateKeys, passphrase, verifyTime)
 }
 
-// DecryptMessageVerifyBinKeyPrivbinkeys decrypt message and verify the signature
-// veriferKey []byte: unarmored verifier keys
+// DecryptMessageVerifyBinKeyPrivBinKeys decrypt message and verify the signature
+// verifierKey []byte: unarmored verifier keys
 // privateKey []byte: unarmored private key to decrypt. could be mutiple
-func (pm *PmCrypto) DecryptMessageVerifyBinKeyPrivbinkeys(encryptedText string, veriferKey []byte, privateKeys []byte, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
-	return pm.decryptMessageVerifyAllBin(encryptedText, veriferKey, privateKeys, passphrase, verifyTime)
+func (pm *PmCrypto) DecryptMessageVerifyBinKeyPrivBinKeys(encryptedText string, verifierKey []byte, privateKeys []byte, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
+	return pm.decryptMessageVerifyAllBin(encryptedText, verifierKey, privateKeys, passphrase, verifyTime)
 }
 
 // DecryptMessageVerify decrypt message and verify the signature
-// veriferKey string: armored verifier keys
+// verifierKey string: armored verifier keys
 // privateKey string: private to decrypt
-func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, veriferKey string, privateKey string, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
-	if len(veriferKey) > 0 {
-		verifierRaw, err := armorUtils.UnArmor(veriferKey)
+func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey string, privateKey string, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
+	if len(verifierKey) > 0 {
+		verifierRaw, err := armorUtils.Unarmor(verifierKey)
 		if err != nil {
 			return nil, err
 		}
@@ -113,20 +113,20 @@ func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, veriferKey string
 }
 
 // DecryptMessageVerifyBinKey decrypt message and verify the signature
-// veriferKey []byte: unarmored verifier keys
+// verifierKey []byte: unarmored verifier keys
 // privateKey string: private to decrypt
-func (pm *PmCrypto) DecryptMessageVerifyBinKey(encryptedText string, veriferKey []byte, privateKey string, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
-	privateKeyRaw, err := armorUtils.UnArmor(privateKey)
+func (pm *PmCrypto) DecryptMessageVerifyBinKey(encryptedText string, verifierKey []byte, privateKey string, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
+	privateKeyRaw, err := armorUtils.Unarmor(privateKey)
 	if err != nil {
 		return nil, err
 	}
-	return pm.decryptMessageVerifyAllBin(encryptedText, veriferKey, privateKeyRaw, passphrase, verifyTime)
+	return pm.decryptMessageVerifyAllBin(encryptedText, verifierKey, privateKeyRaw, passphrase, verifyTime)
 }
 
 // decryptMessageVerifyAllBin
 // decrypt_message_verify_single_key(private_key: string, passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
 // decrypt_message_verify(passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
-func (pm *PmCrypto) decryptMessageVerifyAllBin(encryptedText string, veriferKey []byte, privateKey []byte, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
+func (pm *PmCrypto) decryptMessageVerifyAllBin(encryptedText string, verifierKey []byte, privateKey []byte, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
 	privKey := bytes.NewReader(privateKey)
 	privKeyEntries, err := openpgp.ReadKeyRing(privKey)
 	if err != nil {
@@ -151,8 +151,8 @@ func (pm *PmCrypto) decryptMessageVerifyAllBin(encryptedText string, veriferKey 
 	out.Verify = failed
 
 	var verifierEntries openpgp.EntityList
-	if len(veriferKey) > 0 {
-		verifierReader := bytes.NewReader(veriferKey)
+	if len(verifierKey) > 0 {
+		verifierReader := bytes.NewReader(verifierKey)
 		verifierEntries, err = openpgp.ReadKeyRing(verifierReader)
 		if err != nil {
 			return nil, err
@@ -165,7 +165,7 @@ func (pm *PmCrypto) decryptMessageVerifyAllBin(encryptedText string, veriferKey 
 		out.Verify = noVerifier
 	}
 
-	encryptedio, err := internal.UnArmor(encryptedText)
+	encryptedio, err := internal.Unarmor(encryptedText)
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +222,7 @@ func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 			if md.Signature.KeyLifetimeSecs != nil {
 				expires = int64(*md.Signature.KeyLifetimeSecs) + created
 			}
-			if created - internal.CreationTimeOffset <= verifyTime && verifyTime <= expires {
+			if created-internal.CreationTimeOffset <= verifyTime && verifyTime <= expires {
 				md.SignatureError = nil
 			}
 		} else {
@@ -238,7 +238,7 @@ func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 // privateKey : optional required when you want to sign
 // passphrase : optional required when you pass the private key and this passphrase must could decrypt the private key
 func (pm *PmCrypto) EncryptMessage(plainText string, publicKey string, privateKey string, passphrase string, trim bool) (string, error) {
-	rawPubKey, err := armorUtils.UnArmor(publicKey)
+	rawPubKey, err := armorUtils.Unarmor(publicKey)
 	if err != nil {
 		return "", err
 	}
@@ -290,11 +290,11 @@ func (pm *PmCrypto) EncryptMessageBinKey(plainText string, publicKey []byte, pri
 		}
 
 		if signEntity == nil {
-			return "", errors.New("cannot sign message, singer key is not unlocked")
+			return "", errors.New("cannot sign message, signer key is not unlocked")
 		}
 	}
 
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator() }
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator()}
 
 	ew, err := openpgp.Encrypt(w, pubKeyEntries, signEntity, nil, config)
 
@@ -315,7 +315,7 @@ func (pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string
 		return "", err
 	}
 
-	config := &packet.Config{ Time: pm.getTimeGenerator() }
+	config := &packet.Config{Time: pm.getTimeGenerator()}
 	plaintext, err := openpgp.SymmetricallyEncrypt(w, []byte(password), nil, config)
 	if err != nil {
 		return "", err
@@ -338,7 +338,7 @@ func (pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string
 //encrypted string : armored pgp message
 //output string : clear text
 func (pm *PmCrypto) DecryptMessageWithPassword(encrypted string, password string) (string, error) {
-	encryptedio, err := internal.UnArmor(encrypted)
+	encryptedio, err := internal.Unarmor(encrypted)
 	if err != nil {
 		return "", err
 	}
@@ -347,7 +347,7 @@ func (pm *PmCrypto) DecryptMessageWithPassword(encrypted string, password string
 		return []byte(password), nil
 	}
 
-	config := &packet.Config{ Time: pm.getTimeGenerator() }
+	config := &packet.Config{Time: pm.getTimeGenerator()}
 	md, err := openpgp.ReadMessage(encryptedio.Body, nil, prompt, config)
 	if err != nil {
 		return "", err

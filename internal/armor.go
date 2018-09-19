@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func UnArmor(input string) (*armor.Block, error) {
+func Unarmor(input string) (*armor.Block, error) {
 	io := strings.NewReader(input)
 	b, err := armor.Decode(io)
 	if err != nil {

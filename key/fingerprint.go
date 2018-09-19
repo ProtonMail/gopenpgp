@@ -11,7 +11,7 @@ import (
 
 // GetFingerprint get a armored public key fingerprint
 func GetFingerprint(publicKey string) (string, error) {
-	rawPubKey, err := armor.UnArmor(publicKey)
+	rawPubKey, err := armor.Unarmor(publicKey)
 	if err != nil {
 		return "", err
 	}

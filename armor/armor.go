@@ -2,13 +2,13 @@ package armor
 
 import (
 	"bytes"
-	"io/ioutil"
-	"golang.org/x/crypto/openpgp/armor"
-	"proton/pmcrypto/internal"
-	"golang.org/x/crypto/openpgp/clearsign"
 	"errors"
+	"golang.org/x/crypto/openpgp/armor"
+	"golang.org/x/crypto/openpgp/clearsign"
 	"golang.org/x/crypto/openpgp/packet"
 	"io"
+	"io/ioutil"
+	"proton/pmcrypto/internal"
 	"proton/pmcrypto/models"
 )
 
@@ -32,9 +32,9 @@ func ArmorWithType(input []byte, armorType string) (string, error) {
 	return b.String(), nil
 }
 
-// UnArmor an armored key to bytes key
-func UnArmor(input string) ([]byte, error) {
-	b, err := internal.UnArmor(input)
+// Unarmor an armored key to bytes key
+func Unarmor(input string) ([]byte, error) {
+	b, err := internal.Unarmor(input)
 	if err != nil {
 		return nil, err
 	}
@@ -50,14 +50,12 @@ func ReadClearSignedMessage(signedMessage string) (string, error) {
 	return string(modulusBlock.Bytes), nil
 }
 
-
-
 //SeparateKeyAndData ...
 func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
 
 	var err error
 
-	encryptedRaw, err := UnArmor(encrypted)
+	encryptedRaw, err := Unarmor(encrypted)
 	if err != nil {
 		return nil, err
 	}
@@ -111,8 +109,6 @@ func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
 
 	return outSplit, err
 }
-
-
 
 //encode length based on 4.2.2. in the RFC
 func encodedLength(length int) (b []byte) {

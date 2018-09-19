@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 
 	"golang.org/x/crypto/openpgp"
-	armorUtils "proton/pmcrypto/armor"
-	"golang.org/x/crypto/openpgp/packet"
-		"proton/pmcrypto/internal"
 	"golang.org/x/crypto/openpgp/armor"
+	"golang.org/x/crypto/openpgp/packet"
+	armorUtils "proton/pmcrypto/armor"
+	"proton/pmcrypto/internal"
 	"proton/pmcrypto/models"
 )
 
@@ -52,7 +52,7 @@ func (pm *PmCrypto) EncryptAttachmentBinKey(plainData []byte, fileName string, p
 
 //EncryptAttachment ...
 func (pm *PmCrypto) EncryptAttachment(plainData []byte, fileName string, publicKey string) (*models.EncryptedSplit, error) {
-	rawPubKey, err := armorUtils.UnArmor(publicKey)
+	rawPubKey, err := armorUtils.Unarmor(publicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (pm *PmCrypto) DecryptAttachmentBinKey(keyPacket []byte, dataPacket []byte,
 
 	encryptedReader := io.MultiReader(keyReader, dataReader)
 
-	config := &packet.Config{ Time: pm.getTimeGenerator() }
+	config := &packet.Config{Time: pm.getTimeGenerator()}
 
 	md, err := openpgp.ReadMessage(encryptedReader, privKeyEntries, nil, config)
 	if err != nil {
@@ -107,7 +107,7 @@ func (pm *PmCrypto) DecryptAttachmentBinKey(keyPacket []byte, dataPacket []byte,
 
 //DecryptAttachment ...
 func (pm *PmCrypto) DecryptAttachment(keyPacket []byte, dataPacket []byte, privateKey string, passphrase string) ([]byte, error) {
-	rawPrivKey, err := armorUtils.UnArmor(privateKey)
+	rawPrivKey, err := armorUtils.Unarmor(privateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (pm *PmCrypto) EncryptAttachmentWithPassword(plainData []byte, password str
 		return "", err
 	}
 
-	config := &packet.Config{ Time: pm.getTimeGenerator() }
+	config := &packet.Config{Time: pm.getTimeGenerator()}
 
 	plaintext, err := openpgp.SymmetricallyEncrypt(w, []byte(password), nil, config)
 	if err != nil {
@@ -154,7 +154,7 @@ func (pm *PmCrypto) DecryptAttachmentWithPassword(keyPacket []byte, dataPacket [
 		return []byte(password), nil
 	}
 
-	config := &packet.Config{ Time: pm.getTimeGenerator() }
+	config := &packet.Config{Time: pm.getTimeGenerator()}
 
 	md, err := openpgp.ReadMessage(encryptedReader, nil, prompt, config)
 	if err != nil {

@@ -5,7 +5,7 @@ import (
 	"crypto"
 	"encoding/hex"
 	"errors"
-		"strings"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/openpgp"
@@ -20,7 +20,6 @@ const (
 	noVerifier = 2
 	failed     = 3
 )
-
 
 //IsKeyExpiredBin ...
 func (pm *PmCrypto) IsKeyExpiredBin(publicKey []byte) (bool, error) {
@@ -77,7 +76,7 @@ func (pm *PmCrypto) IsKeyExpiredBin(publicKey []byte) (bool, error) {
 //IsKeyExpired ....
 // will user the cached time to check
 func (pm *PmCrypto) IsKeyExpired(publicKey string) (bool, error) {
-	rawPubKey, err := armor.UnArmor(publicKey)
+	rawPubKey, err := armor.Unarmor(publicKey)
 	if err != nil {
 		return false, err
 	}
@@ -133,7 +132,6 @@ func (pm *PmCrypto) generateKey(userName string, domain string, passphrase strin
 		return "", err
 	}
 
-
 	rawPwd := []byte(passphrase)
 	if newEntity.PrivateKey != nil && !newEntity.PrivateKey.Encrypted {
 		if err := newEntity.PrivateKey.Encrypt(rawPwd); err != nil {
@@ -158,7 +156,7 @@ func (pm *PmCrypto) generateKey(userName string, domain string, passphrase strin
 }
 
 func (pm *PmCrypto) GenerateRSAKeyWithPrimes(userName string, domain string, passphrase string, bits int,
-	primeone []byte, primetwo []byte, primethree []byte, primefour []byte) (string, error)  {
+	primeone []byte, primetwo []byte, primethree []byte, primefour []byte) (string, error) {
 	return pm.generateKey(userName, domain, passphrase, "rsa", bits, primeone, primetwo, primethree, primefour)
 }
 
@@ -171,6 +169,7 @@ func (pm *PmCrypto) GenerateRSAKeyWithPrimes(userName string, domain string, pas
 func (pm *PmCrypto) GenerateKey(userName string, domain string, passphrase string, keyType string, bits int) (string, error) {
 	return pm.generateKey(userName, domain, passphrase, keyType, bits, nil, nil, nil, nil)
 }
+
 // UpdatePrivateKeyPassphrase ...
 func (pm *PmCrypto) UpdatePrivateKeyPassphrase(privateKey string, oldPassphrase string, newPassphrase string) (string, error) {
 
@@ -217,7 +216,7 @@ func (pm *PmCrypto) UpdatePrivateKeyPassphrase(privateKey string, oldPassphrase 
 }
 
 // CheckKey print out the key and subkey fingerprint
-func (pm *PmCrypto)  CheckKey(pubKey string) (string, error) {
+func (pm *PmCrypto) CheckKey(pubKey string) (string, error) {
 	pubKeyReader := strings.NewReader(pubKey)
 	entries, err := openpgp.ReadArmoredKeyRing(pubKeyReader)
 	if err != nil {
