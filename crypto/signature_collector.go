@@ -1,17 +1,17 @@
 package crypto
 
 import (
+	"bufio"
+	"bytes"
+	"golang.org/x/crypto/openpgp"
+	"golang.org/x/crypto/openpgp/packet"
 	"io"
+	"io/ioutil"
+	"mime"
+	"mime/multipart"
 	"net/textproto"
 	"proton/pmmime"
-	"golang.org/x/crypto/openpgp/packet"
-	"golang.org/x/crypto/openpgp"
-	"io/ioutil"
-	"bytes"
-	"bufio"
-	"mime/multipart"
-	"mime"
-	)
+)
 
 type SignatureCollector struct {
 	config    *packet.Config
@@ -23,8 +23,8 @@ type SignatureCollector struct {
 
 func newSignatureCollector(targetAccepter pmmime.VisitAcceptor, keyring openpgp.KeyRing, config *packet.Config) *SignatureCollector {
 	return &SignatureCollector{
-		target: targetAccepter,
-		config: config,
+		target:  targetAccepter,
+		config:  config,
 		keyring: keyring,
 	}
 }
@@ -70,39 +70,16 @@ func getRawMimePart(rawdata io.Reader, boundary string) (io.Reader, io.Reader) {
 	}
 	ioutil.ReadAll(reader)
 	data := bodyBuffer.Bytes()
-	return tee, bytes.NewReader(data[0:len(data) - lineEndingLength])
-}
-
-func getMultipartParts(r io.Reader, params map[string]string) (parts []io.Reader, headers []textproto.MIMEHeader, err error) {
-	mr := multipart.NewReader(r, params["boundary"])
-	parts = []io.Reader{}
-	headers = []textproto.MIMEHeader{}
-	var p *multipart.Part
-	for {
-		p, err = mr.NextPart()
-		if err == io.EOF {
-			err = nil
-			break
-		}
-		if err != nil {
-			return
-		}
-		b, _ := ioutil.ReadAll(p)
-		buffer := bytes.NewBuffer(b)
-
-		parts = append(parts, buffer)
-		headers = append(headers, p.Header)
-	}
-	return
+	return tee, bytes.NewReader(data[0 : len(data)-lineEndingLength])
 }
 
 func (sc *SignatureCollector) Accept(part io.Reader, header textproto.MIMEHeader, hasPlainSibling bool, isFirst, isLast bool) (err error) {
 	parentMediaType, params, _ := mime.ParseMediaType(header.Get("Content-Type"))
 	if parentMediaType == "multipart/signed" {
-		newPart, rawBody := getRawMimePart(part, "--" + params["boundary"])
+		newPart, rawBody := getRawMimePart(part, "--"+params["boundary"])
 		var multiparts []io.Reader
 		var multipartHeaders []textproto.MIMEHeader
-		if multiparts, multipartHeaders, err = getMultipartParts(newPart, params); err != nil {
+		if multiparts, multipartHeaders, err = mime.GetMultipartParts(newPart, params); err != nil {
 			return
 		} else {
 			hasPlainChild := false
@@ -140,7 +117,7 @@ func (sc *SignatureCollector) Accept(part io.Reader, header textproto.MIMEHeader
 				return err
 			}
 			sc.signature = string(buffer)
-			str, _  := ioutil.ReadAll(rawBody)
+			str, _ := ioutil.ReadAll(rawBody)
 			rawBody = bytes.NewReader(str)
 			if sc.keyring != nil {
 				_, err = openpgp.CheckArmoredDetachedSignature(sc.keyring, rawBody, bytes.NewReader(buffer), sc.config)
