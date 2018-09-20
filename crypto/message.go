@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
+	armorUtils "gitlab.com/ProtonMail/go-pm-crypto/armor"
+	"gitlab.com/ProtonMail/go-pm-crypto/internal"
+	"gitlab.com/ProtonMail/go-pm-crypto/models"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
 	errors2 "golang.org/x/crypto/openpgp/errors"
 	"golang.org/x/crypto/openpgp/packet"
 	"math"
-	armorUtils "proton/pmcrypto/armor"
-	"proton/pmcrypto/internal"
-	"proton/pmcrypto/models"
 )
 
 // DecryptMessage decrypt encrypted message use private key (string )

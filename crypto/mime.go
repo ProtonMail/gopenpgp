@@ -1,21 +1,20 @@
 package crypto
 
 import (
-	"proton/pmmime"
-	"net/mail"
-	"strings"
-	"golang.org/x/crypto/openpgp/packet"
-	"net/textproto"
-	"io/ioutil"
 	"bytes"
+	"github.com/ProtonMail/go-pm-mime"
+	"gitlab.com/ProtonMail/go-pm-crypto/armor"
 	"golang.org/x/crypto/openpgp"
-	"proton/pmcrypto/armor"
+	"golang.org/x/crypto/openpgp/packet"
+	"io/ioutil"
+	"net/mail"
+	"net/textproto"
+	"strings"
 )
 
 // ======================== Attachments Collector  ==============
 // Collect contents of all attachment parts and return
 // them as a string
-
 
 func (pm PmCrypto) parseMIME(mimeBody string, verifierKey []byte) (*pmmime.BodyCollector, int, []string, []string, error) {
 	pubKey := bytes.NewReader(verifierKey)
@@ -34,7 +33,10 @@ func (pm PmCrypto) parseMIME(mimeBody string, verifierKey []byte) (*pmmime.BodyC
 	bodyCollector := pmmime.NewBodyCollector(printAccepter)
 	attachmentsCollector := pmmime.NewAttachmentsCollector(bodyCollector)
 	mimeVisitor := pmmime.NewMimeVisitor(attachmentsCollector)
-	str, err := armor.ArmorKey(verifierKey)
+	// TODO: build was failing on this unused 'str' variable. This code looks like WIP
+	//str, err := armor.ArmorKey(verifierKey)
+	_, err = armor.ArmorKey(verifierKey)
+
 	signatureCollector := newSignatureCollector(mimeVisitor, pubKeyEntries, config)
 	err = pmmime.VisitAll(bytes.NewReader(mmBodyData), h, signatureCollector)
 

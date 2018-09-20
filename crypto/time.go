@@ -11,15 +11,20 @@ func (pm *PmCrypto) UpdateTime(newTime int64) {
 }
 
 //GetTime get latest cached time
-func (pm *PmCrypto) GetTime() int64 {
+func (pm *PmCrypto) GetTimeUnix() int64 {
 	return pm.getNow().Unix()
+}
+
+//GetTime get latest cached time
+func (pm *PmCrypto) GetTime() time.Time {
+	return pm.getNow()
 }
 
 func (pm *PmCrypto) getNow() time.Time {
 	if pm.latestServerTime > 0 && !pm.latestClientTime.IsZero() {
 		// Sub is monotome, it uses a monotime time clock in this case instead of the wall clock
 		extrapolate := int64(pm.latestClientTime.Sub(time.Now()).Seconds())
-		return time.Unix(pm.latestServerTime + extrapolate, 0)
+		return time.Unix(pm.latestServerTime+extrapolate, 0)
 	}
 
 	return time.Now()

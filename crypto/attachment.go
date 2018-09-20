@@ -5,12 +5,12 @@ import (
 	"io"
 	"io/ioutil"
 
+	armorUtils "gitlab.com/ProtonMail/go-pm-crypto/armor"
+	"gitlab.com/ProtonMail/go-pm-crypto/internal"
+	"gitlab.com/ProtonMail/go-pm-crypto/models"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/packet"
-	armorUtils "proton/pmcrypto/armor"
-	"proton/pmcrypto/internal"
-	"proton/pmcrypto/models"
 )
 
 //EncryptAttachmentBinKey ...

@@ -1,16 +1,14 @@
 package crypto
 
 import (
-	"bufio"
 	"bytes"
+	"github.com/ProtonMail/go-pm-mime"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 	"io"
 	"io/ioutil"
 	"mime"
-	"mime/multipart"
 	"net/textproto"
-	"proton/pmmime"
 )
 
 type SignatureCollector struct {

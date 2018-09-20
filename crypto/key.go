@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/ProtonMail/go-pm-crypto/armor"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 	"math/big"
-	"proton/pmcrypto/armor"
 )
 
 const (

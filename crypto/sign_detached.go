@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/ProtonMail/go-pm-crypto/internal"
 	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/packet"
 	errors2 "golang.org/x/crypto/openpgp/errors"
+	"golang.org/x/crypto/openpgp/packet"
 	"io"
-	"proton/pmcrypto/internal"
 )
 
 // SignTextDetached sign detached text type
@@ -45,7 +45,7 @@ func (pm *PmCrypto) SignTextDetached(plainText string, privateKey string, passph
 		return "", errors.New("cannot sign message, signer key is not unlocked")
 	}
 
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator() }
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator()}
 
 	att := strings.NewReader(plainText)
 
@@ -90,7 +90,7 @@ func (pm *PmCrypto) SignTextDetachedBinKey(plainText string, privateKey []byte, 
 		return "", errors.New("cannot sign message, singer key is not unlocked")
 	}
 
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator() }
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator()}
 
 	att := strings.NewReader(plainText)
 
@@ -131,7 +131,7 @@ func (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey string, passphr
 		return "", errors.New("cannot sign message, singer key is not unlocked")
 	}
 
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator() }
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator()}
 
 	att := bytes.NewReader(plainData)
 
@@ -172,7 +172,7 @@ func (pm *PmCrypto) SignBinDetachedBinKey(plainData []byte, privateKey []byte, p
 		return "", errors.New("cannot sign message, singer key is not unlocked")
 	}
 
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator() }
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator()}
 
 	att := bytes.NewReader(plainData)
 
@@ -226,7 +226,7 @@ func verifySignature(pubKeyEntries openpgp.EntityList, origText *bytes.Reader, s
 		}
 	} else {
 		config.Time = func() time.Time {
-			return time.Unix(verifyTime + internal.CreationTimeOffset, 0)
+			return time.Unix(verifyTime+internal.CreationTimeOffset, 0)
 		}
 	}
 	signatureReader := strings.NewReader(signature)
@@ -260,7 +260,6 @@ func verifySignature(pubKeyEntries openpgp.EntityList, origText *bytes.Reader, s
 	// }
 	return true, nil
 }
-
 
 // VerifyBinSignDetached ...
 func (pm *PmCrypto) VerifyBinSignDetached(signature string, plainData []byte, publicKey string, verifyTime int64) (bool, error) {

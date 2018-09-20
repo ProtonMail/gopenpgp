@@ -7,10 +7,10 @@ import (
 	"io"
 	"strings"
 
+	"gitlab.com/ProtonMail/go-pm-crypto/armor"
+	"gitlab.com/ProtonMail/go-pm-crypto/models"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
-	"proton/pmcrypto/armor"
-	"proton/pmcrypto/models"
 )
 
 //RandomToken ...
