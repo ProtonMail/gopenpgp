@@ -1,10 +1,9 @@
 package internal
 
 import (
+	"gitlab.com/ProtonMail/go-pm-crypto/constants"
 	"regexp"
-	"proton/pmcrypto/constants"
 )
-
 
 func TrimNewlines(input string) string {
 	var re = regexp.MustCompile(`(?m)[ \t]*$`)
@@ -19,7 +18,8 @@ const (
 	ARMOR_HEADER_VERSION = "Pmcrypto Golang 0.0.1 (" + constants.VERSION + ")"
 	ARMOR_HEADER_COMMENT = "https://protonmail.com"
 )
-var ArmorHeaders = map[string]string {
+
+var ArmorHeaders = map[string]string{
 	"Version": ARMOR_HEADER_VERSION,
 	"Comment": ARMOR_HEADER_COMMENT,
 }

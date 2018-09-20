@@ -62,6 +62,7 @@ func (sc *SignatureCollector) Accept(part io.Reader, header textproto.MIMEHeader
 			if err != nil {
 				return
 			}
+			// TODO: Sunny proposed to move this also to pm-mime library
 			partData, _ := ioutil.ReadAll(multiparts[1])
 			decodedPart := pmmime.DecodeContentEncoding(bytes.NewReader(partData), multipartHeaders[1].Get("Content-Transfer-Encoding"))
 			buffer, err := ioutil.ReadAll(decodedPart)

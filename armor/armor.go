@@ -3,13 +3,13 @@ package armor
 import (
 	"bytes"
 	"errors"
+	"gitlab.com/ProtonMail/go-pm-crypto/internal"
+	"gitlab.com/ProtonMail/go-pm-crypto/models"
 	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/clearsign"
 	"golang.org/x/crypto/openpgp/packet"
 	"io"
 	"io/ioutil"
-	"proton/pmcrypto/internal"
-	"proton/pmcrypto/models"
 )
 
 // ArmorKey make bytes input key to armor format
