@@ -1,8 +1,10 @@
-hash: 0e0069ce69a4e3bde6233726f21a880347400808a97c2e6f7a173e4d7daea51c
-updated: 2018-09-07T10:20:50.211694+02:00
+hash: 7169f4883725d9716bbd62ecee1f32d73e8529b4bb0989173826e986395afe6b
+updated: 2018-10-24T18:02:15.233807+02:00
 imports:
+- name: github.com/konsorten/go-windows-terminal-sequences
+  version: 5c8c8bd35d3832f5d134ae1e1e375b69a4d25242
 - name: github.com/Sirupsen/logrus
-  version: 3791101e143bf0f32515ac23e831475684f61229
+  version: 4fabf2fffcecfd47f802869b7b92d75e43c5a095
 - name: golang.org/x/crypto
   version: 9e4251120d8c43f10024d798bc6dde21d40704a0
   repo: https://github.com/ProtonMail/crypto.git
@@ -31,12 +33,12 @@ imports:
   - rsa
   - ssh/terminal
 - name: golang.org/x/sys
-  version: 8cf3aee429924738c56c34bb819c4ea8273fc434
+  version: 5cd93ef61a7c8f0f858690154eb6de2e69415fa1
   subpackages:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 4ae1256249243a4eb350a9a372e126557f2aa346
+  version: 4d1c5fb19474adfe9562c9847ba425e7da817e81
   subpackages:
   - encoding
   - encoding/charmap
@@ -44,6 +46,6 @@ imports:
   - encoding/internal/identifier
   - transform
 - name: proton/pmmime
-  version: 347d69204aa62d6958bcb3b9bbacccb24a36372b
+  version: 72b7b1bf2d1b491e1d003632a0fda41410b0bb59
   repo: git@gitlab.protontech.ch:ProtonMail/go-pm-mime.git
 testImports: []

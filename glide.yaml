@@ -1,4 +1,4 @@
-package: proton/pmcrypto
+package: gitlab.com/ProtonMail/go-pm-crypto
 import:
 - package: golang.org/x/crypto
   version: v1.0.0
