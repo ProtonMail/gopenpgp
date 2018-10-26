@@ -11,17 +11,15 @@ import (
 	armorUtils "gitlab.com/ProtonMail/go-pm-crypto/armor"
 	"gitlab.com/ProtonMail/go-pm-crypto/internal"
 	"gitlab.com/ProtonMail/go-pm-crypto/models"
-)
+		"sync"
+	)
 
 //EncryptAttachmentBinKey ...
 func (pm *PmCrypto) EncryptAttachmentBinKey(plainData []byte, fileName string, publicKey []byte) (*models.EncryptedSplit, error) {
-
-	var outBuf bytes.Buffer
-	w, err := armor.Encode(&outBuf, armorUtils.MESSAGE_HEADER, internal.ArmorHeaders)
-	if err != nil {
-		return nil, err
-	}
-
+	var wg sync.WaitGroup
+	// you can also add these one at
+	// a time if you need to
+	wg.Add(1)
 	pubKeyReader := bytes.NewReader(publicKey)
 	pubKeyEntries, err := openpgp.ReadKeyRing(pubKeyReader)
 	if err != nil {
@@ -36,13 +34,26 @@ func (pm *PmCrypto) EncryptAttachmentBinKey(plainData []byte, fileName string, p
 		Time:          pm.getTimeGenerator(),
 	}
 
-	ew, err := openpgp.Encrypt(w, pubKeyEntries, nil, hints, config)
+	reader, writer := io.Pipe()
+	var encryptErr error
+	go func() {
+		defer wg.Done()
+		var ew io.WriteCloser
+		ew, encryptErr = openpgp.Encrypt(writer, pubKeyEntries, nil, hints, config)
+		_, _ = ew.Write(plainData)
+		plainData = nil
+		// clear the buffer
+		ew.Close()
+		writer.Close()
+	}()
 
-	_, _ = ew.Write(plainData)
-	ew.Close()
-	w.Close()
+	split, err := internal.SplitPackets(reader, len(plainData))
 
-	split, err := armorUtils.SplitArmor(outBuf.String())
+	wg.Wait()
+	if encryptErr != nil {
+		return nil, encryptErr
+	}
+
 	if err != nil {
 		return nil, err
 	}
