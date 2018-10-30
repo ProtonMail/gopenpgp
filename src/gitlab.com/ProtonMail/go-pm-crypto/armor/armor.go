@@ -54,7 +54,7 @@ func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
 	if err != nil {
 		return nil, err
 	}
-	split, err := internal.SplitPackets(b.Body, len(encrypted))
+	split, err := internal.SplitPackets(b.Body, len(encrypted), -1)
 	if err != nil {
 		return nil, err
 	}

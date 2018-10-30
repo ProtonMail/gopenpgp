@@ -1,22 +1,10 @@
-hash: 7169f4883725d9716bbd62ecee1f32d73e8529b4bb0989173826e986395afe6b
-updated: 2018-10-25T13:47:24.679131+02:00
+hash: 7497775ba9a895661860516e3bbf9f367dc7102b014b84d7af225035c0cbfc02
+updated: 2018-10-29T15:51:04.090506+01:00
 imports:
-- name: github.com/alecthomas/template
-  version: a0175ee3bccc567396460bf5acd36800cb10c49c
-  subpackages:
-  - parse
-- name: github.com/alecthomas/units
-  version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
-- name: github.com/dustin/go-humanize
-  version: 9f541cc9db5d55bce703bd99987c9d5cb8eea45e
 - name: github.com/konsorten/go-windows-terminal-sequences
   version: 5c8c8bd35d3832f5d134ae1e1e375b69a4d25242
-- name: github.com/mattn/go-zglob
-  version: 2ea3427bfa539cca900ca2768d8663ecc8a708c1
-  subpackages:
-  - fastwalk
 - name: github.com/Sirupsen/logrus
-  version: 4fabf2fffcecfd47f802869b7b92d75e43c5a095
+  version: 566a5f690849162ff53cf98f3c42135389d63f95
 - name: golang.org/x/crypto
   version: 9e4251120d8c43f10024d798bc6dde21d40704a0
   repo: https://github.com/ProtonMail/crypto.git
@@ -45,12 +33,12 @@ imports:
   - rsa
   - ssh/terminal
 - name: golang.org/x/sys
-  version: d989b31c87461dc8ab2f1cac6792814e27fadea9
+  version: 95b1ffbd15a57cc5abb3f04402b9e8ec0016a52c
   subpackages:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 4d1c5fb19474adfe9562c9847ba425e7da817e81
+  version: 6f8607282f41687a5ce9b5a0378084237f2f7576
   subpackages:
   - encoding
   - encoding/charmap
@@ -60,16 +48,4 @@ imports:
 - name: proton/pmmime
   version: 72b7b1bf2d1b491e1d003632a0fda41410b0bb59
   repo: git@gitlab.protontech.ch:ProtonMail/go-pm-mime.git
-testImports:
-- name: github.com/davecgh/go-spew
-  version: d8f796af33cc11cb798c1aaeb27a4ebc5099927d
-  subpackages:
-  - spew
-- name: github.com/pmezard/go-difflib
-  version: 792786c7400a136282c1664665ae0a8db921c6c2
-  subpackages:
-  - difflib
-- name: github.com/stretchr/testify
-  version: 04af85275a5c7ac09d16bb3b9b2e751ed45154e5
-  subpackages:
-  - assert
+testImports: []

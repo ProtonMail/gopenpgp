@@ -5,3 +5,5 @@ import:
   repo: https://github.com/ProtonMail/crypto.git
 - package: proton/pmmime
   repo: git@gitlab.protontech.ch:ProtonMail/go-pm-mime.git
+  version: feat/mimevisitor
+

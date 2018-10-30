@@ -5,15 +5,18 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 	"gitlab.com/ProtonMail/go-pm-crypto/models"
 	"io"
-			)
+	"runtime"
+		)
 
-func SplitPackets(encryptedReader io.Reader, estimatedLength int) (*models.EncryptedSplit, error){
+func SplitPackets(encryptedReader io.Reader, estimatedLength int, garbageCollector int) (*models.EncryptedSplit, error){
 	var err error
 
+	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
 	//kr *KeyRing, r io.Reader) (key *SymmetricKey, symEncryptedData []byte,
 	packets := packet.NewReader(encryptedReader)
 
 	outSplit := &models.EncryptedSplit{}
+	gcCounter := 0
 
 	// Save encrypted key and signature apart
 	var ek *packet.EncryptedKey
@@ -35,9 +38,11 @@ func SplitPackets(encryptedReader io.Reader, estimatedLength int) (*models.Encry
 		case *packet.SymmetricallyEncrypted:
 			// The code below is optimized to not
 			var b bytes.Buffer
-			// 128 is an estimation of the size difference between input and output, the size difference is most probably
+			// 2^16 is an estimation of the size difference between input and output, the size difference is most probably
 			// 16 bytes at a maximum though.
-			b.Grow(128 + estimatedLength)
+			// We need to avoid triggering a grow from the system as this will allocate too much memory causing problems
+			// in low-memory environments
+			b.Grow(1 << 16 + estimatedLength)
 			// empty encoded length + start byte
 			b.Write(make([]byte, 6))
 			b.WriteByte(byte(1))
@@ -50,6 +55,11 @@ func SplitPackets(encryptedReader io.Reader, estimatedLength int) (*models.Encry
 				}
 				b.Write(block[:n])
 				actualLength += n
+				gcCounter += n
+				if gcCounter > garbageCollector && garbageCollector > 0 {
+					runtime.GC()
+					gcCounter = 0
+				}
 			}
 
 			// quick encoding
