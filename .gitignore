@@ -1,4 +1,5 @@
 .DS_Store
 bin
+pkg
 vendor
 .vscode
