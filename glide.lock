@@ -31,7 +31,6 @@ imports:
   - rsa
   - ssh/terminal
 - name: golang.org/x/sys
-  version: 8cf3aee429924738c56c34bb819c4ea8273fc434
   subpackages:
   - unix
   - windows
@@ -43,7 +42,8 @@ imports:
   - encoding/internal
   - encoding/internal/identifier
   - transform
-- name: proton/pmmime
+- name: github.com/ProtonMail/go-pm-mime
   version: 347d69204aa62d6958bcb3b9bbacccb24a36372b
-  repo: git@gitlab.protontech.ch:ProtonMail/go-pm-mime.git
+  repo: https://gitlab.protontech.ch/ProtonMail/go-pm-mime.git
+  version: feat/mimevisitor
 testImports: []

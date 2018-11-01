@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/ProtonMail/go-pm-crypto/internal"
+	"github.com/ProtonMail/go-pm-crypto/internal"
 	"golang.org/x/crypto/openpgp"
 	errors2 "golang.org/x/crypto/openpgp/errors"
 	"golang.org/x/crypto/openpgp/packet"

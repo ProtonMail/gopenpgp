@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"errors"
 
+	"github.com/ProtonMail/go-pm-crypto/armor"
 	"golang.org/x/crypto/openpgp"
-	"proton/pmcrypto/armor"
 )
 
 // GetFingerprint get a armored public key fingerprint

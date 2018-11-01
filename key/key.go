@@ -1,12 +1,12 @@
 package key
 
 import (
-	"strings"
-	"golang.org/x/crypto/openpgp"
-	"fmt"
-	"golang.org/x/crypto/openpgp/packet"
 	"bytes"
-	"proton/pmcrypto/armor"
+	"fmt"
+	"github.com/ProtonMail/go-pm-crypto/armor"
+	"golang.org/x/crypto/openpgp"
+	"golang.org/x/crypto/openpgp/packet"
+	"strings"
 )
 
 //CheckPassphrase check is private key passphrase ok
@@ -38,7 +38,6 @@ func CheckPassphrase(privateKey string, passphrase string) bool {
 	}
 	return true
 }
-
 
 // PublicKey get a public key from a private key
 func PublicKey(privateKey string) (string, error) {

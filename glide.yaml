@@ -1,7 +1,9 @@
 package: proton/pmcrypto
 import:
 - package: golang.org/x/crypto
-  version: v1.0.0
+  version: master
   repo: https://github.com/ProtonMail/crypto.git
-- package: proton/pmmime
-  repo: git@gitlab.protontech.ch:ProtonMail/go-pm-mime.git
+  version: 9e4251120d8c43f10024d798bc6dde21d40704a0
+- package: github.com/ProtonMail/go-pm-mime
+  repo: https://gitlab.protontech.ch/ProtonMail/go-pm-mime.git
+

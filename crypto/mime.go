@@ -2,8 +2,8 @@ package crypto
 
 import (
 	"bytes"
+	"github.com/ProtonMail/go-pm-crypto/armor"
 	"github.com/ProtonMail/go-pm-mime"
-	"gitlab.com/ProtonMail/go-pm-crypto/armor"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 	"io/ioutil"

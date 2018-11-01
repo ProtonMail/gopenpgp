@@ -12,15 +12,13 @@ import (
 	"time"
 
 	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/armor"
+	//"golang.org/x/crypto/openpgp/armor"
 	pgperrors "golang.org/x/crypto/openpgp/errors"
 	"golang.org/x/crypto/openpgp/packet"
 
-	"gitlab.com/ProtonMail/go-pm-crypto/crypto"
+	armorUtils "github.com/ProtonMail/go-pm-crypto/armor"
+	"github.com/ProtonMail/go-pm-crypto/crypto"
 )
-
-// Armored type for PGP encrypted messages.
-const pgpMessageType = "PGP MESSAGE"
 
 // A keypair contains a private key and a public key.
 type pmKeyObject struct {
@@ -188,7 +186,7 @@ func (w *armorEncryptWriter) Close() (err error) {
 
 // EncryptArmored encrypts and armors data to the keyring's owner.
 func (kr *KeyRing) EncryptArmored(w io.Writer, sign *KeyRing) (wc io.WriteCloser, err error) {
-	aw, err := armor.Encode(w, pgpMessageType, nil)
+	aw, err := armorUtils.ArmorWithTypeBuffered(w, armorUtils.MESSAGE_HEADER)
 	if err != nil {
 		return
 	}
@@ -367,7 +365,7 @@ func (kr *KeyRing) DecryptArmored(r io.Reader) (decrypted io.Reader, signed *Sig
 		return
 	}
 
-	if block.Type != pgpMessageType {
+	if block.Type != armorUtils.MESSAGE_HEADER {
 		err = errors.New("pmapi: not an armored PGP message")
 		return
 	}

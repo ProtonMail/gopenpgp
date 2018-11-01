@@ -7,8 +7,8 @@ import (
 	"io"
 	"strings"
 
-	"gitlab.com/ProtonMail/go-pm-crypto/armor"
-	"gitlab.com/ProtonMail/go-pm-crypto/models"
+	"github.com/ProtonMail/go-pm-crypto/armor"
+	"github.com/ProtonMail/go-pm-crypto/models"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )

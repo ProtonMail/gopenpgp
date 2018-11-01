@@ -1,7 +1,7 @@
 package armor
 
 import (
-	"gitlab.com/ProtonMail/go-pm-crypto/internal"
+	"github.com/ProtonMail/go-pm-crypto/internal"
 )
 
 const (

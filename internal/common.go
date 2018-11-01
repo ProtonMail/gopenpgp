@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"gitlab.com/ProtonMail/go-pm-crypto/constants"
+	"github.com/ProtonMail/go-pm-crypto/constants"
 	"regexp"
 )
 
