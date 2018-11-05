@@ -1,3 +1,4 @@
+// Provides high-level public data models used for communication mainly with mobile clients
 package models
 
 //EncryptedSplit when encrypt attachemt
@@ -5,12 +6,6 @@ type EncryptedSplit struct {
 	DataPacket []byte
 	KeyPacket  []byte
 	Algo       string
-}
-
-//SessionSplit split session
-type SessionSplit struct {
-	Session []byte
-	Algo    string
 }
 
 //EncryptedSigned encrypt_sign_package

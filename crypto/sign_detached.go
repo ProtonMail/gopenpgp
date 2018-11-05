@@ -58,7 +58,7 @@ func (pm *PmCrypto) SignTextDetached(plainText string, privateKey string, passph
 	return outBuf.String(), nil
 }
 
-// SignTextDetachedBinKey ...
+// Sign detached text using binary key data
 func (pm *PmCrypto) SignTextDetachedBinKey(plainText string, privateKey []byte, passphrase string, trim bool) (string, error) {
 	//sign with 0x01
 	var signEntity *openpgp.Entity
@@ -103,7 +103,7 @@ func (pm *PmCrypto) SignTextDetachedBinKey(plainText string, privateKey []byte, 
 	return outBuf.String(), nil
 }
 
-// SignBinDetached sign bin data
+// Sign detached bin data using string key
 func (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey string, passphrase string) (string, error) {
 	//sign with 0x00
 	var signEntity *openpgp.Entity
@@ -144,7 +144,7 @@ func (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey string, passphr
 	return outBuf.String(), nil
 }
 
-// SignBinDetachedBinKey ...
+// Sign detached binary data using binary key format
 func (pm *PmCrypto) SignBinDetachedBinKey(plainData []byte, privateKey []byte, passphrase string) (string, error) {
 	//sign with 0x00
 	var signEntity *openpgp.Entity
@@ -185,7 +185,7 @@ func (pm *PmCrypto) SignBinDetachedBinKey(plainData []byte, privateKey []byte, p
 	return outBuf.String(), nil
 }
 
-// VerifyTextSignDetached ...
+// Verify detached text - check if signature is valid using a given publicKey
 func (pm *PmCrypto) VerifyTextSignDetached(signature string, plainText string, publicKey string, verifyTime int64) (bool, error) {
 
 	pubKeyReader := strings.NewReader(publicKey)
@@ -202,7 +202,7 @@ func (pm *PmCrypto) VerifyTextSignDetached(signature string, plainText string, p
 	return verifySignature(pubKeyEntries, origText, signature, verifyTime)
 }
 
-// VerifyTextSignDetachedBinKey ...
+// Verify detached text - check if signature is valid using a given publicKey in binary format
 func (pm *PmCrypto) VerifyTextSignDetachedBinKey(signature string, plainText string, publicKey []byte, verifyTime int64) (bool, error) {
 
 	pubKeyReader := bytes.NewReader(publicKey)
@@ -261,7 +261,7 @@ func verifySignature(pubKeyEntries openpgp.EntityList, origText *bytes.Reader, s
 	return true, nil
 }
 
-// VerifyBinSignDetached ...
+// Verify detached text in binary format - check if signature is valid using a given publicKey in string format
 func (pm *PmCrypto) VerifyBinSignDetached(signature string, plainData []byte, publicKey string, verifyTime int64) (bool, error) {
 
 	pubKeyReader := strings.NewReader(publicKey)
@@ -275,7 +275,7 @@ func (pm *PmCrypto) VerifyBinSignDetached(signature string, plainData []byte, pu
 	return verifySignature(pubKeyEntries, origText, signature, verifyTime)
 }
 
-// VerifyBinSignDetachedBinKey ...
+// Verify detached text in binary format - check if signature is valid using a given publicKey in binary format
 func (pm *PmCrypto) VerifyBinSignDetachedBinKey(signature string, plainData []byte, publicKey []byte, verifyTime int64) (bool, error) {
 	pubKeyReader := bytes.NewReader(publicKey)
 

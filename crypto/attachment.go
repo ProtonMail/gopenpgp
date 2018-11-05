@@ -13,11 +13,11 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-//EncryptAttachmentBinKey ...
+// Encrypt attachment. Takes input data and key data in binary form
 func (pm *PmCrypto) EncryptAttachmentBinKey(plainData []byte, fileName string, publicKey []byte) (*models.EncryptedSplit, error) {
 
 	var outBuf bytes.Buffer
-	w, err := armor.Encode(&outBuf, armorUtils.MESSAGE_HEADER, internal.ArmorHeaders)
+	w, err := armor.Encode(&outBuf, armorUtils.PGP_MESSAGE_HEADER, internal.ArmorHeaders)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (pm *PmCrypto) EncryptAttachmentBinKey(plainData []byte, fileName string, p
 	ew.Close()
 	w.Close()
 
-	split, err := armorUtils.SplitArmor(outBuf.String())
+	split, err := SplitArmor(outBuf.String())
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,23 @@ func (pm *PmCrypto) EncryptAttachmentBinKey(plainData []byte, fileName string, p
 	return split, nil
 }
 
-//EncryptAttachment ...
+// Helper method. Splits armored pgp session into key and packet data
+func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
+
+	var err error
+
+	encryptedRaw, err := armorUtils.Unarmor(encrypted)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptedReader := bytes.NewReader(encryptedRaw)
+
+	return SeparateKeyAndData(nil, encryptedReader)
+
+}
+
+// Encrypt attachment. Takes input data in binary form and key in as a string
 func (pm *PmCrypto) EncryptAttachment(plainData []byte, fileName string, publicKey string) (*models.EncryptedSplit, error) {
 	rawPubKey, err := armorUtils.Unarmor(publicKey)
 	if err != nil {
@@ -59,10 +75,7 @@ func (pm *PmCrypto) EncryptAttachment(plainData []byte, fileName string, publicK
 	return pm.EncryptAttachmentBinKey(plainData, fileName, rawPubKey)
 }
 
-//DecryptAttachmentBinKey ...
-//keyPacket
-//dataPacket
-//privateKeys could be mutiple private keys
+// Decrypt attachment. Takes input data and key data in binary form. privateKeys can contains more keys. passphrase is used to unlock keys
 func (pm *PmCrypto) DecryptAttachmentBinKey(keyPacket []byte, dataPacket []byte, privateKeys []byte, passphrase string) ([]byte, error) {
 	privKeyRaw := bytes.NewReader(privateKeys)
 	privKeyEntries, err := openpgp.ReadKeyRing(privKeyRaw)
@@ -105,7 +118,7 @@ func (pm *PmCrypto) DecryptAttachmentBinKey(keyPacket []byte, dataPacket []byte,
 	return b, nil
 }
 
-//DecryptAttachment ...
+// Decrypt attachment. Takes input data and key data in binary form and key as an armored string. passphrase is used to unlock keys
 func (pm *PmCrypto) DecryptAttachment(keyPacket []byte, dataPacket []byte, privateKey string, passphrase string) ([]byte, error) {
 	rawPrivKey, err := armorUtils.Unarmor(privateKey)
 	if err != nil {
@@ -114,11 +127,11 @@ func (pm *PmCrypto) DecryptAttachment(keyPacket []byte, dataPacket []byte, priva
 	return pm.DecryptAttachmentBinKey(keyPacket, dataPacket, rawPrivKey, passphrase)
 }
 
-//EncryptAttachmentWithPassword ...
+//Encrypt attachment. Use symmetrical cipher with key in password input string
 func (pm *PmCrypto) EncryptAttachmentWithPassword(plainData []byte, password string) (string, error) {
 
 	var outBuf bytes.Buffer
-	w, err := armor.Encode(&outBuf, armorUtils.MESSAGE_HEADER, internal.ArmorHeaders)
+	w, err := armor.Encode(&outBuf, armorUtils.PGP_MESSAGE_HEADER, internal.ArmorHeaders)
 	if err != nil {
 		return "", err
 	}
@@ -143,7 +156,7 @@ func (pm *PmCrypto) EncryptAttachmentWithPassword(plainData []byte, password str
 	return outBuf.String(), nil
 }
 
-//DecryptAttachmentWithPassword ...
+//Decrypt attachment using password locked key.
 func (pm *PmCrypto) DecryptAttachmentWithPassword(keyPacket []byte, dataPacket []byte, password string) ([]byte, error) {
 
 	encrypted := append(keyPacket, dataPacket...)

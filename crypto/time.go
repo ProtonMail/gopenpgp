@@ -4,6 +4,12 @@ import (
 	"time"
 )
 
+var pmCrypto = PmCrypto{}
+
+func GetPmCrypto() *PmCrypto {
+	return &pmCrypto
+}
+
 // UpdateTime update cached time
 func (pm *PmCrypto) UpdateTime(newTime int64) {
 	pm.latestServerTime = newTime

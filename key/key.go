@@ -1,3 +1,4 @@
+// Provides key manipulation helper methods
 package key
 
 import (

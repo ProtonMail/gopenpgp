@@ -12,10 +12,6 @@ import (
 	"strings"
 )
 
-// ======================== Attachments Collector  ==============
-// Collect contents of all attachment parts and return
-// them as a string
-
 func (pm PmCrypto) parseMIME(mimeBody string, verifierKey []byte) (*pmmime.BodyCollector, int, []string, []string, error) {
 	pubKey := bytes.NewReader(verifierKey)
 	pubKeyEntries, err := openpgp.ReadKeyRing(pubKey)

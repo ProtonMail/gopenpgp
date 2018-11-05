@@ -3,25 +3,266 @@ package crypto
 import (
 	"bytes"
 	"crypto"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"strings"
-	"time"
-
+	"fmt"
 	"github.com/ProtonMail/go-pm-crypto/armor"
+	"io"
+	"io/ioutil"
+	"math/big"
+	"time"
+	//	"net/http"
+	//	"net/url"
+	"strings"
+
+	//"github.com/ProtonMail/go-pm-crypto/armor"
+	"github.com/ProtonMail/go-pm-crypto/models"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
-	"math/big"
 )
 
-const (
-	ok         = 0
-	notSigned  = 1
-	noVerifier = 2
-	failed     = 3
-)
+// A decrypted session key.
+type SymmetricKey struct {
+	// The clear base64-encoded key.
+	//Key string
+	Key []byte
+	// The algorithm used by this key.
+	Algo string
+}
 
-//IsKeyExpiredBin ...
+//18 with the 2 highest order bits set to 1
+const SymmetricallyEncryptedTag = 210
+
+var symKeyAlgos = map[string]packet.CipherFunction{
+	"3des":      packet.Cipher3DES,
+	"tripledes": packet.Cipher3DES,
+	"cast5":     packet.CipherCAST5,
+	"aes128":    packet.CipherAES128,
+	"aes192":    packet.CipherAES192,
+	"aes256":    packet.CipherAES256,
+}
+
+// Get cipher function corresponding to an algorithm used in this SymmetricKey
+func (sk *SymmetricKey) GetCipherFunc() packet.CipherFunction {
+	cf, ok := symKeyAlgos[sk.Algo]
+	if ok {
+		return cf
+	}
+
+	panic("pmapi: unsupported cipher function: " + sk.Algo)
+}
+
+// Returns a key as base64 encoded string
+func (sk *SymmetricKey) GetBase64Key() string {
+	return base64.StdEncoding.EncodeToString(sk.Key)
+}
+
+func newSymmetricKey(ek *packet.EncryptedKey) *SymmetricKey {
+	var algo string
+	for k, v := range symKeyAlgos {
+		if v == ek.CipherFunc {
+			algo = k
+			break
+		}
+	}
+	if algo == "" {
+		panic(fmt.Sprintf("pmapi: unsupported cipher function: %v", ek.CipherFunc))
+	}
+
+	return &SymmetricKey{
+		Key:  ek.Key, //base64.StdEncoding.EncodeToString(ek.Key),
+		Algo: algo,
+	}
+}
+
+// Decrypt and return a symmetric key
+func DecryptAttKey(kr *KeyRing, keyPacket string) (key *SymmetricKey, err error) {
+	r := base64.NewDecoder(base64.StdEncoding, strings.NewReader(keyPacket))
+	packets := packet.NewReader(r)
+
+	var p packet.Packet
+	if p, err = packets.Next(); err != nil {
+		return
+	}
+
+	ek := p.(*packet.EncryptedKey)
+
+	var decryptErr error
+	for _, key := range kr.entities.DecryptionKeys() {
+		priv := key.PrivateKey
+		if priv.Encrypted {
+			continue
+		}
+
+		if decryptErr = ek.Decrypt(priv, nil); decryptErr == nil {
+			break
+		}
+	}
+
+	if decryptErr != nil {
+		err = fmt.Errorf("pmapi: cannot decrypt encrypted key packet: %v", decryptErr)
+		return
+	}
+
+	key = newSymmetricKey(ek)
+	return
+}
+
+// Separate key and data packets in a pgp session
+func SeparateKeyAndData(kr *KeyRing, r io.Reader) (outSplit *models.EncryptedSplit, err error) {
+	packets := packet.NewReader(r)
+	outSplit = &models.EncryptedSplit{}
+
+	// Save encrypted key and signature apart
+	var ek *packet.EncryptedKey
+	var decryptErr error
+	for {
+		var p packet.Packet
+		if p, err = packets.Next(); err == io.EOF {
+			err = nil
+			break
+		}
+		switch p := p.(type) {
+		case *packet.EncryptedKey:
+			// We got an encrypted key. Try to decrypt it with each available key
+			if ek != nil && ek.Key != nil {
+				break
+			}
+			ek = p
+
+			if kr != nil {
+				for _, key := range kr.entities.DecryptionKeys() {
+					priv := key.PrivateKey
+					if priv.Encrypted {
+						continue
+					}
+
+					if decryptErr = ek.Decrypt(priv, nil); decryptErr == nil {
+						break
+					}
+				}
+			}
+		case *packet.SymmetricallyEncrypted:
+			var packetContents []byte
+			if packetContents, err = ioutil.ReadAll(p.Contents); err != nil {
+				return
+			}
+
+			encodedLength := encodedLength(len(packetContents) + 1)
+			var symEncryptedData []byte
+			symEncryptedData = append(symEncryptedData, byte(210))
+			symEncryptedData = append(symEncryptedData, encodedLength...)
+			symEncryptedData = append(symEncryptedData, byte(1))
+			symEncryptedData = append(symEncryptedData, packetContents...)
+
+			outSplit.DataPacket = symEncryptedData
+			break
+		}
+	}
+	if decryptErr != nil {
+		err = fmt.Errorf("pmapi: cannot decrypt encrypted key packet: %v", decryptErr)
+		return
+	}
+	if ek == nil {
+		err = errors.New("pmapi: packets don't include an encrypted key packet")
+		return
+	}
+	/*if ek.Key == nil {
+		err = errors.New("pmapi: could not find any key to decrypt key")
+		return
+	}*/
+
+	if kr == nil {
+		var buf bytes.Buffer
+		ek.Serialize(&buf)
+		outSplit.KeyPacket = buf.Bytes()
+	} else {
+		key := newSymmetricKey(ek)
+		outSplit.KeyPacket = key.Key
+		outSplit.Algo = key.Algo
+	}
+
+	return outSplit, nil
+}
+
+//encode length based on 4.2.2. in the RFC
+func encodedLength(length int) (b []byte) {
+	if length < 192 {
+		b = append(b, byte(length))
+	} else if length < 8384 {
+		length = length - 192
+		b = append(b, 192+byte(length>>8))
+		b = append(b, byte(length))
+	} else {
+		b = append(b, byte(255))
+		b = append(b, byte(length>>24))
+		b = append(b, byte(length>>16))
+		b = append(b, byte(length>>8))
+		b = append(b, byte(length))
+	}
+	return
+}
+
+// SetKey encrypts the provided key.
+func SetKey(kr *KeyRing, symKey *SymmetricKey) (packets string, err error) {
+	b := &bytes.Buffer{}
+	w := base64.NewEncoder(base64.StdEncoding, b)
+
+	cf := symKey.GetCipherFunc()
+
+	//k, err := base64.StdEncoding.DecodeString(symKey.Key)
+	//if err != nil {
+	//	err = fmt.Errorf("pmapi: cannot set key: %v", err)
+	//	return
+	//}
+
+	if len(kr.entities) == 0 {
+		err = fmt.Errorf("pmapi: cannot set key: key ring is empty")
+		return
+	}
+
+	var pub *packet.PublicKey
+	for _, e := range kr.entities {
+		for _, subKey := range e.Subkeys {
+			if !subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage || subKey.Sig.FlagEncryptCommunications {
+				pub = subKey.PublicKey
+				break
+			}
+		}
+		if pub == nil && len(e.Identities) > 0 {
+			var i *openpgp.Identity
+			for _, i = range e.Identities {
+				break
+			}
+			if i.SelfSignature.FlagsValid || i.SelfSignature.FlagEncryptStorage || i.SelfSignature.FlagEncryptCommunications {
+				pub = e.PrimaryKey
+			}
+		}
+		if pub != nil {
+			break
+		}
+	}
+	if pub == nil {
+		err = fmt.Errorf("pmapi: cannot set key: no public key available")
+		return
+	}
+
+	if err = packet.SerializeEncryptedKey(w, pub, cf, symKey.Key, nil); err != nil {
+		err = fmt.Errorf("pmapi: cannot set key: %v", err)
+		return
+	}
+
+	if err = w.Close(); err != nil {
+		err = fmt.Errorf("pmapi: cannot set key: %v", err)
+		return
+	}
+
+	packets = b.String()
+	return
+}
+
+//Check if the given key is expired. Input in binary format
 func (pm *PmCrypto) IsKeyExpiredBin(publicKey []byte) (bool, error) {
 	now := pm.getNow()
 	pubKeyReader := bytes.NewReader(publicKey)
@@ -73,8 +314,14 @@ func (pm *PmCrypto) IsKeyExpiredBin(publicKey []byte) (bool, error) {
 	return true, errors.New("keys expired")
 }
 
-//IsKeyExpired ....
-// will user the cached time to check
+const (
+	ok         = 0
+	notSigned  = 1
+	noVerifier = 2
+	failed     = 3
+)
+
+//Check if the given key is expired. Input in armored form
 func (pm *PmCrypto) IsKeyExpired(publicKey string) (bool, error) {
 	rawPubKey, err := armor.Unarmor(publicKey)
 	if err != nil {
@@ -170,7 +417,7 @@ func (pm *PmCrypto) GenerateKey(userName string, domain string, passphrase strin
 	return pm.generateKey(userName, domain, passphrase, keyType, bits, nil, nil, nil, nil)
 }
 
-// UpdatePrivateKeyPassphrase ...
+// Decrypt given private key with oldPhrase and reencrypt with newPassphrase
 func (pm *PmCrypto) UpdatePrivateKeyPassphrase(privateKey string, oldPassphrase string, newPassphrase string) (string, error) {
 
 	privKey := strings.NewReader(privateKey)
