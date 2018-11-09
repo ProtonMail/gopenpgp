@@ -38,9 +38,9 @@ func (pm *PmCrypto) DecryptMessageStringKey(encryptedText string, privateKey str
 // encryptedText : string armored encrypted
 // privateKey : unarmored private use to decrypt message could be mutiple keys
 // passphrase : match with private key to decrypt message
-func (kr *KeyRing) DecryptMessage(encryptedText string, passphrase string) (string, error) {
+func (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey *KeyRing, passphrase string) (string, error) {
 
-	md, err := pm.decryptCore(encryptedText, nil, kr.entities, passphrase, pm.getTimeGenerator())
+	md, err := decryptCore(encryptedText, nil, privateKey.entities, passphrase, pm.getTimeGenerator())
 	if err != nil {
 		return "", err
 	}
@@ -62,7 +62,7 @@ func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey []byt
 	return pm.decryptMessageVerify(encryptedText, verifierKey, privateKeysRing, passphrase, verifyTime)
 }
 
-func (pm *PmCrypto) decryptCore(encryptedText string, additionalEntries openpgp.EntityList, privKeyEntries openpgp.EntityList, passphrase string, timeFunc func() time.Time) (*openpgp.MessageDetails, error) {
+func decryptCore(encryptedText string, additionalEntries openpgp.EntityList, privKeyEntries openpgp.EntityList, passphrase string, timeFunc func() time.Time) (*openpgp.MessageDetails, error) {
 
 	rawPwd := []byte(passphrase)
 	for _, e := range privKeyEntries {
@@ -116,7 +116,7 @@ func (pm *PmCrypto) decryptMessageVerify(encryptedText string, verifierKey []byt
 		out.Verify = noVerifier
 	}
 
-	md, err := pm.decryptCore(encryptedText, verifierEntries, privateKeyRing.entities, passphrase, func() time.Time { return time.Unix(0, 0) }) // TODO: I doubt this time is correct
+	md, err := decryptCore(encryptedText, verifierEntries, privateKeyRing.entities, passphrase, func() time.Time { return time.Unix(0, 0) }) // TODO: I doubt this time is correct
 
 	decrypted := md.UnverifiedBody
 	b, err := ioutil.ReadAll(decrypted)
