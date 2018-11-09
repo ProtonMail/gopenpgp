@@ -3,9 +3,7 @@ package crypto
 import (
 	"bytes"
 	"errors"
-	"io"
 	"io/ioutil"
-	"strings"
 	"time"
 
 	armorUtils "github.com/ProtonMail/go-pm-crypto/armor"
@@ -22,21 +20,27 @@ import (
 // encryptedText : string armored encrypted
 // privateKey : armored private use to decrypt message
 // passphrase : match with private key to decrypt message
-func (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey string, passphrase string) (string, error) {
+func (pm *PmCrypto) DecryptMessageStringKey(encryptedText string, privateKey string, passphrase string) (string, error) {
 	privKeyRaw, err := armorUtils.Unarmor(privateKey)
 	if err != nil {
 		return "", err
 	}
-	return pm.DecryptMessageBinKey(encryptedText, privKeyRaw, passphrase)
+	privKeyReader := bytes.NewReader(privKeyRaw)
+	privKeyEntries, err := openpgp.ReadKeyRing(privKeyReader)
+	if err != nil {
+		return "", err
+	}
+
+	return pm.DecryptMessage(encryptedText, &KeyRing{entities: privKeyEntries}, passphrase)
 }
 
 // DecryptMessageBinKey decrypt encrypted message use private key (bytes )
 // encryptedText : string armored encrypted
 // privateKey : unarmored private use to decrypt message could be mutiple keys
 // passphrase : match with private key to decrypt message
-func (pm *PmCrypto) DecryptMessageBinKey(encryptedText string, privateKey []byte, passphrase string) (string, error) {
+func (kr *KeyRing) DecryptMessage(encryptedText string, passphrase string) (string, error) {
 
-	md, err := pm.decryptCore(encryptedText, nil, privateKey, passphrase, pm.getTimeGenerator())
+	md, err := pm.decryptCore(encryptedText, nil, kr.entities, passphrase, pm.getTimeGenerator())
 	if err != nil {
 		return "", err
 	}
@@ -51,60 +55,14 @@ func (pm *PmCrypto) DecryptMessageBinKey(encryptedText string, privateKey []byte
 	return string(b), nil
 }
 
-// DecryptMessageVerifyPrivBinKeys decrypt message and verify the signature
-// verifierKey string: armored verifier keys
-// privateKey []byte: unarmored private key to decrypt. could be mutiple
-func (pm *PmCrypto) DecryptMessageVerifyPrivBinKeys(encryptedText string, verifierKey string, privateKeys []byte, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
-
-	if len(verifierKey) > 0 {
-		verifierRaw, err := armorUtils.Unarmor(verifierKey)
-		if err != nil {
-			return nil, err
-		}
-		return pm.decryptMessageVerifyAllBin(encryptedText, verifierRaw, privateKeys, passphrase, verifyTime)
-	}
-	return pm.decryptMessageVerifyAllBin(encryptedText, nil, privateKeys, passphrase, verifyTime)
-}
-
 // DecryptMessageVerifyBinKeyPrivBinKeys decrypt message and verify the signature
 // verifierKey []byte: unarmored verifier keys
 // privateKey []byte: unarmored private key to decrypt. could be mutiple
-func (pm *PmCrypto) DecryptMessageVerifyBinKeyPrivBinKeys(encryptedText string, verifierKey []byte, privateKeys []byte, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
-	return pm.decryptMessageVerifyAllBin(encryptedText, verifierKey, privateKeys, passphrase, verifyTime)
+func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey []byte, privateKeysRing *KeyRing, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
+	return pm.decryptMessageVerify(encryptedText, verifierKey, privateKeysRing, passphrase, verifyTime)
 }
 
-// DecryptMessageVerify decrypt message and verify the signature
-// verifierKey string: armored verifier keys
-// privateKey string: private to decrypt
-func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey string, privateKey string, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
-	if len(verifierKey) > 0 {
-		verifierRaw, err := armorUtils.Unarmor(verifierKey)
-		if err != nil {
-			return nil, err
-		}
-		return pm.DecryptMessageVerifyBinKey(encryptedText, verifierRaw, privateKey, passphrase, verifyTime)
-	}
-	return pm.DecryptMessageVerifyBinKey(encryptedText, nil, privateKey, passphrase, verifyTime)
-}
-
-// DecryptMessageVerifyBinKey decrypt message and verify the signature
-// verifierKey []byte: unarmored verifier keys
-// privateKey string: private to decrypt
-func (pm *PmCrypto) DecryptMessageVerifyBinKey(encryptedText string, verifierKey []byte, privateKey string, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
-	privateKeyRaw, err := armorUtils.Unarmor(privateKey)
-	if err != nil {
-		return nil, err
-	}
-	return pm.decryptMessageVerifyAllBin(encryptedText, verifierKey, privateKeyRaw, passphrase, verifyTime)
-}
-
-func (pm *PmCrypto) decryptCore(encryptedText string, additionalEntries openpgp.EntityList, privateKey []byte, passphrase string, timeFunc func() time.Time) (*openpgp.MessageDetails, error) {
-
-	privKey := bytes.NewReader(privateKey)
-	privKeyEntries, err := openpgp.ReadKeyRing(privKey)
-	if err != nil {
-		return nil, err
-	}
+func (pm *PmCrypto) decryptCore(encryptedText string, additionalEntries openpgp.EntityList, privKeyEntries openpgp.EntityList, passphrase string, timeFunc func() time.Time) (*openpgp.MessageDetails, error) {
 
 	rawPwd := []byte(passphrase)
 	for _, e := range privKeyEntries {
@@ -137,10 +95,10 @@ func (pm *PmCrypto) decryptCore(encryptedText string, additionalEntries openpgp.
 	return md, err
 }
 
-// decryptMessageVerifyAllBin
+// decryptMessageVerify
 // decrypt_message_verify_single_key(private_key: string, passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
 // decrypt_message_verify(passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
-func (pm *PmCrypto) decryptMessageVerifyAllBin(encryptedText string, verifierKey []byte, privateKey []byte, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
+func (pm *PmCrypto) decryptMessageVerify(encryptedText string, verifierKey []byte, privateKeyRing *KeyRing, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
 
 	out := &models.DecryptSignedVerify{}
 	out.Verify = failed
@@ -158,7 +116,7 @@ func (pm *PmCrypto) decryptMessageVerifyAllBin(encryptedText string, verifierKey
 		out.Verify = noVerifier
 	}
 
-	md, err := pm.decryptCore(encryptedText, verifierEntries, privateKey, passphrase, func() time.Time { return time.Unix(0, 0) }) // TODO: I doubt this time is correct
+	md, err := pm.decryptCore(encryptedText, verifierEntries, privateKeyRing.entities, passphrase, func() time.Time { return time.Unix(0, 0) }) // TODO: I doubt this time is correct
 
 	decrypted := md.UnverifiedBody
 	b, err := ioutil.ReadAll(decrypted)
@@ -212,76 +170,6 @@ func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 	}
 }
 
-// EncryptMessage encrypt message with public key, if pass private key and passphrase will also sign the message
-// publicKey : string armored public key
-// plainText : the input
-// privateKey : optional required when you want to sign
-// passphrase : optional required when you pass the private key and this passphrase must could decrypt the private key
-func (pm *PmCrypto) EncryptMessage(plainText string, publicKey string, privateKey string, passphrase string, trim bool) (string, error) {
-	rawPubKey, err := armorUtils.Unarmor(publicKey)
-	if err != nil {
-		return "", err
-	}
-	return pm.EncryptMessageBinKey(plainText, rawPubKey, privateKey, passphrase, trim)
-}
-
-// EncryptMessageBinKey encrypt message with unarmored public key, if pass private key and passphrase will also sign the message
-// publicKey : bytes unarmored public key
-// plainText : the input
-// privateKey : optional required when you want to sign
-// passphrase : optional required when you pass the private key and this passphrase must could decrypt the private key
-func (pm *PmCrypto) EncryptMessageBinKey(plainText string, publicKey []byte, privateKey string, passphrase string, trim bool) (string, error) {
-
-	if trim {
-		plainText = internal.TrimNewlines(plainText)
-	}
-	var outBuf bytes.Buffer
-	w, err := armor.Encode(&outBuf, armorUtils.PGP_MESSAGE_HEADER, internal.ArmorHeaders)
-	if err != nil {
-		return "", err
-	}
-
-	pubKeyReader := bytes.NewReader(publicKey)
-	pubKeyEntries, err := openpgp.ReadKeyRing(pubKeyReader)
-	if err != nil {
-		return "", err
-	}
-
-	var signEntity *openpgp.Entity
-
-	if len(passphrase) > 0 && len(privateKey) > 0 {
-		signerReader := strings.NewReader(privateKey)
-		signerEntries, err := openpgp.ReadArmoredKeyRing(signerReader)
-		if err != nil {
-			return "", err
-		}
-
-		for _, e := range signerEntries {
-			// Entity.PrivateKey must be a signing key
-			if e.PrivateKey != nil {
-				if e.PrivateKey.Encrypted {
-					e.PrivateKey.Decrypt([]byte(passphrase))
-				}
-				if !e.PrivateKey.Encrypted {
-					signEntity = e
-					break
-				}
-			}
-		}
-
-		if signEntity == nil {
-			return "", errors.New("cannot sign message, signer key is not unlocked")
-		}
-	}
-
-	ew, err := EncryptCore(w, pubKeyEntries, signEntity, "", false, pm.getTimeGenerator())
-
-	_, _ = ew.Write([]byte(plainText))
-	ew.Close()
-	w.Close()
-	return outBuf.String(), nil
-}
-
 //EncryptMessageWithPassword encrypt a plain text to pgp message with a password
 //plainText string: clear text
 //output string: armored pgp message
@@ -312,30 +200,48 @@ func (pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string
 	return outBuf.String(), nil
 }
 
-//DecryptMessageWithPassword decrypt a pgp message with a password
-//encrypted string : armored pgp message
-//output string : clear text
-func (pm *PmCrypto) DecryptMessageWithPassword(encrypted string, password string) (string, error) {
-	encryptedio, err := internal.Unarmor(encrypted)
+// EncryptMessageBinKey encrypt message with unarmored public key, if pass private key and passphrase will also sign the message
+// publicKey : bytes unarmored public key
+// plainText : the input
+// privateKey : optional required when you want to sign
+// passphrase : optional required when you pass the private key and this passphrase must could decrypt the private key
+func (pm *PmCrypto) EncryptMessage(plainText string, publicKey *KeyRing, privateKey *KeyRing, passphrase string, trim bool) (string, error) {
+
+	if trim {
+		plainText = internal.TrimNewlines(plainText)
+	}
+	var outBuf bytes.Buffer
+	w, err := armor.Encode(&outBuf, armorUtils.PGP_MESSAGE_HEADER, internal.ArmorHeaders)
 	if err != nil {
 		return "", err
 	}
 
-	var prompt = func(keys []openpgp.Key, symmetric bool) ([]byte, error) {
-		return []byte(password), nil
+	var signEntity *openpgp.Entity
+
+	if len(passphrase) > 0 && len(privateKey.entities) > 0 {
+
+		for _, e := range privateKey.entities {
+			// Entity.PrivateKey must be a signing key
+			if e.PrivateKey != nil {
+				if e.PrivateKey.Encrypted {
+					e.PrivateKey.Decrypt([]byte(passphrase))
+				}
+				if !e.PrivateKey.Encrypted {
+					signEntity = e
+					break
+				}
+			}
+		}
+
+		if signEntity == nil {
+			return "", errors.New("cannot sign message, signer key is not unlocked")
+		}
 	}
 
-	config := &packet.Config{Time: pm.getTimeGenerator()}
-	md, err := openpgp.ReadMessage(encryptedio.Body, nil, prompt, config)
-	if err != nil {
-		return "", err
-	}
+	ew, err := EncryptCore(w, publicKey.entities, signEntity, "", false, pm.getTimeGenerator())
 
-	messageBuf := bytes.NewBuffer(nil)
-	_, err = io.Copy(messageBuf, md.UnverifiedBody)
-	if err != nil {
-		return "", err
-	}
-
-	return messageBuf.String(), nil
+	_, _ = ew.Write([]byte(plainText))
+	ew.Close()
+	w.Close()
+	return outBuf.String(), nil
 }

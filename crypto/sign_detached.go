@@ -58,51 +58,6 @@ func (pm *PmCrypto) SignTextDetached(plainText string, privateKey string, passph
 	return outBuf.String(), nil
 }
 
-// Sign detached text using binary key data
-func (pm *PmCrypto) SignTextDetachedBinKey(plainText string, privateKey []byte, passphrase string, trim bool) (string, error) {
-	//sign with 0x01
-	var signEntity *openpgp.Entity
-
-	if trim {
-		plainText = internal.TrimNewlines(plainText)
-	}
-
-	signerReader := bytes.NewReader(privateKey)
-	signerEntries, err := openpgp.ReadKeyRing(signerReader)
-	if err != nil {
-		return "", err
-	}
-
-	for _, e := range signerEntries {
-		// Entity.PrivateKey must be a signing key
-		if e.PrivateKey != nil {
-			if e.PrivateKey.Encrypted {
-				e.PrivateKey.Decrypt([]byte(passphrase))
-			}
-			if !e.PrivateKey.Encrypted {
-				signEntity = e
-				break
-			}
-		}
-	}
-
-	if signEntity == nil {
-		return "", errors.New("cannot sign message, singer key is not unlocked")
-	}
-
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator()}
-
-	att := strings.NewReader(plainText)
-
-	var outBuf bytes.Buffer
-	//sign text
-	if err = openpgp.ArmoredDetachSignText(&outBuf, signEntity, att, config); err != nil {
-		return "", err
-	}
-
-	return outBuf.String(), nil
-}
-
 // Sign detached bin data using string key
 func (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey string, passphrase string) (string, error) {
 	//sign with 0x00
@@ -142,64 +97,6 @@ func (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey string, passphr
 	}
 
 	return outBuf.String(), nil
-}
-
-// Sign detached binary data using binary key format
-func (pm *PmCrypto) SignBinDetachedBinKey(plainData []byte, privateKey []byte, passphrase string) (string, error) {
-	//sign with 0x00
-	var signEntity *openpgp.Entity
-
-	signerReader := bytes.NewReader(privateKey)
-	signerEntries, err := openpgp.ReadKeyRing(signerReader)
-	if err != nil {
-		return "", err
-	}
-
-	for _, e := range signerEntries {
-		// Entity.PrivateKey must be a signing key
-		if e.PrivateKey != nil {
-			if e.PrivateKey.Encrypted {
-				e.PrivateKey.Decrypt([]byte(passphrase))
-			}
-			if !e.PrivateKey.Encrypted {
-				signEntity = e
-				break
-			}
-		}
-	}
-
-	if signEntity == nil {
-		return "", errors.New("cannot sign message, singer key is not unlocked")
-	}
-
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator()}
-
-	att := bytes.NewReader(plainData)
-
-	var outBuf bytes.Buffer
-	//sign bin
-	if err = openpgp.ArmoredDetachSign(&outBuf, signEntity, att, config); err != nil {
-		return "", err
-	}
-
-	return outBuf.String(), nil
-}
-
-// Verify detached text - check if signature is valid using a given publicKey
-func (pm *PmCrypto) VerifyTextSignDetached(signature string, plainText string, publicKey string, verifyTime int64) (bool, error) {
-
-	pubKeyReader := strings.NewReader(publicKey)
-
-	pubKeyEntries, err := openpgp.ReadArmoredKeyRing(pubKeyReader)
-	if err != nil {
-		return false, err
-	}
-
-	plainText = internal.TrimNewlines(plainText)
-
-	origText := bytes.NewReader(bytes.NewBufferString(plainText).Bytes())
-
-	return verifySignature(pubKeyEntries, origText, signature, verifyTime)
 }
 
 // Verify detached text - check if signature is valid using a given publicKey in binary format
@@ -259,20 +156,6 @@ func verifySignature(pubKeyEntries openpgp.EntityList, origText *bytes.Reader, s
 	// 	return false, errors.New("signer is nil")
 	// }
 	return true, nil
-}
-
-// Verify detached text in binary format - check if signature is valid using a given publicKey in string format
-func (pm *PmCrypto) VerifyBinSignDetached(signature string, plainData []byte, publicKey string, verifyTime int64) (bool, error) {
-
-	pubKeyReader := strings.NewReader(publicKey)
-
-	pubKeyEntries, err := openpgp.ReadArmoredKeyRing(pubKeyReader)
-	if err != nil {
-		return false, err
-	}
-
-	origText := bytes.NewReader(plainData)
-	return verifySignature(pubKeyEntries, origText, signature, verifyTime)
 }
 
 // Verify detached text in binary format - check if signature is valid using a given publicKey in binary format

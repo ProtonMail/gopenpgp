@@ -473,6 +473,37 @@ func (kr *KeyRing) readFrom(r io.Reader, armored bool) error {
 	return nil
 }
 
+/*func (kr *KeyRing) AppendStringKey(key string) error {
+
+	sr := strings.NewReader(key)
+	return kr.readFrom(sr, true)
+}*/
+
+func (pm *PmCrypto) BuildKeyRing(binKeys []byte) (kr *KeyRing, err error) {
+
+	kr = &KeyRing{}
+	entriesReader := bytes.NewReader(binKeys)
+	err = kr.readFrom(entriesReader, false)
+
+	return
+}
+
+func (pm *PmCrypto) BuildKeyRingNoEror(binKeys []byte) (kr *KeyRing) {
+
+	kr = &KeyRing{}
+	entriesReader := bytes.NewReader(binKeys)
+	kr.readFrom(entriesReader, false)
+
+	return
+}
+
+func (pm *PmCrypto) BuildKeyRingArmored(key string) (kr *KeyRing, err error) {
+	keyRaw, err := armorUtils.Unarmor(key)
+	keyReader := bytes.NewReader(keyRaw)
+	keyEntries, err := openpgp.ReadKeyRing(keyReader)
+	return &KeyRing{entities: keyEntries}, err
+}
+
 // UnmarshalJSON implements encoding/json.Unmarshaler.
 func (kr *KeyRing) UnmarshalJSON(b []byte) (err error) {
 	kr.entities = nil

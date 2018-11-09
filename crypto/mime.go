@@ -54,9 +54,9 @@ type MIMECallbacks interface {
 	OnError(err error)
 }
 
-func (pm *PmCrypto) DecryptMIMEMessage(encryptedText string, verifierKey []byte, privateKeys []byte,
+func (pm *PmCrypto) DecryptMIMEMessage(encryptedText string, verifierKey []byte, privateKeyRing *KeyRing,
 	passphrase string, callbacks MIMECallbacks, verifyTime int64) {
-	decsignverify, err := pm.decryptMessageVerifyAllBin(encryptedText, verifierKey, privateKeys, passphrase, verifyTime)
+	decsignverify, err := pm.decryptMessageVerify(encryptedText, verifierKey, privateKeyRing, passphrase, verifyTime)
 	if err != nil {
 		callbacks.OnError(err)
 		return
