@@ -14,7 +14,7 @@ import (
 )
 
 // SignTextDetached sign detached text type
-func (pm *PmCrypto) SignTextDetached(plainText string, privateKey string, passphrase string, trim bool) (string, error) {
+func (pm *PmCrypto) SignTextDetached(plainText string, privateKey *KeyRing, passphrase string, trim bool) (string, error) {
 	//sign with 0x01 text
 	var signEntity *openpgp.Entity
 
@@ -22,13 +22,7 @@ func (pm *PmCrypto) SignTextDetached(plainText string, privateKey string, passph
 		plainText = internal.TrimNewlines(plainText)
 	}
 
-	signerReader := strings.NewReader(privateKey)
-	signerEntries, err := openpgp.ReadArmoredKeyRing(signerReader)
-	if err != nil {
-		return "", err
-	}
-
-	for _, e := range signerEntries {
+	for _, e := range privateKey.entities {
 		// Entity.PrivateKey must be a signing key
 		if e.PrivateKey != nil {
 			if e.PrivateKey.Encrypted {
@@ -51,7 +45,7 @@ func (pm *PmCrypto) SignTextDetached(plainText string, privateKey string, passph
 
 	var outBuf bytes.Buffer
 	//SignText
-	if err = openpgp.ArmoredDetachSignText(&outBuf, signEntity, att, config); err != nil {
+	if err := openpgp.ArmoredDetachSignText(&outBuf, signEntity, att, config); err != nil {
 		return "", err
 	}
 
@@ -59,17 +53,11 @@ func (pm *PmCrypto) SignTextDetached(plainText string, privateKey string, passph
 }
 
 // Sign detached bin data using string key
-func (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey string, passphrase string) (string, error) {
+func (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey *KeyRing, passphrase string) (string, error) {
 	//sign with 0x00
 	var signEntity *openpgp.Entity
 
-	signerReader := strings.NewReader(privateKey)
-	signerEntries, err := openpgp.ReadArmoredKeyRing(signerReader)
-	if err != nil {
-		return "", err
-	}
-
-	for _, e := range signerEntries {
+	for _, e := range privateKey.entities {
 		// Entity.PrivateKey must be a signing key
 		if e.PrivateKey != nil {
 			if e.PrivateKey.Encrypted {
@@ -92,7 +80,7 @@ func (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey string, passphr
 
 	var outBuf bytes.Buffer
 	//sign bin
-	if err = openpgp.ArmoredDetachSign(&outBuf, signEntity, att, config); err != nil {
+	if err := openpgp.ArmoredDetachSign(&outBuf, signEntity, att, config); err != nil {
 		return "", err
 	}
 
@@ -100,19 +88,12 @@ func (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey string, passphr
 }
 
 // Verify detached text - check if signature is valid using a given publicKey in binary format
-func (pm *PmCrypto) VerifyTextSignDetachedBinKey(signature string, plainText string, publicKey []byte, verifyTime int64) (bool, error) {
-
-	pubKeyReader := bytes.NewReader(publicKey)
-
-	pubKeyEntries, err := openpgp.ReadKeyRing(pubKeyReader)
-	if err != nil {
-		return false, err
-	}
+func (pm *PmCrypto) VerifyTextSignDetachedBinKey(signature string, plainText string, publicKey *KeyRing, verifyTime int64) (bool, error) {
 
 	plainText = internal.TrimNewlines(plainText)
 	origText := bytes.NewReader(bytes.NewBufferString(plainText).Bytes())
 
-	return verifySignature(pubKeyEntries, origText, signature, verifyTime)
+	return verifySignature(publicKey.entities, origText, signature, verifyTime)
 }
 
 func verifySignature(pubKeyEntries openpgp.EntityList, origText *bytes.Reader, signature string, verifyTime int64) (bool, error) {
@@ -159,15 +140,9 @@ func verifySignature(pubKeyEntries openpgp.EntityList, origText *bytes.Reader, s
 }
 
 // Verify detached text in binary format - check if signature is valid using a given publicKey in binary format
-func (pm *PmCrypto) VerifyBinSignDetachedBinKey(signature string, plainData []byte, publicKey []byte, verifyTime int64) (bool, error) {
-	pubKeyReader := bytes.NewReader(publicKey)
-
-	pubKeyEntries, err := openpgp.ReadKeyRing(pubKeyReader)
-	if err != nil {
-		return false, err
-	}
+func (pm *PmCrypto) VerifyBinSignDetachedBinKey(signature string, plainData []byte, publicKey *KeyRing, verifyTime int64) (bool, error) {
 
 	origText := bytes.NewReader(plainData)
 
-	return verifySignature(pubKeyEntries, origText, signature, verifyTime)
+	return verifySignature(publicKey.entities, origText, signature, verifyTime)
 }

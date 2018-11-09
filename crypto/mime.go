@@ -2,9 +2,7 @@ package crypto
 
 import (
 	"bytes"
-	"github.com/ProtonMail/go-pm-crypto/armor"
 	"github.com/ProtonMail/go-pm-mime"
-	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 	"io/ioutil"
 	"net/mail"
@@ -12,9 +10,7 @@ import (
 	"strings"
 )
 
-func (pm PmCrypto) parseMIME(mimeBody string, verifierKey []byte) (*pmmime.BodyCollector, int, []string, []string, error) {
-	pubKey := bytes.NewReader(verifierKey)
-	pubKeyEntries, err := openpgp.ReadKeyRing(pubKey)
+func (pm PmCrypto) parseMIME(mimeBody string, verifierKey *KeyRing) (*pmmime.BodyCollector, int, []string, []string, error) {
 
 	mm, err := mail.ReadMessage(strings.NewReader(mimeBody))
 	if err != nil {
@@ -31,9 +27,8 @@ func (pm PmCrypto) parseMIME(mimeBody string, verifierKey []byte) (*pmmime.BodyC
 	mimeVisitor := pmmime.NewMimeVisitor(attachmentsCollector)
 	// TODO: build was failing on this unused 'str' variable. This code looks like WIP
 	//str, err := armor.ArmorKey(verifierKey)
-	_, err = armor.ArmorKey(verifierKey)
 
-	signatureCollector := newSignatureCollector(mimeVisitor, pubKeyEntries, config)
+	signatureCollector := newSignatureCollector(mimeVisitor, verifierKey.entities, config)
 	err = pmmime.VisitAll(bytes.NewReader(mmBodyData), h, signatureCollector)
 
 	verified := signatureCollector.verified
@@ -54,9 +49,9 @@ type MIMECallbacks interface {
 	OnError(err error)
 }
 
-func (pm *PmCrypto) DecryptMIMEMessage(encryptedText string, verifierKey []byte, privateKeyRing *KeyRing,
+func (pm *PmCrypto) DecryptMIMEMessage(encryptedText string, verifierKey *KeyRing, privateKeyRing *KeyRing,
 	passphrase string, callbacks MIMECallbacks, verifyTime int64) {
-	decsignverify, err := pm.decryptMessageVerify(encryptedText, verifierKey, privateKeyRing, passphrase, verifyTime)
+	decsignverify, err := pm.DecryptMessageVerify(encryptedText, verifierKey, privateKeyRing, passphrase, verifyTime)
 	if err != nil {
 		callbacks.OnError(err)
 		return

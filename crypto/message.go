@@ -55,13 +55,6 @@ func (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey *KeyRing, pa
 	return string(b), nil
 }
 
-// DecryptMessageVerifyBinKeyPrivBinKeys decrypt message and verify the signature
-// verifierKey []byte: unarmored verifier keys
-// privateKey []byte: unarmored private key to decrypt. could be mutiple
-func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey []byte, privateKeysRing *KeyRing, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
-	return pm.decryptMessageVerify(encryptedText, verifierKey, privateKeysRing, passphrase, verifyTime)
-}
-
 func decryptCore(encryptedText string, additionalEntries openpgp.EntityList, privKeyEntries openpgp.EntityList, passphrase string, timeFunc func() time.Time) (*openpgp.MessageDetails, error) {
 
 	rawPwd := []byte(passphrase)
@@ -95,24 +88,16 @@ func decryptCore(encryptedText string, additionalEntries openpgp.EntityList, pri
 	return md, err
 }
 
-// decryptMessageVerify
-// decrypt_message_verify_single_key(private_key: string, passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
-// decrypt_message_verify(passphras: string, encrypted : string, signature : string) : decrypt_sign_verify;
-func (pm *PmCrypto) decryptMessageVerify(encryptedText string, verifierKey []byte, privateKeyRing *KeyRing, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
+func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey *KeyRing, privateKeyRing *KeyRing, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
+	// DecryptMessageVerifyBinKeyPrivBinKeys decrypt message and verify the signature
+	// verifierKey []byte: unarmored verifier keys
+	// privateKey []byte: unarmored private key to decrypt. could be mutiple
 
 	out := &models.DecryptSignedVerify{}
 	out.Verify = failed
 
 	var verifierEntries openpgp.EntityList
-	if len(verifierKey) > 0 {
-		verifierReader := bytes.NewReader(verifierKey)
-		var err error
-		verifierEntries, err = openpgp.ReadKeyRing(verifierReader)
-		if err != nil {
-			return nil, err
-		}
-
-	} else {
+	if len(verifierKey.entities) == 0 {
 		out.Verify = noVerifier
 	}
 
@@ -129,8 +114,8 @@ func (pm *PmCrypto) decryptMessageVerify(encryptedText string, verifierKey []byt
 	out.Plaintext = string(b)
 	if md.IsSigned {
 		if md.SignedBy != nil {
-			if verifierEntries != nil {
-				matches := verifierEntries.KeysById(md.SignedByKeyId)
+			if len(verifierKey.entities) > 0 {
+				matches := verifierKey.entities.KeysById(md.SignedByKeyId)
 				if len(matches) > 0 {
 					if md.SignatureError == nil {
 						out.Verify = ok

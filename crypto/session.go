@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/ProtonMail/go-pm-crypto/armor"
 	"golang.org/x/crypto/openpgp"
@@ -34,7 +33,7 @@ func (pm *PmCrypto) RandomTokenWith(size int) ([]byte, error) {
 }
 
 //GetSessionFromKeyPacketBinkeys get session key no encoding in and out
-func (pm *PmCrypto) GetSessionFromKeyPacketBinkeys(keyPackage []byte, privateKey []byte, passphrase string) (*SymmetricKey, error) {
+func (pm *PmCrypto) GetSessionFromKeyPacket(keyPackage []byte, privateKey *KeyRing, passphrase string) (*SymmetricKey, error) {
 
 	keyReader := bytes.NewReader(keyPackage)
 	packets := packet.NewReader(keyReader)
@@ -47,55 +46,12 @@ func (pm *PmCrypto) GetSessionFromKeyPacketBinkeys(keyPackage []byte, privateKey
 
 	ek := p.(*packet.EncryptedKey)
 
-	privKey := bytes.NewReader(privateKey)
-	privKeyEntries, err := openpgp.ReadKeyRing(privKey)
 	if err != nil {
 		return nil, err
 	}
 	rawPwd := []byte(passphrase)
 	var decryptErr error
-	for _, key := range privKeyEntries.DecryptionKeys() {
-		priv := key.PrivateKey
-		if priv.Encrypted {
-			if err := priv.Decrypt(rawPwd); err != nil {
-				continue
-			}
-		}
-
-		if decryptErr = ek.Decrypt(priv, nil); decryptErr == nil {
-			break
-		}
-	}
-
-	if decryptErr != nil {
-		return nil, err
-	}
-
-	return getSessionSplit(ek)
-}
-
-//GetSessionFromKeyPacket get session key no encoding in and out
-func (pm *PmCrypto) GetSessionFromKeyPacket(keyPackage []byte, privateKey string, passphrase string) (*SymmetricKey, error) {
-
-	keyReader := bytes.NewReader(keyPackage)
-	packets := packet.NewReader(keyReader)
-
-	var p packet.Packet
-	var err error
-	if p, err = packets.Next(); err != nil {
-		return nil, err
-	}
-
-	ek := p.(*packet.EncryptedKey)
-
-	privKey := strings.NewReader(privateKey)
-	privKeyEntries, err := openpgp.ReadArmoredKeyRing(privKey)
-	if err != nil {
-		return nil, err
-	}
-	rawPwd := []byte(passphrase)
-	var decryptErr error
-	for _, key := range privKeyEntries.DecryptionKeys() {
+	for _, key := range privateKey.entities.DecryptionKeys() {
 		priv := key.PrivateKey
 		if priv.Encrypted {
 			if err := priv.Decrypt(rawPwd); err != nil {
