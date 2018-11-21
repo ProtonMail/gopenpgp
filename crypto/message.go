@@ -214,36 +214,6 @@ func (pm *PmCrypto) EncryptMessage(plainText string, publicKey *KeyRing, private
 	return outBuf.String(), nil
 }
 
-//EncryptMessageWithPassword encrypt a plain text to pgp message with a password
-//plainText string: clear text
-//output string: armored pgp message
-func (pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string) (string, error) {
-
-	var outBuf bytes.Buffer
-	w, err := armor.Encode(&outBuf, armorUtils.MESSAGE_HEADER, internal.ArmorHeaders)
-	if err != nil {
-		return "", err
-	}
-
-	config := &packet.Config{Time: pm.getTimeGenerator()}
-	plaintext, err := openpgp.SymmetricallyEncrypt(w, []byte(password), nil, config)
-	if err != nil {
-		return "", err
-	}
-	message := []byte(plainText)
-	_, err = plaintext.Write(message)
-	if err != nil {
-		return "", err
-	}
-	err = plaintext.Close()
-	if err != nil {
-		return "", err
-	}
-	w.Close()
-
-	return outBuf.String(), nil
-}
-
 //DecryptMessageWithPassword decrypt a pgp message with a password
 //encrypted string : armored pgp message
 //output string : clear text
