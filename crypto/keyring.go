@@ -105,6 +105,25 @@ func (kr *KeyRing) GetEntities() openpgp.EntityList {
 	return kr.entities
 }
 
+func (kr *KeyRing) GetSigningEntity(passphrase string) *openpgp.Entity {
+
+	var signEntity *openpgp.Entity
+
+	for _, e := range kr.entities {
+		// Entity.PrivateKey must be a signing key
+		if e.PrivateKey != nil {
+			if e.PrivateKey.Encrypted {
+				e.PrivateKey.Decrypt([]byte(passphrase))
+			}
+			if !e.PrivateKey.Encrypted {
+				signEntity = e
+				break
+			}
+		}
+	}
+	return signEntity
+}
+
 // Encrypt encrypts data to this keyring's owner. If sign is not nil, it also
 // signs data with it. sign must be unlock to be able to sign data, if it's not
 // the case an error will be returned.
@@ -347,7 +366,7 @@ func (kr *KeyRing) Unlock(passphrase []byte) error {
 	}
 
 	if len(keys) == 0 {
-		return errors.New("pmapi: cannot unlock key ring, no private key available")
+		return errors.New("go-pm-crypto: cannot unlock key ring, no private key available")
 	}
 
 	var err error

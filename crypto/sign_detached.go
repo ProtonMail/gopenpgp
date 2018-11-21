@@ -16,24 +16,11 @@ import (
 // SignTextDetached sign detached text type
 func (pm *PmCrypto) SignTextDetached(plainText string, privateKey *KeyRing, passphrase string, trim bool) (string, error) {
 	//sign with 0x01 text
-	var signEntity *openpgp.Entity
-
 	if trim {
 		plainText = internal.TrimNewlines(plainText)
 	}
 
-	for _, e := range privateKey.entities {
-		// Entity.PrivateKey must be a signing key
-		if e.PrivateKey != nil {
-			if e.PrivateKey.Encrypted {
-				e.PrivateKey.Decrypt([]byte(passphrase))
-			}
-			if !e.PrivateKey.Encrypted {
-				signEntity = e
-				break
-			}
-		}
-	}
+	signEntity := privateKey.GetSigningEntity(passphrase)
 
 	if signEntity == nil {
 		return "", errors.New("cannot sign message, signer key is not unlocked")
@@ -55,20 +42,7 @@ func (pm *PmCrypto) SignTextDetached(plainText string, privateKey *KeyRing, pass
 // Sign detached bin data using string key
 func (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey *KeyRing, passphrase string) (string, error) {
 	//sign with 0x00
-	var signEntity *openpgp.Entity
-
-	for _, e := range privateKey.entities {
-		// Entity.PrivateKey must be a signing key
-		if e.PrivateKey != nil {
-			if e.PrivateKey.Encrypted {
-				e.PrivateKey.Decrypt([]byte(passphrase))
-			}
-			if !e.PrivateKey.Encrypted {
-				signEntity = e
-				break
-			}
-		}
-	}
+	signEntity := privateKey.GetSigningEntity(passphrase)
 
 	if signEntity == nil {
 		return "", errors.New("cannot sign message, singer key is not unlocked")

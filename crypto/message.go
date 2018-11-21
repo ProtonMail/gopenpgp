@@ -40,7 +40,7 @@ func (pm *PmCrypto) DecryptMessageStringKey(encryptedText string, privateKey str
 // passphrase : match with private key to decrypt message
 func (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey *KeyRing, passphrase string) (string, error) {
 
-	md, err := decryptCore(encryptedText, nil, privateKey.entities, passphrase, pm.getTimeGenerator())
+	md, err := decryptCore(encryptedText, nil, privateKey, passphrase, pm.getTimeGenerator())
 	if err != nil {
 		return "", err
 	}
@@ -55,20 +55,14 @@ func (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey *KeyRing, pa
 	return string(b), nil
 }
 
-func decryptCore(encryptedText string, additionalEntries openpgp.EntityList, privKeyEntries openpgp.EntityList, passphrase string, timeFunc func() time.Time) (*openpgp.MessageDetails, error) {
+func decryptCore(encryptedText string, additionalEntries openpgp.EntityList, privKey *KeyRing, passphrase string, timeFunc func() time.Time) (*openpgp.MessageDetails, error) {
 
 	rawPwd := []byte(passphrase)
-	for _, e := range privKeyEntries {
+	privKey.Unlock(rawPwd)
 
-		if e.PrivateKey != nil && e.PrivateKey.Encrypted {
-			e.PrivateKey.Decrypt(rawPwd)
-		}
-
-		for _, sub := range e.Subkeys {
-			if sub.PrivateKey != nil && sub.PrivateKey.Encrypted {
-				sub.PrivateKey.Decrypt(rawPwd)
-			}
-		}
+	privKeyEntries := privKey.entities
+	for _, entity := range privKey.entities {
+		privKeyEntries = append(privKeyEntries, entity)
 	}
 
 	if additionalEntries != nil {
@@ -101,7 +95,7 @@ func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey *KeyR
 		out.Verify = noVerifier
 	}
 
-	md, err := decryptCore(encryptedText, verifierEntries, privateKeyRing.entities, passphrase, func() time.Time { return time.Unix(0, 0) }) // TODO: I doubt this time is correct
+	md, err := decryptCore(encryptedText, verifierEntries, privateKeyRing, passphrase, func() time.Time { return time.Unix(0, 0) }) // TODO: I doubt this time is correct
 
 	decrypted := md.UnverifiedBody
 	b, err := ioutil.ReadAll(decrypted)
@@ -205,18 +199,7 @@ func (pm *PmCrypto) EncryptMessage(plainText string, publicKey *KeyRing, private
 
 	if len(passphrase) > 0 && len(privateKey.entities) > 0 {
 
-		for _, e := range privateKey.entities {
-			// Entity.PrivateKey must be a signing key
-			if e.PrivateKey != nil {
-				if e.PrivateKey.Encrypted {
-					e.PrivateKey.Decrypt([]byte(passphrase))
-				}
-				if !e.PrivateKey.Encrypted {
-					signEntity = e
-					break
-				}
-			}
-		}
+		signEntity := privateKey.GetSigningEntity(passphrase)
 
 		if signEntity == nil {
 			return "", errors.New("cannot sign message, signer key is not unlocked")

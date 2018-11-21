@@ -65,19 +65,7 @@ func (pm *PmCrypto) DecryptAttachment(keyPacket []byte, dataPacket []byte, kr *K
 
 	privKeyEntries := kr.entities
 
-	rawPwd := []byte(passphrase)
-	for _, e := range privKeyEntries {
-
-		if e.PrivateKey != nil && e.PrivateKey.Encrypted {
-			e.PrivateKey.Decrypt(rawPwd)
-		}
-
-		for _, sub := range e.Subkeys {
-			if sub.PrivateKey != nil && sub.PrivateKey.Encrypted {
-				sub.PrivateKey.Decrypt(rawPwd)
-			}
-		}
-	}
+	kr.Unlock([]byte(passphrase))
 
 	keyReader := bytes.NewReader(keyPacket)
 	dataReader := bytes.NewReader(dataPacket)
