@@ -213,3 +213,61 @@ func (pm *PmCrypto) EncryptMessage(plainText string, publicKey *KeyRing, private
 	w.Close()
 	return outBuf.String(), nil
 }
+
+//EncryptMessageWithPassword encrypt a plain text to pgp message with a password
+//plainText string: clear text
+//output string: armored pgp message
+func (pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string) (string, error) {
+
+	var outBuf bytes.Buffer
+	w, err := armor.Encode(&outBuf, armorUtils.MESSAGE_HEADER, internal.ArmorHeaders)
+	if err != nil {
+		return "", err
+	}
+
+	config := &packet.Config{Time: pm.getTimeGenerator()}
+	plaintext, err := openpgp.SymmetricallyEncrypt(w, []byte(password), nil, config)
+	if err != nil {
+		return "", err
+	}
+	message := []byte(plainText)
+	_, err = plaintext.Write(message)
+	if err != nil {
+		return "", err
+	}
+	err = plaintext.Close()
+	if err != nil {
+		return "", err
+	}
+	w.Close()
+
+	return outBuf.String(), nil
+}
+
+//DecryptMessageWithPassword decrypt a pgp message with a password
+//encrypted string : armored pgp message
+//output string : clear text
+func (pm *PmCrypto) DecryptMessageWithPassword(encrypted string, password string) (string, error) {
+	encryptedio, err := internal.Unarmor(encrypted)
+	if err != nil {
+		return "", err
+	}
+
+	var prompt = func(keys []openpgp.Key, symmetric bool) ([]byte, error) {
+		return []byte(password), nil
+	}
+
+	config := &packet.Config{Time: pm.getTimeGenerator()}
+	md, err := openpgp.ReadMessage(encryptedio.Body, nil, prompt, config)
+	if err != nil {
+		return "", err
+	}
+
+	messageBuf := bytes.NewBuffer(nil)
+	_, err = io.Copy(messageBuf, md.UnverifiedBody)
+	if err != nil {
+		return "", err
+	}
+
+	return messageBuf.String(), nil
+}
