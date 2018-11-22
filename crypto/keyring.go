@@ -241,7 +241,7 @@ func (kr *KeyRing) EncryptSymmetric(textToEncrypt string, canonicalizeText bool)
 	}
 	encryptedWriter.Close()
 
-	if outSplit, err = SeparateKeyAndData(kr, buffer); err != nil {
+	if outSplit, err = SeparateKeyAndData(kr, buffer, len(textToEncrypt), -1); err != nil {
 		return
 	}
 

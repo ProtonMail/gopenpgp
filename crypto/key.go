@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"github.com/ProtonMail/go-pm-crypto/armor"
 	"io"
-	"io/ioutil"
 	"math/big"
 	"time"
 	//	"net/http"
 	//	"net/url"
+	"runtime"
 	"strings"
 
 	//"github.com/ProtonMail/go-pm-crypto/armor"
@@ -110,9 +110,12 @@ func DecryptAttKey(kr *KeyRing, keyPacket string) (key *SymmetricKey, err error)
 }
 
 // Separate key and data packets in a pgp session
-func SeparateKeyAndData(kr *KeyRing, r io.Reader) (outSplit *models.EncryptedSplit, err error) {
+func SeparateKeyAndData(kr *KeyRing, r io.Reader, estimatedLength int, garbageCollector int) (outSplit *models.EncryptedSplit, err error) {
+
+	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
 	packets := packet.NewReader(r)
 	outSplit = &models.EncryptedSplit{}
+	gcCounter := 0
 
 	// Save encrypted key and signature apart
 	var ek *packet.EncryptedKey
@@ -144,20 +147,56 @@ func SeparateKeyAndData(kr *KeyRing, r io.Reader) (outSplit *models.EncryptedSpl
 				}
 			}
 		case *packet.SymmetricallyEncrypted:
-			var packetContents []byte
-			if packetContents, err = ioutil.ReadAll(p.Contents); err != nil {
-				return
+			// The code below is optimized to not
+			var b bytes.Buffer
+			// 2^16 is an estimation of the size difference between input and output, the size difference is most probably
+			// 16 bytes at a maximum though.
+			// We need to avoid triggering a grow from the system as this will allocate too much memory causing problems
+			// in low-memory environments
+			b.Grow(1<<16 + estimatedLength)
+			// empty encoded length + start byte
+			b.Write(make([]byte, 6))
+			b.WriteByte(byte(1))
+			actualLength := 1
+			block := make([]byte, 128)
+			for {
+				n, err := p.Contents.Read(block)
+				if err == io.EOF {
+					break
+				}
+				b.Write(block[:n])
+				actualLength += n
+				gcCounter += n
+				if gcCounter > garbageCollector && garbageCollector > 0 {
+					runtime.GC()
+					gcCounter = 0
+				}
 			}
 
-			encodedLength := encodedLength(len(packetContents) + 1)
-			var symEncryptedData []byte
-			symEncryptedData = append(symEncryptedData, byte(210))
-			symEncryptedData = append(symEncryptedData, encodedLength...)
-			symEncryptedData = append(symEncryptedData, byte(1))
-			symEncryptedData = append(symEncryptedData, packetContents...)
+			// quick encoding
+			symEncryptedData := b.Bytes()
+			if actualLength < 192 {
+				symEncryptedData[4] = byte(210)
+				symEncryptedData[5] = byte(actualLength)
+				symEncryptedData = symEncryptedData[4:]
+			} else if actualLength < 8384 {
+				actualLength = actualLength - 192
+				symEncryptedData[3] = byte(210)
+				symEncryptedData[4] = 192 + byte(actualLength>>8)
+				symEncryptedData[5] = byte(actualLength)
+				symEncryptedData = symEncryptedData[3:]
+			} else {
+				symEncryptedData[0] = byte(210)
+				symEncryptedData[1] = byte(255)
+				symEncryptedData[2] = byte(actualLength >> 24)
+				symEncryptedData[3] = byte(actualLength >> 16)
+				symEncryptedData[4] = byte(actualLength >> 8)
+				symEncryptedData[5] = byte(actualLength)
+			}
 
 			outSplit.DataPacket = symEncryptedData
 			break
+
 		}
 	}
 	if decryptErr != nil {

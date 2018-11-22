@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"errors"
+	"io"
 	"io/ioutil"
 	"time"
 

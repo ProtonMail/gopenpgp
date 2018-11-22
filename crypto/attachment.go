@@ -4,22 +4,49 @@ import (
 	"bytes"
 	"io"
 	"io/ioutil"
+	"runtime"
+	"sync"
 
 	armorUtils "github.com/ProtonMail/go-pm-crypto/armor"
-	"github.com/ProtonMail/go-pm-crypto/internal"
 	"github.com/ProtonMail/go-pm-crypto/models"
 	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-// Encrypt attachment. Takes input data and key data in binary form
-func (pm *PmCrypto) EncryptAttachment(plainData []byte, fileName string, publicKey *KeyRing) (*models.EncryptedSplit, error) {
-	var outBuf bytes.Buffer
-	w, err := armor.Encode(&outBuf, armorUtils.PGP_MESSAGE_HEADER, internal.ArmorHeaders)
-	if err != nil {
-		return nil, err
+//EncryptedSplit when encrypt attachment
+type AttachmentProcessor struct {
+	w                *io.WriteCloser
+	pipe             *io.PipeWriter
+	done             sync.WaitGroup
+	split            *models.EncryptedSplit
+	garbageCollector int
+	err              error
+}
+
+func (ap *AttachmentProcessor) Process(plainData []byte) {
+	(*ap.w).Write(plainData)
+}
+
+func (ap *AttachmentProcessor) Finish() (*models.EncryptedSplit, error) {
+	if ap.err != nil {
+		return nil, ap.err
 	}
+	(*ap.w).Close()
+	(*ap.pipe).Close()
+	ap.done.Wait()
+	if ap.garbageCollector > 0 {
+		runtime.GC()
+	}
+	return ap.split, nil
+}
+
+// Encrypt attachment. Takes input data and key data in binary form
+func (pm *PmCrypto) encryptAttachment(estimatedSize int, fileName string, publicKey *KeyRing, garbageCollector int) (*AttachmentProcessor, error) {
+	attachmentProc := &AttachmentProcessor{}
+	// you can also add these one at
+	// a time if you need to
+	attachmentProc.done.Add(1)
+	attachmentProc.garbageCollector = garbageCollector
 
 	hints := &openpgp.FileHints{
 		FileName: fileName,
@@ -30,18 +57,49 @@ func (pm *PmCrypto) EncryptAttachment(plainData []byte, fileName string, publicK
 		Time:          pm.getTimeGenerator(),
 	}
 
-	ew, err := openpgp.Encrypt(w, publicKey.entities, nil, hints, config)
+	reader, writer := io.Pipe()
 
-	_, _ = ew.Write(plainData)
-	ew.Close()
-	w.Close()
+	go func() {
+		defer attachmentProc.done.Done()
+		split, splitError := SeparateKeyAndData(nil, reader, estimatedSize, garbageCollector)
+		if attachmentProc.err != nil {
+			attachmentProc.err = splitError
+		}
+		split.Algo = "aes256"
+		attachmentProc.split = split
+	}()
 
-	split, err := SplitArmor(outBuf.String())
+	var ew io.WriteCloser
+	var encryptErr error
+	ew, encryptErr = openpgp.Encrypt(writer, publicKey.entities, nil, hints, config)
+	attachmentProc.w = &ew
+	attachmentProc.pipe = writer
+	if attachmentProc.err != nil {
+		attachmentProc.err = encryptErr
+	}
+
+	return attachmentProc, nil
+
+}
+
+func (pm *PmCrypto) EncryptAttachment(plainData []byte, fileName string, publicKey *KeyRing) (*models.EncryptedSplit, error) {
+	ap, err := pm.encryptAttachment(len(plainData), fileName, publicKey, -1)
 	if err != nil {
 		return nil, err
 	}
-	split.Algo = "aes256"
+	ap.Process(plainData)
+	split, err := ap.Finish()
+	if err != nil {
+		return nil, err
+	}
 	return split, nil
+
+}
+
+//EncryptAttachment ...
+func (pm *PmCrypto) EncryptAttachmentLowMemory(estimatedSize int, fileName string, publicKey *KeyRing) (*AttachmentProcessor, error) {
+	// Garbage collect every megabyte
+	return pm.encryptAttachment(estimatedSize, fileName, publicKey, 1<<20)
 }
 
 // Helper method. Splits armored pgp session into key and packet data
@@ -56,7 +114,7 @@ func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
 
 	encryptedReader := bytes.NewReader(encryptedRaw)
 
-	return SeparateKeyAndData(nil, encryptedReader)
+	return SeparateKeyAndData(nil, encryptedReader, len(encrypted), -1)
 
 }
 
