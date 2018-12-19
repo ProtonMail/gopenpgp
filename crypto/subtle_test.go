@@ -29,7 +29,7 @@ func TestSubtle_DecryptWithoutIntegrity(t *testing.T) {
 
 func TestSubtle_DeriveKey(t *testing.T) {
 	salt, _ := hex.DecodeString("c828f258a76aad7b")
-	dk, _ := DeriveKey("some password", salt)
+	dk, _ := DeriveKey("some password", salt, 32768)
 	if hex.EncodeToString(dk) != "9469cccfc8a8d005247f39fa3e5b35a97db456cecf18deac6d84364d0818d763" {
 		t.Fatal("DeriveKey returned unexpected result")
 	}

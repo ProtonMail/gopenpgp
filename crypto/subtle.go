@@ -25,7 +25,7 @@ func DecryptWithoutIntegrity(key, input, iv []byte) ([]byte, error) {
 	return EncryptWithoutIntegrity(key, input, iv)
 }
 
-// DeriveKey derives a key from a password using scrypt.
-func DeriveKey(password string, salt []byte) ([]byte, error) {
-	return scrypt.Key([]byte(password), salt, 32768, 8, 1, 32)
+// DeriveKey derives a key from a password using scrypt. N should be set to the highest power of 2 you can derive within 100 milliseconds.
+func DeriveKey(password string, salt []byte, N int) ([]byte, error) {
+	return scrypt.Key([]byte(password), salt, N, 8, 1, 32)
 }
