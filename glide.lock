@@ -4,7 +4,7 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: 3791101e143bf0f32515ac23e831475684f61229
 - name: golang.org/x/crypto
-  version: 9e4251120d8c43f10024d798bc6dde21d40704a0
+  version: 26363818da67edd6e5591bcfac10765337b0ee39
   repo: https://github.com/ProtonMail/crypto.git
   subpackages:
   - bitcurves
