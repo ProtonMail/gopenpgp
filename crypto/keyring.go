@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"regexp"
 	"strings"
 	"time"
 
@@ -31,6 +32,9 @@ type pmKeyObject struct {
 	//Activation string // Undocumented
 	Primary int
 }
+
+// Armored type for PGP encrypted messages.
+const PGP_MESSAGE_TYPE = "PGP MESSAGE"
 
 func (ko *pmKeyObject) PrivateKeyReader() io.Reader {
 	return strings.NewReader(ko.PrivateKey)
@@ -264,6 +268,20 @@ func (kr *KeyRing) DecryptString(encrypted string) (SignedString, error) {
 
 	s := string(b)
 	return SignedString{String: s, Signed: signed}, nil
+}
+
+// Decrypt data if has PGP MESSAGE format, if not return original data.
+// If error is errors.ErrSignatureExpired (from golang.org/x/crypto/openpgp/errors),
+// contents are still provided if library clients wish to process this message further
+func (kr *KeyRing) DecryptStringIfNeeded(data string) (decrypted string, err error) {
+	if re := regexp.MustCompile("^-----BEGIN " + PGP_MESSAGE_TYPE + "-----(?s:.+)-----END " + PGP_MESSAGE_TYPE + "-----"); re.MatchString(data) {
+		var signed SignedString
+		signed, err = kr.DecryptString(data)
+		decrypted = signed.String
+	} else {
+		decrypted = data
+	}
+	return
 }
 
 // Sign a string message, using this KeyRing. canonicalizeText identifies if newlines are canonicalized
