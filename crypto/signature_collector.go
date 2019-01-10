@@ -11,6 +11,7 @@ import (
 	"net/textproto"
 )
 
+// Use: ios/android only
 type SignatureCollector struct {
 	config    *packet.Config
 	keyring   openpgp.KeyRing

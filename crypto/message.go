@@ -17,6 +17,7 @@ import (
 	"math"
 )
 
+// Use: ios/android only
 // DecryptMessage decrypt encrypted message use private key (string )
 // encryptedText : string armored encrypted
 // privateKey : armored private use to decrypt message
@@ -35,6 +36,7 @@ func (pm *PmCrypto) DecryptMessageStringKey(encryptedText string, privateKey str
 	return pm.DecryptMessage(encryptedText, &KeyRing{entities: privKeyEntries}, passphrase)
 }
 
+// Use ios/android only
 // DecryptMessageBinKey decrypt encrypted message use private key (bytes )
 // encryptedText : string armored encrypted
 // privateKey : unarmored private use to decrypt message could be mutiple keys
@@ -83,6 +85,7 @@ func decryptCore(encryptedText string, additionalEntries openpgp.EntityList, pri
 	return md, err
 }
 
+// Use: ios/android only
 func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey *KeyRing, privateKeyRing *KeyRing, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
 	// DecryptMessageVerifyBinKeyPrivBinKeys decrypt message and verify the signature
 	// verifierKey []byte: unarmored verifier keys
@@ -150,6 +153,7 @@ func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 	}
 }
 
+// Use: ios/android only
 //EncryptMessageWithPassword encrypt a plain text to pgp message with a password
 //plainText string: clear text
 //output string: armored pgp message
@@ -180,6 +184,7 @@ func (pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string
 	return outBuf.String(), nil
 }
 
+// Use ios/android only
 // EncryptMessageBinKey encrypt message with unarmored public key, if pass private key and passphrase will also sign the message
 // publicKey : bytes unarmored public key
 // plainText : the input
@@ -215,6 +220,7 @@ func (pm *PmCrypto) EncryptMessage(plainText string, publicKey *KeyRing, private
 	return outBuf.String(), nil
 }
 
+// Use: ios/android only
 //DecryptMessageWithPassword decrypt a pgp message with a password
 //encrypted string : armored pgp message
 //output string : clear text

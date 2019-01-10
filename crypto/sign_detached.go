@@ -13,6 +13,7 @@ import (
 	"io"
 )
 
+// Use: ios/android only
 // SignTextDetached sign detached text type
 func (pm *PmCrypto) SignTextDetached(plainText string, privateKey *KeyRing, passphrase string, trim bool) (string, error) {
 	//sign with 0x01 text
@@ -39,6 +40,7 @@ func (pm *PmCrypto) SignTextDetached(plainText string, privateKey *KeyRing, pass
 	return outBuf.String(), nil
 }
 
+// Use: ios/android only
 // Sign detached bin data using string key
 func (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey *KeyRing, passphrase string) (string, error) {
 	//sign with 0x00
@@ -61,6 +63,7 @@ func (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey *KeyRing, passp
 	return outBuf.String(), nil
 }
 
+// Use: ios/android only
 // Verify detached text - check if signature is valid using a given publicKey in binary format
 func (pm *PmCrypto) VerifyTextSignDetachedBinKey(signature string, plainText string, publicKey *KeyRing, verifyTime int64) (bool, error) {
 
@@ -113,6 +116,7 @@ func verifySignature(pubKeyEntries openpgp.EntityList, origText *bytes.Reader, s
 	return true, nil
 }
 
+// Use: ios/android only
 // Verify detached text in binary format - check if signature is valid using a given publicKey in binary format
 func (pm *PmCrypto) VerifyBinSignDetachedBinKey(signature string, plainData []byte, publicKey *KeyRing, verifyTime int64) (bool, error) {
 

@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// Use: ios/android only
 //CheckPassphrase check is private key passphrase ok
 func CheckPassphrase(privateKey string, passphrase string) bool {
 	privKeyReader := strings.NewReader(privateKey)
@@ -40,6 +41,7 @@ func CheckPassphrase(privateKey string, passphrase string) bool {
 	return true
 }
 
+// Use: ios/android only
 // PublicKey get a public key from a private key
 func PublicKey(privateKey string) (string, error) {
 	privKeyReader := strings.NewReader(privateKey)
@@ -61,6 +63,7 @@ func PublicKey(privateKey string) (string, error) {
 	return outString, nil
 }
 
+// Use: ios/android only
 // PublicKeyBinOut get a public key from a private key
 func PublicKeyBinOut(privateKey string) ([]byte, error) {
 	privKeyReader := strings.NewReader(privateKey)

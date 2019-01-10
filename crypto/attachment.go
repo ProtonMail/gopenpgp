@@ -23,10 +23,12 @@ type AttachmentProcessor struct {
 	err              error
 }
 
+// Use: ios/android only
 func (ap *AttachmentProcessor) Process(plainData []byte) {
 	(*ap.w).Write(plainData)
 }
 
+// Use: ios/android only
 func (ap *AttachmentProcessor) Finish() (*models.EncryptedSplit, error) {
 	if ap.err != nil {
 		return nil, ap.err
@@ -40,6 +42,7 @@ func (ap *AttachmentProcessor) Finish() (*models.EncryptedSplit, error) {
 	return ap.split, nil
 }
 
+// Use: ios/android only
 // Encrypt attachment. Takes input data and key data in binary form
 func (pm *PmCrypto) encryptAttachment(estimatedSize int, fileName string, publicKey *KeyRing, garbageCollector int) (*AttachmentProcessor, error) {
 	attachmentProc := &AttachmentProcessor{}
@@ -82,6 +85,7 @@ func (pm *PmCrypto) encryptAttachment(estimatedSize int, fileName string, public
 
 }
 
+// Use: ios/android only
 func (pm *PmCrypto) EncryptAttachment(plainData []byte, fileName string, publicKey *KeyRing) (*models.EncryptedSplit, error) {
 	ap, err := pm.encryptAttachment(len(plainData), fileName, publicKey, -1)
 	if err != nil {
@@ -96,12 +100,14 @@ func (pm *PmCrypto) EncryptAttachment(plainData []byte, fileName string, publicK
 
 }
 
+// Use: ios/android only
 //EncryptAttachment ...
 func (pm *PmCrypto) EncryptAttachmentLowMemory(estimatedSize int, fileName string, publicKey *KeyRing) (*AttachmentProcessor, error) {
 	// Garbage collect every megabyte
 	return pm.encryptAttachment(estimatedSize, fileName, publicKey, 1<<20)
 }
 
+// Use: ios/android only
 // Helper method. Splits armored pgp session into key and packet data
 func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
 
@@ -118,6 +124,7 @@ func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
 
 }
 
+// Use: ios/android only
 // Decrypt attachment. Takes input data and key data in binary form. privateKeys can contains more keys. passphrase is used to unlock keys
 func (pm *PmCrypto) DecryptAttachment(keyPacket []byte, dataPacket []byte, kr *KeyRing, passphrase string) ([]byte, error) {
 

@@ -2,8 +2,8 @@ package crypto
 
 import (
 	"fmt"
+	"github.com/ProtonMail/go-pm-crypto/internal"
 	"io/ioutil"
-	"proton/pmcrypto/internal"
 	"testing"
 )
 
@@ -262,8 +262,8 @@ func TestDecrypt(t *testing.T) {
 	publicKeyUnarmored, _ := ioutil.ReadAll(block.Body)
 	block, _ = internal.Unarmor(privatekey)
 	privateKeyUnarmored, _ := ioutil.ReadAll(block.Body)
-	o.DecryptMIMEMessage(testMessage, publicKeyUnarmored, privateKeyUnarmored, privatekeypassword,
-		&callbacks, o.GetTime())
+	o.DecryptMIMEMessage(testMessage, pmCrypto.BuildKeyRingNoError(publicKeyUnarmored), pmCrypto.BuildKeyRingNoError(privateKeyUnarmored), privatekeypassword,
+		&callbacks, o.GetTimeUnix())
 }
 
 func TestParse(t *testing.T) {

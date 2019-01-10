@@ -49,6 +49,7 @@ type MIMECallbacks interface {
 	OnError(err error)
 }
 
+// Use ios/android only
 func (pm *PmCrypto) DecryptMIMEMessage(encryptedText string, verifierKey *KeyRing, privateKeyRing *KeyRing,
 	passphrase string, callbacks MIMECallbacks, verifyTime int64) {
 	decsignverify, err := pm.DecryptMessageVerify(encryptedText, verifierKey, privateKeyRing, passphrase, verifyTime)

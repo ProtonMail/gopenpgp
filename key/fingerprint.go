@@ -9,6 +9,7 @@ import (
 	"golang.org/x/crypto/openpgp"
 )
 
+// Use: ios/android only
 // GetFingerprint get a armored public key fingerprint
 func GetFingerprint(publicKey string) (string, error) {
 	rawPubKey, err := armor.Unarmor(publicKey)
@@ -18,6 +19,7 @@ func GetFingerprint(publicKey string) (string, error) {
 	return GetFingerprintBinKey(rawPubKey)
 }
 
+// Use: ios/android only
 // GetFingerprintBinKey get a unarmored public key fingerprint
 func GetFingerprintBinKey(publicKey []byte) (string, error) {
 	pubKeyReader := bytes.NewReader(publicKey)

@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
+// Use: ios/android only
 //RandomToken ...
 func (pm *PmCrypto) RandomToken() ([]byte, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256}
@@ -22,6 +23,7 @@ func (pm *PmCrypto) RandomToken() ([]byte, error) {
 	return symKey, nil
 }
 
+// Use: ios/android only
 // RandomTokenWith ...
 func (pm *PmCrypto) RandomTokenWith(size int) ([]byte, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256}
@@ -32,6 +34,7 @@ func (pm *PmCrypto) RandomTokenWith(size int) ([]byte, error) {
 	return symKey, nil
 }
 
+// Use: ios/android only
 //GetSessionFromKeyPacketBinkeys get session key no encoding in and out
 func (pm *PmCrypto) GetSessionFromKeyPacket(keyPackage []byte, privateKey *KeyRing, passphrase string) (*SymmetricKey, error) {
 
@@ -71,6 +74,7 @@ func (pm *PmCrypto) GetSessionFromKeyPacket(keyPackage []byte, privateKey *KeyRi
 	return getSessionSplit(ek)
 }
 
+// Use: ios/android only
 //KeyPacketWithPublicKey ...
 func (pm *PmCrypto) KeyPacketWithPublicKey(sessionSplit *SymmetricKey, publicKey string) ([]byte, error) {
 	pubkeyRaw, err := armor.Unarmor(publicKey)
@@ -80,6 +84,7 @@ func (pm *PmCrypto) KeyPacketWithPublicKey(sessionSplit *SymmetricKey, publicKey
 	return pm.KeyPacketWithPublicKeyBin(sessionSplit, pubkeyRaw)
 }
 
+// Use: ios/android only
 // KeyPacketWithPublicKeyBin ...
 func (pm *PmCrypto) KeyPacketWithPublicKeyBin(sessionSplit *SymmetricKey, publicKey []byte) ([]byte, error) {
 	publicKeyReader := bytes.NewReader(publicKey)
@@ -164,6 +169,7 @@ func (pm *PmCrypto) GetSessionFromSymmetricPacket(keyPackage []byte, password st
 	return nil, errors.New("password incorrect")
 }
 
+// Use: ios/android only
 // SymmetricKeyPacketWithPassword ...
 func (pm *PmCrypto) SymmetricKeyPacketWithPassword(sessionSplit *SymmetricKey, password string) ([]byte, error) {
 	outbuf := &bytes.Buffer{}
