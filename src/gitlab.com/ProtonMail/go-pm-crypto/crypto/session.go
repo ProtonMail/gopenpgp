@@ -69,7 +69,7 @@ func (pm *PmCrypto) GetSessionFromKeyPacketBinkeys(keyPackage []byte, privateKey
 	}
 
 	if decryptErr != nil {
-		return nil, err
+		return nil, decryptErr
 	}
 
 	return getSessionSplit(ek)
@@ -110,7 +110,7 @@ func (pm *PmCrypto) GetSessionFromKeyPacket(keyPackage []byte, privateKey string
 	}
 
 	if decryptErr != nil {
-		return nil, err
+		return nil, decryptErr
 	}
 
 	return getSessionSplit(ek)
