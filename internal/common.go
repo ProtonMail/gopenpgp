@@ -16,13 +16,8 @@ func TrimNewlines(input string) string {
 // ProtonMail Email Parser
 const CreationTimeOffset = int64(60 * 60 * 24 * 2)
 
-const (
-	armorHeaderVersion = "Pmcrypto Golang 0.0.1 (" + constants.VERSION + ")"
-	armorHeaderComment = "https://protonmail.com"
-)
-
 // ArmorHeaders from golang pm-crypto
 var ArmorHeaders = map[string]string{
-	"Version": armorHeaderVersion,
-	"Comment": armorHeaderComment,
+	"Version": constants.ArmorHeaderVersion,
+	"Comment": constants.ArmorHeaderComment,
 }

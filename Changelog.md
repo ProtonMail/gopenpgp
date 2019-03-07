@@ -9,7 +9,9 @@ Changelog [format](http://keepachangelog.com/en/1.0.0/)
 * `FirstKeyID` into `KeyRing` object to be able match salts
 
 ### Changed
-* Comments following linter recomendations
+* If statement re-factor following linter recommendations
+* Constants rename following linter recomendations
+* Comments following linter recomendations (not complete)
 * Update the crypto and mime dependencies
 * Error handling in `GetSessionFromKeyPaket`
 

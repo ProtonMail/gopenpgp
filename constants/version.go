@@ -1,3 +1,3 @@
 package constants
 
-const VERSION = "ddacebe0"
+const Version = "ddacebe0"

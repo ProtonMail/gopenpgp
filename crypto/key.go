@@ -7,22 +7,21 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/ProtonMail/go-pm-crypto/armor"
 	"io"
 	"math/big"
-	"time"
-	//	"net/http"
-	//	"net/url"
 	"runtime"
 	"strings"
+	"time"
 
-	//"github.com/ProtonMail/go-pm-crypto/armor"
+	"github.com/ProtonMail/go-pm-crypto/armor"
+	"github.com/ProtonMail/go-pm-crypto/constants"
 	"github.com/ProtonMail/go-pm-crypto/models"
+
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-// A decrypted session key.
+// SymmetricKey stores a decrypted session key.
 type SymmetricKey struct {
 	// The clear base64-encoded key.
 	//Key string
@@ -31,7 +30,7 @@ type SymmetricKey struct {
 	Algo string
 }
 
-//18 with the 2 highest order bits set to 1
+// SymmetricallyEncryptedTag is 18 with the 2 highest order bits set to 1
 const SymmetricallyEncryptedTag = 210
 
 var symKeyAlgos = map[string]packet.CipherFunction{
@@ -43,8 +42,8 @@ var symKeyAlgos = map[string]packet.CipherFunction{
 	"aes256":    packet.CipherAES256,
 }
 
+// GetCipherFunc returns functin corresponding to an algorithm used in this SymmetricKey
 // Use: go-pm-crypto, key.go, session.go
-// Get cipher function corresponding to an algorithm used in this SymmetricKey
 func (sk *SymmetricKey) GetCipherFunc() packet.CipherFunction {
 	cf, ok := symKeyAlgos[sk.Algo]
 	if ok {
@@ -54,8 +53,8 @@ func (sk *SymmetricKey) GetCipherFunc() packet.CipherFunction {
 	panic("pmapi: unsupported cipher function: " + sk.Algo)
 }
 
+// GetBase64Key returns a key as base64 encoded string
 // Use: bridge
-// Returns a key as base64 encoded string
 func (sk *SymmetricKey) GetBase64Key() string {
 	return base64.StdEncoding.EncodeToString(sk.Key)
 }
@@ -246,8 +245,8 @@ func encodedLength(length int) (b []byte) {
 	return
 }
 
-// Use: bridge
 // SetKey encrypts the provided key.
+// Use: bridge
 func SetKey(kr *KeyRing, symKey *SymmetricKey) (packets string, err error) {
 	b := &bytes.Buffer{}
 	w := base64.NewEncoder(base64.StdEncoding, b)
@@ -305,8 +304,8 @@ func SetKey(kr *KeyRing, symKey *SymmetricKey) (packets string, err error) {
 	return
 }
 
+// IsKeyExpiredBin checks if the given key is expired. Input in binary format
 //Use: ios/android only
-//Check if the given key is expired. Input in binary format
 func (pm *PmCrypto) IsKeyExpiredBin(publicKey []byte) (bool, error) {
 	now := pm.getNow()
 	pubKeyReader := bytes.NewReader(publicKey)
@@ -365,8 +364,8 @@ const (
 	failed     = 3
 )
 
-//Use: ios/android only
-//Check if the given key is expired. Input in armored form
+// IsKeyExpired checks if the given key is expired. Input in armored format
+// Use: ios/android only
 func (pm *PmCrypto) IsKeyExpired(publicKey string) (bool, error) {
 	rawPubKey, err := armor.Unarmor(publicKey)
 	if err != nil {
@@ -444,29 +443,34 @@ func (pm *PmCrypto) generateKey(userName string, domain string, passphrase strin
 		return "", err
 	}
 	serialized := w.Bytes()
-	return armor.ArmorWithType(serialized, armor.PRIVATE_KEY_HEADER)
+	return armor.ArmorWithType(serialized, constants.PrivateKeyHeader)
 }
 
-func (pm *PmCrypto) GenerateRSAKeyWithPrimes(userName string, domain string, passphrase string, bits int,
-	primeone []byte, primetwo []byte, primethree []byte, primefour []byte) (string, error) {
+// GenerateRSAKeyWithPrimes generates RSA key with given primes.
+// Use: TODO
+func (pm *PmCrypto) GenerateRSAKeyWithPrimes(
+	userName, domain, passphrase string,
+	bits int,
+	primeone, primetwo, primethree, primefour []byte,
+) (string, error) {
 	return pm.generateKey(userName, domain, passphrase, "rsa", bits, primeone, primetwo, primethree, primefour)
 }
 
-// Use: ios/android only
 // GenerateKey ...
+// TODO: is it really disabled
 // disabled now, will enable later
 // #generat new key with email address. Fix the UserID issue in protonmail system. on Feb 28, 17
 // #static generate_key_with_email(email : string, passphrase : string, bits : i32) : open_pgp_key;
 // # generate new key
 // #static generate_new_key(user_id : string, email : string, passphrase : string, bits : i32) : open_pgp_key;
+// Use: ios/android only
 func (pm *PmCrypto) GenerateKey(userName string, domain string, passphrase string, keyType string, bits int) (string, error) {
 	return pm.generateKey(userName, domain, passphrase, keyType, bits, nil, nil, nil, nil)
 }
 
+// UpdatePrivateKeyPassphrase decrypts the given private key with oldPhrase and reencrypt with the newPassphrase
 // Use ios/android only
-// Decrypt given private key with oldPhrase and reencrypt with newPassphrase
 func (pm *PmCrypto) UpdatePrivateKeyPassphrase(privateKey string, oldPassphrase string, newPassphrase string) (string, error) {
-
 	privKey := strings.NewReader(privateKey)
 	privKeyEntries, err := openpgp.ReadArmoredKeyRing(privKey)
 	if err != nil {
@@ -506,11 +510,11 @@ func (pm *PmCrypto) UpdatePrivateKeyPassphrase(privateKey string, oldPassphrase 
 	}
 
 	serialized := w.Bytes()
-	return armor.ArmorWithType(serialized, armor.PRIVATE_KEY_HEADER)
+	return armor.ArmorWithType(serialized, constants.PrivateKeyHeader)
 }
 
-// Use: ios/android only
 // CheckKey print out the key and subkey fingerprint
+// Use: ios/android only
 func (pm *PmCrypto) CheckKey(pubKey string) (string, error) {
 	pubKeyReader := strings.NewReader(pubKey)
 	entries, err := openpgp.ReadArmoredKeyRing(pubKeyReader)

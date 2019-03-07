@@ -5,23 +5,25 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"math"
 	"time"
 
-	armorUtils "github.com/ProtonMail/go-pm-crypto/armor"
-	"github.com/ProtonMail/go-pm-crypto/internal"
-	"github.com/ProtonMail/go-pm-crypto/models"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
-	errors2 "golang.org/x/crypto/openpgp/errors"
+	pgpErrors "golang.org/x/crypto/openpgp/errors"
 	"golang.org/x/crypto/openpgp/packet"
-	"math"
+
+	armorUtils "github.com/ProtonMail/go-pm-crypto/armor"
+	"github.com/ProtonMail/go-pm-crypto/constants"
+	"github.com/ProtonMail/go-pm-crypto/internal"
+	"github.com/ProtonMail/go-pm-crypto/models"
 )
 
-// Use: ios/android only
-// DecryptMessage decrypt encrypted message use private key (string )
+// DecryptMessageStringKey decrypt encrypted message use private key (string )
 // encryptedText : string armored encrypted
 // privateKey : armored private use to decrypt message
 // passphrase : match with private key to decrypt message
+// Use: ios/android only
 func (pm *PmCrypto) DecryptMessageStringKey(encryptedText string, privateKey string, passphrase string) (string, error) {
 	privKeyRaw, err := armorUtils.Unarmor(privateKey)
 	if err != nil {
@@ -36,13 +38,12 @@ func (pm *PmCrypto) DecryptMessageStringKey(encryptedText string, privateKey str
 	return pm.DecryptMessage(encryptedText, &KeyRing{entities: privKeyEntries}, passphrase)
 }
 
-// Use ios/android only
-// DecryptMessageBinKey decrypt encrypted message use private key (bytes )
+// DecryptMessage decrypts encrypted string using keyring
 // encryptedText : string armored encrypted
-// privateKey : unarmored private use to decrypt message could be mutiple keys
+// privateKey : keyring with private key to decrypt message, could be mutiple keys
 // passphrase : match with private key to decrypt message
+// Use ios/android only
 func (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey *KeyRing, passphrase string) (string, error) {
-
 	md, err := decryptCore(encryptedText, nil, privateKey, passphrase, pm.getTimeGenerator())
 	if err != nil {
 		return "", err
@@ -59,7 +60,6 @@ func (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey *KeyRing, pa
 }
 
 func decryptCore(encryptedText string, additionalEntries openpgp.EntityList, privKey *KeyRing, passphrase string, timeFunc func() time.Time) (*openpgp.MessageDetails, error) {
-
 	rawPwd := []byte(passphrase)
 	privKey.Unlock(rawPwd)
 
@@ -136,7 +136,7 @@ func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey *KeyR
 
 // Handle signature time verification manually, so we can add a margin to the creationTime check.
 func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
-	if md.SignatureError == errors2.ErrSignatureExpired {
+	if md.SignatureError == pgpErrors.ErrSignatureExpired {
 		if verifyTime > 0 {
 			created := md.Signature.CreationTime.Unix()
 			expires := int64(math.MaxInt64)
@@ -160,7 +160,7 @@ func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 func (pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string) (string, error) {
 
 	var outBuf bytes.Buffer
-	w, err := armor.Encode(&outBuf, armorUtils.PGP_MESSAGE_HEADER, internal.ArmorHeaders)
+	w, err := armor.Encode(&outBuf, constants.PGPMessageHeader, internal.ArmorHeaders)
 	if err != nil {
 		return "", err
 	}
@@ -196,7 +196,7 @@ func (pm *PmCrypto) EncryptMessage(plainText string, publicKey *KeyRing, private
 		plainText = internal.TrimNewlines(plainText)
 	}
 	var outBuf bytes.Buffer
-	w, err := armor.Encode(&outBuf, armorUtils.PGP_MESSAGE_HEADER, internal.ArmorHeaders)
+	w, err := armor.Encode(&outBuf, constants.PGPMessageHeader, internal.ArmorHeaders)
 	if err != nil {
 		return "", err
 	}

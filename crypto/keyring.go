@@ -12,13 +12,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ProtonMail/go-pm-crypto/models"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
 	pgperrors "golang.org/x/crypto/openpgp/errors"
 	"golang.org/x/crypto/openpgp/packet"
 
 	armorUtils "github.com/ProtonMail/go-pm-crypto/armor"
+	"github.com/ProtonMail/go-pm-crypto/constants"
+	"github.com/ProtonMail/go-pm-crypto/models"
 )
 
 // A keypair contains a private key and a public key.
@@ -178,9 +179,8 @@ func EncryptCore(w io.Writer, encryptEntities []*openpgp.Entity, signEntity *ope
 	}
 	if canonicalizeText {
 		return openpgp.EncryptText(w, encryptEntities, signEntity, hints, config)
-	} else {
-		return openpgp.Encrypt(w, encryptEntities, signEntity, hints, config)
 	}
+	return openpgp.Encrypt(w, encryptEntities, signEntity, hints, config)
 }
 
 // An io.WriteCloser that both encrypts and armors data.
@@ -206,7 +206,7 @@ func (w *armorEncryptWriter) Close() (err error) {
 // EncryptArmored encrypts and armors data to the keyring's owner.
 // Use: go-pm-crypto, keyring.go
 func (kr *KeyRing) EncryptArmored(w io.Writer, sign *KeyRing) (wc io.WriteCloser, err error) {
-	aw, err := armorUtils.ArmorWithTypeBuffered(w, armorUtils.PGP_MESSAGE_HEADER)
+	aw, err := armorUtils.ArmorWithTypeBuffered(w, constants.PGPMessageHeader)
 	if err != nil {
 		return
 	}
@@ -287,7 +287,7 @@ func (kr *KeyRing) DecryptString(encrypted string) (SignedString, error) {
 // contents are still provided if library clients wish to process this message further
 // Use go-pmapi
 func (kr *KeyRing) DecryptStringIfNeeded(data string) (decrypted string, err error) {
-	if re := regexp.MustCompile("^-----BEGIN " + armorUtils.PGP_MESSAGE_HEADER + "-----(?s:.+)-----END " + armorUtils.PGP_MESSAGE_HEADER + "-----"); re.MatchString(data) {
+	if re := regexp.MustCompile("^-----BEGIN " + constants.PGPMessageHeader + "-----(?s:.+)-----END " + constants.PGPMessageHeader + "-----"); re.MatchString(data) {
 		var signed SignedString
 		signed, err = kr.DecryptString(data)
 		decrypted = signed.String
@@ -305,9 +305,8 @@ func (kr *KeyRing) SignString(message string, canonicalizeText bool) (signed str
 
 	if err != nil {
 		return "", err
-	} else {
-		return sig.String(), nil
 	}
+	return sig.String(), nil
 }
 
 // DetachedSign will sign a separate ("detached") data from toSign, writing to
@@ -451,7 +450,7 @@ func (kr *KeyRing) DecryptArmored(r io.Reader) (decrypted io.Reader, signed *Sig
 		return
 	}
 
-	if block.Type != armorUtils.PGP_MESSAGE_HEADER {
+	if block.Type != constants.PGPMessageHeader {
 		err = errors.New("pmapi: not an armored PGP message")
 		return
 	}

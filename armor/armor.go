@@ -4,6 +4,7 @@ package armor
 import (
 	"bytes"
 	"errors"
+	"github.com/ProtonMail/go-pm-crypto/constants"
 	"github.com/ProtonMail/go-pm-crypto/internal"
 	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/clearsign"
@@ -11,20 +12,20 @@ import (
 	"io/ioutil"
 )
 
-// Use: ios/android only
 // ArmorKey make bytes input key to armor format
+// Use: ios/android only
 func ArmorKey(input []byte) (string, error) {
-	return ArmorWithType(input, PUBLIC_KEY_HEADER)
+	return ArmorWithType(input, constants.PublicKeyHeader)
 }
 
-// Use: go-pm-crypto, keyring.go
 // ArmorWithTypeBuffered take input from io.Writer and returns io.WriteCloser which can be read for armored code
+// Use: go-pm-crypto, keyring.go
 func ArmorWithTypeBuffered(w io.Writer, armorType string) (io.WriteCloser, error) {
 	return armor.Encode(w, armorType, nil)
 }
 
-// Use: go-pm-crypto
 // ArmorWithType make bytes input to armor format
+// Use: go-pm-crypto
 func ArmorWithType(input []byte, armorType string) (string, error) {
 	var b bytes.Buffer
 
@@ -41,8 +42,8 @@ func ArmorWithType(input []byte, armorType string) (string, error) {
 	return b.String(), nil
 }
 
-// Use: go-pm-crypto, attachment.go, keyring.go, session.go, message.go
 // Unarmor an armored key to bytes key
+// Use: go-pm-crypto, attachment.go, keyring.go, session.go, message.go
 func Unarmor(input string) ([]byte, error) {
 	b, err := internal.Unarmor(input)
 	if err != nil {
@@ -51,8 +52,8 @@ func Unarmor(input string) ([]byte, error) {
 	return ioutil.ReadAll(b.Body)
 }
 
-// Use: ios/android only
 //ReadClearSignedMessage read clear message from a clearsign package (package containing cleartext and signature)
+// Use: ios/android only
 func ReadClearSignedMessage(signedMessage string) (string, error) {
 	modulusBlock, rest := clearsign.Decode([]byte(signedMessage))
 	if len(rest) != 0 {

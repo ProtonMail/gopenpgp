@@ -34,9 +34,7 @@ func (sc *SignatureCollector) Accept(part io.Reader, header textproto.MIMEHeader
 		newPart, rawBody := pmmime.GetRawMimePart(part, "--"+params["boundary"])
 		var multiparts []io.Reader
 		var multipartHeaders []textproto.MIMEHeader
-		if multiparts, multipartHeaders, err = pmmime.GetMultipartParts(newPart, params); err != nil {
-			return
-		} else {
+		if multiparts, multipartHeaders, err = pmmime.GetMultipartParts(newPart, params); err == nil {
 			hasPlainChild := false
 			for _, header := range multipartHeaders {
 				mediaType, _, _ := mime.ParseMediaType(header.Get("Content-Type"))

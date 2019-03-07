@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/ProtonMail/go-pm-crypto/armor"
+	"github.com/ProtonMail/go-pm-crypto/constants"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 	"strings"
@@ -55,7 +56,7 @@ func PublicKey(privateKey string) (string, error) {
 		e.Serialize(&outBuf)
 	}
 
-	outString, err := armor.ArmorWithType(outBuf.Bytes(), armor.PUBLIC_KEY_HEADER)
+	outString, err := armor.ArmorWithType(outBuf.Bytes(), constants.PublicKeyHeader)
 	if err != nil {
 		return "", nil
 	}
