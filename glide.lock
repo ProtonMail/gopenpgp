@@ -45,5 +45,4 @@ imports:
 - name: github.com/ProtonMail/go-pm-mime
   version: 56f1d379d824060de4ae591dadf54bbbe4b47f08
   repo: https://gitlab.protontech.ch/ProtonMail/go-pm-mime.git
-  version: feat/mimevisitor
 testImports: []
