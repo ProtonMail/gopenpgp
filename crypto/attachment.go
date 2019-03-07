@@ -107,10 +107,9 @@ func (pm *PmCrypto) EncryptAttachmentLowMemory(estimatedSize int, fileName strin
 	return pm.encryptAttachment(estimatedSize, fileName, publicKey, 1<<20)
 }
 
-// Use: ios/android only
 // Helper method. Splits armored pgp session into key and packet data
+// Use: ios/android only
 func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
-
 	var err error
 
 	encryptedRaw, err := armorUtils.Unarmor(encrypted)
@@ -121,7 +120,6 @@ func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
 	encryptedReader := bytes.NewReader(encryptedRaw)
 
 	return SeparateKeyAndData(nil, encryptedReader, len(encrypted), -1)
-
 }
 
 // Use: ios/android only

@@ -112,10 +112,9 @@ func DecryptAttKey(kr *KeyRing, keyPacket string) (key *SymmetricKey, err error)
 	return
 }
 
+// SeparateKeyAndData from packets in a pgp session
 // Use: bridge, ios/android, go-pm-crypto, attachment.go, keyring.go
-// Separate key and data packets in a pgp session
 func SeparateKeyAndData(kr *KeyRing, r io.Reader, estimatedLength int, garbageCollector int) (outSplit *models.EncryptedSplit, err error) {
-
 	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
 	packets := packet.NewReader(r)
 	outSplit = &models.EncryptedSplit{}
