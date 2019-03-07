@@ -2,13 +2,15 @@ package crypto
 
 import (
 	"bytes"
-	"github.com/ProtonMail/go-pm-mime"
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/packet"
 	"io"
 	"io/ioutil"
 	"mime"
 	"net/textproto"
+
+	"github.com/ProtonMail/go-pm-mime"
+
+	"golang.org/x/crypto/openpgp"
+	"golang.org/x/crypto/openpgp/packet"
 )
 
 // Use: ios/android only

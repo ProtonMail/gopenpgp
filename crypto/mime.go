@@ -2,16 +2,18 @@ package crypto
 
 import (
 	"bytes"
-	"github.com/ProtonMail/go-pm-mime"
-	"golang.org/x/crypto/openpgp/packet"
 	"io/ioutil"
 	"net/mail"
 	"net/textproto"
 	"strings"
+
+	pmmime "github.com/ProtonMail/go-pm-mime"
+
+	"golang.org/x/crypto/openpgp"
+	"golang.org/x/crypto/openpgp/packet"
 )
 
 func (pm PmCrypto) parseMIME(mimeBody string, verifierKey *KeyRing) (*pmmime.BodyCollector, int, []string, []string, error) {
-
 	mm, err := mail.ReadMessage(strings.NewReader(mimeBody))
 	if err != nil {
 		return nil, 0, nil, nil, err
@@ -25,10 +27,14 @@ func (pm PmCrypto) parseMIME(mimeBody string, verifierKey *KeyRing) (*pmmime.Bod
 	bodyCollector := pmmime.NewBodyCollector(printAccepter)
 	attachmentsCollector := pmmime.NewAttachmentsCollector(bodyCollector)
 	mimeVisitor := pmmime.NewMimeVisitor(attachmentsCollector)
-	// TODO: build was failing on this unused 'str' variable. This code looks like WIP
-	//str, err := armor.ArmorKey(verifierKey)
 
-	signatureCollector := newSignatureCollector(mimeVisitor, verifierKey.entities, config)
+	var pgpKering openpgp.KeyRing
+	if verifierKey != nil {
+		pgpKering = verifierKey.entities
+	}
+
+	signatureCollector := newSignatureCollector(mimeVisitor, pgpKering, config)
+
 	err = pmmime.VisitAll(bytes.NewReader(mmBodyData), h, signatureCollector)
 
 	verified := signatureCollector.verified

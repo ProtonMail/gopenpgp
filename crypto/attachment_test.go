@@ -17,7 +17,7 @@ dille.
 
 const testAttachmentEncrypted = `0ksB0fHC6Duezx/0TqpK/82HSl8+qCY0c2BCuyrSFoj6Dubd93T3//32jVYa624NYvfvxX+UxFKYKJxG09gFsU1IVc87cWvUgmUmgjU=`
 
-func TestAttachment_GetKey(t *testing.T) {
+func TestAttachmentGetKey(t *testing.T) {
 	split, err := SeparateKeyAndData(testPrivateKeyRing, strings.NewReader(testKeyPackets), len(testKeyPackets), -1)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting attachment key, got:", err)
@@ -28,8 +28,7 @@ func TestAttachment_GetKey(t *testing.T) {
 	}
 }
 
-func TestAttachment_SetKey(t *testing.T) {
-
+func TestAttachmentSetKey(t *testing.T) {
 	var packets string
 	var err error
 
@@ -48,7 +47,7 @@ func TestAttachment_SetKey(t *testing.T) {
 	}
 }
 
-func TestAttachnent_EncryptDecrypt(t *testing.T) {
+func TestAttachnentEncryptDecrypt(t *testing.T) {
 	plainData, _ := base64.StdEncoding.DecodeString(testAttachmentCleartext)
 
 	var pmCrypto = PmCrypto{}
@@ -66,7 +65,7 @@ func TestAttachnent_EncryptDecrypt(t *testing.T) {
 	s := string(redecData)
 
 	if testAttachmentCleartext != s {
-		t.Fatalf("Invalid decrypted attachment: expected %v, got %v", testAttachmentCleartext, s)
+		t.Fatalf("Invalid decrypted attachment: expected\n%v\ngot\n%v", testAttachmentCleartext, s)
 	}
 
 }
