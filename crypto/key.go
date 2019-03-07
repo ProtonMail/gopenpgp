@@ -78,8 +78,8 @@ func newSymmetricKey(ek *packet.EncryptedKey) *SymmetricKey {
 	}
 }
 
+// DecryptAttKey and return a symmetric key
 // Use: bridge
-// Decrypt and return a symmetric key
 func DecryptAttKey(kr *KeyRing, keyPacket string) (key *SymmetricKey, err error) {
 	r := base64.NewDecoder(base64.StdEncoding, strings.NewReader(keyPacket))
 	packets := packet.NewReader(r)
