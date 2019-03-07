@@ -4,7 +4,7 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: 3791101e143bf0f32515ac23e831475684f61229
 - name: golang.org/x/crypto
-  version: 26363818da67edd6e5591bcfac10765337b0ee39
+  version: 25f88b74191b57d090d6d7cffaea61a9046393f4
   repo: https://github.com/ProtonMail/crypto.git
   subpackages:
   - bitcurves
@@ -43,7 +43,7 @@ imports:
   - encoding/internal/identifier
   - transform
 - name: github.com/ProtonMail/go-pm-mime
-  version: 347d69204aa62d6958bcb3b9bbacccb24a36372b
+  version: 56f1d379d824060de4ae591dadf54bbbe4b47f08
   repo: https://gitlab.protontech.ch/ProtonMail/go-pm-mime.git
   version: feat/mimevisitor
 testImports: []
