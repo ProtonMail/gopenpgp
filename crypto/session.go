@@ -124,7 +124,7 @@ func (pm *PmCrypto) KeyPacketWithPublicKeyBin(sessionSplit *SymmetricKey, public
 	}
 
 	if err = packet.SerializeEncryptedKey(outbuf, pub, cf, sessionSplit.Key, nil); err != nil {
-		err = fmt.Errorf("pmapi: cannot set key: %v", err)
+		err = fmt.Errorf("pm-crypto: cannot set key: %v", err)
 		return nil, errors.New("cannot set key: key ring is empty")
 	}
 	return outbuf.Bytes(), nil

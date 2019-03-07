@@ -59,7 +59,7 @@ type SignedString struct {
 	Signed *Signature
 }
 
-var errKeyringNotUnlocked = errors.New("pmapi: cannot sign message, key ring is not unlocked")
+var errKeyringNotUnlocked = errors.New("pm-crypto: cannot sign message, key ring is not unlocked")
 
 // Err returns a non-nil error if the signature is invalid.
 // Use: not used by bridge
@@ -451,7 +451,7 @@ func (kr *KeyRing) DecryptArmored(r io.Reader) (decrypted io.Reader, signed *Sig
 	}
 
 	if block.Type != constants.PGPMessageHeader {
-		err = errors.New("pmapi: not an armored PGP message")
+		err = errors.New("pm-crypto: not an armored PGP message")
 		return
 	}
 
@@ -524,7 +524,7 @@ func (kr *KeyRing) readFrom(r io.Reader, armored bool) error {
 	}
 
 	if len(entities) == 0 {
-		return errors.New("pmapi: key ring doesn't contain any key")
+		return errors.New("pm-crypto: key ring doesn't contain any key")
 	}
 
 	kr.entities = append(kr.entities, entities...)

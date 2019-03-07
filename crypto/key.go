@@ -50,7 +50,7 @@ func (sk *SymmetricKey) GetCipherFunc() packet.CipherFunction {
 		return cf
 	}
 
-	panic("pmapi: unsupported cipher function: " + sk.Algo)
+	panic("pm-crypto: unsupported cipher function: " + sk.Algo)
 }
 
 // GetBase64Key returns a key as base64 encoded string
@@ -68,7 +68,7 @@ func newSymmetricKey(ek *packet.EncryptedKey) *SymmetricKey {
 		}
 	}
 	if algo == "" {
-		panic(fmt.Sprintf("pmapi: unsupported cipher function: %v", ek.CipherFunc))
+		panic(fmt.Sprintf("pm-crypto: unsupported cipher function: %v", ek.CipherFunc))
 	}
 
 	return &SymmetricKey{
@@ -103,7 +103,7 @@ func DecryptAttKey(kr *KeyRing, keyPacket string) (key *SymmetricKey, err error)
 	}
 
 	if decryptErr != nil {
-		err = fmt.Errorf("pmapi: cannot decrypt encrypted key packet: %v", decryptErr)
+		err = fmt.Errorf("pm-crypto: cannot decrypt encrypted key packet: %v", decryptErr)
 		return
 	}
 
@@ -202,15 +202,15 @@ func SeparateKeyAndData(kr *KeyRing, r io.Reader, estimatedLength int, garbageCo
 		}
 	}
 	if decryptErr != nil {
-		err = fmt.Errorf("pmapi: cannot decrypt encrypted key packet: %v", decryptErr)
+		err = fmt.Errorf("pm-crypto: cannot decrypt encrypted key packet: %v", decryptErr)
 		return
 	}
 	if ek == nil {
-		err = errors.New("pmapi: packets don't include an encrypted key packet")
+		err = errors.New("pm-crypto: packets don't include an encrypted key packet")
 		return
 	}
 	/*if ek.Key == nil {
-		err = errors.New("pmapi: could not find any key to decrypt key")
+		err = errors.New("pm-crypto: could not find any key to decrypt key")
 		return
 	}*/
 
@@ -255,12 +255,12 @@ func SetKey(kr *KeyRing, symKey *SymmetricKey) (packets string, err error) {
 
 	//k, err := base64.StdEncoding.DecodeString(symKey.Key)
 	//if err != nil {
-	//	err = fmt.Errorf("pmapi: cannot set key: %v", err)
+	//	err = fmt.Errorf("pm-crypto: cannot set key: %v", err)
 	//	return
 	//}
 
 	if len(kr.entities) == 0 {
-		err = fmt.Errorf("pmapi: cannot set key: key ring is empty")
+		err = fmt.Errorf("pm-crypto: cannot set key: key ring is empty")
 		return
 	}
 
@@ -286,17 +286,17 @@ func SetKey(kr *KeyRing, symKey *SymmetricKey) (packets string, err error) {
 		}
 	}
 	if pub == nil {
-		err = fmt.Errorf("pmapi: cannot set key: no public key available")
+		err = fmt.Errorf("pm-crypto: cannot set key: no public key available")
 		return
 	}
 
 	if err = packet.SerializeEncryptedKey(w, pub, cf, symKey.Key, nil); err != nil {
-		err = fmt.Errorf("pmapi: cannot set key: %v", err)
+		err = fmt.Errorf("pm-crypto: cannot set key: %v", err)
 		return
 	}
 
 	if err = w.Close(); err != nil {
-		err = fmt.Errorf("pmapi: cannot set key: %v", err)
+		err = fmt.Errorf("pm-crypto: cannot set key: %v", err)
 		return
 	}
 
