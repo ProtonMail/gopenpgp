@@ -1,3 +1,9 @@
+# Common client library for cryptography
+
+_this should be imported in go as_ `github.com/ProtonMail/go-pm-crypto`
+
+
+
 setup gomobile and build/bind the source code:
 
 Gomobile repo: https://github.com/golang/mobile 
