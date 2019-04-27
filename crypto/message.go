@@ -140,8 +140,8 @@ func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 		if verifyTime > 0 {
 			created := md.Signature.CreationTime.Unix()
 			expires := int64(math.MaxInt64)
-			if md.Signature.KeyLifetimeSecs != nil {
-				expires = int64(*md.Signature.KeyLifetimeSecs) + created
+			if md.Signature.SigLifetimeSecs != nil {
+				expires = int64(*md.Signature.SigLifetimeSecs) + created
 			}
 			if created-internal.CreationTimeOffset <= verifyTime && verifyTime <= expires {
 				md.SignatureError = nil
