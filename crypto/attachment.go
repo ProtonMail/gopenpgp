@@ -75,14 +75,13 @@ func (pm *PmCrypto) encryptAttachment(estimatedSize int, fileName string, public
 	var ew io.WriteCloser
 	var encryptErr error
 	ew, encryptErr = openpgp.Encrypt(writer, publicKey.entities, nil, hints, config)
+	if encryptErr != nil {
+		return nil, encryptErr
+	}
 	attachmentProc.w = &ew
 	attachmentProc.pipe = writer
-	if attachmentProc.err != nil {
-		attachmentProc.err = encryptErr
-	}
 
 	return attachmentProc, nil
-
 }
 
 // Use: ios/android only
