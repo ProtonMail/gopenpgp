@@ -1,0 +1,9 @@
+stages:
+    - test
+
+test-all:
+    stage: test
+    image: golang:1.11
+    script:
+        - glide install
+        - go test ./...
