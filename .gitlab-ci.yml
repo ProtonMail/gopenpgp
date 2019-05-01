@@ -1,9 +1,11 @@
 stages:
     - test
 
+
 test-all:
     stage: test
     image: golang:1.11
     script:
+        - curl https://glide.sh/get | sh
         - glide install
         - go test ./...
