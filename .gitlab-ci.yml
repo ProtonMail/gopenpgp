@@ -1,11 +1,22 @@
+variables:
+  # Please edit to your GitLab project
+  REPO_NAME: github.com/ProtonMail/go-pm-crypto
+
+before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    - export PATH=/opt/local/bin:$PATH
+    - mkdir -p $GOPATH/src/$(dirname $REPO_NAME)
+    - ln -svf $CI_PROJECT_DIR $GOPATH/src/$REPO_NAME
+    - cd $GOPATH/src/$REPO_NAME
+    - glide install
+
 stages:
     - test
 
-
 test-all:
     stage: test
-    image: golang:1.11
+    image: gitlab.protontech.ch:4567/protonmail/import-export/linux
     script:
-        - curl https://glide.sh/get | sh
-        - glide install
         - go test ./...
