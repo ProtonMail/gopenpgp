@@ -320,7 +320,7 @@ func (pm *PmCrypto) IsKeyExpiredBin(publicKey []byte) (bool, error) {
 			if subkey.Sig.FlagsValid &&
 				subkey.Sig.FlagEncryptCommunications &&
 				subkey.PublicKey.PubKeyAlgo.CanEncrypt() &&
-				!subkey.Sig.KeyExpired(now) &&
+				!subkey.PublicKey.KeyExpired(subkey.Sig, now) &&
 				(maxTime.IsZero() || subkey.Sig.CreationTime.After(maxTime)) {
 				candidateSubkey = i
 				maxTime = subkey.Sig.CreationTime
@@ -349,7 +349,7 @@ func (pm *PmCrypto) IsKeyExpiredBin(publicKey []byte) (bool, error) {
 			i := firstIdentity
 			if !i.SelfSignature.FlagsValid || i.SelfSignature.FlagEncryptCommunications &&
 				e.PrimaryKey.PubKeyAlgo.CanEncrypt() &&
-				!i.SelfSignature.KeyExpired(now) {
+				!e.PrimaryKey.KeyExpired(i.SelfSignature, now) {
 				return false, nil
 			}
 		}

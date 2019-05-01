@@ -639,7 +639,7 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 			hasExpired := false
 			hasUnexpired := false
 			for _, subkey := range entity.Subkeys {
-				if subkey.Sig.KeyExpired(now) {
+				if subkey.PublicKey.KeyExpired(subkey.Sig, now) {
 					hasExpired = true
 				} else {
 					hasUnexpired = true
