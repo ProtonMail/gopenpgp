@@ -1,58 +1,59 @@
 package crypto
 
 import (
-	//	"bytes"
+	"github.com/stretchr/testify/assert"
 	"encoding/base64"
-	//	"io/ioutil"
-	"reflect"
+	"io/ioutil"
 	"strings"
 	"testing"
 )
 
-var testKeyPackets = "wcBMA0fcZ7XLgmf2AQgAiRsOlnm1kSB4/lr7tYe6pBsRGn10GqwUhrwU5PMKOHdCgnO12jO3y3CzP0Yl/jGhAYja9wLDqH8X0sk3tY32u4Sb1Qe5IuzggAiCa4dwOJj5gEFMTHMzjIMPHR7A70XqUxMhmILye8V4KRm/j4c1sxbzA1rM3lYBumQuB5l/ck0Kgt4ZqxHVXHK5Q1l65FHhSXRj8qnunasHa30TYNzP8nmBA8BinnJxpiQ7FGc2umnUhgkFt    jm5ixu9vyjr9ukwDTbwAXXfmY+o7tK7kqIXJcmTL6k2UeC6Mz1AagQtRCRtU+bv/3zGojq/trZo9lom3naIeQYa36Ketmcpj2Qwjg=="
-
-const testAttachmentCleartext = `cc,
-dille.
-`
-
-const testAttachmentEncrypted = `0ksB0fHC6Duezx/0TqpK/82HSl8+qCY0c2BCuyrSFoj6Dubd93T3//32jVYa624NYvfvxX+UxFKYKJxG09gFsU1IVc87cWvUgmUmgjU=`
+// const testAttachmentEncrypted = `0ksB0fHC6Duezx/0TqpK/82HSl8+qCY0c2BCuyrSFoj6Dubd93T3//32jVYa624NYvfvxX+UxFKYKJxG09gFsU1IVc87cWvUgmUmgjU=`
 
 func TestAttachmentGetKey(t *testing.T) {
-	split, err := SeparateKeyAndData(testPrivateKeyRing, strings.NewReader(testKeyPackets), len(testKeyPackets), -1)
+	testKeyPackets, err := ioutil.ReadFile("testdata/attachment_keypacket")
+	if err != nil {
+	  t.Error("Expected no error while reading from file, got:", err)
+	  return
+	}
+
+	testKeyPacketsDecoded, err := base64.StdEncoding.DecodeString(string(testKeyPackets))
+	if err != nil {
+		t.Fatal("Expected no error while decoding base64 KeyPacket, got:", err)
+	}
+
+	split, err := SeparateKeyAndData(testPrivateKeyRing, strings.NewReader(string(testKeyPacketsDecoded)), len(testKeyPacketsDecoded), -1)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting attachment key, got:", err)
 	}
 
-	if !reflect.DeepEqual(testSymmetricKey, split.KeyPacket) {
-		t.Fatalf("Invalid attachment key: expected %+v, got %+v", testSymmetricKey, split.KeyPacket)
-	}
+	assert.Exactly(t, testSymmetricKey.Key, split.KeyPacket)
 }
 
 func TestAttachmentSetKey(t *testing.T) {
-	var packets string
-	var err error
-
-	if packets, err = SetKey(testPublicKeyRing, testSymmetricKey); err != nil {
+	packets, err := SetKey(testPublicKeyRing, testSymmetricKey)
+	if err != nil {
 		t.Fatal("Expected no error while encrypting attachment key, got:", err)
 	}
-	keyPackets := packets
 
-	split, err := SeparateKeyAndData(testPrivateKeyRing, strings.NewReader(keyPackets), len(keyPackets), -1)
+	keyPackets, err := base64.StdEncoding.DecodeString(packets)
+	if err != nil {
+		t.Fatal("Expected no error while decoding base64 KeyPacket, got:", err)
+	}
+
+	split, err := SeparateKeyAndData(testPrivateKeyRing, strings.NewReader(string(keyPackets)), len(keyPackets), -1)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting attachment key, got:", err)
 	}
 
-	if !reflect.DeepEqual(testSymmetricKey, split.KeyPacket) {
-		t.Fatalf("Invalid attachment key: expected %+v, got %+v", testSymmetricKey, split.KeyPacket)
-	}
+	assert.Exactly(t, testSymmetricKey.Key, split.KeyPacket)
 }
 
 func TestAttachnentEncryptDecrypt(t *testing.T) {
-	plainData, _ := base64.StdEncoding.DecodeString(testAttachmentCleartext)
-
 	var pmCrypto = PmCrypto{}
+	var testAttachmentCleartext = "cc,\ndille."
 
-	encSplit, err := pmCrypto.EncryptAttachment(plainData, "s.txt", testPrivateKeyRing)
+	encSplit, err := pmCrypto.EncryptAttachment([]byte(testAttachmentCleartext), "s.txt", testPrivateKeyRing)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting attachment, got:", err)
 	}
@@ -62,10 +63,5 @@ func TestAttachnentEncryptDecrypt(t *testing.T) {
 		t.Fatal("Expected no error while decrypting attachment, got:", err)
 	}
 
-	s := string(redecData)
-
-	if testAttachmentCleartext != s {
-		t.Fatalf("Invalid decrypted attachment: expected\n%v\ngot\n%v", testAttachmentCleartext, s)
-	}
-
+	assert.Exactly(t, testAttachmentCleartext, string(redecData))
 }

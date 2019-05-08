@@ -45,4 +45,16 @@ imports:
 - name: github.com/ProtonMail/go-pm-mime
   version: dc270ae56b61837aa404c828a14b8ea731167ac0
   repo: https://gitlab.protontech.ch/ProtonMail/go-pm-mime.git
-testImports: []
+testImports:
+  - name: github.com/davecgh/go-spew
+    version: d8f796af33cc11cb798c1aaeb27a4ebc5099927d
+    subpackages:
+    - spew
+  - name: github.com/pmezard/go-difflib
+    version: 5d4384ee4fb2527b0a1256a821ebfc92f91efefc
+    subpackages:
+    - difflib
+  - name: github.com/stretchr/testify
+    version: 34c6fa2dc70986bccbbffcc6130f6920a924b075
+    subpackages:
+    - assert

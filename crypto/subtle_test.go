@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"github.com/stretchr/testify/assert"
 	"encoding/hex"
 	"testing"
 )
@@ -11,9 +12,7 @@ func TestSubtle_EncryptWithoutIntegrity(t *testing.T) {
 	iv, _ := hex.DecodeString("c828f258a76aad7bc828f258a76aad7b")
 
 	ciphertext, _ := EncryptWithoutIntegrity(key, plaintext, iv)
-	if hex.EncodeToString(ciphertext) != "14697192f7e112fc88d83380693f" {
-		t.Fatal("EncryptWithoutIntegrity returned unexpected result")
-	}
+	assert.Exactly(t, "14697192f7e112fc88d83380693f", hex.EncodeToString(ciphertext))
 }
 
 func TestSubtle_DecryptWithoutIntegrity(t *testing.T) {
@@ -22,15 +21,11 @@ func TestSubtle_DecryptWithoutIntegrity(t *testing.T) {
 	iv, _ := hex.DecodeString("c828f258a76aad7bc828f258a76aad7b")
 
 	plaintext, _ := DecryptWithoutIntegrity(key, ciphertext, iv)
-	if string(plaintext) != "some plaintext" {
-		t.Fatal("DecryptWithoutIntegrity returned unexpected result")
-	}
+	assert.Exactly(t, "some plaintext", string(plaintext))
 }
 
 func TestSubtle_DeriveKey(t *testing.T) {
 	salt, _ := hex.DecodeString("c828f258a76aad7b")
 	dk, _ := DeriveKey("some password", salt, 32768)
-	if hex.EncodeToString(dk) != "9469cccfc8a8d005247f39fa3e5b35a97db456cecf18deac6d84364d0818d763" {
-		t.Fatal("DeriveKey returned unexpected result")
-	}
+	assert.Exactly(t, "9469cccfc8a8d005247f39fa3e5b35a97db456cecf18deac6d84364d0818d763", hex.EncodeToString(dk))
 }
