@@ -19,4 +19,15 @@ test-all:
     stage: test
     image: gitlab.protontech.ch:4567/protonmail/import-export/linux
     script:
-        - go test ./...
+        - go test -coverprofile cover.out ./...
+        - mkdir reports
+        - go tool cover -html=cover.out -o reports/cover.html
+    tags:
+        - coverage
+    artifacts:
+        paths:
+            - reports
+        reports:
+            junit: reports/cover.html
+        when: always
+        expire_in: 5 days

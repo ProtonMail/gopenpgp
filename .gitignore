@@ -3,3 +3,6 @@ bin
 dist
 vendor
 .vscode
+.out
+.html
+reports
