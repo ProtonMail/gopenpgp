@@ -13,8 +13,8 @@ import (
 func TestAttachmentGetKey(t *testing.T) {
 	testKeyPackets, err := ioutil.ReadFile("testdata/attachment_keypacket")
 	if err != nil {
-	  t.Error("Expected no error while reading from file, got:", err)
-	  return
+		t.Error("Expected no error while reading from file, got:", err)
+		return
 	}
 
 	testKeyPacketsDecoded, err := base64.StdEncoding.DecodeString(string(testKeyPackets))
