@@ -16,6 +16,7 @@ import (
 	"golang.org/x/crypto/openpgp/armor"
 	pgperrors "golang.org/x/crypto/openpgp/errors"
 	"golang.org/x/crypto/openpgp/packet"
+	xrsa "golang.org/x/crypto/rsa"
 
 	armorUtils "github.com/ProtonMail/go-pm-crypto/armor"
 	"github.com/ProtonMail/go-pm-crypto/constants"
@@ -503,7 +504,7 @@ func (kr *KeyRing) readFrom(r io.Reader, armored bool) error {
 			switch entity.PrivateKey.PrivateKey.(type) {
 			// TODO: type mismatch after crypto lib update, fix this:
 			case *rsa.PrivateKey:
-				entity.PrimaryKey = packet.NewRSAPublicKey(time.Now(), entity.PrivateKey.PrivateKey.(*rsa.PrivateKey).Public().(*rsa.PublicKey))
+				entity.PrimaryKey = packet.NewRSAPublicKey(time.Now(), entity.PrivateKey.PrivateKey.(*rsa.PrivateKey).Public().(*xrsa.PublicKey))
 			case *ecdsa.PrivateKey:
 				entity.PrimaryKey = packet.NewECDSAPublicKey(time.Now(), entity.PrivateKey.PrivateKey.(*ecdsa.PrivateKey).Public().(*ecdsa.PublicKey))
 			}
@@ -512,7 +513,7 @@ func (kr *KeyRing) readFrom(r io.Reader, armored bool) error {
 			if subkey.PrivateKey != nil {
 				switch subkey.PrivateKey.PrivateKey.(type) {
 				case *rsa.PrivateKey:
-					subkey.PublicKey = packet.NewRSAPublicKey(time.Now(), subkey.PrivateKey.PrivateKey.(*rsa.PrivateKey).Public().(*rsa.PublicKey))
+					subkey.PublicKey = packet.NewRSAPublicKey(time.Now(), subkey.PrivateKey.PrivateKey.(*rsa.PrivateKey).Public().(*xrsa.PublicKey))
 				case *ecdsa.PrivateKey:
 					subkey.PublicKey = packet.NewECDSAPublicKey(time.Now(), subkey.PrivateKey.PrivateKey.(*ecdsa.PrivateKey).Public().(*ecdsa.PublicKey))
 				}
