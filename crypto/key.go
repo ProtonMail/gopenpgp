@@ -456,8 +456,8 @@ func (pm *PmCrypto) GenerateRSAKeyWithPrimes(
 	return pm.generateKey(userName, domain, passphrase, "rsa", bits, primeone, primetwo, primethree, primefour)
 }
 
-// GenerateKey ...
-// TODO: is it really disabled
+// GenerateKey and generate primes
+// TODO: is it really disabled -> no this is used by android
 // disabled now, will enable later
 // #generat new key with email address. Fix the UserID issue in protonmail system. on Feb 28, 17
 // #static generate_key_with_email(email : string, passphrase : string, bits : i32) : open_pgp_key;
