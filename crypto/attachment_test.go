@@ -50,7 +50,6 @@ func TestAttachmentSetKey(t *testing.T) {
 }
 
 func TestAttachnentEncryptDecrypt(t *testing.T) {
-	var pmCrypto = PmCrypto{}
 	var testAttachmentCleartext = "cc,\ndille."
 
 	encSplit, err := pmCrypto.EncryptAttachment([]byte(testAttachmentCleartext), "s.txt", testPrivateKeyRing)

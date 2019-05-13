@@ -480,13 +480,10 @@ func (pm *PmCrypto) CheckKey(pubKey string) (string, error) {
 	for _, e := range entries {
 		for _, subKey := range e.Subkeys {
 			if !subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage || subKey.Sig.FlagEncryptCommunications {
-
-				println("SubKey:" + hex.EncodeToString(subKey.PublicKey.Fingerprint[:]))
-
+				fmt.Println("SubKey:" + hex.EncodeToString(subKey.PublicKey.Fingerprint[:]))
 			}
 		}
-		println("PrimaryKey:" + hex.EncodeToString(e.PrimaryKey.Fingerprint[:]))
-
+		fmt.Println("PrimaryKey:" + hex.EncodeToString(e.PrimaryKey.Fingerprint[:]))
 	}
 	return "", nil
 }

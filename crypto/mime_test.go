@@ -36,7 +36,6 @@ func (t Callbacks) OnError(err error) {
 }
 
 func TestDecrypt(t *testing.T) {
-	var pmCrypto = PmCrypto{}
 	callbacks := Callbacks{
 		Testing: t,
 	}
@@ -65,8 +64,6 @@ func TestDecrypt(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	var pmCrypto = PmCrypto{}
-
 	body, _, atts, attHeaders, err := pmCrypto.parseMIME(readTestFile("mime_testMessage"), nil)
 
 	if err != nil {

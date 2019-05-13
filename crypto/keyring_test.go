@@ -34,14 +34,6 @@ var testIdentity = &Identity{
 	Email: "",
 }
 
-func readTestFile(name string) string {
-	data, err := ioutil.ReadFile("testdata/" + name)
-	if err != nil {
-	  panic(err)
-	}
-	return string(data)
-}
-
 func init() {
 	var err error
 	if testPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey"))); err != nil {
