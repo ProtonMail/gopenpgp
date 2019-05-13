@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"runtime"
@@ -123,7 +124,10 @@ func (pm *PmCrypto) DecryptAttachment(keyPacket []byte, dataPacket []byte, kr *K
 
 	privKeyEntries := kr.entities
 
-	kr.Unlock([]byte(passphrase))
+	if err := kr.Unlock([]byte(passphrase)); err != nil {
+		err = fmt.Errorf("pm-crypto: cannot decrypt attachment: %v", err)
+		return nil, err
+	}
 
 	keyReader := bytes.NewReader(keyPacket)
 	dataReader := bytes.NewReader(dataPacket)

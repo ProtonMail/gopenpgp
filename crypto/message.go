@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"math"
@@ -59,7 +60,10 @@ func (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey *KeyRing, pa
 
 func decryptCore(encryptedText string, additionalEntries openpgp.EntityList, privKey *KeyRing, passphrase string, timeFunc func() time.Time) (*openpgp.MessageDetails, error) {
 	rawPwd := []byte(passphrase)
-	privKey.Unlock(rawPwd)
+	if err := privKey.Unlock(rawPwd); err != nil {
+		err = fmt.Errorf("pm-crypto: cannot decrypt passphrase: %v", err)
+		return nil, err
+	}
 
 	privKeyEntries := privKey.entities
 	for _, entity := range privKey.entities {

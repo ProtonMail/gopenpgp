@@ -51,7 +51,9 @@ func PublicKey(privateKey string) (string, error) {
 
 	var outBuf bytes.Buffer
 	for _, e := range entries {
-		e.Serialize(&outBuf)
+		if err := e.Serialize(&outBuf); err != nil {
+			return "", err
+		}
 	}
 
 	outString, err := armor.ArmorWithType(outBuf.Bytes(), constants.PublicKeyHeader)
@@ -72,7 +74,9 @@ func PublicKeyBinOut(privateKey string) ([]byte, error) {
 
 	var outBuf bytes.Buffer
 	for _, e := range entries {
-		e.Serialize(&outBuf)
+		if err := e.Serialize(&outBuf); err != nil {
+			return nil, err
+		}
 	}
 
 	return outBuf.Bytes(), nil
