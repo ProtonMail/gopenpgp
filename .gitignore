@@ -6,3 +6,4 @@ vendor
 *.out
 *.html
 reports
+.idea

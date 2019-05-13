@@ -527,6 +527,9 @@ func (pm *PmCrypto) BuildKeyRingNoError(binKeys []byte) (kr *KeyRing) {
 // BuildKeyRingArmored reads armored string and returns keyring
 func (pm *PmCrypto) BuildKeyRingArmored(key string) (kr *KeyRing, err error) {
 	keyRaw, err := armorUtils.Unarmor(key)
+	if err != nil {
+		return nil, err
+	}
 	keyReader := bytes.NewReader(keyRaw)
 	keyEntries, err := openpgp.ReadKeyRing(keyReader)
 	return &KeyRing{entities: keyEntries}, err

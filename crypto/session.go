@@ -46,9 +46,6 @@ func (pm *PmCrypto) GetSessionFromKeyPacket(keyPackage []byte, privateKey *KeyRi
 
 	ek := p.(*packet.EncryptedKey)
 
-	if err != nil {
-		return nil, err
-	}
 	rawPwd := []byte(passphrase)
 	var decryptErr error
 	for _, key := range privateKey.entities.DecryptionKeys() {

@@ -192,22 +192,23 @@ func SeparateKeyAndData(kr *KeyRing, r io.Reader, estimatedLength int, garbageCo
 			}
 
 			outSplit.DataPacket = symEncryptedData
-			break
-
 		}
 	}
 	if decryptErr != nil {
 		err = fmt.Errorf("pm-crypto: cannot decrypt encrypted key packet: %v", decryptErr)
-		return
+		return nil, err
 	}
 	if ek == nil {
 		err = errors.New("pm-crypto: packets don't include an encrypted key packet")
-		return
+		return nil, err
 	}
 
 	if kr == nil {
 		var buf bytes.Buffer
-		ek.Serialize(&buf)
+		if err := ek.Serialize(&buf); err != nil {
+			err = fmt.Errorf("pm-crypto: cannot serialize encrypted key: %v", err)
+			return nil, err
+		}
 		outSplit.KeyPacket = buf.Bytes()
 	} else {
 		key := newSymmetricKey(ek)
