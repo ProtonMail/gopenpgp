@@ -1,58 +1,39 @@
-# Common client library for cryptography
+# GopenPGP Wrapper Library
 
-_this should be imported in go as_ `github.com/ProtonMail/go-pm-crypto`
+## Download/Install
 
+Manually `git clone` the repository into `$GOPATH/src/github.com/ProtonMail/go-pm-crypto`.
 
+This library is meant to be used together with https://github.com/ProtonMail/crypto.
 
-setup gomobile and build/bind the source code:
+## Using with Go Mobile
 
-Gomobile repo: https://github.com/golang/mobile 
-Gomobile wiki: https://github.com/golang/go/wiki/Mobile
-ProtonMail Openpgp: https://github.com/ProtonMail/crypto/tree/master/openpgp
+Setup Go Mobile and build/bind the source code:
 
-1. Install Go: brew install go
-2. Install Gomobile: go get golang.org/x/mobile/cmd/gomobile
-                     //go get -u golang.org/x/mobile/cmd/...
-3. Install Gobind: go install golang.org/x/mobile/cmd/gobind
-3. Install android sdk and ndk use android studio
-4. Set Env: export ANDROID_HOME="/AndroidSDK" #set your own path
-5. Init gomobile: gomobile init -ndk /AndroidSDK/ndk-bundle/ #put your own ndk path
+Go Mobile repo: https://github.com/golang/mobile  
+Go Mobile wiki: https://github.com/golang/go/wiki/Mobile
 
-6. build examples:
-   gomobile build -target=android  #or ios
+1. Install Go: `brew install go`
+2. Install Gomobile: `go get -u golang.org/x/mobile/cmd/gomobile`
+3. Install Gobind: `go install golang.org/x/mobile/cmd/gobind`
+4. Install Android SDK and NDK using Android Studio
+5. Set env: `export ANDROID_HOME="/AndroidSDK"` (path to your SDK)
+6. Init gomobile: `gomobile init -ndk /AndroidSDK/ndk-bundle/` (path to your NDK)
 
-   bind examples:
-   gomobile bind -target ios -o frameworks/name.framework
-   gomobile bind -target android
+7. Build examples:  
+   `gomobile build -target=android  #or ios`
 
-the bind will create framework for ios and jar&aar file for android x86_64 arm arch
-   
+   Bind examples:  
+   `gomobile bind -target ios -o frameworks/name.framework`  
+   `gomobile bind -target android`
 
-7. Project uses glide to setup vendor
+   The bind will create framework for iOS and jar&aar files for Android (x86_64 and ARM).
 
-OTHER NOTES:
-two way bridge go & swift:
-https://medium.com/@matryer/tutorial-calling-go-code-from-swift-on-ios-and-vice-versa-with-gomobile-7925620c17a4
+## Other notes
 
+This project uses glide to setup vendors.
 
-SOME UNSOLVED ISSUES:
-No Mips support but this is fine we don't support it anyway
-https://github.com/golang/go/issues/23692   issue with atomic
-EXC_BAD_ACCESS is hard to catch
-https://github.com/golang/go/issues/21288   memory issue
-https://github.com/golang/go/issues/21594   gradle issue
-https://github.com/golang/go/issues/23307
-https://github.com/golang/go/issues/20241
-  upload failed. we are using framework need to confirm this
-https://github.com/golang/go/issues/17278   android load jni issue
-https://github.com/golang/go/issues/17807   dlopen issue
-https://github.com/golang/go/issues/18903   doesn't work well with vender
-https://github.com/golang/go/issues/13438   bind issue
-https://github.com/golang/go/issues/14332   build types issue
-https://github.com/golang/go/issues/15956   no multiple independent bindings support
+Interfacing between Go and Swift:
+https://medium.com/@matryer/tutorial-calling-go-code-from-swift-on-ios-and-vice-versa-with-gomobile-7925620c17a4.
 
-
-
-
-
-The build.sh need to modify the path when you use it
+If you use build.sh, you may need to modify the paths in it.
