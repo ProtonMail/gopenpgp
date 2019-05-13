@@ -14,10 +14,10 @@ import (
 	pgpErrors "golang.org/x/crypto/openpgp/errors"
 	"golang.org/x/crypto/openpgp/packet"
 
-	armorUtils "github.com/ProtonMail/go-pm-crypto/armor"
-	"github.com/ProtonMail/go-pm-crypto/constants"
-	"github.com/ProtonMail/go-pm-crypto/internal"
-	"github.com/ProtonMail/go-pm-crypto/models"
+	armorUtils "github.com/ProtonMail/gopenpgp/armor"
+	"github.com/ProtonMail/gopenpgp/constants"
+	"github.com/ProtonMail/gopenpgp/internal"
+	"github.com/ProtonMail/gopenpgp/models"
 )
 
 // DecryptMessageStringKey decrypts encrypted message use private key (string)

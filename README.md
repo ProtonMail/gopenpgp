@@ -2,7 +2,8 @@
 
 ## Download/Install
 
-Manually `git clone` the repository into `$GOPATH/src/github.com/ProtonMail/go-pm-crypto`.
+Run `go get -u github.com/ProtonMail/gopenpgp`, or manually `git clone` the
+repository into `$GOPATH/src/github.com/ProtonMail/gopenpgp`.
 
 This library is meant to be used together with https://github.com/ProtonMail/crypto.
 

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ProtonMail/go-pm-crypto/internal"
+	"github.com/ProtonMail/gopenpgp/internal"
 
 	"golang.org/x/crypto/openpgp"
 	errorsPGP "golang.org/x/crypto/openpgp/errors"

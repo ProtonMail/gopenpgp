@@ -19,9 +19,9 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 	xrsa "golang.org/x/crypto/rsa"
 
-	armorUtils "github.com/ProtonMail/go-pm-crypto/armor"
-	"github.com/ProtonMail/go-pm-crypto/constants"
-	"github.com/ProtonMail/go-pm-crypto/models"
+	armorUtils "github.com/ProtonMail/gopenpgp/armor"
+	"github.com/ProtonMail/gopenpgp/constants"
+	"github.com/ProtonMail/gopenpgp/models"
 )
 
 // A keypair contains a private key and a public key.
@@ -399,7 +399,7 @@ func (kr *KeyRing) Unlock(passphrase []byte) error {
 	}
 
 	if len(keys) == 0 {
-		return errors.New("go-pm-crypto: cannot unlock key ring, no private key available")
+		return errors.New("gopenpgp: cannot unlock key ring, no private key available")
 	}
 
 	var err error

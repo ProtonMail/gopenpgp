@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/ProtonMail/go-pm-crypto/armor"
-	"github.com/ProtonMail/go-pm-crypto/constants"
+	"github.com/ProtonMail/gopenpgp/armor"
+	"github.com/ProtonMail/gopenpgp/constants"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"

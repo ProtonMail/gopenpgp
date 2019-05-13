@@ -1,6 +1,5 @@
 variables:
-  # Please edit to your GitLab project
-  REPO_NAME: github.com/ProtonMail/go-pm-crypto
+  REPO_NAME: github.com/ProtonMail/gopenpgp
 
 before_script:
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
