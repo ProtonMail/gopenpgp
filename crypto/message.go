@@ -19,11 +19,10 @@ import (
 	"github.com/ProtonMail/go-pm-crypto/models"
 )
 
-// DecryptMessageStringKey decrypt encrypted message use private key (string )
+// DecryptMessageStringKey decrypts encrypted message use private key (string )
 // encryptedText : string armored encrypted
 // privateKey : armored private use to decrypt message
 // passphrase : match with private key to decrypt message
-// Use: ios/android only
 func (pm *PmCrypto) DecryptMessageStringKey(encryptedText string, privateKey string, passphrase string) (string, error) {
 	privKeyRaw, err := armorUtils.Unarmor(privateKey)
 	if err != nil {
@@ -40,9 +39,8 @@ func (pm *PmCrypto) DecryptMessageStringKey(encryptedText string, privateKey str
 
 // DecryptMessage decrypts encrypted string using keyring
 // encryptedText : string armored encrypted
-// privateKey : keyring with private key to decrypt message, could be mutiple keys
+// privateKey : keyring with private key to decrypt message, could be multiple keys
 // passphrase : match with private key to decrypt message
-// Use ios/android only
 func (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey *KeyRing, passphrase string) (string, error) {
 	md, err := decryptCore(encryptedText, nil, privateKey, passphrase, pm.getTimeGenerator())
 	if err != nil {
@@ -85,12 +83,12 @@ func decryptCore(encryptedText string, additionalEntries openpgp.EntityList, pri
 	return md, err
 }
 
-// Use: ios/android only
+// DecryptMessageVerify decrypts message and verify the signature
+// encryptedText:  string armored encrypted
+// verifierKey    []byte: unarmored verifier keys
+// privateKeyRing []byte: unarmored private key to decrypt. could be multiple
+// passphrase:    match with private key to decrypt message
 func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey *KeyRing, privateKeyRing *KeyRing, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
-	// DecryptMessageVerifyBinKeyPrivBinKeys decrypt message and verify the signature
-	// verifierKey []byte: unarmored verifier keys
-	// privateKey []byte: unarmored private key to decrypt. could be mutiple
-
 	out := &models.DecryptSignedVerify{}
 	out.Verify = failed
 
@@ -134,7 +132,7 @@ func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey *KeyR
 	return out, nil
 }
 
-// Handle signature time verification manually, so we can add a margin to the creationTime check.
+// processSignatureExpiration handles signature time verification manually, so we can add a margin to the creationTime check.
 func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 	if md.SignatureError == pgpErrors.ErrSignatureExpired {
 		if verifyTime > 0 {
@@ -153,10 +151,9 @@ func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 	}
 }
 
-// Use: ios/android only
-//EncryptMessageWithPassword encrypt a plain text to pgp message with a password
-//plainText string: clear text
-//output string: armored pgp message
+// EncryptMessageWithPassword encrypts a plain text to pgp message with a password
+// plainText string: clear text
+// output string: armored pgp message
 func (pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string) (string, error) {
 
 	var outBuf bytes.Buffer
@@ -184,12 +181,12 @@ func (pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string
 	return outBuf.String(), nil
 }
 
-// Use ios/android only
-// EncryptMessageBinKey encrypt message with unarmored public key, if pass private key and passphrase will also sign the message
+// EncryptMessage encrypts message with unarmored public key, if pass private key and passphrase will also sign the message
 // publicKey : bytes unarmored public key
 // plainText : the input
 // privateKey : optional required when you want to sign
-// passphrase : optional required when you pass the private key and this passphrase must could decrypt the private key
+// passphrase : optional required when you pass the private key and this passphrase should decrypt the private key
+// trim : bool true if need to trim new lines
 func (pm *PmCrypto) EncryptMessage(plainText string, publicKey *KeyRing, privateKey *KeyRing, passphrase string, trim bool) (string, error) {
 
 	if trim {
@@ -220,10 +217,9 @@ func (pm *PmCrypto) EncryptMessage(plainText string, publicKey *KeyRing, private
 	return outBuf.String(), nil
 }
 
-// Use: ios/android only
-//DecryptMessageWithPassword decrypt a pgp message with a password
-//encrypted string : armored pgp message
-//output string : clear text
+// DecryptMessageWithPassword decrypts a pgp message with a password
+// encrypted string : armored pgp message
+// output string : clear text
 func (pm *PmCrypto) DecryptMessageWithPassword(encrypted string, password string) (string, error) {
 	encryptedio, err := internal.Unarmor(encrypted)
 	if err != nil {

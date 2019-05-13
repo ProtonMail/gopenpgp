@@ -24,7 +24,6 @@ import (
 // SymmetricKey stores a decrypted session key.
 type SymmetricKey struct {
 	// The clear base64-encoded key.
-	//Key string
 	Key []byte
 	// The algorithm used by this key.
 	Algo string
@@ -42,8 +41,7 @@ var symKeyAlgos = map[string]packet.CipherFunction{
 	"aes256":    packet.CipherAES256,
 }
 
-// GetCipherFunc returns functin corresponding to an algorithm used in this SymmetricKey
-// Use: go-pm-crypto, key.go, session.go
+// GetCipherFunc returns function corresponding to an algorithm used in this SymmetricKey
 func (sk *SymmetricKey) GetCipherFunc() packet.CipherFunction {
 	cf, ok := symKeyAlgos[sk.Algo]
 	if ok {
@@ -54,7 +52,6 @@ func (sk *SymmetricKey) GetCipherFunc() packet.CipherFunction {
 }
 
 // GetBase64Key returns a key as base64 encoded string
-// Use: bridge
 func (sk *SymmetricKey) GetBase64Key() string {
 	return base64.StdEncoding.EncodeToString(sk.Key)
 }
@@ -77,8 +74,7 @@ func newSymmetricKey(ek *packet.EncryptedKey) *SymmetricKey {
 	}
 }
 
-// DecryptAttKey and return a symmetric key
-// Use: bridge
+// DecryptAttKey and returns a symmetric key
 func DecryptAttKey(kr *KeyRing, keyPacket string) (key *SymmetricKey, err error) {
 	r := base64.NewDecoder(base64.StdEncoding, strings.NewReader(keyPacket))
 	packets := packet.NewReader(r)
@@ -112,7 +108,6 @@ func DecryptAttKey(kr *KeyRing, keyPacket string) (key *SymmetricKey, err error)
 }
 
 // SeparateKeyAndData from packets in a pgp session
-// Use: bridge, ios/android, go-pm-crypto, attachment.go, keyring.go
 func SeparateKeyAndData(kr *KeyRing, r io.Reader, estimatedLength int, garbageCollector int) (outSplit *models.EncryptedSplit, err error) {
 	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
 	packets := packet.NewReader(r)
@@ -209,10 +204,6 @@ func SeparateKeyAndData(kr *KeyRing, r io.Reader, estimatedLength int, garbageCo
 		err = errors.New("pm-crypto: packets don't include an encrypted key packet")
 		return
 	}
-	/*if ek.Key == nil {
-		err = errors.New("pm-crypto: could not find any key to decrypt key")
-		return
-	}*/
 
 	if kr == nil {
 		var buf bytes.Buffer
@@ -227,37 +218,12 @@ func SeparateKeyAndData(kr *KeyRing, r io.Reader, estimatedLength int, garbageCo
 	return outSplit, nil
 }
 
-//encode length based on 4.2.2. in the RFC
-func encodedLength(length int) (b []byte) {
-	if length < 192 {
-		b = append(b, byte(length))
-	} else if length < 8384 {
-		length = length - 192
-		b = append(b, 192+byte(length>>8))
-		b = append(b, byte(length))
-	} else {
-		b = append(b, byte(255))
-		b = append(b, byte(length>>24))
-		b = append(b, byte(length>>16))
-		b = append(b, byte(length>>8))
-		b = append(b, byte(length))
-	}
-	return
-}
-
 // SetKey encrypts the provided key.
-// Use: bridge
 func SetKey(kr *KeyRing, symKey *SymmetricKey) (packets string, err error) {
 	b := &bytes.Buffer{}
 	w := base64.NewEncoder(base64.StdEncoding, b)
 
 	cf := symKey.GetCipherFunc()
-
-	//k, err := base64.StdEncoding.DecodeString(symKey.Key)
-	//if err != nil {
-	//	err = fmt.Errorf("pm-crypto: cannot set key: %v", err)
-	//	return
-	//}
 
 	if len(kr.entities) == 0 {
 		err = fmt.Errorf("pm-crypto: cannot set key: key ring is empty")
@@ -305,7 +271,6 @@ func SetKey(kr *KeyRing, symKey *SymmetricKey) (packets string, err error) {
 }
 
 // IsKeyExpiredBin checks if the given key is expired. Input in binary format
-//Use: ios/android only
 func (pm *PmCrypto) IsKeyExpiredBin(publicKey []byte) (bool, error) {
 	now := pm.getNow()
 	pubKeyReader := bytes.NewReader(publicKey)
@@ -365,7 +330,6 @@ const (
 )
 
 // IsKeyExpired checks if the given key is expired. Input in armored format
-// Use: ios/android only
 func (pm *PmCrypto) IsKeyExpired(publicKey string) (bool, error) {
 	rawPubKey, err := armor.Unarmor(publicKey)
 	if err != nil {
@@ -378,7 +342,7 @@ func (pm *PmCrypto) generateKey(userName string, domain string, passphrase strin
 	prime1 []byte, prime2 []byte, prime3 []byte, prime4 []byte) (string, error) {
 
 	if len(userName) <= 0 {
-		return "", errors.New("Invalid user name format")
+		return "", errors.New("invalid user name format")
 	}
 	var email = userName
 
@@ -447,7 +411,6 @@ func (pm *PmCrypto) generateKey(userName string, domain string, passphrase strin
 }
 
 // GenerateRSAKeyWithPrimes generates RSA key with given primes.
-// Use: TODO
 func (pm *PmCrypto) GenerateRSAKeyWithPrimes(
 	userName, domain, passphrase string,
 	bits int,
@@ -457,19 +420,11 @@ func (pm *PmCrypto) GenerateRSAKeyWithPrimes(
 }
 
 // GenerateKey and generate primes
-// TODO: is it really disabled -> no this is used by android
-// disabled now, will enable later
-// #generat new key with email address. Fix the UserID issue in protonmail system. on Feb 28, 17
-// #static generate_key_with_email(email : string, passphrase : string, bits : i32) : open_pgp_key;
-// # generate new key
-// #static generate_new_key(user_id : string, email : string, passphrase : string, bits : i32) : open_pgp_key;
-// Use: ios/android only
 func (pm *PmCrypto) GenerateKey(userName string, domain string, passphrase string, keyType string, bits int) (string, error) {
 	return pm.generateKey(userName, domain, passphrase, keyType, bits, nil, nil, nil, nil)
 }
 
-// UpdatePrivateKeyPassphrase decrypts the given private key with oldPhrase and reencrypt with the newPassphrase
-// Use ios/android only
+// UpdatePrivateKeyPassphrase decrypts the given private key with oldPhrase and re-encrypts with the newPassphrase
 func (pm *PmCrypto) UpdatePrivateKeyPassphrase(privateKey string, oldPassphrase string, newPassphrase string) (string, error) {
 	privKey := strings.NewReader(privateKey)
 	privKeyEntries, err := openpgp.ReadArmoredKeyRing(privKey)
@@ -513,8 +468,7 @@ func (pm *PmCrypto) UpdatePrivateKeyPassphrase(privateKey string, oldPassphrase 
 	return armor.ArmorWithType(serialized, constants.PrivateKeyHeader)
 }
 
-// CheckKey print out the key and subkey fingerprint
-// Use: ios/android only
+// CheckKey prints out the key and subkey fingerprint
 func (pm *PmCrypto) CheckKey(pubKey string) (string, error) {
 	pubKeyReader := strings.NewReader(pubKey)
 	entries, err := openpgp.ReadArmoredKeyRing(pubKeyReader)

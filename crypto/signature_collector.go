@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-// Use: ios/android only
+// SignatureCollector structure
 type SignatureCollector struct {
 	config    *packet.Config
 	keyring   openpgp.KeyRing
@@ -22,18 +22,19 @@ type SignatureCollector struct {
 	verified  int
 }
 
-func newSignatureCollector(targetAccepter pmmime.VisitAcceptor, keyring openpgp.KeyRing, config *packet.Config) *SignatureCollector {
+func newSignatureCollector(targetAcceptor pmmime.VisitAcceptor, keyring openpgp.KeyRing, config *packet.Config) *SignatureCollector {
 	return &SignatureCollector{
-		target:  targetAccepter,
+		target:  targetAcceptor,
 		config:  config,
 		keyring: keyring,
 	}
 }
 
+// Accept
 func (sc *SignatureCollector) Accept(part io.Reader, header textproto.MIMEHeader, hasPlainSibling bool, isFirst, isLast bool) (err error) {
 	parentMediaType, params, _ := mime.ParseMediaType(header.Get("Content-Type"))
 	if parentMediaType == "multipart/signed" {
-		newPart, rawBody := pmmime.GetRawMimePart(part, "--"+params["boundary"])
+		newPart, rawBody := pmmime.GetRawMimePart(part, "--" + params["boundary"])
 		var multiparts []io.Reader
 		var multipartHeaders []textproto.MIMEHeader
 		if multiparts, multipartHeaders, err = pmmime.GetMultipartParts(newPart, params); err == nil {
@@ -61,7 +62,7 @@ func (sc *SignatureCollector) Accept(part io.Reader, header textproto.MIMEHeader
 			if err != nil {
 				return
 			}
-			// TODO: Sunny proposed to move this also to pm-mime library
+
 			partData, _ := ioutil.ReadAll(multiparts[1])
 			decodedPart := pmmime.DecodeContentEncoding(bytes.NewReader(partData), multipartHeaders[1].Get("Content-Transfer-Encoding"))
 			buffer, err := ioutil.ReadAll(decodedPart)
@@ -94,6 +95,7 @@ func (sc *SignatureCollector) Accept(part io.Reader, header textproto.MIMEHeader
 	return nil
 }
 
-func (ac SignatureCollector) GetSignature() string {
-	return ac.signature
+// GetSignature
+func (sc SignatureCollector) GetSignature() string {
+	return sc.signature
 }
