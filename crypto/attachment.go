@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-//EncryptedSplit when encrypt attachment
+// EncryptedSplit when encrypt attachment
 type AttachmentProcessor struct {
 	w                *io.WriteCloser
 	pipe             *io.PipeWriter
@@ -23,12 +23,12 @@ type AttachmentProcessor struct {
 	err              error
 }
 
-// Use: ios/android only
+// Process allows the attachment processor to write the encrypted attachment
 func (ap *AttachmentProcessor) Process(plainData []byte) {
 	(*ap.w).Write(plainData)
 }
 
-// Use: ios/android only
+// Finish attachment process
 func (ap *AttachmentProcessor) Finish() (*models.EncryptedSplit, error) {
 	if ap.err != nil {
 		return nil, ap.err
@@ -42,8 +42,7 @@ func (ap *AttachmentProcessor) Finish() (*models.EncryptedSplit, error) {
 	return ap.split, nil
 }
 
-// Use: ios/android only
-// Encrypt attachment. Takes input data and key data in binary form
+// Encrypts attachment. Takes input data and key data in binary form
 func (pm *PmCrypto) encryptAttachment(estimatedSize int, fileName string, publicKey *KeyRing, garbageCollector int) (*AttachmentProcessor, error) {
 	attachmentProc := &AttachmentProcessor{}
 	// you can also add these one at
@@ -84,7 +83,7 @@ func (pm *PmCrypto) encryptAttachment(estimatedSize int, fileName string, public
 	return attachmentProc, nil
 }
 
-// Use: ios/android only
+// EncryptAttachment encrypts attachment. Takes input data and key data in binary form
 func (pm *PmCrypto) EncryptAttachment(plainData []byte, fileName string, publicKey *KeyRing) (*models.EncryptedSplit, error) {
 	ap, err := pm.encryptAttachment(len(plainData), fileName, publicKey, -1)
 	if err != nil {
@@ -99,15 +98,13 @@ func (pm *PmCrypto) EncryptAttachment(plainData []byte, fileName string, publicK
 
 }
 
-// Use: ios/android only
-//EncryptAttachment ...
+// EncryptAttachmentLowMemory ...
 func (pm *PmCrypto) EncryptAttachmentLowMemory(estimatedSize int, fileName string, publicKey *KeyRing) (*AttachmentProcessor, error) {
 	// Garbage collect every megabyte
 	return pm.encryptAttachment(estimatedSize, fileName, publicKey, 1<<20)
 }
 
-// Helper method. Splits armored pgp session into key and packet data
-// Use: ios/android only
+// SplitArmor is a Helper method. Splits armored pgp session into key and packet data
 func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
 	var err error
 
@@ -121,7 +118,6 @@ func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
 	return SeparateKeyAndData(nil, encryptedReader, len(encrypted), -1)
 }
 
-// Use: ios/android only
 // Decrypt attachment. Takes input data and key data in binary form. privateKeys can contains more keys. passphrase is used to unlock keys
 func (pm *PmCrypto) DecryptAttachment(keyPacket []byte, dataPacket []byte, kr *KeyRing, passphrase string) ([]byte, error) {
 

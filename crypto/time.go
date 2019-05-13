@@ -6,29 +6,30 @@ import (
 
 var pmCrypto = PmCrypto{}
 
+// GetPmCrypto
 func GetPmCrypto() *PmCrypto {
 	return &pmCrypto
 }
 
-// UpdateTime update cached time
+// UpdateTime updates cached time
 func (pm *PmCrypto) UpdateTime(newTime int64) {
 	pm.latestServerTime = newTime
 	pm.latestClientTime = time.Now()
 }
 
-//GetTime get latest cached time
+// GetTimeUnix gets latest cached time
 func (pm *PmCrypto) GetTimeUnix() int64 {
 	return pm.getNow().Unix()
 }
 
-//GetTime get latest cached time
+// GetTime gets latest cached time
 func (pm *PmCrypto) GetTime() time.Time {
 	return pm.getNow()
 }
 
 func (pm *PmCrypto) getNow() time.Time {
 	if pm.latestServerTime > 0 && !pm.latestClientTime.IsZero() {
-		// Sub is monotome, it uses a monotime time clock in this case instead of the wall clock
+		// Sub is monotonic, it uses a monotonic clock in this case instead of the wall clock
 		extrapolate := int64(pm.latestClientTime.Sub(time.Now()).Seconds())
 		return time.Unix(pm.latestServerTime+extrapolate, 0)
 	}

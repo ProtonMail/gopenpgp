@@ -11,9 +11,8 @@ func TrimNewlines(input string) string {
 	return re.ReplaceAllString(input, "")
 }
 
-// CreationTimeOffset stores amount of seconds that a signature may be created
-// after the verify time Consistent with the 2 day slack allowed in the
-// ProtonMail Email Parser
+// CreationTimeOffset stores the amount of seconds that a signature may be
+// created in the future, to compensate for clock skew
 const CreationTimeOffset = int64(60 * 60 * 24 * 2)
 
 // ArmorHeaders from golang pm-crypto

@@ -1,5 +1,5 @@
 // Package crypto contains all methods and classes needed for manipulation
-// with underlying cryptographic operations. It uses lowlevel openpgp functions
+// with underlying cryptographic operations. It uses low-level openpgp functions
 // and provides higher level views. It uses models of messages, attachments
 // and other higher-level entities
 package crypto

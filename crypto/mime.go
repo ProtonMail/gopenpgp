@@ -45,7 +45,7 @@ func (pm PmCrypto) parseMIME(mimeBody string, verifierKey *KeyRing) (*pmmime.Bod
 	return body, verified, atts, attHeaders, nil
 }
 
-// define call back interface
+// MIMECallbacks defines a call back interface
 type MIMECallbacks interface {
 	OnBody(body string, mimetype string)
 	OnAttachment(headers string, data []byte)
@@ -55,7 +55,7 @@ type MIMECallbacks interface {
 	OnError(err error)
 }
 
-// Use ios/android only
+// DecryptMIMEMessage decrypts a MIME message
 func (pm *PmCrypto) DecryptMIMEMessage(encryptedText string, verifierKey *KeyRing, privateKeyRing *KeyRing,
 	passphrase string, callbacks MIMECallbacks, verifyTime int64) {
 	decsignverify, err := pm.DecryptMessageVerify(encryptedText, verifierKey, privateKeyRing, passphrase, verifyTime)

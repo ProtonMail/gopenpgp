@@ -35,7 +35,7 @@ type pmKeyObject struct {
 	Primary int
 }
 
-// Use: only ios/android (internal)
+// PrivateKeyReader
 func (ko *pmKeyObject) PrivateKeyReader() io.Reader {
 	return strings.NewReader(ko.PrivateKey)
 }
@@ -63,14 +63,12 @@ type SignedString struct {
 var errKeyringNotUnlocked = errors.New("pm-crypto: cannot sign message, key ring is not unlocked")
 
 // Err returns a non-nil error if the signature is invalid.
-// Use: not used by bridge
 func (s *Signature) Err() error {
 	return s.md.SignatureError
 }
 
 // KeyRing returns the key ring that was used to produce the signature, if
 // available.
-// Use: not used by bridge
 func (s *Signature) KeyRing() *KeyRing {
 	if s.md.SignedBy == nil {
 		return nil
@@ -82,7 +80,6 @@ func (s *Signature) KeyRing() *KeyRing {
 }
 
 // IsBy returns true if the signature has been created by kr's owner.
-// Use: not used by bridge
 func (s *Signature) IsBy(kr *KeyRing) bool {
 	// Use fingerprint if possible
 	if s.md.SignedBy != nil {
@@ -117,8 +114,6 @@ func (kr *KeyRing) GetEntities() openpgp.EntityList {
 }
 
 // GetSigningEntity returns first private signing entity from keyring
-// Use: internal, but proxied to ios/android only
-// Use: go-pm-crypto, message.go, sign_detached.go
 func (kr *KeyRing) GetSigningEntity(passphrase string) *openpgp.Entity {
 	var signEntity *openpgp.Entity
 
@@ -140,7 +135,6 @@ func (kr *KeyRing) GetSigningEntity(passphrase string) *openpgp.Entity {
 // Encrypt encrypts data to this keyring's owner. If sign is not nil, it also
 // signs data with it. sign must be unlock to be able to sign data, if it's not
 // the case an error will be returned.
-// Use: go-pmapi
 func (kr *KeyRing) Encrypt(w io.Writer, sign *KeyRing, filename string, canonicalizeText bool) (io.WriteCloser, error) {
 	// The API returns keys sorted by descending priority
 	// Only encrypt to the first one
@@ -170,7 +164,6 @@ func (kr *KeyRing) Encrypt(w io.Writer, sign *KeyRing, filename string, canonica
 }
 
 // EncryptCore is common encryption method for desktop and mobile clients
-// Use: go-pm-crypto, keyring.go
 func EncryptCore(w io.Writer, encryptEntities []*openpgp.Entity, signEntity *openpgp.Entity, filename string, canonicalizeText bool, timeGenerator func() time.Time) (io.WriteCloser, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: timeGenerator}
 
@@ -190,7 +183,7 @@ type armorEncryptWriter struct {
 	ew io.WriteCloser // Encrypted writer
 }
 
-// Encrypt data
+// Write encrypted data
 func (w *armorEncryptWriter) Write(b []byte) (n int, err error) {
 	return w.ew.Write(b)
 }
@@ -205,7 +198,6 @@ func (w *armorEncryptWriter) Close() (err error) {
 }
 
 // EncryptArmored encrypts and armors data to the keyring's owner.
-// Use: go-pm-crypto, keyring.go
 func (kr *KeyRing) EncryptArmored(w io.Writer, sign *KeyRing) (wc io.WriteCloser, err error) {
 	aw, err := armorUtils.ArmorWithTypeBuffered(w, constants.PGPMessageHeader)
 	if err != nil {
@@ -223,7 +215,6 @@ func (kr *KeyRing) EncryptArmored(w io.Writer, sign *KeyRing) (wc io.WriteCloser
 }
 
 // EncryptString encrypts and armors a string to the keyring's owner.
-// Use go-pmapi
 func (kr *KeyRing) EncryptString(s string, sign *KeyRing) (encrypted string, err error) {
 	var b bytes.Buffer
 	w, err := kr.EncryptArmored(&b, sign)
@@ -243,7 +234,6 @@ func (kr *KeyRing) EncryptString(s string, sign *KeyRing) (encrypted string, err
 }
 
 // EncryptSymmetric data using generated symmetric key encrypted with this KeyRing
-// Use: bridge
 func (kr *KeyRing) EncryptSymmetric(textToEncrypt string, canonicalizeText bool) (outSplit *models.EncryptedSplit, err error) {
 	var encryptedWriter io.WriteCloser
 	buffer := &bytes.Buffer{}
@@ -267,7 +257,6 @@ func (kr *KeyRing) EncryptSymmetric(textToEncrypt string, canonicalizeText bool)
 // DecryptString decrypts an armored string sent to the keypair's owner.
 // If error is errors.ErrSignatureExpired (from golang.org/x/crypto/openpgp/errors),
 // contents are still provided if library clients wish to process this message further
-// Use go-pmapi
 func (kr *KeyRing) DecryptString(encrypted string) (SignedString, error) {
 	r, signed, err := kr.DecryptArmored(strings.NewReader(encrypted))
 	if err != nil && err != pgperrors.ErrSignatureExpired {
@@ -286,7 +275,6 @@ func (kr *KeyRing) DecryptString(encrypted string) (SignedString, error) {
 // DecryptStringIfNeeded data if has armored PGP message format, if not return original data.
 // If error is errors.ErrSignatureExpired (from golang.org/x/crypto/openpgp/errors),
 // contents are still provided if library clients wish to process this message further
-// Use go-pmapi
 func (kr *KeyRing) DecryptStringIfNeeded(data string) (decrypted string, err error) {
 	if re := regexp.MustCompile("^-----BEGIN " + constants.PGPMessageHeader + "-----(?s:.+)-----END " + constants.PGPMessageHeader + "-----"); re.MatchString(data) {
 		var signed SignedString
@@ -298,8 +286,7 @@ func (kr *KeyRing) DecryptStringIfNeeded(data string) (decrypted string, err err
 	return
 }
 
-// SignString sings a string message, using this KeyRing. canonicalizeText identifies if newlines are canonicalized
-// Use go-pmapi
+// SignString signs a string message, using this KeyRing. canonicalizeText identifies if newlines are canonicalized
 func (kr *KeyRing) SignString(message string, canonicalizeText bool) (signed string, err error) {
 	var sig bytes.Buffer
 	err = kr.DetachedSign(&sig, strings.NewReader(message), canonicalizeText, true)
@@ -312,8 +299,6 @@ func (kr *KeyRing) SignString(message string, canonicalizeText bool) (signed str
 
 // DetachedSign will sign a separate ("detached") data from toSign, writing to
 // w writer. The canonicalizeText identifies if newlines are canonicalized
-// Use: go-pmapi
-// Use: go-pm-crypto, keyring.go
 func (kr *KeyRing) DetachedSign(w io.Writer, toSign io.Reader, canonicalizeText bool, armored bool) (err error) {
 	var signEntity *openpgp.Entity
 	for _, e := range kr.entities {
@@ -351,8 +336,7 @@ func (kr *KeyRing) DetachedSign(w io.Writer, toSign io.Reader, canonicalizeText 
 
 // VerifyString may return errors.ErrSignatureExpired (defined in
 // golang.org/x/crypto/openpgp/errors) In this case signature has been verified
-// successfuly, but it is either expired or in the future.
-// Use: go-pmapi
+// successfully, but it is either expired or in the future.
 func (kr *KeyRing) VerifyString(message, signature string, sign *KeyRing) (err error) {
 	messageReader := strings.NewReader(message)
 	signatureReader := strings.NewReader(signature)
@@ -381,8 +365,6 @@ func (kr *KeyRing) VerifyString(message, signature string, sign *KeyRing) (err e
 // err == nil does not mean that all keys have been successfully decrypted.
 // If err != nil, the password is wrong for every key, and err is the last error
 // encountered.
-// Use: go-pmapi
-// Use: go-pm-crypto, attachment.go, message.go
 func (kr *KeyRing) Unlock(passphrase []byte) error {
 	// Build a list of keys to decrypt
 	var keys []*packet.PrivateKey
@@ -426,8 +408,6 @@ func (kr *KeyRing) Unlock(passphrase []byte) error {
 // signed, signed will be nil.
 // If error is errors.ErrSignatureExpired (from golang.org/x/crypto/openpgp/errors),
 // contents are still provided if library clients wish to process this message further
-// Use: go-pmapi
-// Use: go-pm-crypto, keyring.go
 func (kr *KeyRing) Decrypt(r io.Reader) (decrypted io.Reader, signed *Signature, err error) {
 	md, err := openpgp.ReadMessage(r, kr.entities, nil, nil)
 	if err != nil && err != pgperrors.ErrSignatureExpired {
@@ -444,7 +424,6 @@ func (kr *KeyRing) Decrypt(r io.Reader) (decrypted io.Reader, signed *Signature,
 // DecryptArmored decrypts an armored message sent to the keypair's owner.
 // If error is errors.ErrSignatureExpired (from golang.org/x/crypto/openpgp/errors),
 // contents are still provided if library clients wish to process this message further
-// Use: go-pm-crypto, keyring.go
 func (kr *KeyRing) DecryptArmored(r io.Reader) (decrypted io.Reader, signed *Signature, err error) {
 	block, err := armor.Decode(r)
 	if err != nil && err != pgperrors.ErrSignatureExpired {
@@ -460,7 +439,6 @@ func (kr *KeyRing) DecryptArmored(r io.Reader) (decrypted io.Reader, signed *Sig
 }
 
 // WriteArmoredPublicKey outputs armored public keys from the keyring to w.
-// Use: go-pm-crypto, keyring.go
 func (kr *KeyRing) WriteArmoredPublicKey(w io.Writer) (err error) {
 	aw, err := armor.Encode(w, openpgp.PublicKeyType, nil)
 	if err != nil {
@@ -479,7 +457,6 @@ func (kr *KeyRing) WriteArmoredPublicKey(w io.Writer) (err error) {
 }
 
 // ArmoredPublicKeyString returns the armored public keys from this keyring.
-// Use: bridge
 func (kr *KeyRing) ArmoredPublicKeyString() (s string, err error) {
 	b := &bytes.Buffer{}
 	if err = kr.WriteArmoredPublicKey(b); err != nil {
@@ -533,7 +510,6 @@ func (kr *KeyRing) readFrom(r io.Reader, armored bool) error {
 }
 
 // BuildKeyRing reads keyring from binary data
-// Use: ios/android only
 func (pm *PmCrypto) BuildKeyRing(binKeys []byte) (kr *KeyRing, err error) {
 	kr = &KeyRing{}
 	entriesReader := bytes.NewReader(binKeys)
@@ -543,14 +519,12 @@ func (pm *PmCrypto) BuildKeyRing(binKeys []byte) (kr *KeyRing, err error) {
 }
 
 // BuildKeyRingNoError does not return error on fail
-// Use: ios/android only
 func (pm *PmCrypto) BuildKeyRingNoError(binKeys []byte) (kr *KeyRing) {
 	kr, _ = pm.BuildKeyRing(binKeys)
 	return
 }
 
 // BuildKeyRingArmored reads armored string and returns keyring
-// Use: ios/android only
 func (pm *PmCrypto) BuildKeyRingArmored(key string) (kr *KeyRing, err error) {
 	keyRaw, err := armorUtils.Unarmor(key)
 	keyReader := bytes.NewReader(keyRaw)
@@ -559,8 +533,6 @@ func (pm *PmCrypto) BuildKeyRingArmored(key string) (kr *KeyRing, err error) {
 }
 
 // UnmarshalJSON implements encoding/json.Unmarshaler.
-// Use: go-pmapi
-// Use: ios/android
 func (kr *KeyRing) UnmarshalJSON(b []byte) (err error) {
 	kr.entities = nil
 
@@ -584,7 +556,6 @@ func (kr *KeyRing) UnmarshalJSON(b []byte) (err error) {
 }
 
 // Identities returns the list of identities associated with this key ring.
-// Use: bridge
 func (kr *KeyRing) Identities() []*Identity {
 	var identities []*Identity
 	for _, e := range kr.entities {
@@ -599,7 +570,6 @@ func (kr *KeyRing) Identities() []*Identity {
 }
 
 // KeyIds returns array of IDs of keys in this KeyRing
-// Use: not used by bridge
 func (kr *KeyRing) KeyIds() []uint64 {
 	var res []uint64
 	for _, e := range kr.entities {
@@ -609,7 +579,6 @@ func (kr *KeyRing) KeyIds() []uint64 {
 }
 
 // ReadArmoredKeyRing reads an armored data into keyring.
-// Use: go-pmapi
 func ReadArmoredKeyRing(r io.Reader) (kr *KeyRing, err error) {
 	kr = &KeyRing{}
 	err = kr.readFrom(r, true)
@@ -617,7 +586,6 @@ func ReadArmoredKeyRing(r io.Reader) (kr *KeyRing, err error) {
 }
 
 // ReadKeyRing reads an binary data into keyring.
-// Use: bridge
 func ReadKeyRing(r io.Reader) (kr *KeyRing, err error) {
 	kr = &KeyRing{}
 	err = kr.readFrom(r, false)
@@ -627,7 +595,6 @@ func ReadKeyRing(r io.Reader) (kr *KeyRing, err error) {
 // FilterExpiredKeys takes a given KeyRing list and it returns only those
 // KeyRings which contain at least, one unexpired Key. It returns only unexpired
 // parts of these KeyRings
-// Use: bridge
 func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err error) {
 	now := time.Now()
 	hasExpiredEntity := false
