@@ -124,9 +124,8 @@ func TestUpdatePrivateKeysPassphrase(t *testing.T) {
 	passphrase = newPassphrase
 }
 
-// ExampleCheckKey to track changes in test data
-func ExampleCheckKey() {
-	_, _ = pmCrypto.CheckKey(readTestFile("keyring_publicKey"))
+func ExampleCheckKeys() {
+	_, _ = pmCrypto.CheckKey(readTestFile("keyring_publicKey", false))
 	// Output:
 	// SubKey:37e4bcf09b36e34012d10c0247dc67b5cb8267f6
 	// PrimaryKey:6e8ba229b0cccaf6962f97953eb6259edf21df24
@@ -148,8 +147,8 @@ func TestIsKeyExpired(t *testing.T) {
 
 	pmCrypto.UpdateTime(1557754627) // 2019-05-13T13:37:07+00:00
 
-	expRes, expErr := pmCrypto.IsKeyExpired(readTestFile("key_expiredKey"))
-	futureRes, futureErr := pmCrypto.IsKeyExpired(readTestFile("key_futureKey"))
+	expRes, expErr := pmCrypto.IsKeyExpired(readTestFile("key_expiredKey", false))
+	futureRes, futureErr := pmCrypto.IsKeyExpired(readTestFile("key_futureKey", false))
 
 	assert.Exactly(t, true, expRes)
 	assert.Exactly(t, true, futureRes)
