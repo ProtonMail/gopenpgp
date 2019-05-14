@@ -24,12 +24,12 @@ var (
 )
 
 func TestGenerateKeys(t *testing.T) {
-	rsaKey, err = pmCrypto.GenerateKey(name, domain, passphrase, "rsa", 1024)
+	rsaKey, err = pgp.GenerateKey(name, domain, passphrase, "rsa", 1024)
 	if err != nil {
 		t.Fatal("Cannot generate RSA key:", err)
 	}
 
-	ecKey, err = pmCrypto.GenerateKey(name, domain, passphrase, "x25519", 256)
+	ecKey, err = pgp.GenerateKey(name, domain, passphrase, "x25519", 256)
 	if err != nil {
 		t.Fatal("Cannot generate EC key:", err)
 	}
@@ -111,12 +111,12 @@ func TestEncryptDecryptKeys(t *testing.T) {
 
 func TestUpdatePrivateKeysPassphrase(t *testing.T) {
 	newPassphrase := "I like GNU"
-	rsaKey, err = pmCrypto.UpdatePrivateKeyPassphrase(rsaKey, passphrase, newPassphrase)
+	rsaKey, err = pgp.UpdatePrivateKeyPassphrase(rsaKey, passphrase, newPassphrase)
 	if err != nil {
 		t.Fatal("Error in changing RSA key's passphrase:", err)
 	}
 
-	ecKey, err = pmCrypto.UpdatePrivateKeyPassphrase(ecKey, passphrase, newPassphrase)
+	ecKey, err = pgp.UpdatePrivateKeyPassphrase(ecKey, passphrase, newPassphrase)
 	if err != nil {
 		t.Fatal("Error in changing EC key's passphrase:", err)
 	}
@@ -125,19 +125,19 @@ func TestUpdatePrivateKeysPassphrase(t *testing.T) {
 }
 
 func ExampleCheckKeys() {
-	_, _ = pmCrypto.CheckKey(readTestFile("keyring_publicKey", false))
+	_, _ = pgp.CheckKey(readTestFile("keyring_publicKey", false))
 	// Output:
 	// SubKey:37e4bcf09b36e34012d10c0247dc67b5cb8267f6
 	// PrimaryKey:6e8ba229b0cccaf6962f97953eb6259edf21df24
 }
 
 func TestIsKeyExpired(t *testing.T) {
-	rsaRes, err := pmCrypto.IsKeyExpired(rsaPublicKey)
+	rsaRes, err := pgp.IsKeyExpired(rsaPublicKey)
 	if err != nil {
 		t.Fatal("Error in checking expiration of RSA key:", err)
 	}
 
-	ecRes, err := pmCrypto.IsKeyExpired(ecPublicKey)
+	ecRes, err := pgp.IsKeyExpired(ecPublicKey)
 	if err != nil {
 		t.Fatal("Error in checking expiration of EC key:", err)
 	}
@@ -145,10 +145,10 @@ func TestIsKeyExpired(t *testing.T) {
 	assert.Exactly(t, false, rsaRes)
 	assert.Exactly(t, false, ecRes)
 
-	pmCrypto.UpdateTime(1557754627) // 2019-05-13T13:37:07+00:00
+	pgp.UpdateTime(1557754627) // 2019-05-13T13:37:07+00:00
 
-	expRes, expErr := pmCrypto.IsKeyExpired(readTestFile("key_expiredKey", false))
-	futureRes, futureErr := pmCrypto.IsKeyExpired(readTestFile("key_futureKey", false))
+	expRes, expErr := pgp.IsKeyExpired(readTestFile("key_expiredKey", false))
+	futureRes, futureErr := pgp.IsKeyExpired(readTestFile("key_futureKey", false))
 
 	assert.Exactly(t, true, expRes)
 	assert.Exactly(t, true, futureRes)

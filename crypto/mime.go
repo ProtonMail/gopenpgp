@@ -13,14 +13,14 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-func (pm PmCrypto) parseMIME(
+func (pgp GopenPGP) parseMIME(
 	mimeBody string, verifierKey *KeyRing,
 ) (*pmmime.BodyCollector, int, []string, []string, error) {
 	mm, err := mail.ReadMessage(strings.NewReader(mimeBody))
 	if err != nil {
 		return nil, 0, nil, nil, err
 	}
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator()}
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pgp.getTimeGenerator()}
 
 	h := textproto.MIMEHeader(mm.Header)
 	mmBodyData, err := ioutil.ReadAll(mm.Body)
@@ -61,17 +61,17 @@ type MIMECallbacks interface {
 }
 
 // DecryptMIMEMessage decrypts a MIME message
-func (pm *PmCrypto) DecryptMIMEMessage(
+func (pgp *GopenPGP) DecryptMIMEMessage(
 	encryptedText string, verifierKey, privateKeyRing *KeyRing,
 	passphrase string, callbacks MIMECallbacks, verifyTime int64,
 ) {
-	decsignverify, err := pm.DecryptMessageVerify(encryptedText, verifierKey, privateKeyRing, passphrase, verifyTime)
+	decsignverify, err := pgp.DecryptMessageVerify(encryptedText, verifierKey, privateKeyRing, passphrase, verifyTime)
 	if err != nil {
 		callbacks.OnError(err)
 		return
 	}
 
-	body, verified, attachments, attachmentHeaders, err := pm.parseMIME(decsignverify.Plaintext, verifierKey)
+	body, verified, attachments, attachmentHeaders, err := pgp.parseMIME(decsignverify.Plaintext, verifierKey)
 	if err != nil {
 		callbacks.OnError(err)
 		return

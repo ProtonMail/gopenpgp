@@ -6,9 +6,9 @@ package crypto
 
 import "time"
 
-// PmCrypto structure is used to manage server time shift. It should be also used for any
+// GopenPGP structure is used to manage server time shift. It should be also used for any
 // other specific general cryptographic entities.
-type PmCrypto struct {
+type GopenPGP struct {
 	//latestServerTime unix time cache
 	latestServerTime int64
 	latestClientTime time.Time

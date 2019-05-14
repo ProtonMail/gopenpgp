@@ -1,4 +1,4 @@
-package: proton/pmcrypto
+package: proton/gopenpgp
 import:
 - package: golang.org/x/crypto
   version: master

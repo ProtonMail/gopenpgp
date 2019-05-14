@@ -131,7 +131,7 @@ func (kr *KeyRing) GetSigningEntity(passphrase string) (*openpgp.Entity, error) 
 		}
 	}
 	if signEntity == nil {
-		err := errors.New("pmcrypto: cannot sign message, unable to unlock signer key")
+		err := errors.New("gopenpgp: cannot sign message, unable to unlock signer key")
 		return signEntity, err
 	}
 
@@ -172,7 +172,7 @@ func (kr *KeyRing) Encrypt(w io.Writer, sign *KeyRing, filename string, canonica
 		signEntity,
 		filename,
 		canonicalizeText,
-		func() time.Time { return GetPmCrypto().GetTime() })
+		func() time.Time { return GetGopenPGP().GetTime() })
 }
 
 // EncryptCore is common encryption method for desktop and mobile clients
@@ -332,7 +332,7 @@ func (kr *KeyRing) DetachedSign(w io.Writer, toSign io.Reader, canonicalizeText 
 
 	config := &packet.Config{DefaultCipher: packet.CipherAES256,
 		Time: func() time.Time {
-			return GetPmCrypto().GetTime()
+			return GetGopenPGP().GetTime()
 		},
 	}
 
@@ -588,7 +588,7 @@ func (kr *KeyRing) readFrom(r io.Reader, armored bool) error {
 }
 
 // BuildKeyRing reads keyring from binary data
-func (pm *PmCrypto) BuildKeyRing(binKeys []byte) (kr *KeyRing, err error) {
+func (pgp *GopenPGP) BuildKeyRing(binKeys []byte) (kr *KeyRing, err error) {
 	kr = &KeyRing{}
 	entriesReader := bytes.NewReader(binKeys)
 	err = kr.readFrom(entriesReader, false)
@@ -597,13 +597,13 @@ func (pm *PmCrypto) BuildKeyRing(binKeys []byte) (kr *KeyRing, err error) {
 }
 
 // BuildKeyRingNoError does not return error on fail
-func (pm *PmCrypto) BuildKeyRingNoError(binKeys []byte) (kr *KeyRing) {
-	kr, _ = pm.BuildKeyRing(binKeys)
+func (pgp *GopenPGP) BuildKeyRingNoError(binKeys []byte) (kr *KeyRing) {
+	kr, _ = pgp.BuildKeyRing(binKeys)
 	return
 }
 
 // BuildKeyRingArmored reads armored string and returns keyring
-func (pm *PmCrypto) BuildKeyRingArmored(key string) (kr *KeyRing, err error) {
+func (pgp *GopenPGP) BuildKeyRingArmored(key string) (kr *KeyRing, err error) {
 	keyRaw, err := armorUtils.Unarmor(key)
 	if err != nil {
 		return nil, err

@@ -16,7 +16,7 @@ gomobile bind -target ios -o ${IOS_OUT}/Crypto.framework $PACKAGE_PATH/crypto $P
 
 printf "\e[0;32mStart Building Android lib .. Location: ${ANDROID_OUT} \033[0m\n\n"
 
-gomobile bind -target android -javapkg com.proton.pmcrypto -o ${ANDROID_OUT}/pmcrypto.aar $PACKAGE_PATH/crypto $PACKAGE_PATH/armor $PACKAGE_PATH/constants $PACKAGE_PATH/key $PACKAGE_PATH/models 
+gomobile bind -target android -javapkg com.proton.gopenpgp -o ${ANDROID_OUT}/gopenpgp.aar $PACKAGE_PATH/crypto $PACKAGE_PATH/armor $PACKAGE_PATH/constants $PACKAGE_PATH/key $PACKAGE_PATH/models 
 
 printf "\e[0;32mInstalling frameworks. \033[0m\n\n"
 
