@@ -1,17 +1,54 @@
-# GopenPGP Wrapper Library
+# GopenPGP
+
+GopenPGP is a high-level OpenPGP library built on top of [a fork of the golang
+crypto library](https://github.com/ProtonMail/crypto).
+
+**Table of Contents**
+
+<!-- TOC depthFrom:2 -->
+
+- [Download/Install](#downloadinstall)
+- [Documentation](#documentation)
+- [Using with Go Mobile](#using-with-go-mobile)
+- [Other notes](#other-notes)
+- [Examples](#examples)
+    - [Set up](#set-up)
+    - [Encrypt and decrypt](#encrypt-and-decrypt)
+        - [Encrypt / Decrypt with password](#encrypt--decrypt-with-password)
+        - [Encrypt / Decrypt with PGP keys](#encrypt--decrypt-with-pgp-keys)
+    - [Generate key](#generate-key)
+    - [Sign](#sign)
+    - [Detached signatures](#detached-signatures)
+
+<!-- /TOC -->
 
 ## Download/Install
 
-Run `go get -u github.com/ProtonMail/gopenpgp`, or manually `git clone` the
-repository into `$GOPATH/src/github.com/ProtonMail/gopenpgp`.
+1. Run `go get -u github.com/ProtonMail/gopenpgp`, or manually `git clone` this
+   repository into `$GOPATH/src/github.com/ProtonMail/gopenpgp`.
 
-This library is meant to be used together with https://github.com/ProtonMail/crypto.
+2. [Install Glide](https://github.com/Masterminds/glide#install):
+
+   ```bash
+   curl https://glide.sh/get | sh
+   ```
+
+3. Install dependencies using glide:
+
+   ```bash
+   cd $GOPATH/src/github.com/ProtonMail/gopenpgp
+   glide install
+   ```
+
+## Documentation
+
+https://godoc.org/github.com/ProtonMail/gopenpgp/crypto
 
 ## Using with Go Mobile
 
 Setup Go Mobile and build/bind the source code:
 
-Go Mobile repo: https://github.com/golang/mobile  
+Go Mobile repo: https://github.com/golang/mobile
 Go Mobile wiki: https://github.com/golang/go/wiki/Mobile
 
 1. Install Go: `brew install go`
@@ -21,35 +58,38 @@ Go Mobile wiki: https://github.com/golang/go/wiki/Mobile
 5. Set env: `export ANDROID_HOME="/AndroidSDK"` (path to your SDK)
 6. Init gomobile: `gomobile init -ndk /AndroidSDK/ndk-bundle/` (path to your NDK)
 
-7. Build examples:  
+7. Build examples:
    `gomobile build -target=android  #or ios`
 
-   Bind examples:  
-   `gomobile bind -target ios -o frameworks/name.framework`  
+   Bind examples:
+   `gomobile bind -target ios -o frameworks/name.framework`
    `gomobile bind -target android`
 
    The bind will create framework for iOS and jar&aar files for Android (x86_64 and ARM).
 
 ## Other notes
 
-This project uses glide to setup vendors.
+If you wish to use build.sh, you may need to modify the paths in it.
 
 Interfacing between Go and Swift:
 https://medium.com/@matryer/tutorial-calling-go-code-from-swift-on-ios-and-vice-versa-with-gomobile-7925620c17a4.
 
-If you use build.sh, you may need to modify the paths in it.
-
 ## Examples
 
 ### Set up
+
+```go
+import "github.com/ProtonMail/gopenpgp/crypto"
+```
 
 ### Encrypt and decrypt
 
 Encryption and decryption will use the AES256 algorithm by default.
 
 #### Encrypt / Decrypt with password
-```
-var pgp = GopenPGP{}
+
+```go
+var pgp = crypto.GopenPGP{}
 
 const password = "my secret password"
 
@@ -61,7 +101,8 @@ message, err := pgp.DecryptMessageWithPassword(armor, password)
 ```
 
 #### Encrypt / Decrypt with PGP keys
-```
+
+```go
 // put keys in backtick (``) to avoid errors caused by spaces or tabs
 const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 ...
@@ -91,10 +132,12 @@ plainText = signedText.String
 ```
 
 ### Generate key
-Keys are generated with the `GenerateKey` function, that returns the armored key as a string and a potential error.  
+
+Keys are generated with the `GenerateKey` function, that returns the armored key as a string and a potential error.
 The library supports RSA with different key lengths or Curve25519 keys.
-```
-var pgp = GopenPGP{}
+
+```go
+var pgp = crypto.GopenPGP{}
 
 var (
   localPart = "name.surname"
@@ -107,7 +150,7 @@ var (
 // RSA
 rsaKey, err := pgp.GenerateKey(localPart, domain, passphrase, "rsa", rsaBits)
 
-// Curve 25519
+// Curve25519
 ecKey, err := pgp.GenerateKey(localPart, domain, passphrase, "x25519", ecBits)
 ```
 
