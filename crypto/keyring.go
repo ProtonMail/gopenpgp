@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"crypto/rsa"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
@@ -456,8 +457,8 @@ func (kr *KeyRing) WriteArmoredPublicKey(w io.Writer) (err error) {
 	return
 }
 
-// ArmoredPublicKeyString returns the armored public keys from this keyring.
-func (kr *KeyRing) ArmoredPublicKeyString() (s string, err error) {
+// GetArmoredPublicKey returns the armored public keys from this keyring.
+func (kr *KeyRing) GetArmoredPublicKey() (s string, err error) {
 	b := &bytes.Buffer{}
 	if err = kr.WriteArmoredPublicKey(b); err != nil {
 		return
@@ -465,6 +466,60 @@ func (kr *KeyRing) ArmoredPublicKeyString() (s string, err error) {
 
 	s = b.String()
 	return
+}
+
+// WritePublicKey outputs unarmored public keys from the keyring to w.
+func (kr *KeyRing) WritePublicKey(w io.Writer) (err error) {
+	for _, e := range kr.entities {
+		if err = e.Serialize(w); err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+// GetPublicKey returns the unarmored public keys from this keyring.
+func (kr *KeyRing) GetPublicKey() (b []byte, err error) {
+	var outBuf bytes.Buffer
+	if err = kr.WritePublicKey(&outBuf); err != nil {
+		return
+	}
+
+	b = outBuf.Bytes()
+	return
+}
+
+// GetFingerprint gets the fingerprint from the keyring
+func (kr *KeyRing) GetFingerprint() (string, error) {
+	for _, entity := range kr.entities {
+		fp := entity.PrimaryKey.Fingerprint
+		return hex.EncodeToString(fp[:]), nil
+	}
+	return "", errors.New("can't find public key")
+}
+
+// CheckPassphrase checks if private key passphrase ok
+func (kr *KeyRing) CheckPassphrase(passphrase string) bool {
+	var keys []*packet.PrivateKey
+
+	for _, entity := range kr.entities {
+		keys = append(keys, entity.PrivateKey)
+	}
+	var decryptError error
+	var n int
+	for _, key := range keys {
+		if !key.Encrypted {
+			continue // Key already decrypted
+		}
+		if decryptError = key.Decrypt([]byte(passphrase)); decryptError == nil {
+			n++
+		}
+	}
+	if n == 0 {
+		return false
+	}
+	return true
 }
 
 // readFrom reads unarmored and armored keys from r and adds them to the keyring.

@@ -75,7 +75,7 @@ func TestKeyRing_Encrypt(t *testing.T) {
 }
 
 func TestKeyRing_ArmoredPublicKeyString(t *testing.T) {
-	s, err := testPrivateKeyRing.ArmoredPublicKeyString()
+	s, err := testPrivateKeyRing.GetArmoredPublicKey()
 	if err != nil {
 		t.Fatal("Expected no error while getting armored public key, got:", err)
 	}

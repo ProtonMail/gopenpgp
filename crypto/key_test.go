@@ -43,7 +43,7 @@ func TestGenerateKeyRings(t *testing.T) {
 		t.Fatal("Cannot read RSA key:", err)
 	}
 
-	rsaPublicKey, err = rsaPrivateKeyRing.ArmoredPublicKeyString()
+	rsaPublicKey, err = rsaPrivateKeyRing.GetArmoredPublicKey()
 	if err != nil {
 		t.Fatal("Cannot extract RSA public key:", err)
 	}
@@ -63,7 +63,7 @@ func TestGenerateKeyRings(t *testing.T) {
 		t.Fatal("Cannot read EC key:", err)
 	}
 
-	ecPublicKey, err = ecPrivateKeyRing.ArmoredPublicKeyString()
+	ecPublicKey, err = ecPrivateKeyRing.GetArmoredPublicKey()
 	if err != nil {
 		t.Fatal("Cannot extract EC public key:", err)
 	}
@@ -142,4 +142,14 @@ func TestIsKeyExpired(t *testing.T) {
 
 	assert.Exactly(t, false, rsaRes)
 	assert.Exactly(t, false, ecRes)
+
+	pmCrypto.UpdateTime(1557754627) // 2019-05-13T13:37:07+00:00
+
+	expRes, expErr := pmCrypto.IsKeyExpired(readTestFile("key_expiredKey"))
+	futureRes, futureErr := pmCrypto.IsKeyExpired(readTestFile("key_futureKey"))
+
+	assert.Exactly(t, true, expRes)
+	assert.Exactly(t, true, futureRes)
+	assert.EqualError(t, expErr, "keys expired")
+	assert.EqualError(t, futureErr, "keys expired")
 }
