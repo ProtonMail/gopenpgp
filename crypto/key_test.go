@@ -1,11 +1,13 @@
 package crypto
 
 import (
-	"github.com/stretchr/testify/assert"
 	"encoding/base64"
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/ProtonMail/go-pm-crypto/constants"
+	"github.com/stretchr/testify/assert"
 )
 
 const name = "richard.stallman"
@@ -38,7 +40,7 @@ func TestGenerateKeys(t *testing.T) {
 }
 
 func TestGenerateKeyRings(t *testing.T) {
-	rsaPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(rsaKey));
+	rsaPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(rsaKey))
 	if err != nil {
 		t.Fatal("Cannot read RSA key:", err)
 	}
@@ -48,7 +50,7 @@ func TestGenerateKeyRings(t *testing.T) {
 		t.Fatal("Cannot extract RSA public key:", err)
 	}
 
-	rsaPublicKeyRing, err = ReadArmoredKeyRing(strings.NewReader(rsaPublicKey));
+	rsaPublicKeyRing, err = ReadArmoredKeyRing(strings.NewReader(rsaPublicKey))
 	if err != nil {
 		t.Fatal("Cannot read RSA public key:", err)
 	}
@@ -58,7 +60,7 @@ func TestGenerateKeyRings(t *testing.T) {
 		t.Fatal("Cannot decrypt RSA key:", err)
 	}
 
-	ecPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(ecKey));
+	ecPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(ecKey))
 	if err != nil {
 		t.Fatal("Cannot read EC key:", err)
 	}
@@ -68,7 +70,7 @@ func TestGenerateKeyRings(t *testing.T) {
 		t.Fatal("Cannot extract EC public key:", err)
 	}
 
-	ecPublicKeyRing, err = ReadArmoredKeyRing(strings.NewReader(ecPublicKey));
+	ecPublicKeyRing, err = ReadArmoredKeyRing(strings.NewReader(ecPublicKey))
 	if err != nil {
 		t.Fatal("Cannot read EC public key:", err)
 	}
@@ -83,7 +85,7 @@ func TestEncryptDecryptKeys(t *testing.T) {
 	var pass, _ = base64.StdEncoding.DecodeString("H2CAwzpdexjxXucVYMERDiAc/td8aGPrr6ZhfMnZlLI=")
 	var testSymmetricKey = &SymmetricKey{
 		Key:  pass,
-		Algo: "aes256",
+		Algo: constants.AES256,
 	}
 
 	packet, err := SetKey(rsaPublicKeyRing, testSymmetricKey)
@@ -122,8 +124,9 @@ func TestUpdatePrivateKeysPassphrase(t *testing.T) {
 	passphrase = newPassphrase
 }
 
-func ExampleCheckKeys() {
-	pmCrypto.CheckKey(readTestFile("keyring_publicKey"))
+// ExampleCheckKey to track changes in test data
+func ExampleCheckKey() {
+	_, _ = pmCrypto.CheckKey(readTestFile("keyring_publicKey"))
 	// Output:
 	// SubKey:37e4bcf09b36e34012d10c0247dc67b5cb8267f6
 	// PrimaryKey:6e8ba229b0cccaf6962f97953eb6259edf21df24

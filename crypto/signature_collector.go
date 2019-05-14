@@ -22,7 +22,9 @@ type SignatureCollector struct {
 	verified  int
 }
 
-func newSignatureCollector(targetAcceptor pmmime.VisitAcceptor, keyring openpgp.KeyRing, config *packet.Config) *SignatureCollector {
+func newSignatureCollector(
+	targetAcceptor pmmime.VisitAcceptor, keyring openpgp.KeyRing, config *packet.Config,
+) *SignatureCollector {
 	return &SignatureCollector{
 		target:  targetAcceptor,
 		config:  config,
@@ -30,11 +32,14 @@ func newSignatureCollector(targetAcceptor pmmime.VisitAcceptor, keyring openpgp.
 	}
 }
 
-// Accept
-func (sc *SignatureCollector) Accept(part io.Reader, header textproto.MIMEHeader, hasPlainSibling bool, isFirst, isLast bool) (err error) {
+// Accept collects the signature
+func (sc *SignatureCollector) Accept(
+	part io.Reader, header textproto.MIMEHeader,
+	hasPlainSibling, isFirst, isLast bool,
+) (err error) {
 	parentMediaType, params, _ := mime.ParseMediaType(header.Get("Content-Type"))
 	if parentMediaType == "multipart/signed" {
-		newPart, rawBody := pmmime.GetRawMimePart(part, "--" + params["boundary"])
+		newPart, rawBody := pmmime.GetRawMimePart(part, "--"+params["boundary"])
 		var multiparts []io.Reader
 		var multipartHeaders []textproto.MIMEHeader
 		if multiparts, multipartHeaders, err = pmmime.GetMultipartParts(newPart, params); err == nil {
@@ -48,7 +53,11 @@ func (sc *SignatureCollector) Accept(part io.Reader, header textproto.MIMEHeader
 			if len(multiparts) != 2 {
 				sc.verified = notSigned
 				// Invalid multipart/signed format just pass along
-				ioutil.ReadAll(rawBody)
+				_, err = ioutil.ReadAll(rawBody)
+				if err != nil {
+					return err
+				}
+
 				for i, p := range multiparts {
 					if err = sc.target.Accept(p, multipartHeaders[i], hasPlainChild, true, true); err != nil {
 						return
@@ -60,11 +69,18 @@ func (sc *SignatureCollector) Accept(part io.Reader, header textproto.MIMEHeader
 			// actual multipart/signed format
 			err = sc.target.Accept(multiparts[0], multipartHeaders[0], hasPlainChild, true, true)
 			if err != nil {
-				return
+				return err
 			}
 
-			partData, _ := ioutil.ReadAll(multiparts[1])
-			decodedPart := pmmime.DecodeContentEncoding(bytes.NewReader(partData), multipartHeaders[1].Get("Content-Transfer-Encoding"))
+			partData, err := ioutil.ReadAll(multiparts[1])
+			if err != nil {
+				return err
+			}
+
+			decodedPart := pmmime.DecodeContentEncoding(
+				bytes.NewReader(partData),
+				multipartHeaders[1].Get("Content-Transfer-Encoding"))
+
 			buffer, err := ioutil.ReadAll(decodedPart)
 			if err != nil {
 				return err
@@ -91,11 +107,15 @@ func (sc *SignatureCollector) Accept(part io.Reader, header textproto.MIMEHeader
 		}
 		return
 	}
-	sc.target.Accept(part, header, hasPlainSibling, isFirst, isLast)
+	err = sc.target.Accept(part, header, hasPlainSibling, isFirst, isLast)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-// GetSignature
+// GetSignature collected by Accept
 func (sc SignatureCollector) GetSignature() string {
 	return sc.signature
 }

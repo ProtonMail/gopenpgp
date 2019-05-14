@@ -13,7 +13,9 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-func (pm PmCrypto) parseMIME(mimeBody string, verifierKey *KeyRing) (*pmmime.BodyCollector, int, []string, []string, error) {
+func (pm PmCrypto) parseMIME(
+	mimeBody string, verifierKey *KeyRing,
+) (*pmmime.BodyCollector, int, []string, []string, error) {
 	mm, err := mail.ReadMessage(strings.NewReader(mimeBody))
 	if err != nil {
 		return nil, 0, nil, nil, err
@@ -22,6 +24,9 @@ func (pm PmCrypto) parseMIME(mimeBody string, verifierKey *KeyRing) (*pmmime.Bod
 
 	h := textproto.MIMEHeader(mm.Header)
 	mmBodyData, err := ioutil.ReadAll(mm.Body)
+	if err != nil {
+		return nil, 0, nil, nil, err
+	}
 
 	printAccepter := pmmime.NewMIMEPrinter()
 	bodyCollector := pmmime.NewBodyCollector(printAccepter)
@@ -42,10 +47,10 @@ func (pm PmCrypto) parseMIME(mimeBody string, verifierKey *KeyRing) (*pmmime.Bod
 	atts := attachmentsCollector.GetAttachments()
 	attHeaders := attachmentsCollector.GetAttHeaders()
 
-	return body, verified, atts, attHeaders, nil
+	return body, verified, atts, attHeaders, err
 }
 
-// MIMECallbacks defines a call back interface
+// MIMECallbacks defines a call back methods to process MIME message
 type MIMECallbacks interface {
 	OnBody(body string, mimetype string)
 	OnAttachment(headers string, data []byte)
@@ -56,8 +61,10 @@ type MIMECallbacks interface {
 }
 
 // DecryptMIMEMessage decrypts a MIME message
-func (pm *PmCrypto) DecryptMIMEMessage(encryptedText string, verifierKey *KeyRing, privateKeyRing *KeyRing,
-	passphrase string, callbacks MIMECallbacks, verifyTime int64) {
+func (pm *PmCrypto) DecryptMIMEMessage(
+	encryptedText string, verifierKey, privateKeyRing *KeyRing,
+	passphrase string, callbacks MIMECallbacks, verifyTime int64,
+) {
 	decsignverify, err := pm.DecryptMessageVerify(encryptedText, verifierKey, privateKeyRing, passphrase, verifyTime)
 	if err != nil {
 		callbacks.OnError(err)

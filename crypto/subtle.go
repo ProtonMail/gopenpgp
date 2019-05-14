@@ -7,7 +7,8 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
-// EncryptWithoutIntegrity encrypts data with AES-CTR. Note: this encryption mode is not secure when stored/sent on an untrusted medium.
+// EncryptWithoutIntegrity encrypts data with AES-CTR. Note: this encryption
+// mode is not secure when stored/sent on an untrusted medium.
 func EncryptWithoutIntegrity(key, input, iv []byte) (output []byte, err error) {
 	var block cipher.Block
 	if block, err = aes.NewCipher(key); err != nil {
@@ -25,7 +26,8 @@ func DecryptWithoutIntegrity(key, input, iv []byte) ([]byte, error) {
 	return EncryptWithoutIntegrity(key, input, iv)
 }
 
-// DeriveKey derives a key from a password using scrypt. N should be set to the highest power of 2 you can derive within 100 milliseconds.
+// DeriveKey derives a key from a password using scrypt. N should be set to the
+// highest power of 2 you can derive within 100 milliseconds.
 func DeriveKey(password string, salt []byte, N int) ([]byte, error) {
 	return scrypt.Key([]byte(password), salt, N, 8, 1, 32)
 }

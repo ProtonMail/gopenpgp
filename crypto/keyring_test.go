@@ -1,26 +1,29 @@
 package crypto
 
 import (
-	"github.com/stretchr/testify/assert"
 	"encoding/base64"
-	"golang.org/x/crypto/openpgp/armor"
 	"io/ioutil"
 	"strings"
 	"testing"
+
+	"golang.org/x/crypto/openpgp/armor"
+
+	"github.com/ProtonMail/go-pm-crypto/constants"
+	"github.com/stretchr/testify/assert"
 )
 
-var decodedSymmetricKey, _ = base64.StdEncoding.DecodeString("ExXmnSiQ2QCey20YLH6qlLhkY3xnIBC1AwlIXwK/HvY=");
+var decodedSymmetricKey, _ = base64.StdEncoding.DecodeString("ExXmnSiQ2QCey20YLH6qlLhkY3xnIBC1AwlIXwK/HvY=")
 
 var testSymmetricKey = &SymmetricKey{
 	Key:  decodedSymmetricKey,
-	Algo: "aes256",
+	Algo: constants.AES256,
 }
 
 // Corresponding key in testdata/keyring_privateKey
 const testMailboxPassword = "apple"
 
 // Corresponding key in testdata/keyring_privateKeyLegacy
-const testMailboxPasswordLegacy = "123"
+// const testMailboxPasswordLegacy = "123"
 
 const testToken = "d79ca194a22810a5363eeddfdef7dfbc327c6229"
 
@@ -29,22 +32,25 @@ var (
 	testPublicKeyRing  *KeyRing
 )
 
-var testIdentity = &Identity{
-	Name:  "UserID",
-	Email: "",
-}
+// var testIdentity = &Identity{
+// 	Name:  "UserID",
+// 	Email: "",
+// }
 
 func init() {
 	var err error
-	if testPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey"))); err != nil {
+	testPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey")))
+	if err != nil {
 		panic(err)
 	}
 
-	if testPublicKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_publicKey"))); err != nil {
+	testPublicKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_publicKey")))
+	if err != nil {
 		panic(err)
 	}
 
-	if err := testPrivateKeyRing.Unlock([]byte(testMailboxPassword)); err != nil {
+	err = testPrivateKeyRing.Unlock([]byte(testMailboxPassword))
+	if err != nil {
 		panic(err)
 	}
 }

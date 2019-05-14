@@ -22,6 +22,7 @@ test-all:
         - go test -coverprofile cover.out ./...
         - mkdir reports
         - go tool cover -html=cover.out -o reports/cover.html
+        - go run vendor/github.com/golangci/golangci-lint/cmd/golangci-lint/main.go run crypto/... --enable-all -D govet -D interfacer -D gofmt -D prealloc -D gochecknoglobals -D goimports -D gosec -D gocritic -D gochecknoinits
     tags:
         - coverage
     artifacts:
