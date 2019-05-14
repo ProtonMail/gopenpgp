@@ -17,8 +17,8 @@ crypto library](https://github.com/ProtonMail/crypto).
         - [Encrypt / Decrypt with password](#encrypt--decrypt-with-password)
         - [Encrypt / Decrypt with PGP keys](#encrypt--decrypt-with-pgp-keys)
     - [Generate key](#generate-key)
-    - [Sign](#sign)
-    - [Detached signatures](#detached-signatures)
+    - [Sign plain text messages](#sign-plain-text-messages)
+    - [Detached signatures for binary data](#detached-signatures-for-binary-data)
 
 <!-- /TOC -->
 
@@ -154,6 +154,82 @@ rsaKey, err := pgp.GenerateKey(localPart, domain, passphrase, "rsa", rsaBits)
 ecKey, err := pgp.GenerateKey(localPart, domain, passphrase, "x25519", ecBits)
 ```
 
-### Sign
+### Sign plain text messages
 
-### Detached signatures
+To sign plain text data either an unlocked private keyring or a passphrase must be provided.
+The output is an armored signature.
+
+```go
+const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+...
+-----END PGP PRIVATE KEY BLOCK-----` // encrypted private key
+passphrase = "LongSecret"
+const trimNewlines = false
+
+signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(privkey))
+
+signature, err := pmCrypto.SignTextDetached(plaintext, signingKeyRing, passphrase, trimNewlines)
+// or
+signingKeyRing.Unlock([]byte(passphrase))
+signature, err := pmCrypto.SignTextDetached(plaintext, signingKeyRing, "", trimNewlines)
+```
+
+To verify a signature either private or public keyring can be provided.
+The newlines in the text are never trimmed in the verification process.
+The function outputs a bool, if the verification fails `verified` will be false, and the error will be not `nil`.
+
+```go
+const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+...
+-----END PGP PUBLIC KEY BLOCK-----`
+
+const signature = `-----BEGIN PGP SIGNATURE-----
+...
+-----END PGP SIGNATURE-----`
+
+const verifyTime = 0
+
+signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(pubkey))
+
+verified, err := pmCrypto.VerifyTextDetachedSig(signature, signedPlainText, signingKeyRing, verifyTime)
+```
+
+### Detached signatures for binary data
+
+To sign binary data either an unlocked private keyring or a passphrase must be provided.
+The output is an armored signature.
+
+```go
+const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+...
+-----END PGP PRIVATE KEY BLOCK-----` // encrypted private key
+passphrase = "LongSecret"
+const trimNewlines = false
+
+signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(privkey))
+
+signature, err := pmCrypto.SignBinDetached(data, signingKeyRing, passphrase, trimNewlines)
+// or
+signingKeyRing.Unlock([]byte(passphrase))
+signature, err := pmCrypto.SignBinDetached(data, signingKeyRing, "", trimNewlines)
+```
+
+To verify a signature either private or public keyring can be provided.
+The newlines in the text are never trimmed in the verification process.
+The function outputs a bool, if the verification fails `verified` will be false, and the error will be not `nil`.
+
+```go
+const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+...
+-----END PGP PUBLIC KEY BLOCK-----`
+
+const signature = `-----BEGIN PGP SIGNATURE-----
+...
+-----END PGP SIGNATURE-----`
+
+const verifyTime = 0
+
+signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(pubkey))
+
+verified, err := pmCrypto.VerifyBinDetachedSig(signature, data, signingKeyRing, verifyTime)
+```
