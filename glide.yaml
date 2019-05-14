@@ -1,9 +1,0 @@
-package: proton/gopenpgp
-import:
-- package: golang.org/x/crypto
-  version: master
-  repo: https://github.com/ProtonMail/crypto.git
-  version: 9e4251120d8c43f10024d798bc6dde21d40704a0
-- package: github.com/ProtonMail/go-mime
-  repo: https://github.com/ProtonMail/go-mime.git
-

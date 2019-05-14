@@ -1,0 +1,77 @@
+---
+---
+
+// Breakpoints
+$large-breakpoint: 64em !default;
+$medium-breakpoint: 42em !default;
+
+// Headers
+$header-heading-color: #fff !default;
+$header-bg-color: #262a33 !default;
+$header-bg-color-secondary: #434a59 !default;
+
+// Text
+$section-headings-color: #000 !default;
+$body-text-color: #606c71 !default;
+$body-link-color: #657ee4 !default;
+$blockquote-text-color: #819198 !default;
+
+// Code
+$code-bg-color: #f3f6fa !default;
+$code-text-color: #567482 !default;
+
+// Borders
+$border-color: #dce6f0 !default;
+$table-border-color: #e9ebec !default;
+$hr-border-color: #eff0f1 !default;
+
+body .page-header {
+	border-bottom: 6px solid #657ee4;
+	position: relative;
+	background: $header-bg-color;
+}
+
+.page-header section {
+	position: relative;
+	z-index: 3;
+}
+
+.page-header::after {
+	display: block;
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 1;
+	height: 100%;
+	width: 100%;
+	background: url('/assets/img/triangles.png') 0 0 repeat;
+	opacity: 5;
+}
+
+.card {
+	display: inline-block;
+	padding: 1rem;
+	margin: 0 .5rem 1rem 0;
+	width: 20rem;
+	border: 1px solid $border-color;
+	border-radius: 0.3rem;
+	background: linear-gradient(120deg, $body-text-color, $header-bg-color-secondary);
+	color: $header-heading-color;
+}
+
+.card img {
+	height: 10vh;
+	margin: auto;
+	display: block;
+	margin-bottom: .5rem;
+	width: 80%;
+}
+
+.text-center {
+	text-align: center;
+}
+
+@import 'jekyll-theme-cayman';

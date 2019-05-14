@@ -1,0 +1,7 @@
+title: GopenPGP
+description: Supplementary Go cryptography libraries
+show_downloads: true
+google_analytics:
+theme: jekyll-theme-cayman
+github:
+  project: https://github.com/ProtonMail/crypto
