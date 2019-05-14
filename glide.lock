@@ -58,3 +58,5 @@ testImports:
     version: 34c6fa2dc70986bccbbffcc6130f6920a924b075
     subpackages:
     - assert
+  - name: github.com/golangci/golangci-lint
+    version: 901cf25e20f86b7e9dc6f73eaba5afbd0cbdc257

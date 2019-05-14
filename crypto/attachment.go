@@ -9,12 +9,13 @@ import (
 	"sync"
 
 	armorUtils "github.com/ProtonMail/go-pm-crypto/armor"
+	"github.com/ProtonMail/go-pm-crypto/constants"
 	"github.com/ProtonMail/go-pm-crypto/models"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-// EncryptedSplit when encrypt attachment
+// AttachmentProcessor to encrypt an attachment
 type AttachmentProcessor struct {
 	w                *io.WriteCloser
 	pipe             *io.PipeWriter
@@ -26,7 +27,9 @@ type AttachmentProcessor struct {
 
 // Process allows the attachment processor to write the encrypted attachment
 func (ap *AttachmentProcessor) Process(plainData []byte) {
-	(*ap.w).Write(plainData)
+	if _, err := (*ap.w).Write(plainData); err != nil {
+		panic(err)
+	}
 }
 
 // Finish attachment process
@@ -43,11 +46,12 @@ func (ap *AttachmentProcessor) Finish() (*models.EncryptedSplit, error) {
 	return ap.split, nil
 }
 
-// Encrypts attachment. Takes input data and key data in binary form
-func (pm *PmCrypto) encryptAttachment(estimatedSize int, fileName string, publicKey *KeyRing, garbageCollector int) (*AttachmentProcessor, error) {
+// encryptAttachment takes input data from file
+func (pm *PmCrypto) encryptAttachment(
+	estimatedSize int, fileName string, publicKey *KeyRing, garbageCollector int,
+) (*AttachmentProcessor, error) {
 	attachmentProc := &AttachmentProcessor{}
-	// you can also add these one at
-	// a time if you need to
+	// you can also add these one at a time if you need to
 	attachmentProc.done.Add(1)
 	attachmentProc.garbageCollector = garbageCollector
 
@@ -68,7 +72,7 @@ func (pm *PmCrypto) encryptAttachment(estimatedSize int, fileName string, public
 		if attachmentProc.err != nil {
 			attachmentProc.err = splitError
 		}
-		split.Algo = "aes256"
+		split.Algo = constants.AES256
 		attachmentProc.split = split
 	}()
 
@@ -84,8 +88,11 @@ func (pm *PmCrypto) encryptAttachment(estimatedSize int, fileName string, public
 	return attachmentProc, nil
 }
 
-// EncryptAttachment encrypts attachment. Takes input data and key data in binary form
-func (pm *PmCrypto) EncryptAttachment(plainData []byte, fileName string, publicKey *KeyRing) (*models.EncryptedSplit, error) {
+// EncryptAttachment encrypts attachment. Takes input data and key data in
+// binary form
+func (pm *PmCrypto) EncryptAttachment(
+	plainData []byte, fileName string, publicKey *KeyRing,
+) (*models.EncryptedSplit, error) {
 	ap, err := pm.encryptAttachment(len(plainData), fileName, publicKey, -1)
 	if err != nil {
 		return nil, err
@@ -96,12 +103,12 @@ func (pm *PmCrypto) EncryptAttachment(plainData []byte, fileName string, publicK
 		return nil, err
 	}
 	return split, nil
-
 }
 
-// EncryptAttachmentLowMemory ...
-func (pm *PmCrypto) EncryptAttachmentLowMemory(estimatedSize int, fileName string, publicKey *KeyRing) (*AttachmentProcessor, error) {
-	// Garbage collect every megabyte
+// EncryptAttachmentLowMemory with garbage collected every megabyte
+func (pm *PmCrypto) EncryptAttachmentLowMemory(
+	estimatedSize int, fileName string, publicKey *KeyRing,
+) (*AttachmentProcessor, error) {
 	return pm.encryptAttachment(estimatedSize, fileName, publicKey, 1<<20)
 }
 
@@ -119,9 +126,12 @@ func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
 	return SeparateKeyAndData(nil, encryptedReader, len(encrypted), -1)
 }
 
-// Decrypt attachment. Takes input data and key data in binary form. privateKeys can contains more keys. passphrase is used to unlock keys
-func (pm *PmCrypto) DecryptAttachment(keyPacket []byte, dataPacket []byte, kr *KeyRing, passphrase string) ([]byte, error) {
-
+// DecryptAttachment takes input data and key data in binary form. The
+// privateKeys can contains more keys. The passphrase is used to unlock keys
+func (pm *PmCrypto) DecryptAttachment(
+	keyPacket, dataPacket []byte,
+	kr *KeyRing, passphrase string,
+) ([]byte, error) {
 	privKeyEntries := kr.entities
 
 	if err := kr.Unlock([]byte(passphrase)); err != nil {

@@ -7,6 +7,8 @@ import (
 	"io"
 
 	"github.com/ProtonMail/go-pm-crypto/armor"
+	"github.com/ProtonMail/go-pm-crypto/constants"
+
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -33,8 +35,10 @@ func (pm *PmCrypto) RandomTokenWith(size int) ([]byte, error) {
 }
 
 // GetSessionFromKeyPacket gets session key no encoding in and out
-func (pm *PmCrypto) GetSessionFromKeyPacket(keyPackage []byte, privateKey *KeyRing, passphrase string) (*SymmetricKey, error) {
-
+func (pm *PmCrypto) GetSessionFromKeyPacket(
+	keyPackage []byte, privateKey *KeyRing, passphrase string,
+) (*SymmetricKey,
+	error) {
 	keyReader := bytes.NewReader(keyPackage)
 	packets := packet.NewReader(keyReader)
 
@@ -68,7 +72,7 @@ func (pm *PmCrypto) GetSessionFromKeyPacket(keyPackage []byte, privateKey *KeyRi
 	return getSessionSplit(ek)
 }
 
-// KeyPacketWithPublicKey
+// KeyPacketWithPublicKey returns binary packet from symmetric key and armored public key
 func (pm *PmCrypto) KeyPacketWithPublicKey(sessionSplit *SymmetricKey, publicKey string) ([]byte, error) {
 	pubkeyRaw, err := armor.Unarmor(publicKey)
 	if err != nil {
@@ -77,10 +81,13 @@ func (pm *PmCrypto) KeyPacketWithPublicKey(sessionSplit *SymmetricKey, publicKey
 	return pm.KeyPacketWithPublicKeyBin(sessionSplit, pubkeyRaw)
 }
 
-// KeyPacketWithPublicKeyBin
+// KeyPacketWithPublicKeyBin returns binary packet from symmetric key and binary public key
 func (pm *PmCrypto) KeyPacketWithPublicKeyBin(sessionSplit *SymmetricKey, publicKey []byte) ([]byte, error) {
 	publicKeyReader := bytes.NewReader(publicKey)
 	pubKeyEntries, err := openpgp.ReadKeyRing(publicKeyReader)
+	if err != nil {
+		return nil, err
+	}
 
 	outbuf := &bytes.Buffer{}
 
@@ -117,14 +124,13 @@ func (pm *PmCrypto) KeyPacketWithPublicKeyBin(sessionSplit *SymmetricKey, public
 
 	if err = packet.SerializeEncryptedKey(outbuf, pub, cf, sessionSplit.Key, nil); err != nil {
 		err = fmt.Errorf("pm-crypto: cannot set key: %v", err)
-		return nil, errors.New("cannot set key: key ring is empty")
+		return nil, err
 	}
 	return outbuf.Bytes(), nil
 }
 
-// GetSessionFromSymmetricPacket
+// GetSessionFromSymmetricPacket extracts symmentric key from binary packet
 func (pm *PmCrypto) GetSessionFromSymmetricPacket(keyPackage []byte, password string) (*SymmetricKey, error) {
-
 	keyReader := bytes.NewReader(keyPackage)
 	packets := packet.NewReader(keyReader)
 
@@ -161,7 +167,7 @@ func (pm *PmCrypto) GetSessionFromSymmetricPacket(keyPackage []byte, password st
 	return nil, errors.New("password incorrect")
 }
 
-// SymmetricKeyPacketWithPassword
+// SymmetricKeyPacketWithPassword return binary packet from symmetric key and password
 func (pm *PmCrypto) SymmetricKeyPacketWithPassword(sessionSplit *SymmetricKey, password string) ([]byte, error) {
 	outbuf := &bytes.Buffer{}
 
@@ -188,7 +194,7 @@ func getSessionSplit(ek *packet.EncryptedKey) (*SymmetricKey, error) {
 	if ek == nil {
 		return nil, errors.New("can't decrypt key packet")
 	}
-	algo := "aes256"
+	algo := constants.AES256
 	for k, v := range symKeyAlgos {
 		if v == ek.CipherFunc {
 			algo = k
@@ -207,7 +213,7 @@ func getSessionSplit(ek *packet.EncryptedKey) (*SymmetricKey, error) {
 }
 
 func getAlgo(cipher packet.CipherFunction) string {
-	algo := "aes256"
+	algo := constants.AES256
 	for k, v := range symKeyAlgos {
 		if v == cipher {
 			algo = k

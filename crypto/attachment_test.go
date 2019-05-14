@@ -1,14 +1,16 @@
 package crypto
 
 import (
-	"github.com/stretchr/testify/assert"
 	"encoding/base64"
 	"io/ioutil"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-// const testAttachmentEncrypted = `0ksB0fHC6Duezx/0TqpK/82HSl8+qCY0c2BCuyrSFoj6Dubd93T3//32jVYa624NYvfvxX+UxFKYKJxG09gFsU1IVc87cWvUgmUmgjU=`
+// const testAttachmentEncrypted =
+// `0ksB0fHC6Duezx/0TqpK/82HSl8+qCY0c2BCuyrSFoj6Dubd93T3//32jVYa624NYvfvxX+UxFKYKJxG09gFsU1IVc87cWvUgmUmgjU=`
 
 func TestAttachmentGetKey(t *testing.T) {
 	testKeyPackets, err := ioutil.ReadFile("testdata/attachment_keypacket")
@@ -22,7 +24,11 @@ func TestAttachmentGetKey(t *testing.T) {
 		t.Fatal("Expected no error while decoding base64 KeyPacket, got:", err)
 	}
 
-	split, err := SeparateKeyAndData(testPrivateKeyRing, strings.NewReader(string(testKeyPacketsDecoded)), len(testKeyPacketsDecoded), -1)
+	split, err := SeparateKeyAndData(
+		testPrivateKeyRing,
+		strings.NewReader(string(testKeyPacketsDecoded)),
+		len(testKeyPacketsDecoded),
+		-1)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting attachment key, got:", err)
 	}

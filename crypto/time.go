@@ -6,7 +6,7 @@ import (
 
 var pmCrypto = PmCrypto{}
 
-// GetPmCrypto
+// GetPmCrypto return global PmCrypto
 func GetPmCrypto() *PmCrypto {
 	return &pmCrypto
 }
@@ -29,8 +29,8 @@ func (pm *PmCrypto) GetTime() time.Time {
 
 func (pm *PmCrypto) getNow() time.Time {
 	if pm.latestServerTime > 0 && !pm.latestClientTime.IsZero() {
-		// Sub is monotonic, it uses a monotonic clock in this case instead of the wall clock
-		extrapolate := int64(pm.latestClientTime.Sub(time.Now()).Seconds())
+		// Until is monotonic, it uses a monotonic clock in this case instead of the wall clock
+		extrapolate := int64(time.Until(pm.latestClientTime).Seconds())
 		return time.Unix(pm.latestServerTime+extrapolate, 0)
 	}
 

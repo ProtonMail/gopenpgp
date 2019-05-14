@@ -33,15 +33,16 @@ type SymmetricKey struct {
 const SymmetricallyEncryptedTag = 210
 
 var symKeyAlgos = map[string]packet.CipherFunction{
-	"3des":      packet.Cipher3DES,
-	"tripledes": packet.Cipher3DES,
-	"cast5":     packet.CipherCAST5,
-	"aes128":    packet.CipherAES128,
-	"aes192":    packet.CipherAES192,
-	"aes256":    packet.CipherAES256,
+	constants.ThreeDES:  packet.Cipher3DES,
+	constants.TripleDES: packet.Cipher3DES,
+	constants.CAST5:     packet.CipherCAST5,
+	constants.AES128:    packet.CipherAES128,
+	constants.AES192:    packet.CipherAES192,
+	constants.AES256:    packet.CipherAES256,
 }
 
-// GetCipherFunc returns function corresponding to an algorithm used in this SymmetricKey
+// GetCipherFunc returns function corresponding to an algorithm used in
+// this SymmetricKey
 func (sk *SymmetricKey) GetCipherFunc() packet.CipherFunction {
 	cf, ok := symKeyAlgos[sk.Algo]
 	if ok {
@@ -108,7 +109,10 @@ func DecryptAttKey(kr *KeyRing, keyPacket string) (key *SymmetricKey, err error)
 }
 
 // SeparateKeyAndData from packets in a pgp session
-func SeparateKeyAndData(kr *KeyRing, r io.Reader, estimatedLength int, garbageCollector int) (outSplit *models.EncryptedSplit, err error) {
+func SeparateKeyAndData(
+	kr *KeyRing, r io.Reader,
+	estimatedLength, garbageCollector int,
+) (outSplit *models.EncryptedSplit, err error) {
 	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
 	packets := packet.NewReader(r)
 	outSplit = &models.EncryptedSplit{}
@@ -254,21 +258,20 @@ func SetKey(kr *KeyRing, symKey *SymmetricKey) (packets string, err error) {
 	}
 	if pub == nil {
 		err = fmt.Errorf("pm-crypto: cannot set key: no public key available")
-		return
+		return "", err
 	}
 
 	if err = packet.SerializeEncryptedKey(w, pub, cf, symKey.Key, nil); err != nil {
 		err = fmt.Errorf("pm-crypto: cannot set key: %v", err)
-		return
+		return "", err
 	}
 
 	if err = w.Close(); err != nil {
 		err = fmt.Errorf("pm-crypto: cannot set key: %v", err)
-		return
+		return "", err
 	}
 
-	packets = b.String()
-	return
+	return b.String(), nil
 }
 
 // IsKeyExpiredBin checks if the given key is expired. Input in binary format
@@ -339,9 +342,11 @@ func (pm *PmCrypto) IsKeyExpired(publicKey string) (bool, error) {
 	return pm.IsKeyExpiredBin(rawPubKey)
 }
 
-func (pm *PmCrypto) generateKey(userName string, domain string, passphrase string, keyType string, bits int,
-	prime1 []byte, prime2 []byte, prime3 []byte, prime4 []byte) (string, error) {
-
+func (pm *PmCrypto) generateKey(
+	userName, domain, passphrase, keyType string,
+	bits int,
+	prime1, prime2, prime3, prime4 []byte,
+) (string, error) {
 	if len(userName) <= 0 {
 		return "", errors.New("invalid user name format")
 	}
@@ -421,12 +426,15 @@ func (pm *PmCrypto) GenerateRSAKeyWithPrimes(
 }
 
 // GenerateKey and generate primes
-func (pm *PmCrypto) GenerateKey(userName string, domain string, passphrase string, keyType string, bits int) (string, error) {
+func (pm *PmCrypto) GenerateKey(userName, domain, passphrase, keyType string, bits int) (string, error) {
 	return pm.generateKey(userName, domain, passphrase, keyType, bits, nil, nil, nil, nil)
 }
 
-// UpdatePrivateKeyPassphrase decrypts the given private key with oldPhrase and re-encrypts with the newPassphrase
-func (pm *PmCrypto) UpdatePrivateKeyPassphrase(privateKey string, oldPassphrase string, newPassphrase string) (string, error) {
+// UpdatePrivateKeyPassphrase decrypts the given private key with oldPhrase and
+// re-encrypts with the newPassphrase
+func (pm *PmCrypto) UpdatePrivateKeyPassphrase(
+	privateKey string, oldPassphrase string, newPassphrase string,
+) (string, error) {
 	privKey := strings.NewReader(privateKey)
 	privKeyEntries, err := openpgp.ReadArmoredKeyRing(privKey)
 	if err != nil {

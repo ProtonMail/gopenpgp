@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -20,11 +19,13 @@ import (
 	"github.com/ProtonMail/go-pm-crypto/models"
 )
 
-// DecryptMessageStringKey decrypts encrypted message use private key (string )
+// DecryptMessageStringKey decrypts encrypted message use private key (string)
 // encryptedText : string armored encrypted
 // privateKey : armored private use to decrypt message
 // passphrase : match with private key to decrypt message
-func (pm *PmCrypto) DecryptMessageStringKey(encryptedText string, privateKey string, passphrase string) (string, error) {
+func (pm *PmCrypto) DecryptMessageStringKey(
+	encryptedText, privateKey, passphrase string,
+) (string, error) {
 	privKeyRaw, err := armorUtils.Unarmor(privateKey)
 	if err != nil {
 		return "", err
@@ -58,7 +59,11 @@ func (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey *KeyRing, pa
 	return string(b), nil
 }
 
-func decryptCore(encryptedText string, additionalEntries openpgp.EntityList, privKey *KeyRing, passphrase string, timeFunc func() time.Time) (*openpgp.MessageDetails, error) {
+func decryptCore(
+	encryptedText string, additionalEntries openpgp.EntityList,
+	privKey *KeyRing, passphrase string,
+	timeFunc func() time.Time,
+) (*openpgp.MessageDetails, error) {
 	rawPwd := []byte(passphrase)
 	if err := privKey.Unlock(rawPwd); err != nil {
 		err = fmt.Errorf("pm-crypto: cannot decrypt passphrase: %v", err)
@@ -66,14 +71,9 @@ func decryptCore(encryptedText string, additionalEntries openpgp.EntityList, pri
 	}
 
 	privKeyEntries := privKey.entities
-	for _, entity := range privKey.entities {
-		privKeyEntries = append(privKeyEntries, entity)
-	}
 
 	if additionalEntries != nil {
-		for _, e := range additionalEntries {
-			privKeyEntries = append(privKeyEntries, e)
-		}
+		privKeyEntries = append(privKeyEntries, additionalEntries...)
 	}
 
 	encryptedio, err := internal.Unarmor(encryptedText)
@@ -92,7 +92,10 @@ func decryptCore(encryptedText string, additionalEntries openpgp.EntityList, pri
 // verifierKey    []byte: unarmored verifier keys
 // privateKeyRing []byte: unarmored private key to decrypt. could be multiple
 // passphrase:    match with private key to decrypt message
-func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey *KeyRing, privateKeyRing *KeyRing, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) {
+func (pm *PmCrypto) DecryptMessageVerify(
+	encryptedText string, verifierKey, privateKeyRing *KeyRing,
+	passphrase string, verifyTime int64,
+) (*models.DecryptSignedVerify, error) {
 	out := &models.DecryptSignedVerify{}
 	out.Verify = failed
 
@@ -101,7 +104,16 @@ func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey *KeyR
 		out.Verify = noVerifier
 	}
 
-	md, err := decryptCore(encryptedText, verifierEntries, privateKeyRing, passphrase, func() time.Time { return time.Unix(0, 0) }) // TODO: I doubt this time is correct
+	md, err := decryptCore(
+		encryptedText,
+		verifierEntries,
+		privateKeyRing,
+		passphrase,
+		func() time.Time { return time.Unix(0, 0) }) // TODO: I doubt this time is correct
+
+	if err != nil {
+		return nil, err
+	}
 
 	decrypted := md.UnverifiedBody
 	b, err := ioutil.ReadAll(decrypted)
@@ -136,7 +148,8 @@ func (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey *KeyR
 	return out, nil
 }
 
-// processSignatureExpiration handles signature time verification manually, so we can add a margin to the creationTime check.
+// processSignatureExpiration handles signature time verification manually, so we can add a margin to the
+// creationTime check.
 func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 	if md.SignatureError == pgpErrors.ErrSignatureExpired {
 		if verifyTime > 0 {
@@ -159,7 +172,6 @@ func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 // plainText string: clear text
 // output string: armored pgp message
 func (pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string) (string, error) {
-
 	var outBuf bytes.Buffer
 	w, err := armor.Encode(&outBuf, constants.PGPMessageHeader, internal.ArmorHeaders)
 	if err != nil {
@@ -185,14 +197,17 @@ func (pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string
 	return outBuf.String(), nil
 }
 
-// EncryptMessage encrypts message with unarmored public key, if pass private key and passphrase will also sign the message
+// EncryptMessage encrypts message with unarmored public key, if pass private key and passphrase will also sign
+// the message
 // publicKey : bytes unarmored public key
 // plainText : the input
 // privateKey : optional required when you want to sign
 // passphrase : optional required when you pass the private key and this passphrase should decrypt the private key
 // trim : bool true if need to trim new lines
-func (pm *PmCrypto) EncryptMessage(plainText string, publicKey *KeyRing, privateKey *KeyRing, passphrase string, trim bool) (string, error) {
-
+func (pm *PmCrypto) EncryptMessage(
+	plainText string, publicKey, privateKey *KeyRing,
+	passphrase string, trim bool,
+) (string, error) {
 	if trim {
 		plainText = internal.TrimNewlines(plainText)
 	}
@@ -205,20 +220,22 @@ func (pm *PmCrypto) EncryptMessage(plainText string, publicKey *KeyRing, private
 	var signEntity *openpgp.Entity
 
 	if len(passphrase) > 0 && len(privateKey.entities) > 0 {
-
-		signEntity := privateKey.GetSigningEntity(passphrase)
-
-		if signEntity == nil {
-			return "", errors.New("cannot sign message, signer key is not unlocked")
+		var err error
+		signEntity, err = privateKey.GetSigningEntity(passphrase)
+		if err != nil {
+			return "", err
 		}
 	}
 
 	ew, err := EncryptCore(w, publicKey.entities, signEntity, "", false, pm.getTimeGenerator())
+	if err != nil {
+		return "", err
+	}
 
-	_, _ = ew.Write([]byte(plainText))
+	_, err = ew.Write([]byte(plainText))
 	ew.Close()
 	w.Close()
-	return outBuf.String(), nil
+	return outBuf.String(), err
 }
 
 // DecryptMessageWithPassword decrypts a pgp message with a password

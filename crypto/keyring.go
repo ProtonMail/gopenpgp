@@ -115,22 +115,28 @@ func (kr *KeyRing) GetEntities() openpgp.EntityList {
 }
 
 // GetSigningEntity returns first private signing entity from keyring
-func (kr *KeyRing) GetSigningEntity(passphrase string) *openpgp.Entity {
+func (kr *KeyRing) GetSigningEntity(passphrase string) (*openpgp.Entity, error) {
 	var signEntity *openpgp.Entity
 
 	for _, e := range kr.entities {
 		// Entity.PrivateKey must be a signing key
 		if e.PrivateKey != nil {
 			if e.PrivateKey.Encrypted {
-				e.PrivateKey.Decrypt([]byte(passphrase))
-			}
-			if !e.PrivateKey.Encrypted {
+				if err := e.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
+					continue
+				}
+
 				signEntity = e
 				break
 			}
 		}
 	}
-	return signEntity
+	if signEntity == nil {
+		err := errors.New("pmcrypto: cannot sign message, unable to unlock signer key")
+		return signEntity, err
+	}
+
+	return signEntity, nil
 }
 
 // Encrypt encrypts data to this keyring's owner. If sign is not nil, it also
@@ -161,11 +167,19 @@ func (kr *KeyRing) Encrypt(w io.Writer, sign *KeyRing, filename string, canonica
 		}
 	}
 
-	return EncryptCore(w, encryptEntities, signEntity, filename, canonicalizeText, func() time.Time { return GetPmCrypto().GetTime() })
+	return EncryptCore(
+		w,
+		encryptEntities,
+		signEntity,
+		filename,
+		canonicalizeText,
+		func() time.Time { return GetPmCrypto().GetTime() })
 }
 
 // EncryptCore is common encryption method for desktop and mobile clients
-func EncryptCore(w io.Writer, encryptEntities []*openpgp.Entity, signEntity *openpgp.Entity, filename string, canonicalizeText bool, timeGenerator func() time.Time) (io.WriteCloser, error) {
+func EncryptCore(w io.Writer, encryptEntities []*openpgp.Entity, signEntity *openpgp.Entity, filename string,
+	canonicalizeText bool, timeGenerator func() time.Time) (io.WriteCloser, error) {
+
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: timeGenerator}
 
 	hints := &openpgp.FileHints{
@@ -235,7 +249,9 @@ func (kr *KeyRing) EncryptString(s string, sign *KeyRing) (encrypted string, err
 }
 
 // EncryptSymmetric data using generated symmetric key encrypted with this KeyRing
-func (kr *KeyRing) EncryptSymmetric(textToEncrypt string, canonicalizeText bool) (outSplit *models.EncryptedSplit, err error) {
+func (kr *KeyRing) EncryptSymmetric(textToEncrypt string, canonicalizeText bool) (outSplit *models.EncryptedSplit,
+	err error) {
+
 	var encryptedWriter io.WriteCloser
 	buffer := &bytes.Buffer{}
 
@@ -277,7 +293,9 @@ func (kr *KeyRing) DecryptString(encrypted string) (SignedString, error) {
 // If error is errors.ErrSignatureExpired (from golang.org/x/crypto/openpgp/errors),
 // contents are still provided if library clients wish to process this message further
 func (kr *KeyRing) DecryptStringIfNeeded(data string) (decrypted string, err error) {
-	if re := regexp.MustCompile("^-----BEGIN " + constants.PGPMessageHeader + "-----(?s:.+)-----END " + constants.PGPMessageHeader + "-----"); re.MatchString(data) {
+	if re := regexp.MustCompile("^-----BEGIN " + constants.PGPMessageHeader + "-----(?s:.+)-----END " +
+		constants.PGPMessageHeader + "-----"); re.MatchString(data) {
+
 		var signed SignedString
 		signed, err = kr.DecryptString(data)
 		decrypted = signed.String
@@ -328,11 +346,7 @@ func (kr *KeyRing) DetachedSign(w io.Writer, toSign io.Reader, canonicalizeText 
 			err = openpgp.DetachSign(w, signEntity, toSign, config)
 		}
 	}
-	if err != nil {
-		return
-	}
-
-	return
+	return err
 }
 
 // VerifyString may return errors.ErrSignatureExpired (defined in
@@ -377,7 +391,9 @@ func (kr *KeyRing) Unlock(passphrase []byte) error {
 
 		// Entity.Subkeys can be used for encryption
 		for _, subKey := range e.Subkeys {
-			if subKey.PrivateKey != nil && (!subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage || subKey.Sig.FlagEncryptCommunications) {
+			if subKey.PrivateKey != nil && (!subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage ||
+				subKey.Sig.FlagEncryptCommunications) {
+
 				keys = append(keys, subKey.PrivateKey)
 			}
 		}
@@ -516,10 +532,8 @@ func (kr *KeyRing) CheckPassphrase(passphrase string) bool {
 			n++
 		}
 	}
-	if n == 0 {
-		return false
-	}
-	return true
+
+	return n != 0
 }
 
 // readFrom reads unarmored and armored keys from r and adds them to the keyring.
@@ -536,18 +550,28 @@ func (kr *KeyRing) readFrom(r io.Reader, armored bool) error {
 			switch entity.PrivateKey.PrivateKey.(type) {
 			// TODO: type mismatch after crypto lib update, fix this:
 			case *rsa.PrivateKey:
-				entity.PrimaryKey = packet.NewRSAPublicKey(time.Now(), entity.PrivateKey.PrivateKey.(*rsa.PrivateKey).Public().(*xrsa.PublicKey))
+				entity.PrimaryKey = packet.NewRSAPublicKey(
+					time.Now(),
+					entity.PrivateKey.PrivateKey.(*rsa.PrivateKey).Public().(*xrsa.PublicKey))
+
 			case *ecdsa.PrivateKey:
-				entity.PrimaryKey = packet.NewECDSAPublicKey(time.Now(), entity.PrivateKey.PrivateKey.(*ecdsa.PrivateKey).Public().(*ecdsa.PublicKey))
+				entity.PrimaryKey = packet.NewECDSAPublicKey(
+					time.Now(),
+					entity.PrivateKey.PrivateKey.(*ecdsa.PrivateKey).Public().(*ecdsa.PublicKey))
 			}
 		}
 		for _, subkey := range entity.Subkeys {
 			if subkey.PrivateKey != nil {
 				switch subkey.PrivateKey.PrivateKey.(type) {
 				case *rsa.PrivateKey:
-					subkey.PublicKey = packet.NewRSAPublicKey(time.Now(), subkey.PrivateKey.PrivateKey.(*rsa.PrivateKey).Public().(*xrsa.PublicKey))
+					subkey.PublicKey = packet.NewRSAPublicKey(
+						time.Now(),
+						subkey.PrivateKey.PrivateKey.(*rsa.PrivateKey).Public().(*xrsa.PublicKey))
+
 				case *ecdsa.PrivateKey:
-					subkey.PublicKey = packet.NewECDSAPublicKey(time.Now(), subkey.PrivateKey.PrivateKey.(*ecdsa.PrivateKey).Public().(*ecdsa.PublicKey))
+					subkey.PublicKey = packet.NewECDSAPublicKey(
+						time.Now(),
+						subkey.PrivateKey.PrivateKey.(*ecdsa.PrivateKey).Public().(*ecdsa.PublicKey))
 				}
 			}
 		}
@@ -607,10 +631,13 @@ func (kr *KeyRing) UnmarshalJSON(b []byte) (err error) {
 		if i == 0 {
 			kr.FirstKeyID = ko.ID
 		}
-		kr.readFrom(ko.PrivateKeyReader(), true)
+		err = kr.readFrom(ko.PrivateKeyReader(), true)
+		if err != nil {
+			return err
+		}
 	}
 
-	return
+	return nil
 }
 
 // Identities returns the list of identities associated with this key ring.
@@ -656,7 +683,7 @@ func ReadKeyRing(r io.Reader) (kr *KeyRing, err error) {
 func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err error) {
 	now := time.Now()
 	hasExpiredEntity := false
-	filteredKeys = make([]*KeyRing, 0, 0)
+	filteredKeys = make([]*KeyRing, 0)
 
 	for _, contactKeyRing := range contactKeys {
 		keyRingHasUnexpiredEntity := false
@@ -688,5 +715,5 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 		return filteredKeys, errors.New("all contacts keys are expired")
 	}
 
-	return
+	return filteredKeys, nil
 }
