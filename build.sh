@@ -11,11 +11,11 @@ mkdir -p $IOS_OUT
 printf "\e[0;32mStart Building iOS framework .. Location: ${IOS_OUT} \033[0m\n\n"
 PACKAGE_PATH=github.com/ProtonMail/gopenpgp
 
-gomobile bind -target ios -o ${IOS_OUT}/Crypto.framework $PACKAGE_PATH/crypto $PACKAGE_PATH/armor $PACKAGE_PATH/constants $PACKAGE_PATH/models
+gomobile bind -target ios -o ${IOS_OUT}/Crypto.framework $PACKAGE_PATH/crypto $PACKAGE_PATH/armor $PACKAGE_PATH/constants $PACKAGE_PATH/models $PACKAGE_PATH/subtle
 
 printf "\e[0;32mStart Building Android lib .. Location: ${ANDROID_OUT} \033[0m\n\n"
 
-gomobile bind -target android -javapkg com.proton.gopenpgp -o ${ANDROID_OUT}/gopenpgp.aar $PACKAGE_PATH/crypto $PACKAGE_PATH/armor $PACKAGE_PATH/constants $PACKAGE_PATH/models 
+gomobile bind -target android -javapkg com.proton.gopenpgp -o ${ANDROID_OUT}/gopenpgp.aar $PACKAGE_PATH/crypto $PACKAGE_PATH/armor $PACKAGE_PATH/constants $PACKAGE_PATH/models $PACKAGE_PATH/subtle 
 
 printf "\e[0;32mInstalling frameworks. \033[0m\n\n"
 

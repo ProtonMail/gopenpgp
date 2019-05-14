@@ -1,4 +1,4 @@
-package crypto
+package subtle
 
 import (
 	"github.com/stretchr/testify/assert"

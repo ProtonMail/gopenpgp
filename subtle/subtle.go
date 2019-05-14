@@ -1,4 +1,4 @@
-package crypto
+package subtle
 
 import (
 	"crypto/aes"
