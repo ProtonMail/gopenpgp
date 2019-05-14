@@ -230,8 +230,13 @@ func (pm *PmCrypto) DecryptMessageWithPassword(encrypted string, password string
 		return "", err
 	}
 
+	firstTimeCalled := true
 	var prompt = func(keys []openpgp.Key, symmetric bool) ([]byte, error) {
-		return []byte(password), nil
+		if firstTimeCalled {
+			firstTimeCalled = false
+			return []byte(password), nil
+		}
+		return nil, errors.New("password incorrect")
 	}
 
 	config := &packet.Config{Time: pm.getTimeGenerator()}
