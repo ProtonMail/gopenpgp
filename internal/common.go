@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"github.com/ProtonMail/go-pm-crypto/constants"
+	"github.com/ProtonMail/gopenpgp/constants"
 	"regexp"
 )
 

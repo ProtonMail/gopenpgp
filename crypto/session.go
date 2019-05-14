@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/ProtonMail/go-pm-crypto/armor"
-	"github.com/ProtonMail/go-pm-crypto/constants"
+	"github.com/ProtonMail/gopenpgp/armor"
+	"github.com/ProtonMail/gopenpgp/constants"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
 
 // RandomToken with a default key size
-func (pm *PmCrypto) RandomToken() ([]byte, error) {
+func (pgp *GopenPGP) RandomToken() ([]byte, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256}
 	keySize := config.DefaultCipher.KeySize()
 	symKey := make([]byte, keySize)
@@ -25,7 +25,7 @@ func (pm *PmCrypto) RandomToken() ([]byte, error) {
 }
 
 // RandomTokenWith a given key size
-func (pm *PmCrypto) RandomTokenWith(size int) ([]byte, error) {
+func (pgp *GopenPGP) RandomTokenWith(size int) ([]byte, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256}
 	symKey := make([]byte, size)
 	if _, err := io.ReadFull(config.Random(), symKey); err != nil {
@@ -35,7 +35,7 @@ func (pm *PmCrypto) RandomTokenWith(size int) ([]byte, error) {
 }
 
 // GetSessionFromKeyPacket gets session key no encoding in and out
-func (pm *PmCrypto) GetSessionFromKeyPacket(
+func (pgp *GopenPGP) GetSessionFromKeyPacket(
 	keyPackage []byte, privateKey *KeyRing, passphrase string,
 ) (*SymmetricKey,
 	error) {
@@ -73,16 +73,16 @@ func (pm *PmCrypto) GetSessionFromKeyPacket(
 }
 
 // KeyPacketWithPublicKey returns binary packet from symmetric key and armored public key
-func (pm *PmCrypto) KeyPacketWithPublicKey(sessionSplit *SymmetricKey, publicKey string) ([]byte, error) {
+func (pgp *GopenPGP) KeyPacketWithPublicKey(sessionSplit *SymmetricKey, publicKey string) ([]byte, error) {
 	pubkeyRaw, err := armor.Unarmor(publicKey)
 	if err != nil {
 		return nil, err
 	}
-	return pm.KeyPacketWithPublicKeyBin(sessionSplit, pubkeyRaw)
+	return pgp.KeyPacketWithPublicKeyBin(sessionSplit, pubkeyRaw)
 }
 
 // KeyPacketWithPublicKeyBin returns binary packet from symmetric key and binary public key
-func (pm *PmCrypto) KeyPacketWithPublicKeyBin(sessionSplit *SymmetricKey, publicKey []byte) ([]byte, error) {
+func (pgp *GopenPGP) KeyPacketWithPublicKeyBin(sessionSplit *SymmetricKey, publicKey []byte) ([]byte, error) {
 	publicKeyReader := bytes.NewReader(publicKey)
 	pubKeyEntries, err := openpgp.ReadKeyRing(publicKeyReader)
 	if err != nil {
@@ -130,7 +130,7 @@ func (pm *PmCrypto) KeyPacketWithPublicKeyBin(sessionSplit *SymmetricKey, public
 }
 
 // GetSessionFromSymmetricPacket extracts symmentric key from binary packet
-func (pm *PmCrypto) GetSessionFromSymmetricPacket(keyPackage []byte, password string) (*SymmetricKey, error) {
+func (pgp *GopenPGP) GetSessionFromSymmetricPacket(keyPackage []byte, password string) (*SymmetricKey, error) {
 	keyReader := bytes.NewReader(keyPackage)
 	packets := packet.NewReader(keyReader)
 
@@ -168,7 +168,7 @@ func (pm *PmCrypto) GetSessionFromSymmetricPacket(keyPackage []byte, password st
 }
 
 // SymmetricKeyPacketWithPassword return binary packet from symmetric key and password
-func (pm *PmCrypto) SymmetricKeyPacketWithPassword(sessionSplit *SymmetricKey, password string) ([]byte, error) {
+func (pgp *GopenPGP) SymmetricKeyPacketWithPassword(sessionSplit *SymmetricKey, password string) ([]byte, error) {
 	outbuf := &bytes.Buffer{}
 
 	cf := sessionSplit.GetCipherFunc()

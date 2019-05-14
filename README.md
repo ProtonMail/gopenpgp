@@ -2,7 +2,8 @@
 
 ## Download/Install
 
-Manually `git clone` the repository into `$GOPATH/src/github.com/ProtonMail/go-pm-crypto`.
+Run `go get -u github.com/ProtonMail/gopenpgp`, or manually `git clone` the
+repository into `$GOPATH/src/github.com/ProtonMail/gopenpgp`.
 
 This library is meant to be used together with https://github.com/ProtonMail/crypto.
 
@@ -48,15 +49,15 @@ Encryption and decryption will use the AES256 algorithm by default.
 
 #### Encrypt / Decrypt with password
 ```
-var pmCrypto = PmCrypto{}
+var pgp = GopenPGP{}
 
 const password = "my secret password"
 
 // Encrypt data with password
-armor, err := pmCrypto.EncryptMessageWithPassword("my message", password)
+armor, err := pgp.EncryptMessageWithPassword("my message", password)
 
 // Decrypt data with password
-message, err := pmCrypto.DecryptMessageWithPassword(armor, password)
+message, err := pgp.DecryptMessageWithPassword(armor, password)
 ```
 
 #### Encrypt / Decrypt with PGP keys
@@ -76,13 +77,13 @@ privateKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(privkey))
 publicKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(pubkey))
 
 // encrypt message using public key and can be optionally signed using private key and passphrase
-armor, err := pmCrypto.EncryptMessage("plain text", publicKeyRing, privateKeyRing, passphrase, false)
+armor, err := pgp.EncryptMessage("plain text", publicKeyRing, privateKeyRing, passphrase, false)
 // OR
 privateKeyRing.Unlock([]byte(passphrase)) // if private key is locked with passphrase
 armor, err := publicKeyRing.EncryptString("plain text", privateKeyRing)
 
 // decrypt armored encrypted message using the private key and the passphrase of the private key
-plainText, err := pmCrypto.DecryptMessage(armor, privateKeyRing, passphrase)
+plainText, err := pgp.DecryptMessage(armor, privateKeyRing, passphrase)
 // OR
 signedText, err := privateKeyRing.DecryptString(armor)
 plainText = signedText.String
@@ -93,7 +94,7 @@ plainText = signedText.String
 Keys are generated with the `GenerateKey` function, that returns the armored key as a string and a potential error.  
 The library supports RSA with different key lengths or Curve25519 keys.
 ```
-var pmCrypto = PmCrypto{}
+var pgp = GopenPGP{}
 
 var (
   localPart = "name.surname"
@@ -104,10 +105,10 @@ var (
 )
 
 // RSA
-rsaKey, err := pmCrypto.GenerateKey(localPart, domain, passphrase, "rsa", rsaBits)
+rsaKey, err := pgp.GenerateKey(localPart, domain, passphrase, "rsa", rsaBits)
 
 // Curve 25519
-ecKey, err := pmCrypto.GenerateKey(localPart, domain, passphrase, "x25519", ecBits)
+ecKey, err := pgp.GenerateKey(localPart, domain, passphrase, "x25519", ecBits)
 ```
 
 ### Sign

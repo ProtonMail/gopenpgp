@@ -8,9 +8,9 @@ import (
 	"runtime"
 	"sync"
 
-	armorUtils "github.com/ProtonMail/go-pm-crypto/armor"
-	"github.com/ProtonMail/go-pm-crypto/constants"
-	"github.com/ProtonMail/go-pm-crypto/models"
+	armorUtils "github.com/ProtonMail/gopenpgp/armor"
+	"github.com/ProtonMail/gopenpgp/constants"
+	"github.com/ProtonMail/gopenpgp/models"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -47,7 +47,7 @@ func (ap *AttachmentProcessor) Finish() (*models.EncryptedSplit, error) {
 }
 
 // encryptAttachment takes input data from file
-func (pm *PmCrypto) encryptAttachment(
+func (pgp *GopenPGP) encryptAttachment(
 	estimatedSize int, fileName string, publicKey *KeyRing, garbageCollector int,
 ) (*AttachmentProcessor, error) {
 	attachmentProc := &AttachmentProcessor{}
@@ -61,7 +61,7 @@ func (pm *PmCrypto) encryptAttachment(
 
 	config := &packet.Config{
 		DefaultCipher: packet.CipherAES256,
-		Time:          pm.getTimeGenerator(),
+		Time:          pgp.getTimeGenerator(),
 	}
 
 	reader, writer := io.Pipe()
@@ -90,10 +90,10 @@ func (pm *PmCrypto) encryptAttachment(
 
 // EncryptAttachment encrypts attachment. Takes input data and key data in
 // binary form
-func (pm *PmCrypto) EncryptAttachment(
+func (pgp *GopenPGP) EncryptAttachment(
 	plainData []byte, fileName string, publicKey *KeyRing,
 ) (*models.EncryptedSplit, error) {
-	ap, err := pm.encryptAttachment(len(plainData), fileName, publicKey, -1)
+	ap, err := pgp.encryptAttachment(len(plainData), fileName, publicKey, -1)
 	if err != nil {
 		return nil, err
 	}
@@ -106,10 +106,10 @@ func (pm *PmCrypto) EncryptAttachment(
 }
 
 // EncryptAttachmentLowMemory with garbage collected every megabyte
-func (pm *PmCrypto) EncryptAttachmentLowMemory(
+func (pgp *GopenPGP) EncryptAttachmentLowMemory(
 	estimatedSize int, fileName string, publicKey *KeyRing,
 ) (*AttachmentProcessor, error) {
-	return pm.encryptAttachment(estimatedSize, fileName, publicKey, 1<<20)
+	return pgp.encryptAttachment(estimatedSize, fileName, publicKey, 1<<20)
 }
 
 // SplitArmor is a Helper method. Splits armored pgp session into key and packet data
@@ -128,7 +128,7 @@ func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
 
 // DecryptAttachment takes input data and key data in binary form. The
 // privateKeys can contains more keys. The passphrase is used to unlock keys
-func (pm *PmCrypto) DecryptAttachment(
+func (pgp *GopenPGP) DecryptAttachment(
 	keyPacket, dataPacket []byte,
 	kr *KeyRing, passphrase string,
 ) ([]byte, error) {
@@ -144,7 +144,7 @@ func (pm *PmCrypto) DecryptAttachment(
 
 	encryptedReader := io.MultiReader(keyReader, dataReader)
 
-	config := &packet.Config{Time: pm.getTimeGenerator()}
+	config := &packet.Config{Time: pgp.getTimeGenerator()}
 
 	md, err := openpgp.ReadMessage(encryptedReader, privKeyEntries, nil, config)
 	if err != nil {

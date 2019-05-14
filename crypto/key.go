@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ProtonMail/go-pm-crypto/armor"
-	"github.com/ProtonMail/go-pm-crypto/constants"
-	"github.com/ProtonMail/go-pm-crypto/models"
+	"github.com/ProtonMail/gopenpgp/armor"
+	"github.com/ProtonMail/gopenpgp/constants"
+	"github.com/ProtonMail/gopenpgp/models"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
@@ -275,8 +275,8 @@ func SetKey(kr *KeyRing, symKey *SymmetricKey) (packets string, err error) {
 }
 
 // IsKeyExpiredBin checks if the given key is expired. Input in binary format
-func (pm *PmCrypto) IsKeyExpiredBin(publicKey []byte) (bool, error) {
-	now := pm.getNow()
+func (pgp *GopenPGP) IsKeyExpiredBin(publicKey []byte) (bool, error) {
+	now := pgp.getNow()
 	pubKeyReader := bytes.NewReader(publicKey)
 	pubKeyEntries, err := openpgp.ReadKeyRing(pubKeyReader)
 	if err != nil {
@@ -334,15 +334,15 @@ const (
 )
 
 // IsKeyExpired checks if the given key is expired. Input in armored format
-func (pm *PmCrypto) IsKeyExpired(publicKey string) (bool, error) {
+func (pgp *GopenPGP) IsKeyExpired(publicKey string) (bool, error) {
 	rawPubKey, err := armor.Unarmor(publicKey)
 	if err != nil {
 		return false, err
 	}
-	return pm.IsKeyExpiredBin(rawPubKey)
+	return pgp.IsKeyExpiredBin(rawPubKey)
 }
 
-func (pm *PmCrypto) generateKey(
+func (pgp *GopenPGP) generateKey(
 	userName, domain, passphrase, keyType string,
 	bits int,
 	prime1, prime2, prime3, prime4 []byte,
@@ -361,7 +361,7 @@ func (pm *PmCrypto) generateKey(
 	cfg := &packet.Config{
 		Algorithm:     packet.PubKeyAlgoRSA,
 		RSABits:       bits,
-		Time:          pm.getTimeGenerator(),
+		Time:          pgp.getTimeGenerator(),
 		DefaultHash:   crypto.SHA256,
 		DefaultCipher: packet.CipherAES256,
 	}
@@ -417,22 +417,22 @@ func (pm *PmCrypto) generateKey(
 }
 
 // GenerateRSAKeyWithPrimes generates RSA key with given primes.
-func (pm *PmCrypto) GenerateRSAKeyWithPrimes(
+func (pgp *GopenPGP) GenerateRSAKeyWithPrimes(
 	userName, domain, passphrase string,
 	bits int,
 	primeone, primetwo, primethree, primefour []byte,
 ) (string, error) {
-	return pm.generateKey(userName, domain, passphrase, "rsa", bits, primeone, primetwo, primethree, primefour)
+	return pgp.generateKey(userName, domain, passphrase, "rsa", bits, primeone, primetwo, primethree, primefour)
 }
 
 // GenerateKey and generate primes
-func (pm *PmCrypto) GenerateKey(userName, domain, passphrase, keyType string, bits int) (string, error) {
-	return pm.generateKey(userName, domain, passphrase, keyType, bits, nil, nil, nil, nil)
+func (pgp *GopenPGP) GenerateKey(userName, domain, passphrase, keyType string, bits int) (string, error) {
+	return pgp.generateKey(userName, domain, passphrase, keyType, bits, nil, nil, nil, nil)
 }
 
 // UpdatePrivateKeyPassphrase decrypts the given private key with oldPhrase and
 // re-encrypts with the newPassphrase
-func (pm *PmCrypto) UpdatePrivateKeyPassphrase(
+func (pgp *GopenPGP) UpdatePrivateKeyPassphrase(
 	privateKey string, oldPassphrase string, newPassphrase string,
 ) (string, error) {
 	privKey := strings.NewReader(privateKey)
@@ -478,7 +478,7 @@ func (pm *PmCrypto) UpdatePrivateKeyPassphrase(
 }
 
 // CheckKey prints out the key and subkey fingerprint
-func (pm *PmCrypto) CheckKey(pubKey string) (string, error) {
+func (pgp *GopenPGP) CheckKey(pubKey string) (string, error) {
 	pubKeyReader := strings.NewReader(pubKey)
 	entries, err := openpgp.ReadArmoredKeyRing(pubKeyReader)
 	if err != nil {

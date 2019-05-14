@@ -4,8 +4,8 @@ package armor
 import (
 	"bytes"
 	"errors"
-	"github.com/ProtonMail/go-pm-crypto/constants"
-	"github.com/ProtonMail/go-pm-crypto/internal"
+	"github.com/ProtonMail/gopenpgp/constants"
+	"github.com/ProtonMail/gopenpgp/internal"
 	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/clearsign"
 	"io"

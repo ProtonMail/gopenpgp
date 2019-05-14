@@ -42,9 +42,9 @@ imports:
   - encoding/internal
   - encoding/internal/identifier
   - transform
-- name: github.com/ProtonMail/go-pm-mime
+- name: github.com/ProtonMail/go-mime
   version: dc270ae56b61837aa404c828a14b8ea731167ac0
-  repo: https://gitlab.protontech.ch/ProtonMail/go-pm-mime.git
+  repo: https://github.com/ProtonMail/go-mime.git
 testImports:
   - name: github.com/davecgh/go-spew
     version: d8f796af33cc11cb798c1aaeb27a4ebc5099927d

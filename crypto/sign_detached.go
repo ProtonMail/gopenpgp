@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ProtonMail/go-pm-crypto/internal"
+	"github.com/ProtonMail/gopenpgp/internal"
 
 	"golang.org/x/crypto/openpgp"
 	errorsPGP "golang.org/x/crypto/openpgp/errors"
@@ -15,7 +15,7 @@ import (
 )
 
 // SignTextDetached signs detached text type
-func (pm *PmCrypto) SignTextDetached(
+func (pgp *GopenPGP) SignTextDetached(
 	plainText string, privateKey *KeyRing, passphrase string, trim bool,
 ) (string, error) {
 	//sign with 0x01 text
@@ -28,7 +28,7 @@ func (pm *PmCrypto) SignTextDetached(
 		return "", err
 	}
 
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator()}
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pgp.getTimeGenerator()}
 
 	att := strings.NewReader(plainText)
 
@@ -42,14 +42,14 @@ func (pm *PmCrypto) SignTextDetached(
 }
 
 // SignBinDetached Signs detached bin data using string key
-func (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey *KeyRing, passphrase string) (string, error) {
+func (pgp *GopenPGP) SignBinDetached(plainData []byte, privateKey *KeyRing, passphrase string) (string, error) {
 	//sign with 0x00
 	signEntity, err := privateKey.GetSigningEntity(passphrase)
 	if err != nil {
 		return "", err
 	}
 
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pm.getTimeGenerator()}
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pgp.getTimeGenerator()}
 
 	att := bytes.NewReader(plainData)
 
@@ -64,7 +64,7 @@ func (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey *KeyRing, passp
 
 // VerifyTextDetachedSig verifies detached text
 // - check if signature is valid using a given publicKey in binary format
-func (pm *PmCrypto) VerifyTextDetachedSig(
+func (pgp *GopenPGP) VerifyTextDetachedSig(
 	signature string, plainText string, publicKey *KeyRing, verifyTime int64,
 ) (bool, error) {
 	plainText = internal.TrimNewlines(plainText)
@@ -112,7 +112,7 @@ func verifySignature(
 	}
 
 	if signer == nil {
-		return false, errors.New("pmcrypto: signer is empty")
+		return false, errors.New("gopenpgp: signer is empty")
 	}
 	// if signer.PrimaryKey.KeyId != signed.PrimaryKey.KeyId {
 	// 	// t.Errorf("wrong signer got:%x want:%x", signer.PrimaryKey.KeyId, 0)
@@ -123,7 +123,7 @@ func verifySignature(
 
 // VerifyBinDetachedSig verifies detached text in binary format
 // - check if signature is valid using a given publicKey in binary format
-func (pm *PmCrypto) VerifyBinDetachedSig(
+func (pgp *GopenPGP) VerifyBinDetachedSig(
 	signature string, plainData []byte, publicKey *KeyRing, verifyTime int64,
 ) (bool, error) {
 	origText := bytes.NewReader(plainData)

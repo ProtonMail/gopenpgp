@@ -58,12 +58,12 @@ func TestAttachmentSetKey(t *testing.T) {
 func TestAttachnentEncryptDecrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
 
-	encSplit, err := pmCrypto.EncryptAttachment([]byte(testAttachmentCleartext), "s.txt", testPrivateKeyRing)
+	encSplit, err := pgp.EncryptAttachment([]byte(testAttachmentCleartext), "s.txt", testPrivateKeyRing)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting attachment, got:", err)
 	}
 
-	redecData, err := pmCrypto.DecryptAttachment(encSplit.KeyPacket, encSplit.DataPacket, testPrivateKeyRing, "")
+	redecData, err := pgp.DecryptAttachment(encSplit.KeyPacket, encSplit.DataPacket, testPrivateKeyRing, "")
 	if err != nil {
 		t.Fatal("Expected no error while decrypting attachment, got:", err)
 	}

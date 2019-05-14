@@ -7,7 +7,7 @@ import (
 	"mime"
 	"net/textproto"
 
-	"github.com/ProtonMail/go-pm-mime"
+	"github.com/ProtonMail/go-mime"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"

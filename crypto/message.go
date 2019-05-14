@@ -14,17 +14,17 @@ import (
 	pgpErrors "golang.org/x/crypto/openpgp/errors"
 	"golang.org/x/crypto/openpgp/packet"
 
-	armorUtils "github.com/ProtonMail/go-pm-crypto/armor"
-	"github.com/ProtonMail/go-pm-crypto/constants"
-	"github.com/ProtonMail/go-pm-crypto/internal"
-	"github.com/ProtonMail/go-pm-crypto/models"
+	armorUtils "github.com/ProtonMail/gopenpgp/armor"
+	"github.com/ProtonMail/gopenpgp/constants"
+	"github.com/ProtonMail/gopenpgp/internal"
+	"github.com/ProtonMail/gopenpgp/models"
 )
 
 // DecryptMessageStringKey decrypts encrypted message use private key (string)
 // encryptedText : string armored encrypted
 // privateKey : armored private use to decrypt message
 // passphrase : match with private key to decrypt message
-func (pm *PmCrypto) DecryptMessageStringKey(
+func (pgp *GopenPGP) DecryptMessageStringKey(
 	encryptedText, privateKey, passphrase string,
 ) (string, error) {
 	privKeyRaw, err := armorUtils.Unarmor(privateKey)
@@ -37,15 +37,15 @@ func (pm *PmCrypto) DecryptMessageStringKey(
 		return "", err
 	}
 
-	return pm.DecryptMessage(encryptedText, &KeyRing{entities: privKeyEntries}, passphrase)
+	return pgp.DecryptMessage(encryptedText, &KeyRing{entities: privKeyEntries}, passphrase)
 }
 
 // DecryptMessage decrypts encrypted string using keyring
 // encryptedText : string armored encrypted
 // privateKey : keyring with private key to decrypt message, could be multiple keys
 // passphrase : match with private key to decrypt message
-func (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey *KeyRing, passphrase string) (string, error) {
-	md, err := decryptCore(encryptedText, nil, privateKey, passphrase, pm.getTimeGenerator())
+func (pgp *GopenPGP) DecryptMessage(encryptedText string, privateKey *KeyRing, passphrase string) (string, error) {
+	md, err := decryptCore(encryptedText, nil, privateKey, passphrase, pgp.getTimeGenerator())
 	if err != nil {
 		return "", err
 	}
@@ -92,7 +92,7 @@ func decryptCore(
 // verifierKey    []byte: unarmored verifier keys
 // privateKeyRing []byte: unarmored private key to decrypt. could be multiple
 // passphrase:    match with private key to decrypt message
-func (pm *PmCrypto) DecryptMessageVerify(
+func (pgp *GopenPGP) DecryptMessageVerify(
 	encryptedText string, verifierKey, privateKeyRing *KeyRing,
 	passphrase string, verifyTime int64,
 ) (*models.DecryptSignedVerify, error) {
@@ -171,14 +171,14 @@ func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 // EncryptMessageWithPassword encrypts a plain text to pgp message with a password
 // plainText string: clear text
 // output string: armored pgp message
-func (pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string) (string, error) {
+func (pgp *GopenPGP) EncryptMessageWithPassword(plainText string, password string) (string, error) {
 	var outBuf bytes.Buffer
 	w, err := armor.Encode(&outBuf, constants.PGPMessageHeader, internal.ArmorHeaders)
 	if err != nil {
 		return "", err
 	}
 
-	config := &packet.Config{Time: pm.getTimeGenerator()}
+	config := &packet.Config{Time: pgp.getTimeGenerator()}
 	plaintext, err := openpgp.SymmetricallyEncrypt(w, []byte(password), nil, config)
 	if err != nil {
 		return "", err
@@ -204,7 +204,7 @@ func (pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string
 // privateKey : optional required when you want to sign
 // passphrase : optional required when you pass the private key and this passphrase should decrypt the private key
 // trim : bool true if need to trim new lines
-func (pm *PmCrypto) EncryptMessage(
+func (pgp *GopenPGP) EncryptMessage(
 	plainText string, publicKey, privateKey *KeyRing,
 	passphrase string, trim bool,
 ) (string, error) {
@@ -227,7 +227,7 @@ func (pm *PmCrypto) EncryptMessage(
 		}
 	}
 
-	ew, err := EncryptCore(w, publicKey.entities, signEntity, "", false, pm.getTimeGenerator())
+	ew, err := EncryptCore(w, publicKey.entities, signEntity, "", false, pgp.getTimeGenerator())
 	if err != nil {
 		return "", err
 	}
@@ -241,7 +241,7 @@ func (pm *PmCrypto) EncryptMessage(
 // DecryptMessageWithPassword decrypts a pgp message with a password
 // encrypted string : armored pgp message
 // output string : clear text
-func (pm *PmCrypto) DecryptMessageWithPassword(encrypted string, password string) (string, error) {
+func (pgp *GopenPGP) DecryptMessageWithPassword(encrypted string, password string) (string, error) {
 	encryptedio, err := internal.Unarmor(encrypted)
 	if err != nil {
 		return "", err
@@ -256,7 +256,7 @@ func (pm *PmCrypto) DecryptMessageWithPassword(encrypted string, password string
 		return nil, errors.New("password incorrect")
 	}
 
-	config := &packet.Config{Time: pm.getTimeGenerator()}
+	config := &packet.Config{Time: pgp.getTimeGenerator()}
 	md, err := openpgp.ReadMessage(encryptedio.Body, nil, prompt, config)
 	if err != nil {
 		return "", err

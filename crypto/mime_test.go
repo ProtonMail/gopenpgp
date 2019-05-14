@@ -2,7 +2,7 @@ package crypto
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/ProtonMail/go-pm-crypto/internal"
+	"github.com/ProtonMail/gopenpgp/internal"
 	"io/ioutil"
 	"testing"
 )
@@ -53,17 +53,17 @@ func TestDecrypt(t *testing.T) {
 
 	privateKeyUnarmored, _ := ioutil.ReadAll(block.Body)
 
-	pmCrypto.DecryptMIMEMessage(
+	pgp.DecryptMIMEMessage(
 		readTestFile("mime_pgpMessage", false),
-		pmCrypto.BuildKeyRingNoError(publicKeyUnarmored),
-		pmCrypto.BuildKeyRingNoError(privateKeyUnarmored),
+		pgp.BuildKeyRingNoError(publicKeyUnarmored),
+		pgp.BuildKeyRingNoError(privateKeyUnarmored),
 		privateKeyPassword,
 		&callbacks,
-		pmCrypto.GetTimeUnix())
+		pgp.GetTimeUnix())
 }
 
 func TestParse(t *testing.T) {
-	body, _, atts, attHeaders, err := pmCrypto.parseMIME(readTestFile("mime_testMessage", false), nil)
+	body, _, atts, attHeaders, err := pgp.parseMIME(readTestFile("mime_testMessage", false), nil)
 
 	if err != nil {
 		t.Error("Expected no error while parsing message, got:", err)
