@@ -36,21 +36,6 @@ body .page-header {
 	z-index: 3;
 }
 
-.page-header::after {
-	display: block;
-	content: "";
-	position: absolute;
-	left: 0;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	z-index: 1;
-	height: 100%;
-	width: 100%;
-	background: url('/assets/img/triangles.png') 0 0 repeat;
-	opacity: 5;
-}
-
 .card {
 	display: inline-block;
 	padding: 1rem;
