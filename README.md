@@ -37,3 +37,15 @@ Interfacing between Go and Swift:
 https://medium.com/@matryer/tutorial-calling-go-code-from-swift-on-ios-and-vice-versa-with-gomobile-7925620c17a4.
 
 If you use build.sh, you may need to modify the paths in it.
+
+## Examples
+
+### Set up
+
+### Encrypt and decrypt
+
+### Generate key
+
+### Sign
+
+### Detached signatures
