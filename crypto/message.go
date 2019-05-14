@@ -55,7 +55,6 @@ func (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey *KeyRing, pa
 		return "", err
 	}
 
-	println(4)
 	return string(b), nil
 }
 
