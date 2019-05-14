@@ -45,6 +45,25 @@ If you use build.sh, you may need to modify the paths in it.
 ### Encrypt and decrypt
 
 ### Generate key
+Keys are generated with the `GenerateKey` function, that returns the armored key as a string and a potential error.  
+The library supports RSA with different key lengths or Curve25519 keys.
+```
+var pmCrypto = PmCrypto{}
+
+var (
+  localPart = "name.surname"
+  domain = "example.com"
+  passphrase = "LongSecret"
+  rsaBits = 2048
+  ecBits = 256
+)
+
+// RSA
+rsaKey, err := pmCrypto.GenerateKey(localPart, domain, passphrase, "rsa", rsaBits)
+
+// Curve 25519
+ecKey, err := pmCrypto.GenerateKey(localPart, domain, passphrase, "x25519", ecBits)
+```
 
 ### Sign
 
