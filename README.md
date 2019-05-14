@@ -44,6 +44,51 @@ If you use build.sh, you may need to modify the paths in it.
 
 ### Encrypt and decrypt
 
+Encryption and decryption will use the AES256 algorithm by default.
+
+#### Encrypt / Decrypt with password
+```
+var pmCrypto = PmCrypto{}
+
+const password = "my secret password"
+
+// Encrypt data with password
+armor, err := pmCrypto.EncryptMessageWithPassword("my message", password)
+
+// Decrypt data with password
+message, err := pmCrypto.DecryptMessageWithPassword(armor, password)
+```
+
+#### Encrypt / Decrypt with PGP keys
+```
+// put keys in backtick (``) to avoid errors caused by spaces or tabs
+const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+...
+-----END PGP PUBLIC KEY BLOCK-----`
+
+const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+...
+-----END PGP PRIVATE KEY BLOCK-----` // encrypted private key
+
+const passphrase = `the passphrase of the private key` // what the privKey is encrypted with
+
+privateKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(privkey))
+publicKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(pubkey))
+
+// encrypt message using public key and can be optionally signed using private key and passphrase
+armor, err := pmCrypto.EncryptMessage("plain text", publicKeyRing, privateKeyRing, passphrase, false)
+// OR
+privateKeyRing.Unlock([]byte(passphrase)) // if private key is locked with passphrase
+armor, err := publicKeyRing.EncryptString("plain text", privateKeyRing)
+
+// decrypt armored encrypted message using the private key and the passphrase of the private key
+plainText, err := pmCrypto.DecryptMessage(armor, privateKeyRing, passphrase)
+// OR
+signedText, err := privateKeyRing.DecryptString(armor)
+plainText = signedText.String
+
+```
+
 ### Generate key
 Keys are generated with the `GenerateKey` function, that returns the armored key as a string and a potential error.  
 The library supports RSA with different key lengths or Curve25519 keys.
