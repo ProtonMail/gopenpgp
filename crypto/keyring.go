@@ -125,10 +125,9 @@ func (kr *KeyRing) GetSigningEntity(passphrase string) (*openpgp.Entity, error) 
 				if err := e.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
 					continue
 				}
-
-				signEntity = e
-				break
 			}
+			signEntity = e
+			break
 		}
 	}
 	if signEntity == nil {

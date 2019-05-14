@@ -4,7 +4,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/ProtonMail/go-pm-crypto/internal"
 	"io/ioutil"
-	"strings"
 	"testing"
 )
 
@@ -17,7 +16,7 @@ type Callbacks struct {
 }
 
 func (t *Callbacks) OnBody(body string, mimetype string) {
-	assert.Exactly(t.Testing, readTestFile("mime_decryptedBody"), body)
+	assert.Exactly(t.Testing, readTestFile("mime_decryptedBody", false), body)
 }
 
 func (t Callbacks) OnAttachment(headers string, data []byte) {
@@ -40,14 +39,14 @@ func TestDecrypt(t *testing.T) {
 		Testing: t,
 	}
 
-	block, err := internal.Unarmor(readTestFile("mime_publicKey"))
+	block, err := internal.Unarmor(readTestFile("mime_publicKey", false))
 	if err != nil {
 		t.Fatal("Cannot unarmor public key: ", err)
 	}
 
 	publicKeyUnarmored, _ := ioutil.ReadAll(block.Body)
 
-	block, err = internal.Unarmor(readTestFile("mime_privateKey"))
+	block, err = internal.Unarmor(readTestFile("mime_privateKey", false))
 	if err != nil {
 		t.Fatal("Cannot unarmor private key: ", err)
 	}
@@ -55,7 +54,7 @@ func TestDecrypt(t *testing.T) {
 	privateKeyUnarmored, _ := ioutil.ReadAll(block.Body)
 
 	pmCrypto.DecryptMIMEMessage(
-		readTestFile("mime_pgpMessage"),
+		readTestFile("mime_pgpMessage", false),
 		pmCrypto.BuildKeyRingNoError(publicKeyUnarmored),
 		pmCrypto.BuildKeyRingNoError(privateKeyUnarmored),
 		privateKeyPassword,
@@ -64,7 +63,7 @@ func TestDecrypt(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	body, _, atts, attHeaders, err := pmCrypto.parseMIME(readTestFile("mime_testMessage"), nil)
+	body, _, atts, attHeaders, err := pmCrypto.parseMIME(readTestFile("mime_testMessage", false), nil)
 
 	if err != nil {
 		t.Error("Expected no error while parsing message, got:", err)
@@ -74,7 +73,7 @@ func TestParse(t *testing.T) {
 	_ = attHeaders
 
 	bodyData, _ := body.GetBody()
-	assert.Exactly(t, strings.Trim(readTestFile("mime_decodedBody"), "\n"), bodyData)
-	assert.Exactly(t, readTestFile("mime_decodedBodyHeaders"), body.GetHeaders())
+	assert.Exactly(t, readTestFile("mime_decodedBody", true), bodyData)
+	assert.Exactly(t, readTestFile("mime_decodedBodyHeaders", false), body.GetHeaders())
 	assert.Exactly(t, 2, len(atts))
 }

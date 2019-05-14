@@ -39,12 +39,13 @@ var (
 
 func init() {
 	var err error
-	testPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey")))
+
+	testPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))
 	if err != nil {
 		panic(err)
 	}
 
-	testPublicKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_publicKey")))
+	testPublicKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_publicKey", false)))
 	if err != nil {
 		panic(err)
 	}
@@ -56,7 +57,7 @@ func init() {
 }
 
 func TestKeyRing_Decrypt(t *testing.T) {
-	ss, err := testPrivateKeyRing.DecryptString(readTestFile("keyring_token"))
+	ss, err := testPrivateKeyRing.DecryptString(readTestFile("keyring_token", false))
 	if err != nil {
 		t.Fatal("Cannot decrypt token:", err)
 	}
@@ -92,7 +93,7 @@ func TestKeyRing_ArmoredPublicKeyString(t *testing.T) {
 		t.Fatal("Expected no error while decoding armored public key, got:", err)
 	}
 
-	expected, err := armor.Decode(strings.NewReader(readTestFile("keyring_publicKey")))
+	expected, err := armor.Decode(strings.NewReader(readTestFile("keyring_publicKey", false)))
 	if err != nil {
 		t.Fatal("Expected no error while decoding expected armored public key, got:", err)
 	}

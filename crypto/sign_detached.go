@@ -112,7 +112,7 @@ func verifySignature(
 	}
 
 	if signer == nil {
-		return false, errors.New("signer is empty")
+		return false, errors.New("pmcrypto: signer is empty")
 	}
 	// if signer.PrimaryKey.KeyId != signed.PrimaryKey.KeyId {
 	// 	// t.Errorf("wrong signer got:%x want:%x", signer.PrimaryKey.KeyId, 0)
