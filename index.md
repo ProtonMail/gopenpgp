@@ -4,13 +4,13 @@ title: GopenPGP
 description: Supplementary Go cryptography libraries
 ---
 
-# About
+# What is GopenPGP?
 
-The goal of this project is to provide a fork of the original golang crypto library that is well maintained, up-to-date with the latest OpenPGP RFC changes, and periodically audited for security. With the help of the community, we hope to bring this to the standard of OpenPGP.js, also maintained by ProtonMail, by creating a high-level API that can be easily used to manage keys and encrypt, decrypt, sign, and verify messages while abstracting away complicated cryptographic concepts.
+GopenPGP is a high-level OpenPGP library developed by ProtonMail, as well as a fork of the golang crypto library, which the high-level library is built on. The goal of this project is to provide an easy-to-use, open source encryption library for the developer community that is well-maintained, up-to-date with the latest OpenPGP RFC changes, and periodically audited for security. 
 
-# Roadmap
+# Updates
 
-We welcome contributions and feedback from the community. We have already made a number of improvements to the original library, which have all been independently audited for security. We are currently in discussions with the maintainers of the [original golang crypto library](https://github.com/golang/crypto/) to include our improvements there. In the meantime, we wanted to open source our modifications. So far, we have:
+We are currently in discussions with the maintainers of the [original golang crypto library](https://github.com/golang/crypto/) to include our improvements there. In the meantime, we wanted to open source our modifications:
 
 - Added support for elliptic curve cryptography
 - Undergone an audit by [SEC Consult](/assets/Report_1907551_Proton_Technologies_AG_Source_Code_Review_-_Proton_Crypto_Library_1.2_public.pdf)
@@ -20,9 +20,9 @@ We welcome contributions and feedback from the community. We have already made a
   - Increasing the default key-derivation (S2K) cost parameters
 - Added a high-level wrapper library, the "[GopenPGP library](https://github.com/ProtonMail/gopenpgp)" which provides a simple API for common operations such as key generation, encryption, decryption, signing, and verification, and which is compatible with go-mobile
 
-We will continuously improve the library to better our documentation and API, while fixing bugs and building out new features in both the library and the GopenPGP Wrapper. We invite feedback and contributions, as well as security issues, at [https://github.com/ProtonMail/gopenpgp](https://github.com/ProtonMail/gopenpgp) and [https://github.com/ProtonMail/crypto](https://github.com/ProtonMail/crypto).
+# Contribute to GopenPGP
 
-_Update May 8, 2019: We are currently in discussions with the maintainers of the [original golang crypto library](https://github.com/golang/crypto/) to include our improvements there. Whether this happens or not, we will continue to improve, maintain, and audit both this fork and the GopenPGP wrapper library._
+We welcome contributions and feedback from the community. We will continuously improve the library to better our documentation and API, while fixing bugs and building out new features in both the library and the GopenPGP Wrapper. We invite feedback and contributions, as well as security issues, at https://github.com/ProtonMail/gopenpgp](https://github.com/ProtonMail/gopenpgp) and [https://github.com/ProtonMail/crypto](https://github.com/ProtonMail/crypto).
 
 # Supporters
 
