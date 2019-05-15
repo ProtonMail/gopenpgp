@@ -57,7 +57,7 @@ func init() {
 }
 
 func TestKeyRing_Decrypt(t *testing.T) {
-	decString, err := testPrivateKeyRing.DecryptStringIfNeeded(readTestFile("keyring_token", false))
+	decString, err := testPrivateKeyRing.DecryptMessageIfNeeded(readTestFile("keyring_token", false))
 	if err != nil {
 		t.Fatal("Cannot decrypt token:", err)
 	}
@@ -66,14 +66,14 @@ func TestKeyRing_Decrypt(t *testing.T) {
 }
 
 func TestKeyRing_Encrypt(t *testing.T) {
-	encrypted, err := testPublicKeyRing.EncryptString(testToken, testPrivateKeyRing)
+	encrypted, err := testPublicKeyRing.EncryptMessage(testToken, testPrivateKeyRing)
 	if err != nil {
 		t.Fatal("Cannot encrypt token:", err)
 	}
 
 	// We can't just check if encrypted == testEncryptedToken
 	// Decrypt instead
-	ss, err := testPrivateKeyRing.DecryptString(encrypted)
+	ss, err := testPrivateKeyRing.DecryptMessage(encrypted)
 	if err != nil {
 		t.Fatal("Cannot decrypt token:", err)
 	}
