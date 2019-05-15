@@ -15,20 +15,17 @@ import (
 )
 
 // SignTextDetached signs detached text type
-func (pgp *GopenPGP) SignTextDetached(
-	plainText string, privateKey *KeyRing, passphrase string, trim bool,
-) (string, error) {
-	//sign with 0x01 text
-	if trim {
-		plainText = internal.TrimNewlines(plainText)
-	}
-
-	signEntity, err := privateKey.GetSigningEntity(passphrase)
+func (kr *KeyRing) SignTextDetached(plainText string, passphrase string, trimNewlines bool) (string, error) {
+	signEntity, err := kr.GetSigningEntity(passphrase)
 	if err != nil {
 		return "", err
 	}
 
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pgp.getTimeGenerator()}
+
+	if trimNewlines {
+		plainText = internal.TrimNewlines(plainText)
+	}
 
 	att := strings.NewReader(plainText)
 
@@ -42,9 +39,9 @@ func (pgp *GopenPGP) SignTextDetached(
 }
 
 // SignBinDetached Signs detached bin data using string key
-func (pgp *GopenPGP) SignBinDetached(plainData []byte, privateKey *KeyRing, passphrase string) (string, error) {
+func (kr *KeyRing) SignBinDetached(plainData []byte, passphrase string) (string, error) {
 	//sign with 0x00
-	signEntity, err := privateKey.GetSigningEntity(passphrase)
+	signEntity, err := kr.GetSigningEntity(passphrase)
 	if err != nil {
 		return "", err
 	}
@@ -64,15 +61,26 @@ func (pgp *GopenPGP) SignBinDetached(plainData []byte, privateKey *KeyRing, pass
 
 // VerifyTextDetachedSig verifies detached text
 // - check if signature is valid using a given publicKey in binary format
-func (pgp *GopenPGP) VerifyTextDetachedSig(
-	signature string, plainText string, publicKey *KeyRing, verifyTime int64,
+func (kr *KeyRing) VerifyTextDetachedSig(
+	signature string, plainText string, verifyTime int64, trimNewlines bool,
 ) (bool, error) {
-	plainText = internal.TrimNewlines(plainText)
+	if trimNewlines {
+		plainText = internal.TrimNewlines(plainText)
+	}
 	origText := bytes.NewReader(bytes.NewBufferString(plainText).Bytes())
 
-	return verifySignature(publicKey.entities, origText, signature, verifyTime)
+	return verifySignature(kr.GetEntities(), origText, signature, verifyTime)
 }
 
+// VerifyBinDetachedSig verifies detached text in binary format
+// - check if signature is valid using a given publicKey in binary format
+func (kr *KeyRing) VerifyBinDetachedSig(signature string, plainData []byte, verifyTime int64) (bool, error) {
+	origText := bytes.NewReader(plainData)
+
+	return verifySignature(kr.GetEntities(), origText, signature, verifyTime)
+}
+
+// Internal
 func verifySignature(
 	pubKeyEntries openpgp.EntityList, origText *bytes.Reader,
 	signature string, verifyTime int64,
@@ -119,14 +127,4 @@ func verifySignature(
 	// 	return false, errors.New("signer is nil")
 	// }
 	return true, nil
-}
-
-// VerifyBinDetachedSig verifies detached text in binary format
-// - check if signature is valid using a given publicKey in binary format
-func (pgp *GopenPGP) VerifyBinDetachedSig(
-	signature string, plainData []byte, publicKey *KeyRing, verifyTime int64,
-) (bool, error) {
-	origText := bytes.NewReader(plainData)
-
-	return verifySignature(publicKey.entities, origText, signature, verifyTime)
 }

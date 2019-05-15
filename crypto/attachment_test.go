@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"encoding/base64"
-	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -13,13 +12,8 @@ import (
 // `0ksB0fHC6Duezx/0TqpK/82HSl8+qCY0c2BCuyrSFoj6Dubd93T3//32jVYa624NYvfvxX+UxFKYKJxG09gFsU1IVc87cWvUgmUmgjU=`
 
 func TestAttachmentGetKey(t *testing.T) {
-	testKeyPackets, err := ioutil.ReadFile("testdata/attachment_keypacket")
-	if err != nil {
-		t.Error("Expected no error while reading from file, got:", err)
-		return
-	}
+	testKeyPacketsDecoded, err := base64.StdEncoding.DecodeString(readTestFile("attachment_keypacket", false))
 
-	testKeyPacketsDecoded, err := base64.StdEncoding.DecodeString(string(testKeyPackets))
 	if err != nil {
 		t.Fatal("Expected no error while decoding base64 KeyPacket, got:", err)
 	}
