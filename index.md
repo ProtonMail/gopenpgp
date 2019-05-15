@@ -13,7 +13,7 @@ GopenPGP is a high-level OpenPGP library developed by ProtonMail, as well as a f
 We are currently in discussions with the maintainers of the [original golang crypto library](https://github.com/golang/crypto/) to include our improvements there. In the meantime, we wanted to open source our modifications:
 
 - Added support for elliptic curve cryptography
-- Undergone an audit by [SEC Consult](/assets/Report_1907551_Proton_Technologies_AG_Source_Code_Review_-_Proton_Crypto_Library_1.2_public.pdf)
+- Undergone an audit by [SEC Consult](/assets/Source_Code_Review_-_Proton_Crypto_Library.pdf)
 - Fixed a number of security issues, including:
   - Rejecting packets that are not integrity-protected (those exploited by Efail)
   - Preventing potential spoofing in cleartext message headers
