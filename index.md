@@ -1,7 +1,7 @@
 ---
 layout: default
 title: GopenPGP
-description: An easy-to-use OpenPGP crypto library written in golang
+description: An easy-to-use OpenPGP crypto wrapper library written in golang
 ---
 
 # What is GopenPGP?
