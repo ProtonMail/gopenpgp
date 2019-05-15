@@ -6,7 +6,7 @@ description: An easy-to-use OpenPGP crypto library written in golang
 
 # What is GopenPGP?
 
-GopenPGP is a high-level OpenPGP library developed by ProtonMail, as well as a fork of the golang crypto library, which the high-level library is built on. The goal of this project is to provide an easy-to-use, open source encryption library for the developer community that is well-maintained, up-to-date with the latest OpenPGP RFC changes, and periodically audited for security. 
+GopenPGP is a high-level OpenPGP wrapper library developed by ProtonMail, as well as a fork of the golang crypto library, which the wrapper library is built on. The goal of this project is to provide an easy-to-use, open source encryption wrapper library for the developer community that is well-maintained, up-to-date with the latest OpenPGP RFC changes, and periodically audited for security. 
 
 # Updates
 
