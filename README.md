@@ -168,10 +168,8 @@ const trimNewlines = false
 
 signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(privkey))
 
-signature, err := pgp.SignTextDetached(plaintext, signingKeyRing, passphrase, trimNewlines)
-// or
-signingKeyRing.Unlock([]byte(passphrase))
-signature, err := pgp.SignTextDetached(plaintext, signingKeyRing, "", trimNewlines)
+signature, err := signingKeyRing.SignTextDetached(plaintext, passphrase, trimNewlines)
+// passphrase is optional if the key is already unlocked
 ```
 
 To verify a signature either private or public keyring can be provided.
@@ -188,10 +186,11 @@ const signature = `-----BEGIN PGP SIGNATURE-----
 -----END PGP SIGNATURE-----`
 
 const verifyTime = 0
+const trimNewlines = false
 
 signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(pubkey))
 
-verified, err := pgp.VerifyTextDetachedSig(signature, signedPlainText, signingKeyRing, verifyTime)
+verified, err := signingKeyRing.VerifyTextDetachedSig(signature, signedPlainText, verifyTime, trimNewlines)
 ```
 
 ### Detached signatures for binary data
@@ -204,14 +203,11 @@ const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 ...
 -----END PGP PRIVATE KEY BLOCK-----` // encrypted private key
 passphrase = "LongSecret"
-const trimNewlines = false
 
 signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(privkey))
 
-signature, err := pgp.SignBinDetached(data, signingKeyRing, passphrase, trimNewlines)
-// or
-signingKeyRing.Unlock([]byte(passphrase))
-signature, err := pgp.SignBinDetached(data, signingKeyRing, "", trimNewlines)
+signature, err := signingKeyRing.SignBinDetached(data, passphrase)
+// passphrase is optional if the key is already unlocked
 ```
 
 To verify a signature either private or public keyring can be provided.
@@ -231,5 +227,5 @@ const verifyTime = 0
 
 signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(pubkey))
 
-verified, err := pgp.VerifyBinDetachedSig(signature, data, signingKeyRing, verifyTime)
+verified, err := signingKeyRing.VerifyBinDetachedSig(signature, data, verifyTime)
 ```

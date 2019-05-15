@@ -20,11 +20,11 @@ func TestSignTextDetached(t *testing.T) {
 		t.Fatal("Cannot read private key:", err)
 	}
 
-	signature, err = pgp.SignTextDetached(signedPlainText, signingKeyRing, "", true)
+	signature, err = signingKeyRing.SignTextDetached(signedPlainText, "", true)
 	assert.EqualError(t, err, "gopenpgp: cannot sign message, unable to unlock signer key")
 
 	// Password defined in keyring_test
-	signature, err = pgp.SignTextDetached(signedPlainText, signingKeyRing, testMailboxPassword, true)
+	signature, err = signingKeyRing.SignTextDetached(signedPlainText, testMailboxPassword, true)
 	if err != nil {
 		t.Fatal("Cannot generate signature with encrypted key:", err)
 	}
@@ -37,7 +37,7 @@ func TestSignTextDetached(t *testing.T) {
 		t.Fatal("Cannot decrypt private key:", err)
 	}
 
-	signatureDec, err := pgp.SignTextDetached(signedPlainText, signingKeyRing, "", true)
+	signatureDec, err := signingKeyRing.SignTextDetached(signedPlainText, "", true)
 	if err != nil {
 		t.Fatal("Cannot generate signature with decrypted key:", err)
 	}
@@ -52,11 +52,11 @@ func TestSignBinDetached(t *testing.T) {
 
 	// Reset keyring to locked state
 	signingKeyRing, _ = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))
-	signatureBin, err = pgp.SignBinDetached([]byte(signedPlainText), signingKeyRing, "")
+	signatureBin, err = signingKeyRing.SignBinDetached([]byte(signedPlainText), "")
 	assert.EqualError(t, err, "gopenpgp: cannot sign message, unable to unlock signer key")
 
 	// Password defined in keyring_test
-	signatureBin, err = pgp.SignBinDetached([]byte(signedPlainText), signingKeyRing, testMailboxPassword)
+	signatureBin, err = signingKeyRing.SignBinDetached([]byte(signedPlainText), testMailboxPassword)
 	if err != nil {
 		t.Fatal("Cannot generate signature with encrypted key:", err)
 	}
@@ -66,7 +66,7 @@ func TestSignBinDetached(t *testing.T) {
 }
 
 func TestVerifyTextDetachedSig(t *testing.T) {
-	verified, err := pgp.VerifyTextDetachedSig(signature, signedPlainText, signingKeyRing, testTime)
+	verified, err := signingKeyRing.VerifyTextDetachedSig(signature, signedPlainText, testTime, true)
 	if err != nil {
 		t.Fatal("Cannot verify plaintext signature:", err)
 	}
@@ -75,14 +75,14 @@ func TestVerifyTextDetachedSig(t *testing.T) {
 }
 
 func TestVerifyTextDetachedSigWrong(t *testing.T) {
-	verified, err := pgp.VerifyTextDetachedSig(signature, "wrong text", signingKeyRing, testTime)
+	verified, err := signingKeyRing.VerifyTextDetachedSig(signature, "wrong text", testTime, true)
 
 	assert.EqualError(t, err, "gopenpgp: signer is empty")
 	assert.Exactly(t, false, verified)
 }
 
 func TestVerifyBinDetachedSig(t *testing.T) {
-	verified, err := pgp.VerifyBinDetachedSig(signatureBin, []byte(signedPlainText), signingKeyRing, testTime)
+	verified, err := signingKeyRing.VerifyBinDetachedSig(signatureBin, []byte(signedPlainText), testTime)
 	if err != nil {
 		t.Fatal("Cannot verify binary signature:", err)
 	}

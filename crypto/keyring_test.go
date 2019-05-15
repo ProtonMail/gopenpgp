@@ -32,10 +32,10 @@ var (
 	testPublicKeyRing  *KeyRing
 )
 
-// var testIdentity = &Identity{
-// 	Name:  "UserID",
-// 	Email: "",
-// }
+var testIdentity = &Identity{
+	Name:  "UserID",
+	Email: "",
+}
 
 func init() {
 	var err error
@@ -57,16 +57,16 @@ func init() {
 }
 
 func TestKeyRing_Decrypt(t *testing.T) {
-	ss, err := testPrivateKeyRing.DecryptString(readTestFile("keyring_token", false))
+	decString, err := testPrivateKeyRing.DecryptStringIfNeeded(readTestFile("keyring_token", false))
 	if err != nil {
 		t.Fatal("Cannot decrypt token:", err)
 	}
 
-	assert.Exactly(t, testToken, ss.String)
+	assert.Exactly(t, testToken, decString)
 }
 
 func TestKeyRing_Encrypt(t *testing.T) {
-	encrypted, err := testPublicKeyRing.EncryptString(testToken, nil)
+	encrypted, err := testPublicKeyRing.EncryptString(testToken, testPrivateKeyRing)
 	if err != nil {
 		t.Fatal("Cannot encrypt token:", err)
 	}
@@ -79,6 +79,12 @@ func TestKeyRing_Encrypt(t *testing.T) {
 	}
 
 	assert.Exactly(t, testToken, ss.String)
+
+	signatureKeyRing := ss.Signed.KeyRing()
+	assert.Exactly(t, testPrivateKeyRing, signatureKeyRing)
+
+	isby := ss.Signed.IsBy(testPublicKeyRing)
+	assert.Exactly(t, true, isby)
 }
 
 func TestKeyRing_ArmoredPublicKeyString(t *testing.T) {
@@ -111,4 +117,33 @@ func TestKeyRing_ArmoredPublicKeyString(t *testing.T) {
 	}
 
 	assert.Exactly(t, eb, b)
+}
+
+func TestCheckPassphrase(t *testing.T) {
+	encryptedKeyRing, _ := ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))
+	is_correct := encryptedKeyRing.CheckPassphrase("Wrong password")
+	assert.Exactly(t, false, is_correct)
+
+	is_correct = encryptedKeyRing.CheckPassphrase(testMailboxPassword)
+	assert.Exactly(t, true, is_correct)
+}
+
+func TestIdentities(t *testing.T) {
+	identities := testPrivateKeyRing.Identities()
+	assert.Len(t, identities, 1)
+	assert.Exactly(t, identities[0], testIdentity)
+}
+
+
+func TestFilterExpiredKeys(t *testing.T) {
+	expiredKey, _ := ReadArmoredKeyRing(strings.NewReader(readTestFile("key_expiredKey", false)))
+	keys := []*KeyRing {testPrivateKeyRing, expiredKey}
+	unexpired, err := FilterExpiredKeys(keys)
+
+	if err != nil {
+		t.Fatal("Expected no error while filtering expired keyrings, got:", err)
+	}
+
+	assert.Len(t, unexpired, 1)
+	assert.Exactly(t, unexpired[0], testPrivateKeyRing)
 }
