@@ -1,9 +1,9 @@
 package constants
 
-// Definitions for cipher suites
+// Cipher suite names.
 const (
 	ThreeDES  = "3des"
-	TripleDES = "tripledes"
+	TripleDES = "tripledes" // Both "3des" and "tripledes" refer to 3DES.
 	CAST5     = "cast5"
 	AES128    = "aes128"
 	AES192    = "aes192"

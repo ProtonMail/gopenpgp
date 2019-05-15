@@ -1,4 +1,5 @@
-// This package contains a set of helper methods for armoring and unarmoring
+// Package armor contains a set of helper methods for armoring and unarmoring
+// data.
 package armor
 
 import (
@@ -12,17 +13,18 @@ import (
 	"io/ioutil"
 )
 
-// ArmorKey makes bytes input key to armor format
+// ArmorKey armors input as a public key.
 func ArmorKey(input []byte) (string, error) {
 	return ArmorWithType(input, constants.PublicKeyHeader)
 }
 
-// ArmorWithTypeBuffered takes input from io.Writer and returns io.WriteCloser which can be read for armored code
+// ArmorWithTypeBuffered returns a io.WriteCloser which, when written to, writes
+// armored data to w with the given armorType.
 func ArmorWithTypeBuffered(w io.Writer, armorType string) (io.WriteCloser, error) {
 	return armor.Encode(w, armorType, nil)
 }
 
-// ArmorWithType makes bytes input to armor format
+// ArmorWithType armors input with the given armorType.
 func ArmorWithType(input []byte, armorType string) (string, error) {
 	var b bytes.Buffer
 
@@ -39,7 +41,7 @@ func ArmorWithType(input []byte, armorType string) (string, error) {
 	return b.String(), nil
 }
 
-// Unarmor an armored key to bytes key
+// Unarmor unarmors an armored key.
 func Unarmor(input string) ([]byte, error) {
 	b, err := internal.Unarmor(input)
 	if err != nil {
@@ -48,7 +50,7 @@ func Unarmor(input string) ([]byte, error) {
 	return ioutil.ReadAll(b.Body)
 }
 
-// ReadClearSignedMessage reads clear message from a clearsign package (package containing cleartext and signature)
+// ReadClearSignedMessage returns the message body from a clearsigned message.
 func ReadClearSignedMessage(signedMessage string) (string, error) {
 	modulusBlock, rest := clearsign.Decode([]byte(signedMessage))
 	if len(rest) != 0 {

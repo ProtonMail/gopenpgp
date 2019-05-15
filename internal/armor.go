@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Unarmor from string
+// Unarmor unarmors an armored string.
 func Unarmor(input string) (*armor.Block, error) {
 	io := strings.NewReader(input)
 	b, err := armor.Decode(io)

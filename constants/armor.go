@@ -1,6 +1,7 @@
+// Package constants provides a set of common OpenPGP constants.
 package constants
 
-// Definitions for armored data
+// Constants for armored data.
 const (
 	ArmorHeaderVersion = "GopenPGP 0.0.1 (" + Version + ")"
 	ArmorHeaderComment = "https://gopenpgp.org"

@@ -174,7 +174,7 @@ func (kr *KeyRing) Encrypt(w io.Writer, sign *KeyRing, filename string, canonica
 		func() time.Time { return GetGopenPGP().GetTime() })
 }
 
-// EncryptCore is common encryption method for desktop and mobile clients
+// EncryptCore is lower-level encryption method used by KeyRing.Encrypt.
 func EncryptCore(w io.Writer, encryptEntities []*openpgp.Entity, signEntity *openpgp.Entity, filename string,
 	canonicalizeText bool, timeGenerator func() time.Time) (io.WriteCloser, error) {
 

@@ -1,3 +1,5 @@
+// Package subtle contains subtly insecure methods not recommended for casual
+// use.
 package subtle
 
 import (

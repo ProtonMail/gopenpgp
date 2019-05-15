@@ -1,20 +1,21 @@
-// Provides high-level public data models used for communication mainly with mobile clients
+// Package models provides structs containing message data.
 package models
 
-// EncryptedSplit when encrypt attachment
+// EncryptedSplit contains a separate session key packet and symmetrically
+// encrypted data packet.
 type EncryptedSplit struct {
 	DataPacket []byte
 	KeyPacket  []byte
 	Algo       string
 }
 
-// EncryptedSigned encrypt_sign_package
+// EncryptedSigned contains an encrypted message and signature.
 type EncryptedSigned struct {
 	Encrypted string
 	Signature string
 }
 
-// DecryptSignedVerify decrypt_sign_verify
+// DecryptSignedVerify contains a decrypted message and verification result.
 type DecryptSignedVerify struct {
 	//clear text
 	Plaintext string
