@@ -22,7 +22,7 @@ We are currently in discussions with the maintainers of the [original golang cry
 
 # Contribute to GopenPGP
 
-We welcome contributions and feedback from the community. We will continuously improve the libraries to better our documentation and API, while fixing bugs and building out new features in both the fork and the wrapper libraries. We invite feedback and contributions, as well as security issues, at [https://github.com/ProtonMail/gopenpgp](https://github.com/ProtonMail/gopenpgp) and [https://github.com/ProtonMail/crypto](https://github.com/ProtonMail/crypto).
+We welcome contributions and feedback from the community. We will continuously improve the libraries to better our documentation and API, while fixing bugs and building out new features. We invite feedback and contributions, as well as security issues, at [https://github.com/ProtonMail/gopenpgp](https://github.com/ProtonMail/gopenpgp) and [https://github.com/ProtonMail/crypto](https://github.com/ProtonMail/crypto).
 
 # Supporters
 
