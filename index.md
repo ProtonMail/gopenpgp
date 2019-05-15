@@ -18,11 +18,11 @@ We are currently in discussions with the maintainers of the [original golang cry
   - Rejecting packets that are not integrity-protected (those exploited by Efail)
   - Preventing potential spoofing in cleartext message headers
   - Increasing the default key-derivation (S2K) cost parameters
-- Added a high-level wrapper library, the "[GopenPGP library](https://github.com/ProtonMail/gopenpgp)" which provides a simple API for common operations such as key generation, encryption, decryption, signing, and verification, and which is compatible with go-mobile
+- Added a high-level wrapper library, which provides a simple API for common operations such as key generation, encryption, decryption, signing, and verification, and which is compatible with go-mobile
 
 # Contribute to GopenPGP
 
-We welcome contributions and feedback from the community. We will continuously improve the library to better our documentation and API, while fixing bugs and building out new features in both the library and the GopenPGP Wrapper. We invite feedback and contributions, as well as security issues, at [https://github.com/ProtonMail/gopenpgp](https://github.com/ProtonMail/gopenpgp) and [https://github.com/ProtonMail/crypto](https://github.com/ProtonMail/crypto).
+We welcome contributions and feedback from the community. We will continuously improve the library to better our documentation and API, while fixing bugs and building out new features in both the fork and the wrapper library. We invite feedback and contributions, as well as security issues, at [https://github.com/ProtonMail/gopenpgp](https://github.com/ProtonMail/gopenpgp) and [https://github.com/ProtonMail/crypto](https://github.com/ProtonMail/crypto).
 
 # Supporters
 
