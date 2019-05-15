@@ -4,6 +4,5 @@ dist
 vendor
 .vscode
 *.out
-*.html
 reports
 .idea
