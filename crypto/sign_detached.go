@@ -14,7 +14,7 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-// SignTextDetached signs detached text type
+// SignTextDetached creates an armored detached signature of a given string.
 func (kr *KeyRing) SignTextDetached(plainText string, passphrase string, trimNewlines bool) (string, error) {
 	signEntity, err := kr.GetSigningEntity(passphrase)
 	if err != nil {
@@ -38,7 +38,7 @@ func (kr *KeyRing) SignTextDetached(plainText string, passphrase string, trimNew
 	return outBuf.String(), nil
 }
 
-// SignBinDetached Signs detached bin data using string key
+// SignBinDetached creates an armored detached signature of binary data.
 func (kr *KeyRing) SignBinDetached(plainData []byte, passphrase string) (string, error) {
 	//sign with 0x00
 	signEntity, err := kr.GetSigningEntity(passphrase)
@@ -59,8 +59,7 @@ func (kr *KeyRing) SignBinDetached(plainData []byte, passphrase string) (string,
 	return outBuf.String(), nil
 }
 
-// VerifyTextDetachedSig verifies detached text
-// - check if signature is valid using a given publicKey in binary format
+// VerifyTextDetachedSig verifies an armored detached signature given the plaintext as a string.
 func (kr *KeyRing) VerifyTextDetachedSig(
 	signature string, plainText string, verifyTime int64, trimNewlines bool,
 ) (bool, error) {
@@ -72,8 +71,7 @@ func (kr *KeyRing) VerifyTextDetachedSig(
 	return verifySignature(kr.GetEntities(), origText, signature, verifyTime)
 }
 
-// VerifyBinDetachedSig verifies detached text in binary format
-// - check if signature is valid using a given publicKey in binary format
+// VerifyBinDetachedSig verifies an armored detached signature given the plaintext as binary data.
 func (kr *KeyRing) VerifyBinDetachedSig(signature string, plainData []byte, verifyTime int64) (bool, error) {
 	origText := bytes.NewReader(plainData)
 
