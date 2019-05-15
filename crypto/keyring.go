@@ -228,9 +228,9 @@ func (kr *KeyRing) EncryptArmored(w io.Writer, sign *KeyRing) (wc io.WriteCloser
 	return
 }
 
-// EncryptString encrypts and armors a string to the keyring's owner.
+// EncryptMessage encrypts and armors a string to the keyring's owner.
 // Wrapper of Encrypt.
-func (kr *KeyRing) EncryptString(s string, sign *KeyRing) (encrypted string, err error) {
+func (kr *KeyRing) EncryptMessage(s string, sign *KeyRing) (encrypted string, err error) {
 	var b bytes.Buffer
 	w, err := kr.EncryptArmored(&b, sign)
 	if err != nil {
@@ -272,10 +272,10 @@ func (kr *KeyRing) EncryptSymmetric(textToEncrypt string, canonicalizeText bool)
 	return
 }
 
-// DecryptString decrypts an armored string sent to the keypair's owner.
+// DecryptMessage decrypts an armored string sent to the keypair's owner.
 // If error is errors.ErrSignatureExpired (from golang.org/x/crypto/openpgp/errors),
 // contents are still provided if library clients wish to process this message further.
-func (kr *KeyRing) DecryptString(encrypted string) (SignedString, error) {
+func (kr *KeyRing) DecryptMessage(encrypted string) (SignedString, error) {
 	r, signed, err := kr.DecryptArmored(strings.NewReader(encrypted))
 	if err != nil && err != pgperrors.ErrSignatureExpired {
 		return SignedString{String: encrypted, Signed: nil}, err
@@ -290,15 +290,15 @@ func (kr *KeyRing) DecryptString(encrypted string) (SignedString, error) {
 	return SignedString{String: s, Signed: signed}, nil
 }
 
-// DecryptStringIfNeeded data if has armored PGP message format, if not return original data.
+// DecryptMessageIfNeeded data if has armored PGP message format, if not return original data.
 // If error is errors.ErrSignatureExpired (from golang.org/x/crypto/openpgp/errors),
 // contents are still provided if library clients wish to process this message further.
-func (kr *KeyRing) DecryptStringIfNeeded(data string) (decrypted string, err error) {
+func (kr *KeyRing) DecryptMessageIfNeeded(data string) (decrypted string, err error) {
 	if re := regexp.MustCompile("^-----BEGIN " + constants.PGPMessageHeader + "-----(?s:.+)-----END " +
 		constants.PGPMessageHeader + "-----"); re.MatchString(data) {
 
 		var signed SignedString
-		signed, err = kr.DecryptString(data)
+		signed, err = kr.DecryptMessage(data)
 		decrypted = signed.String
 	} else {
 		decrypted = data

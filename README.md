@@ -114,21 +114,20 @@ const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 
 const passphrase = `the passphrase of the private key` // what the privKey is encrypted with
 
-privateKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(privkey))
 publicKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(pubkey))
 
-// encrypt message using public key and can be optionally signed using private key and passphrase
-armor, err := pgp.EncryptMessage("plain text", publicKeyRing, privateKeyRing, passphrase, false)
-// OR
+privateKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(privkey))
 privateKeyRing.Unlock([]byte(passphrase)) // if private key is locked with passphrase
-armor, err := publicKeyRing.EncryptString("plain text", privateKeyRing)
 
-// decrypt armored encrypted message using the private key and the passphrase of the private key
-plainText, err := pgp.DecryptMessage(armor, privateKeyRing, passphrase)
-// OR
-signedText, err := privateKeyRing.DecryptString(armor)
+// encrypt message using public key, can be optionally signed using private key
+armor, err := publicKeyRing.EncryptMessage("plain text", privateKeyRing)
+
+// decrypt armored encrypted message using the private key
+signedText, err := privateKeyRing.DecryptMessage(armor)
 plainText = signedText.String
 
+// verify signature (optional)
+signed = signedText.Signed.IsBy(publicKeyRing)
 ```
 
 ### Generate key
@@ -139,7 +138,7 @@ The library supports RSA with different key lengths or Curve25519 keys.
 ```go
 var pgp = crypto.GopenPGP{}
 
-var (
+const (
   localPart = "name.surname"
   domain = "example.com"
   passphrase = "LongSecret"
@@ -166,7 +165,7 @@ const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 passphrase = "LongSecret"
 const trimNewlines = false
 
-signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(privkey))
+signingKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(privkey))
 
 signature, err := signingKeyRing.SignTextDetached(plaintext, passphrase, trimNewlines)
 // passphrase is optional if the key is already unlocked
@@ -188,7 +187,7 @@ const signature = `-----BEGIN PGP SIGNATURE-----
 const verifyTime = 0
 const trimNewlines = false
 
-signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(pubkey))
+signingKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(pubkey))
 
 verified, err := signingKeyRing.VerifyTextDetachedSig(signature, signedPlainText, verifyTime, trimNewlines)
 ```
@@ -204,7 +203,7 @@ const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 -----END PGP PRIVATE KEY BLOCK-----` // encrypted private key
 passphrase = "LongSecret"
 
-signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(privkey))
+signingKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(privkey))
 
 signature, err := signingKeyRing.SignBinDetached(data, passphrase)
 // passphrase is optional if the key is already unlocked
@@ -225,7 +224,7 @@ const signature = `-----BEGIN PGP SIGNATURE-----
 
 const verifyTime = 0
 
-signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(pubkey))
+signingKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(pubkey))
 
 verified, err := signingKeyRing.VerifyBinDetachedSig(signature, data, verifyTime)
 ```
