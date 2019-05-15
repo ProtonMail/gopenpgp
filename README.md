@@ -168,10 +168,10 @@ const trimNewlines = false
 
 signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(privkey))
 
-signature, err := pmCrypto.SignTextDetached(plaintext, signingKeyRing, passphrase, trimNewlines)
+signature, err := pgp.SignTextDetached(plaintext, signingKeyRing, passphrase, trimNewlines)
 // or
 signingKeyRing.Unlock([]byte(passphrase))
-signature, err := pmCrypto.SignTextDetached(plaintext, signingKeyRing, "", trimNewlines)
+signature, err := pgp.SignTextDetached(plaintext, signingKeyRing, "", trimNewlines)
 ```
 
 To verify a signature either private or public keyring can be provided.
@@ -191,7 +191,7 @@ const verifyTime = 0
 
 signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(pubkey))
 
-verified, err := pmCrypto.VerifyTextDetachedSig(signature, signedPlainText, signingKeyRing, verifyTime)
+verified, err := pgp.VerifyTextDetachedSig(signature, signedPlainText, signingKeyRing, verifyTime)
 ```
 
 ### Detached signatures for binary data
@@ -208,10 +208,10 @@ const trimNewlines = false
 
 signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(privkey))
 
-signature, err := pmCrypto.SignBinDetached(data, signingKeyRing, passphrase, trimNewlines)
+signature, err := pgp.SignBinDetached(data, signingKeyRing, passphrase, trimNewlines)
 // or
 signingKeyRing.Unlock([]byte(passphrase))
-signature, err := pmCrypto.SignBinDetached(data, signingKeyRing, "", trimNewlines)
+signature, err := pgp.SignBinDetached(data, signingKeyRing, "", trimNewlines)
 ```
 
 To verify a signature either private or public keyring can be provided.
@@ -231,5 +231,5 @@ const verifyTime = 0
 
 signingKeyRing, err := ReadArmoredKeyRing(strings.NewReader(pubkey))
 
-verified, err := pmCrypto.VerifyBinDetachedSig(signature, data, signingKeyRing, verifyTime)
+verified, err := pgp.VerifyBinDetachedSig(signature, data, signingKeyRing, verifyTime)
 ```
