@@ -32,7 +32,7 @@ func TestSignTextDetached(t *testing.T) {
 	// Reset keyring to locked state
 	signingKeyRing, _ = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))
 	// Password defined in keyring_test
-	err = signingKeyRing.Unlock([]byte(testMailboxPassword))
+	err = signingKeyRing.UnlockWithPassphrase(testMailboxPassword)
 	if err != nil {
 		t.Fatal("Cannot decrypt private key:", err)
 	}

@@ -52,12 +52,15 @@ func TestDecrypt(t *testing.T) {
 	}
 
 	privateKeyUnarmored, _ := ioutil.ReadAll(block.Body)
+	privateKeyRing, _ := pgp.BuildKeyRing(privateKeyUnarmored)
+	err = privateKeyRing.UnlockWithPassphrase(privateKeyPassword)
+	if err != nil {
+		t.Fatal("Cannot unlock private key: ", err)
+	}
 
-	pgp.DecryptMIMEMessage(
+	privateKeyRing.DecryptMIMEMessage(
 		readTestFile("mime_pgpMessage", false),
 		pgp.BuildKeyRingNoError(publicKeyUnarmored),
-		pgp.BuildKeyRingNoError(privateKeyUnarmored),
-		privateKeyPassword,
 		&callbacks,
 		pgp.GetTimeUnix())
 }

@@ -31,14 +31,9 @@ func TestAttachmentGetKey(t *testing.T) {
 }
 
 func TestAttachmentSetKey(t *testing.T) {
-	packets, err := testPublicKeyRing.EncryptKey(testSymmetricKey)
+	keyPackets, err := testPublicKeyRing.EncryptSessionKey(testSymmetricKey)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting attachment key, got:", err)
-	}
-
-	keyPackets, err := base64.StdEncoding.DecodeString(packets)
-	if err != nil {
-		t.Fatal("Expected no error while decoding base64 KeyPacket, got:", err)
 	}
 
 	split, err := SeparateKeyAndData(testPrivateKeyRing, strings.NewReader(string(keyPackets)), len(keyPackets), -1)
@@ -52,12 +47,12 @@ func TestAttachmentSetKey(t *testing.T) {
 func TestAttachnentEncryptDecrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
 
-	encSplit, err := pgp.EncryptAttachment([]byte(testAttachmentCleartext), "s.txt", testPrivateKeyRing)
+	encSplit, err := testPrivateKeyRing.EncryptAttachment([]byte(testAttachmentCleartext), "s.txt")
 	if err != nil {
 		t.Fatal("Expected no error while encrypting attachment, got:", err)
 	}
 
-	redecData, err := pgp.DecryptAttachment(encSplit.KeyPacket, encSplit.DataPacket, testPrivateKeyRing, "")
+	redecData, err := testPrivateKeyRing.DecryptAttachment(encSplit.KeyPacket, encSplit.DataPacket)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting attachment, got:", err)
 	}

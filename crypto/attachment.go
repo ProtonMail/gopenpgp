@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"runtime"
@@ -47,10 +46,10 @@ func (ap *AttachmentProcessor) Finish() (*models.EncryptedSplit, error) {
 	return ap.split, nil
 }
 
-// encryptAttachment creates an AttachmentProcessor which can be used to encrypt
+// newAttachmentProcessor creates an AttachmentProcessor which can be used to encrypt
 // a file. It takes an estimatedSize and fileName as hints about the file.
-func (pgp *GopenPGP) encryptAttachment(
-	estimatedSize int, fileName string, publicKey *KeyRing, garbageCollector int,
+func (publicKey *KeyRing) newAttachmentProcessor(
+	estimatedSize int, fileName string, garbageCollector int,
 ) (*AttachmentProcessor, error) {
 	attachmentProc := &AttachmentProcessor{}
 	// You could also add these one at a time if needed.
@@ -91,10 +90,8 @@ func (pgp *GopenPGP) encryptAttachment(
 }
 
 // EncryptAttachment encrypts a file. fileName
-func (pgp *GopenPGP) EncryptAttachment(
-	plainData []byte, fileName string, publicKey *KeyRing,
-) (*models.EncryptedSplit, error) {
-	ap, err := pgp.encryptAttachment(len(plainData), fileName, publicKey, -1)
+func (publicKey *KeyRing) EncryptAttachment(plainData []byte, fileName string) (*models.EncryptedSplit, error) {
+	ap, err := publicKey.newAttachmentProcessor(len(plainData), fileName, -1)
 	if err != nil {
 		return nil, err
 	}
@@ -106,14 +103,14 @@ func (pgp *GopenPGP) EncryptAttachment(
 	return split, nil
 }
 
-// EncryptAttachmentLowMemory creates an AttachmentProcessor which can be used
+// NewLowMemoryAttachmentProcessor creates an AttachmentProcessor which can be used
 // to encrypt a file. It takes an estimatedSize and fileName as hints about the
 // file. It is optimized for low-memory environments and collects garbage every
 // megabyte.
-func (pgp *GopenPGP) EncryptAttachmentLowMemory(
-	estimatedSize int, fileName string, publicKey *KeyRing,
+func (publicKey *KeyRing) NewLowMemoryAttachmentProcessor(
+	estimatedSize int, fileName string,
 ) (*AttachmentProcessor, error) {
-	return pgp.encryptAttachment(estimatedSize, fileName, publicKey, 1<<20)
+	return publicKey.newAttachmentProcessor(estimatedSize, fileName, 1<<20)
 }
 
 // SplitArmor is a helper method which splits an armored message into its
@@ -132,18 +129,9 @@ func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
 }
 
 // DecryptAttachment takes a session key packet and symmetrically encrypted data
-// packet. privateKeys is a KeyRing that can contain multiple keys. The
-// passphrase is used to unlock keys in privateKeys.
-func (pgp *GopenPGP) DecryptAttachment(
-	keyPacket, dataPacket []byte,
-	kr *KeyRing, passphrase string,
-) ([]byte, error) {
+// packet. privateKeys is a KeyRing that can contain multiple keys.
+func (kr *KeyRing) DecryptAttachment(keyPacket, dataPacket []byte) ([]byte, error) {
 	privKeyEntries := kr.entities
-
-	if err := kr.Unlock([]byte(passphrase)); err != nil {
-		err = fmt.Errorf("gopenpgp: cannot decrypt attachment: %v", err)
-		return nil, err
-	}
 
 	keyReader := bytes.NewReader(keyPacket)
 	dataReader := bytes.NewReader(dataPacket)

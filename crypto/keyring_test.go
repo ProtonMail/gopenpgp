@@ -19,6 +19,11 @@ var testSymmetricKey = &SymmetricKey{
 	Algo: constants.AES256,
 }
 
+var testWrongSymmetricKey = &SymmetricKey{
+	Key:  []byte("WrongPass"),
+	Algo: constants.AES256,
+}
+
 // Corresponding key in testdata/keyring_privateKey
 const testMailboxPassword = "apple"
 
@@ -50,14 +55,14 @@ func init() {
 		panic(err)
 	}
 
-	err = testPrivateKeyRing.Unlock([]byte(testMailboxPassword))
+	err = testPrivateKeyRing.UnlockWithPassphrase(testMailboxPassword)
 	if err != nil {
 		panic(err)
 	}
 }
 
 func TestKeyRing_Decrypt(t *testing.T) {
-	decString, err := testPrivateKeyRing.DecryptMessageIfNeeded(readTestFile("keyring_token", false))
+	decString, _, err := testPrivateKeyRing.DecryptMessage(readTestFile("keyring_token", false), nil, 0)
 	if err != nil {
 		t.Fatal("Cannot decrypt token:", err)
 	}
@@ -66,25 +71,20 @@ func TestKeyRing_Decrypt(t *testing.T) {
 }
 
 func TestKeyRing_Encrypt(t *testing.T) {
-	encrypted, err := testPublicKeyRing.EncryptMessage(testToken, testPrivateKeyRing)
+	encrypted, err := testPublicKeyRing.EncryptMessage(testToken, testPrivateKeyRing, true)
 	if err != nil {
 		t.Fatal("Cannot encrypt token:", err)
 	}
 
 	// We can't just check if encrypted == testEncryptedToken
 	// Decrypt instead
-	ss, err := testPrivateKeyRing.DecryptMessage(encrypted)
+	ss, verified, err := testPrivateKeyRing.DecryptMessage(encrypted, testPrivateKeyRing, pgp.GetTimeUnix())
 	if err != nil {
 		t.Fatal("Cannot decrypt token:", err)
 	}
 
-	assert.Exactly(t, testToken, ss.String)
-
-	signatureKeyRing := ss.Signed.KeyRing()
-	assert.Exactly(t, testPrivateKeyRing, signatureKeyRing)
-
-	isby := ss.Signed.IsBy(testPublicKeyRing)
-	assert.Exactly(t, true, isby)
+	assert.Exactly(t, testToken, ss)
+	assert.Exactly(t, constants.SIGNATURE_OK, verified)
 }
 
 func TestKeyRing_ArmoredPublicKeyString(t *testing.T) {

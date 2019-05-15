@@ -6,40 +6,31 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/ProtonMail/gopenpgp/armor"
 	"github.com/ProtonMail/gopenpgp/constants"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-// RandomToken generates a random token with the key size of the default cipher.
-func (pgp *GopenPGP) RandomToken() ([]byte, error) {
+// RandomToken generates a random token with the specified key size, defaulting to the keysize of the default cipher.
+func (pgp *GopenPGP) RandomToken(size ...int) ([]byte, error) {
+	var KeySize int
 	config := &packet.Config{DefaultCipher: packet.CipherAES256}
-	keySize := config.DefaultCipher.KeySize()
-	symKey := make([]byte, keySize)
+	if len(size) == 0 {
+		KeySize = config.DefaultCipher.KeySize()
+	} else {
+		KeySize = size[0]
+	}
+
+	symKey := make([]byte, KeySize)
 	if _, err := io.ReadFull(config.Random(), symKey); err != nil {
 		return nil, err
 	}
 	return symKey, nil
 }
 
-// RandomTokenWith generates a random token with the given key size.
-func (pgp *GopenPGP) RandomTokenWith(size int) ([]byte, error) {
-	config := &packet.Config{DefaultCipher: packet.CipherAES256}
-	symKey := make([]byte, size)
-	if _, err := io.ReadFull(config.Random(), symKey); err != nil {
-		return nil, err
-	}
-	return symKey, nil
-}
-
-// GetSessionFromKeyPacket returns the decrypted session key from a binary
-// public-key encrypted session key packet.
-func (pgp *GopenPGP) GetSessionFromKeyPacket(
-	keyPacket []byte, privateKey *KeyRing, passphrase string,
-) (*SymmetricKey,
-	error) {
+// DecryptSessionKey returns the decrypted session key from a binary encrypted session key packet.
+func (privateKey *KeyRing) DecryptSessionKey(keyPacket []byte) (*SymmetricKey, error) {
 	keyReader := bytes.NewReader(keyPacket)
 	packets := packet.NewReader(keyReader)
 
@@ -73,35 +64,15 @@ func (pgp *GopenPGP) GetSessionFromKeyPacket(
 	return getSessionSplit(ek)
 }
 
-// KeyPacketWithPublicKey encrypts the session key with the armored publicKey
-// and returns a binary public-key encrypted session key packet.
-func (pgp *GopenPGP) KeyPacketWithPublicKey(sessionSplit *SymmetricKey, publicKey string) ([]byte, error) {
-	pubkeyRaw, err := armor.Unarmor(publicKey)
-	if err != nil {
-		return nil, err
-	}
-	return pgp.KeyPacketWithPublicKeyBin(sessionSplit, pubkeyRaw)
-}
-
-// KeyPacketWithPublicKeyBin encrypts the session key with the unarmored
+// EncryptSessionKey encrypts the session key with the unarmored
 // publicKey and returns a binary public-key encrypted session key packet.
-func (pgp *GopenPGP) KeyPacketWithPublicKeyBin(sessionSplit *SymmetricKey, publicKey []byte) ([]byte, error) {
-	publicKeyReader := bytes.NewReader(publicKey)
-	pubKeyEntries, err := openpgp.ReadKeyRing(publicKeyReader)
-	if err != nil {
-		return nil, err
-	}
-
+func (publicKeyRing *KeyRing) EncryptSessionKey(sessionSplit *SymmetricKey) ([]byte, error) {
 	outbuf := &bytes.Buffer{}
 
 	cf := sessionSplit.GetCipherFunc()
 
-	if len(pubKeyEntries) == 0 {
-		return nil, errors.New("cannot set key: key ring is empty")
-	}
-
 	var pub *packet.PublicKey
-	for _, e := range pubKeyEntries {
+	for _, e := range publicKeyRing.GetEntities() {
 		for _, subKey := range e.Subkeys {
 			if !subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage || subKey.Sig.FlagEncryptCommunications {
 				pub = subKey.PublicKey
@@ -132,9 +103,9 @@ func (pgp *GopenPGP) KeyPacketWithPublicKeyBin(sessionSplit *SymmetricKey, publi
 	return outbuf.Bytes(), nil
 }
 
-// GetSessionFromSymmetricPacket decrypts the binary symmetrically encrypted
+// DecryptSessionKeySymmetric decrypts the binary symmetrically encrypted
 // session key packet and returns the session key.
-func (pgp *GopenPGP) GetSessionFromSymmetricPacket(keyPacket []byte, password string) (*SymmetricKey, error) {
+func (pgp *GopenPGP) DecryptSessionKeySymmetric(keyPacket []byte, password string) (*SymmetricKey, error) {
 	keyReader := bytes.NewReader(keyPacket)
 	packets := packet.NewReader(keyReader)
 
@@ -171,9 +142,9 @@ func (pgp *GopenPGP) GetSessionFromSymmetricPacket(keyPacket []byte, password st
 	return nil, errors.New("password incorrect")
 }
 
-// SymmetricKeyPacketWithPassword encrypts the session key with the password and
+// EncryptSessionKeySymmetric encrypts the session key with the password and
 // returns a binary symmetrically encrypted session key packet.
-func (pgp *GopenPGP) SymmetricKeyPacketWithPassword(sessionSplit *SymmetricKey, password string) ([]byte, error) {
+func (pgp *GopenPGP) EncryptSessionKeySymmetric(sessionSplit *SymmetricKey, password string) ([]byte, error) {
 	outbuf := &bytes.Buffer{}
 
 	cf := sessionSplit.GetCipherFunc()

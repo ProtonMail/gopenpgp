@@ -72,40 +72,6 @@ func newSymmetricKey(ek *packet.EncryptedKey) *SymmetricKey {
 	}
 }
 
-// DecryptAttKey decrypts a public-key encrypted session key and returns the
-// decrypted symmetric session key.
-func DecryptAttKey(kr *KeyRing, keyPacket string) (key *SymmetricKey, err error) {
-	r := base64.NewDecoder(base64.StdEncoding, strings.NewReader(keyPacket))
-	packets := packet.NewReader(r)
-
-	var p packet.Packet
-	if p, err = packets.Next(); err != nil {
-		return
-	}
-
-	ek := p.(*packet.EncryptedKey)
-
-	var decryptErr error
-	for _, key := range kr.entities.DecryptionKeys() {
-		priv := key.PrivateKey
-		if priv.Encrypted {
-			continue
-		}
-
-		if decryptErr = ek.Decrypt(priv, nil); decryptErr == nil {
-			break
-		}
-	}
-
-	if decryptErr != nil {
-		err = fmt.Errorf("gopenpgp: cannot decrypt encrypted key packet: %v", decryptErr)
-		return
-	}
-
-	key = newSymmetricKey(ek)
-	return
-}
-
 // SeparateKeyAndData reads a binary PGP message from r and splits it into its
 // session key packet and symmetrically encrypted data packet.
 func SeparateKeyAndData(
@@ -222,59 +188,8 @@ func SeparateKeyAndData(
 	return outSplit, nil
 }
 
-// EncryptKey encrypts the provided key.
-func (kr *KeyRing) EncryptKey(symKey *SymmetricKey) (packets string, err error) {
-	b := &bytes.Buffer{}
-	w := base64.NewEncoder(base64.StdEncoding, b)
-
-	cf := symKey.GetCipherFunc()
-
-	if len(kr.entities) == 0 {
-		err = fmt.Errorf("gopenpgp: cannot set key: key ring is empty")
-		return
-	}
-
-	var pub *packet.PublicKey
-	for _, e := range kr.entities {
-		for _, subKey := range e.Subkeys {
-			if !subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage || subKey.Sig.FlagEncryptCommunications {
-				pub = subKey.PublicKey
-				break
-			}
-		}
-		if pub == nil && len(e.Identities) > 0 {
-			var i *openpgp.Identity
-			for _, i = range e.Identities {
-				break
-			}
-			if i.SelfSignature.FlagsValid || i.SelfSignature.FlagEncryptStorage || i.SelfSignature.FlagEncryptCommunications {
-				pub = e.PrimaryKey
-			}
-		}
-		if pub != nil {
-			break
-		}
-	}
-	if pub == nil {
-		err = fmt.Errorf("gopenpgp: cannot set key: no public key available")
-		return "", err
-	}
-
-	if err = packet.SerializeEncryptedKey(w, pub, cf, symKey.Key, nil); err != nil {
-		err = fmt.Errorf("gopenpgp: cannot set key: %v", err)
-		return "", err
-	}
-
-	if err = w.Close(); err != nil {
-		err = fmt.Errorf("gopenpgp: cannot set key: %v", err)
-		return "", err
-	}
-
-	return b.String(), nil
-}
-
-// IsKeyExpiredBin checks whether the given (unarmored, binary) key is expired.
-func (pgp *GopenPGP) IsKeyExpiredBin(publicKey []byte) (bool, error) {
+// IsBinKeyExpired checks whether the given (unarmored, binary) key is expired.
+func (pgp *GopenPGP) IsBinKeyExpired(publicKey []byte) (bool, error) {
 	now := pgp.getNow()
 	pubKeyReader := bytes.NewReader(publicKey)
 	pubKeyEntries, err := openpgp.ReadKeyRing(pubKeyReader)
@@ -325,20 +240,13 @@ func (pgp *GopenPGP) IsKeyExpiredBin(publicKey []byte) (bool, error) {
 	return true, errors.New("keys expired")
 }
 
-const (
-	ok         = 0
-	notSigned  = 1
-	noVerifier = 2
-	failed     = 3
-)
-
-// IsKeyExpired checks whether the given armored key is expired.
-func (pgp *GopenPGP) IsKeyExpired(publicKey string) (bool, error) {
+// IsKeyStringExpired checks whether the given armored key is expired.
+func (pgp *GopenPGP) IsStringKeyExpired(publicKey string) (bool, error) {
 	rawPubKey, err := armor.Unarmor(publicKey)
 	if err != nil {
 		return false, err
 	}
-	return pgp.IsKeyExpiredBin(rawPubKey)
+	return pgp.IsBinKeyExpired(rawPubKey)
 }
 
 func (pgp *GopenPGP) generateKey(
@@ -479,9 +387,8 @@ func (pgp *GopenPGP) UpdatePrivateKeyPassphrase(
 	return armor.ArmorWithType(serialized, constants.PrivateKeyHeader)
 }
 
-// CheckKey is a debug helper function that prints the key and subkey
-// fingerprints.
-func (pgp *GopenPGP) CheckKey(pubKey string) (string, error) {
+// PrintFingerprints is a debug helper function that prints the key and subkey fingerprints.
+func (pgp *GopenPGP) PrintFingerprints(pubKey string) (string, error) {
 	pubKeyReader := strings.NewReader(pubKey)
 	entries, err := openpgp.ReadArmoredKeyRing(pubKeyReader)
 	if err != nil {

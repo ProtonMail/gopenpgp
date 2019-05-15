@@ -85,6 +85,8 @@ Encryption and decryption will use the AES256 algorithm by default.
 #### Encrypt / Decrypt with password
 
 ```go
+import "github.com/ProtonMail/gopenpgp/constants"
+
 var pgp = crypto.GopenPGP{}
 
 const password = "my secret password"
@@ -113,17 +115,21 @@ const passphrase = `the passphrase of the private key` // what the privKey is en
 publicKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(pubkey))
 
 privateKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(privkey))
-privateKeyRing.Unlock([]byte(passphrase)) // if private key is locked with passphrase
+privateKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with passphrase
 
 // encrypt message using public key, can be optionally signed using private key
 armor, err := publicKeyRing.EncryptMessage("plain text", privateKeyRing)
 
+verifyTime := pgp.GetTimeUnix()
+verifyKeyRing := publicKeyRing
 // decrypt armored encrypted message using the private key
-signedText, err := privateKeyRing.DecryptMessage(armor)
+// optional signature verification is done through publicKeyRing and verifyTime
+signedText, verified, err := privateKeyRing.DecryptMessage(armor, verifyKeyRing, verifyTime)
 plainText = signedText.String
 
-// verify signature (optional)
-signed = signedText.Signed.IsBy(publicKeyRing)
+if signed == constants.SIGNATURE_OK {
+  // Signature verified!
+}
 ```
 
 ### Generate key
@@ -162,8 +168,9 @@ passphrase = "LongSecret"
 const trimNewlines = false
 
 signingKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(privkey))
+signingKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with passphrase
 
-signature, err := signingKeyRing.SignTextDetached(plaintext, passphrase, trimNewlines)
+signature, err := signingKeyRing.SignTextDetached(plaintext, trimNewlines)
 // passphrase is optional if the key is already unlocked
 ```
 
@@ -200,9 +207,9 @@ const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 passphrase = "LongSecret"
 
 signingKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(privkey))
+signingKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with passphrase
 
-signature, err := signingKeyRing.SignBinDetached(data, passphrase)
-// passphrase is optional if the key is already unlocked
+signature, err := signingKeyRing.SignBinDetached(data)
 ```
 
 To verify a signature either private or public keyring can be provided.

@@ -7,41 +7,39 @@ import (
 )
 
 func TestMessageEncryptionWithPassword(t *testing.T) {
-	var pgp = GopenPGP{}
-
-	const password = "my secret password"
+	var message = "The secret code is... 1, 2, 3, 4, 5"
 
 	// Encrypt data with password
-	armor, err := pgp.EncryptMessageWithPassword("my message", password)
+	armor, err := testSymmetricKey.EncryptMessage(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 	// Decrypt data with wrong password
-	_, err = pgp.DecryptMessageWithPassword(armor, "wrong password")
+	_, err = testWrongSymmetricKey.DecryptMessage(armor)
 	assert.NotNil(t, err)
 	// Decrypt data with the good password
-	text, err := pgp.DecryptMessageWithPassword(armor, password)
+	text, err := testSymmetricKey.DecryptMessage(armor)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
-	assert.Exactly(t, "my message", text)
+	assert.Exactly(t, message, text)
 }
 
 func TestMessageEncryption(t *testing.T) {
-	var pgp = GopenPGP{}
-	var (
-		message = "plain text"
-	)
+	var message = "plain text"
 
-	testPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))
-	_ = testPrivateKeyRing.Unlock([]byte(testMailboxPassword))
 	testPublicKeyRing, _ = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_publicKey", false)))
+	testPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))
+	err = testPrivateKeyRing.UnlockWithPassphrase(testMailboxPassword)
+	if err != nil {
+		t.Fatal("Expected no error unlocking privateKey, got:", err)
+	}
 
-	armor, err := pgp.EncryptMessage(message, testPublicKeyRing, testPrivateKeyRing, testMailboxPassword, false)
+	armor, err := testPublicKeyRing.EncryptMessage(message, testPrivateKeyRing, false)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
-	plainText, err := pgp.DecryptMessage(armor, testPrivateKeyRing, testMailboxPassword)
+	plainText, _, err := testPrivateKeyRing.DecryptMessage(armor, nil, 0)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}

@@ -8,21 +8,25 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
-	"regexp"
 	"strings"
 	"time"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
-	pgperrors "golang.org/x/crypto/openpgp/errors"
 	"golang.org/x/crypto/openpgp/packet"
 	xrsa "golang.org/x/crypto/rsa"
 
 	armorUtils "github.com/ProtonMail/gopenpgp/armor"
-	"github.com/ProtonMail/gopenpgp/constants"
-	"github.com/ProtonMail/gopenpgp/models"
 )
+
+// KeyRing contains multiple private and public keys.
+type KeyRing struct {
+	// PGP entities in this keyring.
+	entities openpgp.EntityList
+
+	// FirstKeyID as obtained from API to match salt
+	FirstKeyID string
+}
 
 // A keypair contains a private key and a public key.
 type pgpKeyObject struct {
@@ -60,8 +64,6 @@ type SignedString struct {
 	Signed *Signature
 }
 
-var errKeyringNotUnlocked = errors.New("gopenpgp: cannot sign message, key ring is not unlocked")
-
 // Err returns a non-nil error if the signature is invalid.
 func (s *Signature) Err() error {
 	return s.md.SignatureError
@@ -97,15 +99,6 @@ func (s *Signature) IsBy(kr *KeyRing) bool {
 		}
 	}
 	return false
-}
-
-// KeyRing contains multiple private and public keys.
-type KeyRing struct {
-	// PGP entities in this keyring.
-	entities openpgp.EntityList
-
-	// FirstKeyID as obtained from API to match salt
-	FirstKeyID string
 }
 
 // GetEntities returns openpgp entities contained in this KeyRing.
@@ -161,7 +154,7 @@ func (kr *KeyRing) Encrypt(w io.Writer, sign *KeyRing, filename string, canonica
 		}
 
 		if signEntity == nil {
-			return nil, errKeyringNotUnlocked
+			return nil, errors.New("gopenpgp: cannot sign message, key ring is not unlocked")
 		}
 	}
 
@@ -207,102 +200,6 @@ func (w *armorEncryptWriter) Close() (err error) {
 		return
 	}
 	err = w.aw.Close()
-	return
-}
-
-// EncryptArmored encrypts and armors data to the keyring's owner.
-// Wrapper of Encrypt.
-func (kr *KeyRing) EncryptArmored(w io.Writer, sign *KeyRing) (wc io.WriteCloser, err error) {
-	aw, err := armorUtils.ArmorWithTypeBuffered(w, constants.PGPMessageHeader)
-	if err != nil {
-		return
-	}
-
-	ew, err := kr.Encrypt(aw, sign, "", false)
-	if err != nil {
-		aw.Close()
-		return
-	}
-
-	wc = &armorEncryptWriter{aw: aw, ew: ew}
-	return
-}
-
-// EncryptMessage encrypts and armors a string to the keyring's owner.
-// Wrapper of Encrypt.
-func (kr *KeyRing) EncryptMessage(s string, sign *KeyRing) (encrypted string, err error) {
-	var b bytes.Buffer
-	w, err := kr.EncryptArmored(&b, sign)
-	if err != nil {
-		return
-	}
-
-	if _, err = w.Write([]byte(s)); err != nil {
-		return
-	}
-	if err = w.Close(); err != nil {
-		return
-	}
-
-	encrypted = b.String()
-	return
-}
-
-// EncryptSymmetric data using generated symmetric key encrypted with this KeyRing.
-// Wrapper of Encrypt.
-func (kr *KeyRing) EncryptSymmetric(textToEncrypt string, canonicalizeText bool) (outSplit *models.EncryptedSplit,
-	err error) {
-
-	var encryptedWriter io.WriteCloser
-	buffer := &bytes.Buffer{}
-
-	if encryptedWriter, err = kr.Encrypt(buffer, kr, "msg.txt", canonicalizeText); err != nil {
-		return
-	}
-
-	if _, err = io.Copy(encryptedWriter, bytes.NewBufferString(textToEncrypt)); err != nil {
-		return
-	}
-	encryptedWriter.Close()
-
-	if outSplit, err = SeparateKeyAndData(kr, buffer, len(textToEncrypt), -1); err != nil {
-		return
-	}
-
-	return
-}
-
-// DecryptMessage decrypts an armored string sent to the keypair's owner.
-// If error is errors.ErrSignatureExpired (from golang.org/x/crypto/openpgp/errors),
-// contents are still provided if library clients wish to process this message further.
-func (kr *KeyRing) DecryptMessage(encrypted string) (SignedString, error) {
-	r, signed, err := kr.DecryptArmored(strings.NewReader(encrypted))
-	if err != nil && err != pgperrors.ErrSignatureExpired {
-		return SignedString{String: encrypted, Signed: nil}, err
-	}
-
-	b, err := ioutil.ReadAll(r)
-	if err != nil && err != pgperrors.ErrSignatureExpired {
-		return SignedString{String: encrypted, Signed: nil}, err
-	}
-
-	s := string(b)
-	return SignedString{String: s, Signed: signed}, nil
-}
-
-// DecryptMessageIfNeeded data if has armored PGP message format, if not return original data.
-// If error is errors.ErrSignatureExpired (from golang.org/x/crypto/openpgp/errors),
-// contents are still provided if library clients wish to process this message further.
-func (kr *KeyRing) DecryptMessageIfNeeded(data string) (decrypted string, err error) {
-	if re := regexp.MustCompile("^-----BEGIN " + constants.PGPMessageHeader + "-----(?s:.+)-----END " +
-		constants.PGPMessageHeader + "-----"); re.MatchString(data) {
-
-		var signed SignedString
-		signed, err = kr.DecryptMessage(data)
-		decrypted = signed.String
-	} else {
-		decrypted = data
-	}
 	return
 }
 
@@ -352,38 +249,9 @@ func (kr *KeyRing) Unlock(passphrase []byte) error {
 	return nil
 }
 
-// Decrypt decrypts a message sent to the keypair's owner. If the message is not
-// signed, signed will be nil.
-// If error is errors.ErrSignatureExpired (from golang.org/x/crypto/openpgp/errors),
-// contents are still provided if library clients wish to process this message further.
-func (kr *KeyRing) Decrypt(r io.Reader) (decrypted io.Reader, signed *Signature, err error) {
-	md, err := openpgp.ReadMessage(r, kr.entities, nil, nil)
-	if err != nil && err != pgperrors.ErrSignatureExpired {
-		return
-	}
-
-	decrypted = md.UnverifiedBody
-	if md.IsSigned {
-		signed = &Signature{md}
-	}
-	return
-}
-
-// DecryptArmored decrypts an armored message sent to the keypair's owner.
-// If error is errors.ErrSignatureExpired (from golang.org/x/crypto/openpgp/errors),
-// contents are still provided if library clients wish to process this message further.
-func (kr *KeyRing) DecryptArmored(r io.Reader) (decrypted io.Reader, signed *Signature, err error) {
-	block, err := armor.Decode(r)
-	if err != nil && err != pgperrors.ErrSignatureExpired {
-		return
-	}
-
-	if block.Type != constants.PGPMessageHeader {
-		err = errors.New("gopenpgp: not an armored PGP message")
-		return
-	}
-
-	return kr.Decrypt(block.Body)
+// UnlockWithPassphrase is a wrapper for Unlock that uses strings
+func (kr *KeyRing) UnlockWithPassphrase(passphrase string) error {
+	return kr.Unlock([]byte(passphrase))
 }
 
 // WriteArmoredPublicKey outputs armored public keys from the keyring to w.

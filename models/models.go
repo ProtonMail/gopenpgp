@@ -14,13 +14,3 @@ type EncryptedSigned struct {
 	Encrypted string
 	Signature string
 }
-
-// DecryptSignedVerify contains a decrypted message and verification result.
-type DecryptSignedVerify struct {
-	//clear text
-	Plaintext string
-	//bitmask verify status : 0
-	Verify int
-	//error message if verify failed
-	Message string
-}

@@ -1,12 +1,10 @@
 package crypto
 
 import (
-	"encoding/base64"
 	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/ProtonMail/gopenpgp/constants"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -55,7 +53,7 @@ func TestGenerateKeyRings(t *testing.T) {
 		t.Fatal("Cannot read RSA public key:", err)
 	}
 
-	err = rsaPrivateKeyRing.Unlock([]byte(passphrase))
+	err = rsaPrivateKeyRing.UnlockWithPassphrase(passphrase)
 	if err != nil {
 		t.Fatal("Cannot decrypt RSA key:", err)
 	}
@@ -75,38 +73,10 @@ func TestGenerateKeyRings(t *testing.T) {
 		t.Fatal("Cannot read EC public key:", err)
 	}
 
-	err = ecPrivateKeyRing.Unlock([]byte(passphrase))
+	err = ecPrivateKeyRing.UnlockWithPassphrase(passphrase)
 	if err != nil {
 		t.Fatal("Cannot decrypt EC key:", err)
 	}
-}
-
-func TestEncryptDecryptKeys(t *testing.T) {
-	var pass, _ = base64.StdEncoding.DecodeString("H2CAwzpdexjxXucVYMERDiAc/td8aGPrr6ZhfMnZlLI=")
-	var testSymmetricKey = &SymmetricKey{
-		Key:  pass,
-		Algo: constants.AES256,
-	}
-
-	packet, err := rsaPublicKeyRing.EncryptKey(testSymmetricKey)
-	if err != nil {
-		t.Fatal("Cannot encrypt keypacket with RSA keyring", err)
-	}
-	rsaTestSymmetricKey, err := DecryptAttKey(rsaPrivateKeyRing, packet)
-	if err != nil {
-		t.Fatal("Cannot decrypt keypacket with RSA keyring", err)
-	}
-	assert.Exactly(t, testSymmetricKey, rsaTestSymmetricKey)
-
-	packet, err = ecPublicKeyRing.EncryptKey(testSymmetricKey)
-	if err != nil {
-		t.Fatal("Cannot encrypt keypacket with EC keyring", err)
-	}
-	ecTestSymmetricKey, err := DecryptAttKey(ecPrivateKeyRing, packet)
-	if err != nil {
-		t.Fatal("Cannot decrypt keypacket with EC keyring", err)
-	}
-	assert.Exactly(t, testSymmetricKey, ecTestSymmetricKey)
 }
 
 func TestUpdatePrivateKeysPassphrase(t *testing.T) {
@@ -124,20 +94,20 @@ func TestUpdatePrivateKeysPassphrase(t *testing.T) {
 	passphrase = newPassphrase
 }
 
-func ExampleCheckKeys() {
-	_, _ = pgp.CheckKey(readTestFile("keyring_publicKey", false))
+func ExamplePrintFingerprints() {
+	_, _ = pgp.PrintFingerprints(readTestFile("keyring_publicKey", false))
 	// Output:
 	// SubKey:37e4bcf09b36e34012d10c0247dc67b5cb8267f6
 	// PrimaryKey:6e8ba229b0cccaf6962f97953eb6259edf21df24
 }
 
-func TestIsKeyExpired(t *testing.T) {
-	rsaRes, err := pgp.IsKeyExpired(rsaPublicKey)
+func TestIsStringKeyExpired(t *testing.T) {
+	rsaRes, err := pgp.IsStringKeyExpired(rsaPublicKey)
 	if err != nil {
 		t.Fatal("Error in checking expiration of RSA key:", err)
 	}
 
-	ecRes, err := pgp.IsKeyExpired(ecPublicKey)
+	ecRes, err := pgp.IsStringKeyExpired(ecPublicKey)
 	if err != nil {
 		t.Fatal("Error in checking expiration of EC key:", err)
 	}
@@ -147,8 +117,8 @@ func TestIsKeyExpired(t *testing.T) {
 
 	pgp.UpdateTime(1557754627) // 2019-05-13T13:37:07+00:00
 
-	expRes, expErr := pgp.IsKeyExpired(readTestFile("key_expiredKey", false))
-	futureRes, futureErr := pgp.IsKeyExpired(readTestFile("key_futureKey", false))
+	expRes, expErr := pgp.IsStringKeyExpired(readTestFile("key_expiredKey", false))
+	futureRes, futureErr := pgp.IsStringKeyExpired(readTestFile("key_futureKey", false))
 
 	assert.Exactly(t, true, expRes)
 	assert.Exactly(t, true, futureRes)

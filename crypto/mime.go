@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	gomime "github.com/ProtonMail/go-mime"
+	"github.com/ProtonMail/gopenpgp/constants"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
@@ -61,17 +62,16 @@ type MIMECallbacks interface {
 }
 
 // DecryptMIMEMessage decrypts a MIME message.
-func (pgp *GopenPGP) DecryptMIMEMessage(
-	encryptedText string, verifierKey, privateKeyRing *KeyRing,
-	passphrase string, callbacks MIMECallbacks, verifyTime int64,
+func (privateKeyRing *KeyRing) DecryptMIMEMessage(
+	encryptedText string, verifyKey *KeyRing, callbacks MIMECallbacks, verifyTime int64,
 ) {
-	decsignverify, err := pgp.DecryptMessageVerify(encryptedText, verifierKey, privateKeyRing, passphrase, verifyTime)
+	decryptedBody, verifiedEncryption, err := privateKeyRing.DecryptMessage(encryptedText, verifyKey, verifyTime)
 	if err != nil {
 		callbacks.OnError(err)
 		return
 	}
 
-	body, verified, attachments, attachmentHeaders, err := pgp.parseMIME(decsignverify.Plaintext, verifierKey)
+	body, verified, attachments, attachmentHeaders, err := pgp.parseMIME(decryptedBody, verifyKey)
 	if err != nil {
 		callbacks.OnError(err)
 		return
@@ -82,9 +82,9 @@ func (pgp *GopenPGP) DecryptMIMEMessage(
 		callbacks.OnAttachment(attachmentHeaders[i], []byte(attachments[i]))
 	}
 	callbacks.OnEncryptedHeaders("")
-	if decsignverify.Verify == notSigned {
-		callbacks.OnVerified(verified)
+	if verifiedEncryption != constants.SIGNATURE_NOT_SIGNED {
+		callbacks.OnVerified(verifiedEncryption)
 	} else {
-		callbacks.OnVerified(decsignverify.Verify)
+		callbacks.OnVerified(verified)
 	}
 }
