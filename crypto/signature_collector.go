@@ -7,7 +7,7 @@ import (
 	"mime"
 	"net/textproto"
 
-	"github.com/ProtonMail/go-mime"
+	gomime "github.com/ProtonMail/go-mime"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
@@ -17,13 +17,13 @@ import (
 type SignatureCollector struct {
 	config    *packet.Config
 	keyring   openpgp.KeyRing
-	target    pmmime.VisitAcceptor
+	target    gomime.VisitAcceptor
 	signature string
 	verified  int
 }
 
 func newSignatureCollector(
-	targetAcceptor pmmime.VisitAcceptor, keyring openpgp.KeyRing, config *packet.Config,
+	targetAcceptor gomime.VisitAcceptor, keyring openpgp.KeyRing, config *packet.Config,
 ) *SignatureCollector {
 	return &SignatureCollector{
 		target:  targetAcceptor,
@@ -39,10 +39,10 @@ func (sc *SignatureCollector) Accept(
 ) (err error) {
 	parentMediaType, params, _ := mime.ParseMediaType(header.Get("Content-Type"))
 	if parentMediaType == "multipart/signed" {
-		newPart, rawBody := pmmime.GetRawMimePart(part, "--"+params["boundary"])
+		newPart, rawBody := gomime.GetRawMimePart(part, "--"+params["boundary"])
 		var multiparts []io.Reader
 		var multipartHeaders []textproto.MIMEHeader
-		if multiparts, multipartHeaders, err = pmmime.GetMultipartParts(newPart, params); err == nil {
+		if multiparts, multipartHeaders, err = gomime.GetMultipartParts(newPart, params); err == nil {
 			hasPlainChild := false
 			for _, header := range multipartHeaders {
 				mediaType, _, _ := mime.ParseMediaType(header.Get("Content-Type"))
@@ -77,7 +77,7 @@ func (sc *SignatureCollector) Accept(
 				return err
 			}
 
-			decodedPart := pmmime.DecodeContentEncoding(
+			decodedPart := gomime.DecodeContentEncoding(
 				bytes.NewReader(partData),
 				multipartHeaders[1].Get("Content-Transfer-Encoding"))
 
@@ -85,7 +85,7 @@ func (sc *SignatureCollector) Accept(
 			if err != nil {
 				return err
 			}
-			buffer, err = pmmime.DecodeCharset(buffer, params)
+			buffer, err = gomime.DecodeCharset(buffer, params)
 			if err != nil {
 				return err
 			}

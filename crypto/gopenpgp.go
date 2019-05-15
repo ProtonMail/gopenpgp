@@ -1,15 +1,11 @@
-// Package crypto contains all methods and classes needed for manipulation
-// with underlying cryptographic operations. It uses low-level openpgp functions
-// and provides higher level views. It uses models of messages, attachments
-// and other higher-level entities
+// Package crypto provides a high-level API for common OpenPGP functionality.
 package crypto
 
 import "time"
 
-// GopenPGP structure is used to manage server time shift. It should be also used for any
-// other specific general cryptographic entities.
+// GopenPGP is used as a "namespace" for many of the functions in this package.
+// It is a struct that keeps track of time skew between server and client.
 type GopenPGP struct {
-	//latestServerTime unix time cache
 	latestServerTime int64
 	latestClientTime time.Time
 }

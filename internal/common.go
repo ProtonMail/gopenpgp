@@ -1,8 +1,9 @@
 package internal
 
 import (
-	"github.com/ProtonMail/gopenpgp/constants"
 	"regexp"
+
+	"github.com/ProtonMail/gopenpgp/constants"
 )
 
 // TrimNewlines removes a whitespace in the end of string (don't stop on linebreak)
@@ -15,7 +16,7 @@ func TrimNewlines(input string) string {
 // created in the future, to compensate for clock skew
 const CreationTimeOffset = int64(60 * 60 * 24 * 2)
 
-// ArmorHeaders from golang pm-crypto
+// ArmorHeaders from gopenpgp
 var ArmorHeaders = map[string]string{
 	"Version": constants.ArmorHeaderVersion,
 	"Comment": constants.ArmorHeaderComment,

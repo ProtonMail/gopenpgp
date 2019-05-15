@@ -121,11 +121,11 @@ func TestKeyRing_ArmoredPublicKeyString(t *testing.T) {
 
 func TestCheckPassphrase(t *testing.T) {
 	encryptedKeyRing, _ := ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))
-	is_correct := encryptedKeyRing.CheckPassphrase("Wrong password")
-	assert.Exactly(t, false, is_correct)
+	isCorrect := encryptedKeyRing.CheckPassphrase("Wrong password")
+	assert.Exactly(t, false, isCorrect)
 
-	is_correct = encryptedKeyRing.CheckPassphrase(testMailboxPassword)
-	assert.Exactly(t, true, is_correct)
+	isCorrect = encryptedKeyRing.CheckPassphrase(testMailboxPassword)
+	assert.Exactly(t, true, isCorrect)
 }
 
 func TestIdentities(t *testing.T) {

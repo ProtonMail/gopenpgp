@@ -66,7 +66,7 @@ func decryptCore(
 ) (*openpgp.MessageDetails, error) {
 	rawPwd := []byte(passphrase)
 	if err := privKey.Unlock(rawPwd); err != nil {
-		err = fmt.Errorf("pm-crypto: cannot decrypt passphrase: %v", err)
+		err = fmt.Errorf("gopenpgp: cannot decrypt passphrase: %v", err)
 		return nil, err
 	}
 

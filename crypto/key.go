@@ -23,14 +23,11 @@ import (
 
 // SymmetricKey stores a decrypted session key.
 type SymmetricKey struct {
-	// The clear base64-encoded key.
+	// The decrypted binary session key.
 	Key []byte
-	// The algorithm used by this key.
+	// The symmetric encryption algorithm used with this key.
 	Algo string
 }
-
-// SymmetricallyEncryptedTag is 18 with the 2 highest order bits set to 1
-const SymmetricallyEncryptedTag = 210
 
 var symKeyAlgos = map[string]packet.CipherFunction{
 	constants.ThreeDES:  packet.Cipher3DES,
@@ -41,18 +38,18 @@ var symKeyAlgos = map[string]packet.CipherFunction{
 	constants.AES256:    packet.CipherAES256,
 }
 
-// GetCipherFunc returns function corresponding to an algorithm used in
-// this SymmetricKey
+// GetCipherFunc returns the cipher function corresponding to the algorithm used
+// with this SymmetricKey.
 func (sk *SymmetricKey) GetCipherFunc() packet.CipherFunction {
 	cf, ok := symKeyAlgos[sk.Algo]
 	if ok {
 		return cf
 	}
 
-	panic("pm-crypto: unsupported cipher function: " + sk.Algo)
+	panic("gopenpgp: unsupported cipher function: " + sk.Algo)
 }
 
-// GetBase64Key returns a key as base64 encoded string
+// GetBase64Key returns the session key as base64 encoded string.
 func (sk *SymmetricKey) GetBase64Key() string {
 	return base64.StdEncoding.EncodeToString(sk.Key)
 }
@@ -66,7 +63,7 @@ func newSymmetricKey(ek *packet.EncryptedKey) *SymmetricKey {
 		}
 	}
 	if algo == "" {
-		panic(fmt.Sprintf("pm-crypto: unsupported cipher function: %v", ek.CipherFunc))
+		panic(fmt.Sprintf("gopenpgp: unsupported cipher function: %v", ek.CipherFunc))
 	}
 
 	return &SymmetricKey{
@@ -75,7 +72,8 @@ func newSymmetricKey(ek *packet.EncryptedKey) *SymmetricKey {
 	}
 }
 
-// DecryptAttKey and returns a symmetric key
+// DecryptAttKey decrypts a public-key encrypted session key and returns the
+// decrypted symmetric session key.
 func DecryptAttKey(kr *KeyRing, keyPacket string) (key *SymmetricKey, err error) {
 	r := base64.NewDecoder(base64.StdEncoding, strings.NewReader(keyPacket))
 	packets := packet.NewReader(r)
@@ -100,7 +98,7 @@ func DecryptAttKey(kr *KeyRing, keyPacket string) (key *SymmetricKey, err error)
 	}
 
 	if decryptErr != nil {
-		err = fmt.Errorf("pm-crypto: cannot decrypt encrypted key packet: %v", decryptErr)
+		err = fmt.Errorf("gopenpgp: cannot decrypt encrypted key packet: %v", decryptErr)
 		return
 	}
 
@@ -108,7 +106,8 @@ func DecryptAttKey(kr *KeyRing, keyPacket string) (key *SymmetricKey, err error)
 	return
 }
 
-// SeparateKeyAndData from packets in a pgp session
+// SeparateKeyAndData reads a binary PGP message from r and splits it into its
+// session key packet and symmetrically encrypted data packet.
 func SeparateKeyAndData(
 	kr *KeyRing, r io.Reader,
 	estimatedLength, garbageCollector int,
@@ -118,7 +117,7 @@ func SeparateKeyAndData(
 	outSplit = &models.EncryptedSplit{}
 	gcCounter := 0
 
-	// Save encrypted key and signature apart
+	// Store encrypted key and symmetrically encrypted packet separately
 	var ek *packet.EncryptedKey
 	var decryptErr error
 	for {
@@ -199,18 +198,18 @@ func SeparateKeyAndData(
 		}
 	}
 	if decryptErr != nil {
-		err = fmt.Errorf("pm-crypto: cannot decrypt encrypted key packet: %v", decryptErr)
+		err = fmt.Errorf("gopenpgp: cannot decrypt encrypted key packet: %v", decryptErr)
 		return nil, err
 	}
 	if ek == nil {
-		err = errors.New("pm-crypto: packets don't include an encrypted key packet")
+		err = errors.New("gopenpgp: packets don't include an encrypted key packet")
 		return nil, err
 	}
 
 	if kr == nil {
 		var buf bytes.Buffer
 		if err := ek.Serialize(&buf); err != nil {
-			err = fmt.Errorf("pm-crypto: cannot serialize encrypted key: %v", err)
+			err = fmt.Errorf("gopenpgp: cannot serialize encrypted key: %v", err)
 			return nil, err
 		}
 		outSplit.KeyPacket = buf.Bytes()
@@ -223,15 +222,15 @@ func SeparateKeyAndData(
 	return outSplit, nil
 }
 
-// SetKey encrypts the provided key.
-func SetKey(kr *KeyRing, symKey *SymmetricKey) (packets string, err error) {
+// EncryptKey encrypts the provided key.
+func (kr *KeyRing) EncryptKey(symKey *SymmetricKey) (packets string, err error) {
 	b := &bytes.Buffer{}
 	w := base64.NewEncoder(base64.StdEncoding, b)
 
 	cf := symKey.GetCipherFunc()
 
 	if len(kr.entities) == 0 {
-		err = fmt.Errorf("pm-crypto: cannot set key: key ring is empty")
+		err = fmt.Errorf("gopenpgp: cannot set key: key ring is empty")
 		return
 	}
 
@@ -257,24 +256,24 @@ func SetKey(kr *KeyRing, symKey *SymmetricKey) (packets string, err error) {
 		}
 	}
 	if pub == nil {
-		err = fmt.Errorf("pm-crypto: cannot set key: no public key available")
+		err = fmt.Errorf("gopenpgp: cannot set key: no public key available")
 		return "", err
 	}
 
 	if err = packet.SerializeEncryptedKey(w, pub, cf, symKey.Key, nil); err != nil {
-		err = fmt.Errorf("pm-crypto: cannot set key: %v", err)
+		err = fmt.Errorf("gopenpgp: cannot set key: %v", err)
 		return "", err
 	}
 
 	if err = w.Close(); err != nil {
-		err = fmt.Errorf("pm-crypto: cannot set key: %v", err)
+		err = fmt.Errorf("gopenpgp: cannot set key: %v", err)
 		return "", err
 	}
 
 	return b.String(), nil
 }
 
-// IsKeyExpiredBin checks if the given key is expired. Input in binary format
+// IsKeyExpiredBin checks whether the given (unarmored, binary) key is expired.
 func (pgp *GopenPGP) IsKeyExpiredBin(publicKey []byte) (bool, error) {
 	now := pgp.getNow()
 	pubKeyReader := bytes.NewReader(publicKey)
@@ -333,7 +332,7 @@ const (
 	failed     = 3
 )
 
-// IsKeyExpired checks if the given key is expired. Input in armored format
+// IsKeyExpired checks whether the given armored key is expired.
 func (pgp *GopenPGP) IsKeyExpired(publicKey string) (bool, error) {
 	rawPubKey, err := armor.Unarmor(publicKey)
 	if err != nil {
@@ -416,7 +415,7 @@ func (pgp *GopenPGP) generateKey(
 	return armor.ArmorWithType(serialized, constants.PrivateKeyHeader)
 }
 
-// GenerateRSAKeyWithPrimes generates RSA key with given primes.
+// GenerateRSAKeyWithPrimes generates a RSA key using the given primes.
 func (pgp *GopenPGP) GenerateRSAKeyWithPrimes(
 	userName, domain, passphrase string,
 	bits int,
@@ -425,13 +424,16 @@ func (pgp *GopenPGP) GenerateRSAKeyWithPrimes(
 	return pgp.generateKey(userName, domain, passphrase, "rsa", bits, primeone, primetwo, primethree, primefour)
 }
 
-// GenerateKey and generate primes
+// GenerateKey generates a key of the given keyType ("rsa" or "x25519"). If
+// keyType is "rsa", bits is the RSA bitsize of the key. If keyType is "x25519",
+// bits is unused.
 func (pgp *GopenPGP) GenerateKey(userName, domain, passphrase, keyType string, bits int) (string, error) {
 	return pgp.generateKey(userName, domain, passphrase, keyType, bits, nil, nil, nil, nil)
 }
 
-// UpdatePrivateKeyPassphrase decrypts the given private key with oldPhrase and
-// re-encrypts with the newPassphrase
+// UpdatePrivateKeyPassphrase decrypts the given armored privateKey with
+// oldPassphrase, re-encrypts it with newPassphrase, and returns the new armored
+// key.
 func (pgp *GopenPGP) UpdatePrivateKeyPassphrase(
 	privateKey string, oldPassphrase string, newPassphrase string,
 ) (string, error) {
@@ -477,7 +479,8 @@ func (pgp *GopenPGP) UpdatePrivateKeyPassphrase(
 	return armor.ArmorWithType(serialized, constants.PrivateKeyHeader)
 }
 
-// CheckKey prints out the key and subkey fingerprint
+// CheckKey is a debug helper function that prints the key and subkey
+// fingerprints.
 func (pgp *GopenPGP) CheckKey(pubKey string) (string, error) {
 	pubKeyReader := strings.NewReader(pubKey)
 	entries, err := openpgp.ReadArmoredKeyRing(pubKeyReader)

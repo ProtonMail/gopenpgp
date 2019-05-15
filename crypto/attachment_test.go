@@ -31,7 +31,7 @@ func TestAttachmentGetKey(t *testing.T) {
 }
 
 func TestAttachmentSetKey(t *testing.T) {
-	packets, err := SetKey(testPublicKeyRing, testSymmetricKey)
+	packets, err := testPublicKeyRing.EncryptKey(testSymmetricKey)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting attachment key, got:", err)
 	}

@@ -7,7 +7,7 @@ import (
 	"net/textproto"
 	"strings"
 
-	pmmime "github.com/ProtonMail/go-mime"
+	gomime "github.com/ProtonMail/go-mime"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
@@ -15,7 +15,7 @@ import (
 
 func (pgp GopenPGP) parseMIME(
 	mimeBody string, verifierKey *KeyRing,
-) (*pmmime.BodyCollector, int, []string, []string, error) {
+) (*gomime.BodyCollector, int, []string, []string, error) {
 	mm, err := mail.ReadMessage(strings.NewReader(mimeBody))
 	if err != nil {
 		return nil, 0, nil, nil, err
@@ -28,10 +28,10 @@ func (pgp GopenPGP) parseMIME(
 		return nil, 0, nil, nil, err
 	}
 
-	printAccepter := pmmime.NewMIMEPrinter()
-	bodyCollector := pmmime.NewBodyCollector(printAccepter)
-	attachmentsCollector := pmmime.NewAttachmentsCollector(bodyCollector)
-	mimeVisitor := pmmime.NewMimeVisitor(attachmentsCollector)
+	printAccepter := gomime.NewMIMEPrinter()
+	bodyCollector := gomime.NewBodyCollector(printAccepter)
+	attachmentsCollector := gomime.NewAttachmentsCollector(bodyCollector)
+	mimeVisitor := gomime.NewMimeVisitor(attachmentsCollector)
 
 	var pgpKering openpgp.KeyRing
 	if verifierKey != nil {
@@ -40,7 +40,7 @@ func (pgp GopenPGP) parseMIME(
 
 	signatureCollector := newSignatureCollector(mimeVisitor, pgpKering, config)
 
-	err = pmmime.VisitAll(bytes.NewReader(mmBodyData), h, signatureCollector)
+	err = gomime.VisitAll(bytes.NewReader(mmBodyData), h, signatureCollector)
 
 	verified := signatureCollector.verified
 	body := bodyCollector
@@ -50,17 +50,17 @@ func (pgp GopenPGP) parseMIME(
 	return body, verified, atts, attHeaders, err
 }
 
-// MIMECallbacks defines a call back methods to process MIME message
+// MIMECallbacks defines callback methods to process a MIME message.
 type MIMECallbacks interface {
 	OnBody(body string, mimetype string)
 	OnAttachment(headers string, data []byte)
-	// Encrypted headers can be an attachment and thus be placed at the end of the mime structure
+	// Encrypted headers can be in an attachment and thus be placed at the end of the mime structure.
 	OnEncryptedHeaders(headers string)
 	OnVerified(verified int)
 	OnError(err error)
 }
 
-// DecryptMIMEMessage decrypts a MIME message
+// DecryptMIMEMessage decrypts a MIME message.
 func (pgp *GopenPGP) DecryptMIMEMessage(
 	encryptedText string, verifierKey, privateKeyRing *KeyRing,
 	passphrase string, callbacks MIMECallbacks, verifyTime int64,

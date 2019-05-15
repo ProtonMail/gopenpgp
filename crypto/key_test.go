@@ -88,7 +88,7 @@ func TestEncryptDecryptKeys(t *testing.T) {
 		Algo: constants.AES256,
 	}
 
-	packet, err := SetKey(rsaPublicKeyRing, testSymmetricKey)
+	packet, err := rsaPublicKeyRing.EncryptKey(testSymmetricKey)
 	if err != nil {
 		t.Fatal("Cannot encrypt keypacket with RSA keyring", err)
 	}
@@ -98,7 +98,7 @@ func TestEncryptDecryptKeys(t *testing.T) {
 	}
 	assert.Exactly(t, testSymmetricKey, rsaTestSymmetricKey)
 
-	packet, err = SetKey(ecPublicKeyRing, testSymmetricKey)
+	packet, err = ecPublicKeyRing.EncryptKey(testSymmetricKey)
 	if err != nil {
 		t.Fatal("Cannot encrypt keypacket with EC keyring", err)
 	}
