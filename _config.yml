@@ -1,5 +1,5 @@
 title: GopenPGP
-description: Supplementary Go cryptography libraries
+description: An easy-to-use OpenPGP wrapper library written in golang
 show_downloads: true
 google_analytics:
 theme: jekyll-theme-cayman
