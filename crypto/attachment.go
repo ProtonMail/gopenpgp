@@ -7,9 +7,7 @@ import (
 	"runtime"
 	"sync"
 
-	armorUtils "github.com/ProtonMail/gopenpgp/armor"
 	"github.com/ProtonMail/gopenpgp/constants"
-	"github.com/ProtonMail/gopenpgp/models"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -20,7 +18,7 @@ type AttachmentProcessor struct {
 	w                *io.WriteCloser
 	pipe             *io.PipeWriter
 	done             sync.WaitGroup
-	split            *models.EncryptedSplit
+	split            *PGPSplitMessage
 	garbageCollector int
 	err              error
 }
@@ -33,7 +31,7 @@ func (ap *AttachmentProcessor) Process(plainData []byte) {
 }
 
 // Finish closes the attachment and returns the encrypted data
-func (ap *AttachmentProcessor) Finish() (*models.EncryptedSplit, error) {
+func (ap *AttachmentProcessor) Finish() (*PGPSplitMessage, error) {
 	if ap.err != nil {
 		return nil, ap.err
 	}
@@ -48,7 +46,7 @@ func (ap *AttachmentProcessor) Finish() (*models.EncryptedSplit, error) {
 
 // newAttachmentProcessor creates an AttachmentProcessor which can be used to encrypt
 // a file. It takes an estimatedSize and fileName as hints about the file.
-func (publicKey *KeyRing) newAttachmentProcessor(
+func (keyRing *KeyRing) newAttachmentProcessor(
 	estimatedSize int, fileName string, garbageCollector int,
 ) (*AttachmentProcessor, error) {
 	attachmentProc := &AttachmentProcessor{}
@@ -69,7 +67,9 @@ func (publicKey *KeyRing) newAttachmentProcessor(
 
 	go func() {
 		defer attachmentProc.done.Done()
-		split, splitError := SeparateKeyAndData(nil, reader, estimatedSize, garbageCollector)
+		ciphertext, _ := ioutil.ReadAll(reader)
+		message := NewPGPMessage(ciphertext)
+		split, splitError := message.SeparateKeyAndData(estimatedSize, garbageCollector)
 		if attachmentProc.err != nil {
 			attachmentProc.err = splitError
 		}
@@ -79,7 +79,7 @@ func (publicKey *KeyRing) newAttachmentProcessor(
 
 	var ew io.WriteCloser
 	var encryptErr error
-	ew, encryptErr = openpgp.Encrypt(writer, publicKey.entities, nil, hints, config)
+	ew, encryptErr = openpgp.Encrypt(writer, keyRing.entities, nil, hints, config)
 	if encryptErr != nil {
 		return nil, encryptErr
 	}
@@ -90,8 +90,8 @@ func (publicKey *KeyRing) newAttachmentProcessor(
 }
 
 // EncryptAttachment encrypts a file. fileName
-func (publicKey *KeyRing) EncryptAttachment(plainData []byte, fileName string) (*models.EncryptedSplit, error) {
-	ap, err := publicKey.newAttachmentProcessor(len(plainData), fileName, -1)
+func (keyRing *KeyRing) EncryptAttachment(plainData []byte, fileName string) (*PGPSplitMessage, error) {
+	ap, err := keyRing.newAttachmentProcessor(len(plainData), fileName, -1)
 	if err != nil {
 		return nil, err
 	}
@@ -107,31 +107,27 @@ func (publicKey *KeyRing) EncryptAttachment(plainData []byte, fileName string) (
 // to encrypt a file. It takes an estimatedSize and fileName as hints about the
 // file. It is optimized for low-memory environments and collects garbage every
 // megabyte.
-func (publicKey *KeyRing) NewLowMemoryAttachmentProcessor(
+func (keyRing *KeyRing) NewLowMemoryAttachmentProcessor(
 	estimatedSize int, fileName string,
 ) (*AttachmentProcessor, error) {
-	return publicKey.newAttachmentProcessor(estimatedSize, fileName, 1<<20)
+	return keyRing.newAttachmentProcessor(estimatedSize, fileName, 1<<20)
 }
 
 // SplitArmor is a helper method which splits an armored message into its
 // session key packet and symmetrically encrypted data packet.
-func SplitArmor(encrypted string) (*models.EncryptedSplit, error) {
-	var err error
-
-	encryptedRaw, err := armorUtils.Unarmor(encrypted)
+func SplitArmor(encrypted string) (*PGPSplitMessage, error) {
+	message, err := NewPGPMessageFromArmored(encrypted)
 	if err != nil {
 		return nil, err
 	}
 
-	encryptedReader := bytes.NewReader(encryptedRaw)
-
-	return SeparateKeyAndData(nil, encryptedReader, len(encrypted), -1)
+	return message.SeparateKeyAndData(len(encrypted), -1)
 }
 
 // DecryptAttachment takes a session key packet and symmetrically encrypted data
 // packet. privateKeys is a KeyRing that can contain multiple keys.
-func (kr *KeyRing) DecryptAttachment(keyPacket, dataPacket []byte) ([]byte, error) {
-	privKeyEntries := kr.entities
+func (keyRing *KeyRing) DecryptAttachment(keyPacket, dataPacket []byte) ([]byte, error) {
+	privKeyEntries := keyRing.entities
 
 	keyReader := bytes.NewReader(keyPacket)
 	dataReader := bytes.NewReader(dataPacket)

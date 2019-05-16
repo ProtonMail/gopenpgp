@@ -3,190 +3,19 @@ package crypto
 import (
 	"bytes"
 	"crypto"
-	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"math/big"
-	"runtime"
 	"strings"
 	"time"
 
 	"github.com/ProtonMail/gopenpgp/armor"
 	"github.com/ProtonMail/gopenpgp/constants"
-	"github.com/ProtonMail/gopenpgp/models"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
-
-// SymmetricKey stores a decrypted session key.
-type SymmetricKey struct {
-	// The decrypted binary session key.
-	Key []byte
-	// The symmetric encryption algorithm used with this key.
-	Algo string
-}
-
-var symKeyAlgos = map[string]packet.CipherFunction{
-	constants.ThreeDES:  packet.Cipher3DES,
-	constants.TripleDES: packet.Cipher3DES,
-	constants.CAST5:     packet.CipherCAST5,
-	constants.AES128:    packet.CipherAES128,
-	constants.AES192:    packet.CipherAES192,
-	constants.AES256:    packet.CipherAES256,
-}
-
-// GetCipherFunc returns the cipher function corresponding to the algorithm used
-// with this SymmetricKey.
-func (sk *SymmetricKey) GetCipherFunc() packet.CipherFunction {
-	cf, ok := symKeyAlgos[sk.Algo]
-	if ok {
-		return cf
-	}
-
-	panic("gopenpgp: unsupported cipher function: " + sk.Algo)
-}
-
-// GetBase64Key returns the session key as base64 encoded string.
-func (sk *SymmetricKey) GetBase64Key() string {
-	return base64.StdEncoding.EncodeToString(sk.Key)
-}
-
-func newSymmetricKey(ek *packet.EncryptedKey) *SymmetricKey {
-	var algo string
-	for k, v := range symKeyAlgos {
-		if v == ek.CipherFunc {
-			algo = k
-			break
-		}
-	}
-	if algo == "" {
-		panic(fmt.Sprintf("gopenpgp: unsupported cipher function: %v", ek.CipherFunc))
-	}
-
-	return &SymmetricKey{
-		Key:  ek.Key, //base64.StdEncoding.EncodeToString(ek.Key),
-		Algo: algo,
-	}
-}
-
-// SeparateKeyAndData reads a binary PGP message from r and splits it into its
-// session key packet and symmetrically encrypted data packet.
-func SeparateKeyAndData(
-	kr *KeyRing, r io.Reader,
-	estimatedLength, garbageCollector int,
-) (outSplit *models.EncryptedSplit, err error) {
-	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
-	packets := packet.NewReader(r)
-	outSplit = &models.EncryptedSplit{}
-	gcCounter := 0
-
-	// Store encrypted key and symmetrically encrypted packet separately
-	var ek *packet.EncryptedKey
-	var decryptErr error
-	for {
-		var p packet.Packet
-		if p, err = packets.Next(); err == io.EOF {
-			err = nil
-			break
-		}
-		switch p := p.(type) {
-		case *packet.EncryptedKey:
-			// We got an encrypted key. Try to decrypt it with each available key
-			if ek != nil && ek.Key != nil {
-				break
-			}
-			ek = p
-
-			if kr != nil {
-				for _, key := range kr.entities.DecryptionKeys() {
-					priv := key.PrivateKey
-					if priv.Encrypted {
-						continue
-					}
-
-					if decryptErr = ek.Decrypt(priv, nil); decryptErr == nil {
-						break
-					}
-				}
-			}
-		case *packet.SymmetricallyEncrypted:
-			// The code below is optimized to not
-			var b bytes.Buffer
-			// 2^16 is an estimation of the size difference between input and output, the size difference is most probably
-			// 16 bytes at a maximum though.
-			// We need to avoid triggering a grow from the system as this will allocate too much memory causing problems
-			// in low-memory environments
-			b.Grow(1<<16 + estimatedLength)
-			// empty encoded length + start byte
-			b.Write(make([]byte, 6))
-			b.WriteByte(byte(1))
-			actualLength := 1
-			block := make([]byte, 128)
-			for {
-				n, err := p.Contents.Read(block)
-				if err == io.EOF {
-					break
-				}
-				b.Write(block[:n])
-				actualLength += n
-				gcCounter += n
-				if gcCounter > garbageCollector && garbageCollector > 0 {
-					runtime.GC()
-					gcCounter = 0
-				}
-			}
-
-			// quick encoding
-			symEncryptedData := b.Bytes()
-			if actualLength < 192 {
-				symEncryptedData[4] = byte(210)
-				symEncryptedData[5] = byte(actualLength)
-				symEncryptedData = symEncryptedData[4:]
-			} else if actualLength < 8384 {
-				actualLength = actualLength - 192
-				symEncryptedData[3] = byte(210)
-				symEncryptedData[4] = 192 + byte(actualLength>>8)
-				symEncryptedData[5] = byte(actualLength)
-				symEncryptedData = symEncryptedData[3:]
-			} else {
-				symEncryptedData[0] = byte(210)
-				symEncryptedData[1] = byte(255)
-				symEncryptedData[2] = byte(actualLength >> 24)
-				symEncryptedData[3] = byte(actualLength >> 16)
-				symEncryptedData[4] = byte(actualLength >> 8)
-				symEncryptedData[5] = byte(actualLength)
-			}
-
-			outSplit.DataPacket = symEncryptedData
-		}
-	}
-	if decryptErr != nil {
-		err = fmt.Errorf("gopenpgp: cannot decrypt encrypted key packet: %v", decryptErr)
-		return nil, err
-	}
-	if ek == nil {
-		err = errors.New("gopenpgp: packets don't include an encrypted key packet")
-		return nil, err
-	}
-
-	if kr == nil {
-		var buf bytes.Buffer
-		if err := ek.Serialize(&buf); err != nil {
-			err = fmt.Errorf("gopenpgp: cannot serialize encrypted key: %v", err)
-			return nil, err
-		}
-		outSplit.KeyPacket = buf.Bytes()
-	} else {
-		key := newSymmetricKey(ek)
-		outSplit.KeyPacket = key.Key
-		outSplit.Algo = key.Algo
-	}
-
-	return outSplit, nil
-}
 
 // IsBinKeyExpired checks whether the given (unarmored, binary) key is expired.
 func (pgp *GopenPGP) IsBinKeyExpired(publicKey []byte) (bool, error) {

@@ -107,19 +107,16 @@ func (kr *KeyRing) GetEntities() openpgp.EntityList {
 }
 
 // GetSigningEntity returns first private unlocked signing entity from keyring.
-func (kr *KeyRing) GetSigningEntity(passphrase string) (*openpgp.Entity, error) {
+func (kr *KeyRing) GetSigningEntity() (*openpgp.Entity, error) {
 	var signEntity *openpgp.Entity
 
 	for _, e := range kr.entities {
 		// Entity.PrivateKey must be a signing key
 		if e.PrivateKey != nil {
-			if e.PrivateKey.Encrypted {
-				if err := e.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
-					continue
-				}
+			if !e.PrivateKey.Encrypted {
+				signEntity = e
+				break
 			}
-			signEntity = e
-			break
 		}
 	}
 	if signEntity == nil {
@@ -128,79 +125,6 @@ func (kr *KeyRing) GetSigningEntity(passphrase string) (*openpgp.Entity, error) 
 	}
 
 	return signEntity, nil
-}
-
-// Encrypt encrypts data to this keyring's owner. If sign is not nil, it also
-// signs data with it. The keyring sign must be unlocked to be able to sign data,
-// if not an error will be returned.
-func (kr *KeyRing) Encrypt(w io.Writer, sign *KeyRing, filename string, canonicalizeText bool) (io.WriteCloser, error) {
-	// The API returns keys sorted by descending priority
-	// Only encrypt to the first one
-	var encryptEntities []*openpgp.Entity
-	for _, e := range kr.entities {
-		encryptEntities = append(encryptEntities, e)
-		break
-	}
-
-	var signEntity *openpgp.Entity
-	if sign != nil {
-		// To sign a message, the private key must be decrypted
-		for _, e := range sign.entities {
-			// Entity.PrivateKey must be a signing key
-			if e.PrivateKey != nil && !e.PrivateKey.Encrypted {
-				signEntity = e
-				break
-			}
-		}
-
-		if signEntity == nil {
-			return nil, errors.New("gopenpgp: cannot sign message, key ring is not unlocked")
-		}
-	}
-
-	return EncryptCore(
-		w,
-		encryptEntities,
-		signEntity,
-		filename,
-		canonicalizeText,
-		func() time.Time { return GetGopenPGP().GetTime() })
-}
-
-// EncryptCore is lower-level encryption method used by KeyRing.Encrypt.
-func EncryptCore(w io.Writer, encryptEntities []*openpgp.Entity, signEntity *openpgp.Entity, filename string,
-	canonicalizeText bool, timeGenerator func() time.Time) (io.WriteCloser, error) {
-
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: timeGenerator}
-
-	hints := &openpgp.FileHints{
-		IsBinary: !canonicalizeText,
-		FileName: filename,
-	}
-	if canonicalizeText {
-		return openpgp.EncryptText(w, encryptEntities, signEntity, hints, config)
-	}
-	return openpgp.Encrypt(w, encryptEntities, signEntity, hints, config)
-}
-
-// An io.WriteCloser that both encrypts and armors data.
-type armorEncryptWriter struct {
-	aw io.WriteCloser // Armored writer
-	ew io.WriteCloser // Encrypted writer
-}
-
-// Write encrypted data
-func (w *armorEncryptWriter) Write(b []byte) (n int, err error) {
-	return w.ew.Write(b)
-}
-
-// Close armor and encryption io.WriteClose
-func (w *armorEncryptWriter) Close() (err error) {
-	if err = w.ew.Close(); err != nil {
-		return
-	}
-	err = w.aw.Close()
-	return
 }
 
 // Unlock tries to unlock as many keys as possible with the following password. Note

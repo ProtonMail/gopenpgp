@@ -30,8 +30,6 @@ const testMailboxPassword = "apple"
 // Corresponding key in testdata/keyring_privateKeyLegacy
 // const testMailboxPasswordLegacy = "123"
 
-const testToken = "d79ca194a22810a5363eeddfdef7dfbc327c6229"
-
 var (
 	testPrivateKeyRing *KeyRing
 	testPublicKeyRing  *KeyRing
@@ -59,32 +57,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func TestKeyRing_Decrypt(t *testing.T) {
-	decString, _, err := testPrivateKeyRing.DecryptMessage(readTestFile("keyring_token", false), nil, 0)
-	if err != nil {
-		t.Fatal("Cannot decrypt token:", err)
-	}
-
-	assert.Exactly(t, testToken, decString)
-}
-
-func TestKeyRing_Encrypt(t *testing.T) {
-	encrypted, err := testPublicKeyRing.EncryptMessage(testToken, testPrivateKeyRing, true)
-	if err != nil {
-		t.Fatal("Cannot encrypt token:", err)
-	}
-
-	// We can't just check if encrypted == testEncryptedToken
-	// Decrypt instead
-	ss, verified, err := testPrivateKeyRing.DecryptMessage(encrypted, testPrivateKeyRing, pgp.GetTimeUnix())
-	if err != nil {
-		t.Fatal("Cannot decrypt token:", err)
-	}
-
-	assert.Exactly(t, testToken, ss)
-	assert.Exactly(t, constants.SIGNATURE_OK, verified)
 }
 
 func TestKeyRing_ArmoredPublicKeyString(t *testing.T) {
