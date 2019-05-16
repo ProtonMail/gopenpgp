@@ -2,7 +2,7 @@
 
 Changelog [format](http://keepachangelog.com/en/1.0.0/)
 
-## 2019-03-07
+## [1.0.0] - 2019-03-07
 * `master` refactor of master contains all changes from `oldMaster`
 
 ### Added
