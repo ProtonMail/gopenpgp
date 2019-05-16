@@ -1,11 +1,15 @@
 @import url("https://fonts.googleapis.com/css?family=Open+Sans:400,700");
-body .page-header { border-bottom: 6px solid #657ee4; position: relative; background: #262a33; }
+body { background: #f3f6fa; }
+
+body .page-header { border-bottom: 6px solid #52c0b4; position: relative; background: #fff; color: #000; }
+
+.page-header .btn { color: rgba(255, 255, 255, 0.9); background-color: #555; border-color: #333; }
+
+.page-header .btn:hover { color: #fff; background: #333; border-color: #333; }
 
 .page-header section { position: relative; z-index: 3; }
 
-.page-header::after { display: block; content: ""; position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 1; height: 100%; width: 100%; background: url("/assets/img/triangles.png") 0 0 repeat; opacity: 5; }
-
-.card { display: inline-block; padding: 1rem; margin: 0 .5rem 1rem 0; width: 20rem; border: 1px solid #dce6f0; border-radius: 0.3rem; background: linear-gradient(120deg, #606c71, #434a59); color: #fff; }
+.card { display: inline-block; padding: 1rem; margin: 0 .5rem 1rem 0; width: 20rem; border: 1px solid #dce6f0; border-radius: 0.3rem; background: #606c71; color: #fff; }
 
 .card img { height: 10vh; margin: auto; display: block; margin-bottom: .5rem; width: 80%; }
 
@@ -268,9 +272,9 @@ td, th { padding: 0; }
 body { padding: 0; margin: 0; font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.5; color: #606c71; }
 
 #skip-to-content { height: 1px; width: 1px; position: absolute; overflow: hidden; top: -10px; }
-#skip-to-content:focus { position: fixed; top: 10px; left: 10px; height: auto; width: auto; background: #9a811b; outline: thick solid #9a811b; }
+#skip-to-content:focus { position: fixed; top: 10px; left: 10px; height: auto; width: auto; background: #c66774; outline: thick solid #c66774; }
 
-a { color: #657ee4; text-decoration: none; }
+a { color: #39988b; text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 .btn { display: inline-block; margin-bottom: 1rem; color: rgba(255, 255, 255, 0.7); background-color: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); border-style: solid; border-width: 1px; border-radius: 0.3rem; transition: color 0.2s, background-color 0.2s, border-color 0.2s; }

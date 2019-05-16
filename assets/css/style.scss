@@ -13,7 +13,7 @@ $header-bg-color-secondary: #434a59 !default;
 // Text
 $section-headings-color: #000 !default;
 $body-text-color: #606c71 !default;
-$body-link-color: #657ee4 !default;
+$body-link-color: #39988b !default;
 $blockquote-text-color: #819198 !default;
 
 // Code
@@ -25,10 +25,27 @@ $border-color: #dce6f0 !default;
 $table-border-color: #e9ebec !default;
 $hr-border-color: #eff0f1 !default;
 
+body {
+	background: $code-bg-color;
+}
+
 body .page-header {
-	border-bottom: 6px solid #657ee4;
+	border-bottom: 6px solid #52c0b4;
 	position: relative;
-	background: $header-bg-color;
+	background: #fff;
+	color: #000;
+}
+
+.page-header .btn {
+    color: rgba(255, 255, 255, 0.9);
+    background-color: #555;
+    border-color: #333;
+}
+
+.page-header .btn:hover {
+	color: #fff;
+	background: #333;
+	border-color: #333;
 }
 
 .page-header section {
@@ -43,7 +60,7 @@ body .page-header {
 	width: 20rem;
 	border: 1px solid $border-color;
 	border-radius: 0.3rem;
-	background: linear-gradient(120deg, $body-text-color, $header-bg-color-secondary);
+	background: $body-text-color;
 	color: $header-heading-color;
 }
 
