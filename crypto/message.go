@@ -165,6 +165,14 @@ func (msg *PGPMessage) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.Data, constants.PGPMessageHeader)
 }
 
+func (msg *PGPSplitMessage) GetDataPacket() []byte {
+	return msg.DataPacket
+}
+
+func (msg *PGPSplitMessage) GetKeyPacket() []byte {
+	return msg.KeyPacket
+}
+
 // SeparateKeyAndData returns the first keypacket and the (hopefully unique) dataPacket (not verified)
 // FIXME: add support for multiple keypackets
 func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)(outSplit *PGPSplitMessage, err error) {

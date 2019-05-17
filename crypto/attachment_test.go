@@ -46,7 +46,7 @@ func TestAttachnentEncryptDecrypt(t *testing.T) {
 		t.Fatal("Expected no error while encrypting attachment, got:", err)
 	}
 
-	redecData, err := testPrivateKeyRing.DecryptAttachment(encSplit.KeyPacket, encSplit.DataPacket)
+	redecData, err := testPrivateKeyRing.DecryptAttachment(encSplit)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting attachment, got:", err)
 	}

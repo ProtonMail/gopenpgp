@@ -124,13 +124,12 @@ func SplitArmor(encrypted string) (*PGPSplitMessage, error) {
 	return message.SeparateKeyAndData(len(encrypted), -1)
 }
 
-// DecryptAttachment takes a session key packet and symmetrically encrypted data
-// packet. privateKeys is a KeyRing that can contain multiple keys.
-func (keyRing *KeyRing) DecryptAttachment(keyPacket, dataPacket []byte) ([]byte, error) {
+// DecryptAttachment takes a PGPSplitMessage, containing a session key packet and symmetrically encrypted data
+func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) ([]byte, error) {
 	privKeyEntries := keyRing.entities
 
-	keyReader := bytes.NewReader(keyPacket)
-	dataReader := bytes.NewReader(dataPacket)
+	keyReader := bytes.NewReader(message.GetKeyPacket())
+	dataReader := bytes.NewReader(message.GetDataPacket())
 
 	encryptedReader := io.MultiReader(keyReader, dataReader)
 
