@@ -50,57 +50,6 @@ type Identity struct {
 	Email string
 }
 
-// Signature is be used to check a signature. Because the signature is checked
-// when the reader is consumed, Signature must only be used after EOF has been
-// seen. A signature is only valid if s.Err() returns nil, otherwise the
-// sender's identity cannot be trusted.
-type Signature struct {
-	md *openpgp.MessageDetails
-}
-
-// SignedString wraps string with a Signature
-type SignedString struct {
-	String string
-	Signed *Signature
-}
-
-// Err returns a non-nil error if the signature is invalid.
-func (s *Signature) Err() error {
-	return s.md.SignatureError
-}
-
-// KeyRing returns the key ring that was used to produce the signature, if
-// available.
-func (s *Signature) KeyRing() *KeyRing {
-	if s.md.SignedBy == nil {
-		return nil
-	}
-
-	return &KeyRing{
-		entities: openpgp.EntityList{s.md.SignedBy.Entity},
-	}
-}
-
-// IsBy returns true if the signature has been created by kr's owner.
-func (s *Signature) IsBy(kr *KeyRing) bool {
-	// Use fingerprint if possible
-	if s.md.SignedBy != nil {
-		for _, e := range kr.entities {
-			if e.PrimaryKey.Fingerprint == s.md.SignedBy.PublicKey.Fingerprint {
-				return true
-			}
-		}
-		return false
-	}
-
-	for _, e := range kr.entities {
-		if e.PrimaryKey.KeyId == s.md.SignedByKeyId {
-			return true
-		}
-	}
-	return false
-}
-
 // GetEntities returns openpgp entities contained in this KeyRing.
 func (kr *KeyRing) GetEntities() openpgp.EntityList {
 	return kr.entities
