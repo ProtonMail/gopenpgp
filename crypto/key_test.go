@@ -101,13 +101,13 @@ func ExamplePrintFingerprints() {
 	// PrimaryKey:6e8ba229b0cccaf6962f97953eb6259edf21df24
 }
 
-func TestIsStringKeyExpired(t *testing.T) {
-	rsaRes, err := pgp.IsStringKeyExpired(rsaPublicKey)
+func TestIsArmoredKeyExpired(t *testing.T) {
+	rsaRes, err := pgp.IsArmoredKeyExpired(rsaPublicKey)
 	if err != nil {
 		t.Fatal("Error in checking expiration of RSA key:", err)
 	}
 
-	ecRes, err := pgp.IsStringKeyExpired(ecPublicKey)
+	ecRes, err := pgp.IsArmoredKeyExpired(ecPublicKey)
 	if err != nil {
 		t.Fatal("Error in checking expiration of EC key:", err)
 	}
@@ -117,8 +117,8 @@ func TestIsStringKeyExpired(t *testing.T) {
 
 	pgp.UpdateTime(1557754627) // 2019-05-13T13:37:07+00:00
 
-	expRes, expErr := pgp.IsStringKeyExpired(readTestFile("key_expiredKey", false))
-	futureRes, futureErr := pgp.IsStringKeyExpired(readTestFile("key_futureKey", false))
+	expRes, expErr := pgp.IsArmoredKeyExpired(readTestFile("key_expiredKey", false))
+	futureRes, futureErr := pgp.IsArmoredKeyExpired(readTestFile("key_futureKey", false))
 
 	assert.Exactly(t, true, expRes)
 	assert.Exactly(t, true, futureRes)

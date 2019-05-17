@@ -17,8 +17,8 @@ func (pgp *GopenPGP) UpdateTime(newTime int64) {
 	pgp.latestClientTime = time.Now()
 }
 
-// GetTimeUnix gets latest cached time
-func (pgp *GopenPGP) GetTimeUnix() int64 {
+// GetUnixTime gets latest cached time
+func (pgp *GopenPGP) GetUnixTime() int64 {
 	return pgp.getNow().Unix()
 }
 

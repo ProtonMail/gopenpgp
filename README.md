@@ -120,7 +120,7 @@ privateKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with
 // encrypt message using public key, can be optionally signed using private key
 armor, err := publicKeyRing.EncryptMessage("plain text", privateKeyRing)
 
-verifyTime := pgp.GetTimeUnix()
+verifyTime := pgp.GetUnixTime()
 verifyKeyRing := publicKeyRing
 // decrypt armored encrypted message using the private key
 // optional signature verification is done through publicKeyRing and verifyTime

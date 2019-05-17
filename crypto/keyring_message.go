@@ -158,7 +158,7 @@ func asymmetricEncrypt (data []byte, publicKey *KeyRing, privateKey *KeyRing, is
 	var signEntity *openpgp.Entity
 	var err error
 
-	if len(privateKey.entities) > 0 {
+	if privateKey != nil && len(privateKey.entities) > 0 {
 		var err error
 		signEntity, err = privateKey.GetSigningEntity()
 		if err != nil {

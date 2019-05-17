@@ -18,7 +18,7 @@ import (
 )
 
 // IsBinKeyExpired checks whether the given (unarmored, binary) key is expired.
-func (pgp *GopenPGP) IsBinKeyExpired(publicKey []byte) (bool, error) {
+func (pgp *GopenPGP) IsKeyExpired(publicKey []byte) (bool, error) {
 	now := pgp.getNow()
 	pubKeyReader := bytes.NewReader(publicKey)
 	pubKeyEntries, err := openpgp.ReadKeyRing(pubKeyReader)
@@ -70,12 +70,12 @@ func (pgp *GopenPGP) IsBinKeyExpired(publicKey []byte) (bool, error) {
 }
 
 // IsKeyStringExpired checks whether the given armored key is expired.
-func (pgp *GopenPGP) IsStringKeyExpired(publicKey string) (bool, error) {
+func (pgp *GopenPGP) IsArmoredKeyExpired(publicKey string) (bool, error) {
 	rawPubKey, err := armor.Unarmor(publicKey)
 	if err != nil {
 		return false, err
 	}
-	return pgp.IsBinKeyExpired(rawPubKey)
+	return pgp.IsKeyExpired(rawPubKey)
 }
 
 func (pgp *GopenPGP) generateKey(

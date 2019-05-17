@@ -67,7 +67,7 @@ func TestDecrypt(t *testing.T) {
 		message,
 		pgp.BuildKeyRingNoError(publicKeyUnarmored),
 		&callbacks,
-		pgp.GetTimeUnix())
+		pgp.GetUnixTime())
 }
 
 func TestParse(t *testing.T) {
