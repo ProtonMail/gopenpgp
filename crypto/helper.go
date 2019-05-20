@@ -2,7 +2,59 @@ package crypto
 
 import (
 	"errors"
+
+	"github.com/ProtonMail/gopenpgp/constants"
 )
+
+func (pgp *GopenPGP) EncryptMessageSymmetricHelper(passphrase, plaintext, algo string) (ciphertext string, err error){
+	var pgpMessage *PGPMessage
+
+	var cleartextMessage = NewCleartextMessage(plaintext)
+	var key = NewSymmetricKeyFromPassphrase(passphrase, algo)
+
+	if pgpMessage, err = key.EncryptMessage(cleartextMessage, false); err != nil {
+		return "", err
+	}
+
+	if ciphertext, err = pgpMessage.GetArmored(); err != nil {
+		return "", err
+	}
+
+	return ciphertext, nil
+}
+
+func (pgp *GopenPGP) DecryptMessageSymmetricHelper(passphrase, ciphertext, algo string) (plaintext string, err error){
+	var cleartextMessage *CleartextMessage
+	var pgpMessage *PGPMessage
+
+	var key = NewSymmetricKeyFromPassphrase(passphrase, algo)
+
+	if pgpMessage, err = NewPGPMessageFromArmored(ciphertext); err != nil {
+		return "", err
+	}
+
+	if cleartextMessage, err = key.DecryptMessage(pgpMessage); err != nil {
+		return "", err
+	}
+
+	return cleartextMessage.GetString(), nil
+}
+
+func (pgp *GopenPGP) EncryptMessageAES128Helper(passphrase, plaintext string) (ciphertext string, err error){
+	return pgp.EncryptMessageSymmetricHelper(passphrase, plaintext, constants.AES128)
+}
+
+func (pgp *GopenPGP) DecryptMessageAES128Helper(passphrase, ciphertext string) (plaintext string, err error){
+	return pgp.DecryptMessageSymmetricHelper(passphrase, ciphertext, constants.AES128)
+}
+
+func (pgp *GopenPGP) EncryptMessageAES256Helper(passphrase, plaintext string) (ciphertext string, err error){
+	return pgp.EncryptMessageSymmetricHelper(passphrase, plaintext, constants.AES256)
+}
+
+func (pgp *GopenPGP) DecryptMessageAES256Helper(passphrase, ciphertext string) (plaintext string, err error){
+	return pgp.DecryptMessageSymmetricHelper(passphrase, ciphertext, constants.AES256)
+}
 
 func (pgp *GopenPGP) EncryptMessageArmoredHelper(publicKey, plaintext string) (ciphertext string, err error){
 	var publicKeyRing *KeyRing
@@ -115,7 +167,6 @@ func (pgp *GopenPGP) DecryptVerifyMessageArmoredHelper(
 
 	return cleartextMessage.GetString(), nil
 }
-
 
 func (pgp *GopenPGP) EncryptSignAttachmentHelper(
 	publicKey, privateKey, passphrase, fileName string,

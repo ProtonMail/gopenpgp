@@ -61,7 +61,7 @@ func (keyRing *KeyRing) DecryptSessionKey(keyPacket []byte) (*SymmetricKey, erro
 		return nil, errors.New("gopenpgp: unable to decrypt session key")
 	}
 
-	return newSymmetricKey(ek)
+	return newSymmetricKeyFromEncrypted(ek)
 }
 
 // EncryptSessionKey encrypts the session key with the unarmored

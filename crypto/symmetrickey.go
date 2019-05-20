@@ -48,7 +48,18 @@ func (simmetricKey *SymmetricKey) GetBase64Key() string {
 	return base64.StdEncoding.EncodeToString(simmetricKey.Key)
 }
 
-func newSymmetricKey(ek *packet.EncryptedKey) (*SymmetricKey, error) {
+func NewSymmetricKeyFromPassphrase(passphrase, algo string) (*SymmetricKey) {
+	return NewSymmetricKey([]byte(passphrase), algo)
+}
+
+func NewSymmetricKey(key []byte, algo string) (*SymmetricKey) {
+	return &SymmetricKey{
+		Key:  key,
+		Algo: algo,
+	}
+}
+
+func newSymmetricKeyFromEncrypted(ek *packet.EncryptedKey) (*SymmetricKey, error) {
 	var algo string
 	for k, v := range symKeyAlgos {
 		if v == ek.CipherFunc {
@@ -60,10 +71,7 @@ func newSymmetricKey(ek *packet.EncryptedKey) (*SymmetricKey, error) {
 		return nil, fmt.Errorf("gopenpgp: unsupported cipher function: %v", ek.CipherFunc)
 	}
 
-	return &SymmetricKey{
-		Key:  ek.Key,
-		Algo: algo,
-	}, nil
+	return NewSymmetricKey(ek.Key, algo), nil
 }
 
 // EncryptMessage encrypts a CleartextMessage to PGPMessage with a SymmetricKey

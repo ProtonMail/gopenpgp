@@ -6,6 +6,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestAESEncryptionHelper(t *testing.T) {
+	var plaintext = "Symmetric secret"
+	var passphrase = "passphrase"
+
+	ciphertext, err := pgp.EncryptMessageAES128Helper(passphrase, plaintext)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+
+	_, err = pgp.DecryptMessageAES128Helper("Wrong passphrase", ciphertext)
+	assert.EqualError(t, err, "gopenpgp: wrong password in symmetric decryption")
+
+	decrypted, err := pgp.DecryptMessageAES128Helper(passphrase, ciphertext)
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+
+	assert.Exactly(t, plaintext, decrypted)
+}
+
 func TestArmoredTextMessageEncryption(t *testing.T) {
 	var plaintext = "Secret message"
 
