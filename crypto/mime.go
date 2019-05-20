@@ -14,43 +14,6 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-func (pgp GopenPGP) parseMIME(
-	mimeBody string, verifierKey *KeyRing,
-) (*gomime.BodyCollector, int, []string, []string, error) {
-	mm, err := mail.ReadMessage(strings.NewReader(mimeBody))
-	if err != nil {
-		return nil, 0, nil, nil, err
-	}
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pgp.getTimeGenerator()}
-
-	h := textproto.MIMEHeader(mm.Header)
-	mmBodyData, err := ioutil.ReadAll(mm.Body)
-	if err != nil {
-		return nil, 0, nil, nil, err
-	}
-
-	printAccepter := gomime.NewMIMEPrinter()
-	bodyCollector := gomime.NewBodyCollector(printAccepter)
-	attachmentsCollector := gomime.NewAttachmentsCollector(bodyCollector)
-	mimeVisitor := gomime.NewMimeVisitor(attachmentsCollector)
-
-	var pgpKering openpgp.KeyRing
-	if verifierKey != nil {
-		pgpKering = verifierKey.entities
-	}
-
-	signatureCollector := newSignatureCollector(mimeVisitor, pgpKering, config)
-
-	err = gomime.VisitAll(bytes.NewReader(mmBodyData), h, signatureCollector)
-
-	verified := signatureCollector.verified
-	body := bodyCollector
-	atts := attachmentsCollector.GetAttachments()
-	attHeaders := attachmentsCollector.GetAttHeaders()
-
-	return body, verified, atts, attHeaders, err
-}
-
 // MIMECallbacks defines callback methods to process a MIME message.
 type MIMECallbacks interface {
 	OnBody(body string, mimetype string)
@@ -87,4 +50,43 @@ func (privateKeyRing *KeyRing) DecryptMIMEMessage(
 	} else {
 		callbacks.OnVerified(verified)
 	}
+}
+
+// ----- INTERNAL FUNCTIONS -----
+
+func (pgp GopenPGP) parseMIME(
+	mimeBody string, verifierKey *KeyRing,
+) (*gomime.BodyCollector, int, []string, []string, error) {
+	mm, err := mail.ReadMessage(strings.NewReader(mimeBody))
+	if err != nil {
+		return nil, 0, nil, nil, err
+	}
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pgp.getTimeGenerator()}
+
+	h := textproto.MIMEHeader(mm.Header)
+	mmBodyData, err := ioutil.ReadAll(mm.Body)
+	if err != nil {
+		return nil, 0, nil, nil, err
+	}
+
+	printAccepter := gomime.NewMIMEPrinter()
+	bodyCollector := gomime.NewBodyCollector(printAccepter)
+	attachmentsCollector := gomime.NewAttachmentsCollector(bodyCollector)
+	mimeVisitor := gomime.NewMimeVisitor(attachmentsCollector)
+
+	var pgpKering openpgp.KeyRing
+	if verifierKey != nil {
+		pgpKering = verifierKey.entities
+	}
+
+	signatureCollector := newSignatureCollector(mimeVisitor, pgpKering, config)
+
+	err = gomime.VisitAll(bytes.NewReader(mmBodyData), h, signatureCollector)
+
+	verified := signatureCollector.verified
+	body := bodyCollector
+	atts := attachmentsCollector.GetAttachments()
+	attHeaders := attachmentsCollector.GetAttHeaders()
+
+	return body, verified, atts, attHeaders, err
 }

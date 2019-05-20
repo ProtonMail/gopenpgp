@@ -70,6 +70,9 @@ If you wish to use build.sh, you may need to modify the paths in it.
 Interfacing between Go and Swift:
 https://medium.com/@matryer/tutorial-calling-go-code-from-swift-on-ios-and-vice-versa-with-gomobile-7925620c17a4.
 
+## Full documentation
+The full documentation for this API is available here: https://godoc.org/gopkg.in/ProtonMail/gopenpgp.v0/crypto
+
 ## Examples
 
 ### Set up
@@ -78,29 +81,54 @@ https://medium.com/@matryer/tutorial-calling-go-code-from-swift-on-ios-and-vice-
 import "github.com/ProtonMail/gopenpgp/crypto"
 ```
 
-### Encrypt and decrypt
-
-Encryption and decryption will use the AES256 algorithm by default.
-
-#### Encrypt / Decrypt with password
+### Encrypt / Decrypt with password
 
 ```go
-import "github.com/ProtonMail/gopenpgp/constants"
-
 var pgp = crypto.GopenPGP{}
 
 const password = "my secret password"
 
 // Encrypt data with password
-armor, err := pgp.EncryptMessageWithPassword("my message", password)
+armor, err := pgp.EncryptMessageAES256Helper(password, "my message")
 
 // Decrypt data with password
-message, err := pgp.DecryptMessageWithPassword(armor, password)
+message, err := pgp.DecryptMessageSymmetricHelper(password, armor)
 ```
 
-#### Encrypt / Decrypt with PGP keys
+To use more encryption algorithms:
+```go
+import "github.com/ProtonMail/gopenpgp/constants"
+var pgp = crypto.GopenPGP{}
+
+// Encrypt data with password
+armor, err := pgp.EncryptMessageSymmetricHelper(password, "my message", constants.ThreeDES)
+
+// Decrypt data with password
+message, err := pgp.DecryptMessageSymmetricHelper(password, armor)
+```
+
+To encrypt binary data, reuse the key multiple times, or use more advanced modes:
+```go
+import "github.com/ProtonMail/gopenpgp/constants"
+var pgp = crypto.GopenPGP{}
+
+var key = crypto.NewSymmetricKey("my secret password", constants.AES256)
+var message = crypto.BinaryMessage(data)
+
+// Encrypt data with password
+encrypted, err := key.Encrypt(message)
+
+// Decrypt data with password
+decrypted, err := key.Decrypt(password, encrypted)
+
+//Original message in decrypted.GetBinary()
+```
+
+### Encrypt / Decrypt with PGP keys
 
 ```go
+var pgp = crypto.GopenPGP{}
+
 // put keys in backtick (``) to avoid errors caused by spaces or tabs
 const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 ...
@@ -112,26 +140,45 @@ const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 
 const passphrase = `the passphrase of the private key` // what the privKey is encrypted with
 
-publicKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(pubkey))
+// encrypt message using public key
+armor, err := pgp.EncryptMessageArmoredHelper(pubkey, "plain text")
 
-privateKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(privkey))
-privateKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with passphrase
-
-// encrypt message using public key, can be optionally signed using private key
-armor, err := publicKeyRing.EncryptMessage("plain text", privateKeyRing)
-
-verifyTime := pgp.GetUnixTime()
-verifyKeyRing := publicKeyRing
 // decrypt armored encrypted message using the private key
-// optional signature verification is done through publicKeyRing and verifyTime
-signedText, verified, err := privateKeyRing.DecryptMessage(armor, verifyKeyRing, verifyTime)
-plainText = signedText.String
-
-if signed == constants.SIGNATURE_OK {
-  // Signature verified!
-}
+decrypted, err := pgp.DecryptMessage(privkey, passphrase, armor)
 ```
 
+With signatures:
+```go
+// Keys initialization as before (omitted)
+
+// encrypt message using public key, sign with the private key
+armor, err := pgp.EncryptSignMessageArmoredHelper(pubkey, privkey, passphrase, "plain text")
+
+// decrypt armored encrypted message using the private key, verify with the public key
+// err != nil if verification fails
+decrypted, err := pgp.DecryptVerifyMessageArmoredHelper(pubkey, privkey, passphrase, armor)
+```
+
+With binary data or advanced modes:
+```go
+
+var binMessage = NewBinaryMessage(data)
+
+publicKeyRing, err := pgp.BuildKeyRingArmored(publicKey)
+privateKeyRing, err := pgp.BuildKeyRingArmored(privateKey)
+err = privateKeyRing.UnlockWithPassphrase(passphrase)
+pgpMessage, err := publicKeyRing.Encrypt(binMessage, privateKeyRing)
+
+// Armored message in pgpMessage.GetArmored()
+// pgpMessage obtained from NewPGPMessageFromArmored(ciphertext)
+
+cleartextMessage, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, pgp.GetUnixTime())
+
+// Original data in cleartextMessage.GetString()
+if cleartextMessage.IsVerified() {
+  // verification success
+}
+```
 ### Generate key
 
 Keys are generated with the `GenerateKey` function, that returns the armored key as a string and a potential error.
@@ -155,7 +202,7 @@ rsaKey, err := pgp.GenerateKey(localPart, domain, passphrase, "rsa", rsaBits)
 ecKey, err := pgp.GenerateKey(localPart, domain, passphrase, "x25519", ecBits)
 ```
 
-### Sign plain text messages
+### Detached signatures for plain text messages
 
 To sign plain text data either an unlocked private keyring or a passphrase must be provided.
 The output is an armored signature.
@@ -164,19 +211,21 @@ The output is an armored signature.
 const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 ...
 -----END PGP PRIVATE KEY BLOCK-----` // encrypted private key
-passphrase = "LongSecret"
+const passphrase = "LongSecret"
 const trimNewlines = false
 
-signingKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(privkey))
+var message = NewPlaintextMessage("Verified message")
+
+signingKeyRing, err := pgp.BuildKeyRingArmored(privkey)
 signingKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with passphrase
 
-signature, err := signingKeyRing.SignTextDetached(plaintext, trimNewlines)
-// passphrase is optional if the key is already unlocked
+message, pgpSignature, err := signingKeyRing.SignMessage(message, trimNewlines)
+
+// The armored signature is in pgpSignature.GetArmored()
+// The signed text is in message.GetString()
 ```
 
 To verify a signature either private or public keyring can be provided.
-The newlines in the text are never trimmed in the verification process.
-The function outputs a bool, if the verification fails `verified` will be false, and the error will be not `nil`.
 
 ```go
 const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -187,34 +236,37 @@ const signature = `-----BEGIN PGP SIGNATURE-----
 ...
 -----END PGP SIGNATURE-----`
 
-const verifyTime = 0
-const trimNewlines = false
+message := NewPlaintextMessage("Verified message")
+pgpSignature, err := NewPGPSignatureFromArmored(signature)
+signingKeyRing, err := pgp.BuildKeyRingArmored(pubkey)
 
-signingKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(pubkey))
+message, err := signingKeyRing.VerifyMessage(message, pgpSignature, pgp.GetUnixTime())
 
-verified, err := signingKeyRing.VerifyTextDetachedSig(signature, signedPlainText, verifyTime, trimNewlines)
+if message.IsVerified() {
+  // verification success
+}
 ```
 
 ### Detached signatures for binary data
-
-To sign binary data either an unlocked private keyring or a passphrase must be provided.
-The output is an armored signature.
 
 ```go
 const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 ...
 -----END PGP PRIVATE KEY BLOCK-----` // encrypted private key
-passphrase = "LongSecret"
+const passphrase = "LongSecret"
 
-signingKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(privkey))
+var message = NewBinaryMessage(data)
+
+signingKeyRing, err := pgp.BuildKeyRingArmored(privkey)
 signingKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with passphrase
 
-signature, err := signingKeyRing.SignBinDetached(data)
+message, pgpSignature, err := signingKeyRing.Sign(message)
+
+// The armored signature is in pgpSignature.GetArmored()
+// The signed text is in message.GetBinary()
 ```
 
 To verify a signature either private or public keyring can be provided.
-The newlines in the text are never trimmed in the verification process.
-The function outputs a bool, if the verification fails `verified` will be false, and the error will be not `nil`.
 
 ```go
 const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -225,9 +277,13 @@ const signature = `-----BEGIN PGP SIGNATURE-----
 ...
 -----END PGP SIGNATURE-----`
 
-const verifyTime = 0
+message := NewBinaryMessage("Verified message")
+pgpSignature, err := NewPGPSignatureFromArmored(signature)
+signingKeyRing, err := pgp.BuildKeyRingArmored(pubkey)
 
-signingKeyRing, err := crypto.ReadArmoredKeyRing(strings.NewReader(pubkey))
+message, err := signingKeyRing.Verify(message, pgpSignature, pgp.GetUnixTime())
 
-verified, err := signingKeyRing.VerifyBinDetachedSig(signature, data, verifyTime)
+if message.IsVerified() {
+  // verification success
+}
 ```

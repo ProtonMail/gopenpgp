@@ -167,7 +167,6 @@ func symmetricDecrypt(encryptedIO io.Reader, sk *SymmetricKey) ([]byte, error) {
 
 	config := &packet.Config{
 		Time: pgp.getTimeGenerator(),
-		DefaultCipher: sk.GetCipherFunc(),
 	}
 	md, err := openpgp.ReadMessage(encryptedIO, nil, prompt, config)
 	if err != nil {

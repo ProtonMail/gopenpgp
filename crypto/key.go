@@ -161,16 +161,15 @@ func (pgp *GopenPGP) GenerateRSAKeyWithPrimes(
 	return pgp.generateKey(userName, domain, passphrase, "rsa", bits, primeone, primetwo, primethree, primefour)
 }
 
-// GenerateKey generates a key of the given keyType ("rsa" or "x25519"). If
-// keyType is "rsa", bits is the RSA bitsize of the key. If keyType is "x25519",
-// bits is unused.
+// GenerateKey generates a key of the given keyType ("rsa" or "x25519").
+// If keyType is "rsa", bits is the RSA bitsize of the key.
+// If keyType is "x25519" bits is unused.
 func (pgp *GopenPGP) GenerateKey(userName, domain, passphrase, keyType string, bits int) (string, error) {
 	return pgp.generateKey(userName, domain, passphrase, keyType, bits, nil, nil, nil, nil)
 }
 
-// UpdatePrivateKeyPassphrase decrypts the given armored privateKey with
-// oldPassphrase, re-encrypts it with newPassphrase, and returns the new armored
-// key.
+// UpdatePrivateKeyPassphrase decrypts the given armored privateKey with oldPassphrase,
+// re-encrypts it with newPassphrase, and returns the new armored key.
 func (pgp *GopenPGP) UpdatePrivateKeyPassphrase(
 	privateKey string, oldPassphrase string, newPassphrase string,
 ) (string, error) {

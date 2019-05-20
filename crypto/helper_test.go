@@ -15,10 +15,10 @@ func TestAESEncryptionHelper(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	_, err = pgp.DecryptMessageAES128Helper("Wrong passphrase", ciphertext)
+	_, err = pgp.DecryptMessageSymmetricHelper("Wrong passphrase", ciphertext)
 	assert.EqualError(t, err, "gopenpgp: wrong password in symmetric decryption")
 
-	decrypted, err := pgp.DecryptMessageAES128Helper(passphrase, ciphertext)
+	decrypted, err := pgp.DecryptMessageSymmetricHelper(passphrase, ciphertext)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
