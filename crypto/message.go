@@ -23,7 +23,7 @@ import (
 type CleartextMessage struct {
 	// The content of the message
 	Text string
-	// If the decoded message was correctly signed. See constants.SIGNATURE* for all values
+	// If the decoded message was correctly signed. See constants.SIGNATURE* for all values.
  	Verified int
 }
 
@@ -31,7 +31,7 @@ type CleartextMessage struct {
 type BinaryMessage struct {
 	// The content of the message
 	Data []byte
-	// If the decoded message was correctly signed. See constants.SIGNATURE* for all values
+	// If the decoded message was correctly signed. See constants.SIGNATURE* for all values.
  	Verified int
 }
 
@@ -56,6 +56,9 @@ type PGPSplitMessage struct {
 }
 
 // ---- GENERATORS -----
+
+// NewCleartextMessage generates a new CleartextMessage ready for encryption,
+// signature, or verification from the plaintext.
 func NewCleartextMessage(text string) (*CleartextMessage) {
 	return &CleartextMessage {
 		Text: text,
@@ -63,6 +66,8 @@ func NewCleartextMessage(text string) (*CleartextMessage) {
 	}
 }
 
+// NewBinaryMessage generates a new BinaryMessage ready for encryption,
+// signature, or verification from the unencrypted bianry data.
 func NewBinaryMessage(data []byte) (*BinaryMessage) {
 	return &BinaryMessage {
 		Data: data,
@@ -70,6 +75,14 @@ func NewBinaryMessage(data []byte) (*BinaryMessage) {
 	}
 }
 
+// NewPGPMessage generates a new PGPMessage from the unarmored binary data.
+func NewPGPMessage(data []byte) (*PGPMessage) {
+	return &PGPMessage {
+		Data: data,
+	}
+}
+
+// NewPGPMessageFromArmored generates a new PGPMessage from an armored string ready for decryption.
 func NewPGPMessageFromArmored(armored string) (*PGPMessage, error) {
 	encryptedIO, err := internal.Unarmor(armored)
 	if err != nil {
@@ -86,12 +99,35 @@ func NewPGPMessageFromArmored(armored string) (*PGPMessage, error) {
 	}, nil
 }
 
-func NewPGPMessage(data []byte) (*PGPMessage) {
-	return &PGPMessage {
+// NewPGPSplitMessage generates a new PGPSplitMessage from the binary unarmored keypacket,
+// datapacket, and encryption algorithm.
+func NewPGPSplitMessage(keyPacket []byte, dataPacket []byte, algo string) (*PGPSplitMessage) {
+	return &PGPSplitMessage {
+		KeyPacket: keyPacket,
+		DataPacket: dataPacket,
+		Algo: algo,
+	}
+}
+
+// NewPGPSplitMessageFromArmored generates a new PGPSplitMessage by splitting an armored message into its
+// session key packet and symmetrically encrypted data packet.
+func NewPGPSplitMessageFromArmored (encrypted string) (*PGPSplitMessage, error) {
+	message, err := NewPGPMessageFromArmored(encrypted)
+	if err != nil {
+		return nil, err
+	}
+
+	return message.SeparateKeyAndData(len(encrypted), -1)
+}
+
+// NewPGPSignature generates a new PGPSignature from the unarmored binary data.
+func NewPGPSignature(data []byte) (*PGPSignature) {
+	return &PGPSignature {
 		Data: data,
 	}
 }
 
+// NewPGPSignatureFromArmored generates a new PGPSignature from the armored string ready for verification.
 func NewPGPSignatureFromArmored(armored string) (*PGPSignature, error) {
 	encryptedIO, err := internal.Unarmor(armored)
 	if err != nil {
@@ -108,73 +144,83 @@ func NewPGPSignatureFromArmored(armored string) (*PGPSignature, error) {
 	}, nil
 }
 
-func NewPGPSignature(data []byte) (*PGPSignature) {
-	return &PGPSignature {
-		Data: data,
-	}
-}
-
 // ---- MODEL METHODS -----
+
+// GetVerification returns the verification status of a message, to use after the KeyRing.Decrypt* or KeyRing.Verify*
+// functions. The int value returned is to compare to constants.SIGNATURE*.
 func (msg *CleartextMessage) GetVerification() int {
 	return msg.Verified
 }
 
+// IsVerified returns true if the message is signed and the signature is valid.
+// To use after the KeyRing.Decrypt* or KeyRing.Verify* functions.
 func (msg *CleartextMessage) IsVerified() bool {
 	return msg.Verified == constants.SIGNATURE_OK
 }
 
+// GetString returns the content of the message as a string
 func (msg *CleartextMessage) GetString() string {
 	return msg.Text
 }
 
+// NewReader returns a New io.Reader for the text of the message
 func (msg *CleartextMessage) NewReader() io.Reader {
 	return bytes.NewReader(bytes.NewBufferString(msg.GetString()).Bytes())
 }
 
+// GetVerification returns the verification status of a message, to use after the KeyRing.Decrypt* or KeyRing.Verify*
+// functions. The int value returned is to compare to constants.SIGNATURE*.
 func (msg *BinaryMessage) GetVerification() int {
 	return msg.Verified
 }
 
+// IsVerified returns true if the message is signed and the signature is valid.
+// To use after the KeyRing.Decrypt* or KeyRing.Verify* functions.
 func (msg *BinaryMessage) IsVerified() bool {
 	return msg.Verified == constants.SIGNATURE_OK
 }
 
-
+// GetBinary returns the binary content of the message as a []byte
 func (msg *BinaryMessage) GetBinary() []byte {
 	return msg.Data
 }
 
+// NewReader returns a New io.Reader for the bianry data of the message
 func (msg *BinaryMessage) NewReader() io.Reader {
 	return bytes.NewReader(msg.GetBinary())
 }
 
-
+// GetBinary returns the base-64 encoded binary content of the message as a string
 func (msg *BinaryMessage) GetBase64() string {
 	return base64.StdEncoding.EncodeToString(msg.Data)
 }
 
+// GetBinary returns the unarmored binary content of the message as a []byte
 func (msg *PGPMessage) GetBinary() []byte {
 	return msg.Data
 }
 
+// NewReader returns a New io.Reader for the unarmored bianry data of the message
 func (msg *PGPMessage) NewReader() io.Reader {
 	return bytes.NewReader(msg.GetBinary())
 }
 
+// GetArmored returns the armored message as a string
 func (msg *PGPMessage) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.Data, constants.PGPMessageHeader)
 }
 
+// GetDataPacket returns the unarmored binary datapacket as a []byte
 func (msg *PGPSplitMessage) GetDataPacket() []byte {
 	return msg.DataPacket
 }
 
+// GetKeyPacket returns the unarmored binary keypacket as a []byte
 func (msg *PGPSplitMessage) GetKeyPacket() []byte {
 	return msg.KeyPacket
 }
 
 // SeparateKeyAndData returns the first keypacket and the (hopefully unique) dataPacket (not verified)
-// FIXME: add support for multiple keypackets
 func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)(outSplit *PGPSplitMessage, err error) {
 	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
 	packets := packet.NewReader(bytes.NewReader(msg.Data))
@@ -198,8 +244,7 @@ func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)
 			encryptedKey = p
 
 		case *packet.SymmetricallyEncrypted:
-			// FIXME
-			// The code below is optimized to not
+			// FIXME: add support for multiple keypackets
 			var b bytes.Buffer
 			// 2^16 is an estimation of the size difference between input and output, the size difference is most probably
 			// 16 bytes at a maximum though.
@@ -266,18 +311,19 @@ func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)
 	return outSplit, nil
 }
 
-
+// GetBinary returns the unarmored binary content of the signature as a []byte
 func (msg *PGPSignature) GetBinary() []byte {
 	return msg.Data
 }
 
+// GetBinary returns the base-64 encoded binary content of the signature as a string
 func (msg *PGPSignature) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.Data, constants.PGPSignatureHeader)
 }
 
 // ---- UTILS -----
 
-// IsPGPMessage check if data if has armored PGP message format.
+// IsPGPMessage checks if data if has armored PGP message format.
 func (pgp *GopenPGP) IsPGPMessage(data string) bool {
 	re := regexp.MustCompile("^-----BEGIN " + constants.PGPMessageHeader + "-----(?s:.+)-----END " +
 		constants.PGPMessageHeader + "-----");

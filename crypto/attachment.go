@@ -113,17 +113,6 @@ func (keyRing *KeyRing) NewLowMemoryAttachmentProcessor(
 	return keyRing.newAttachmentProcessor(estimatedSize, fileName, 1<<20)
 }
 
-// SplitArmor is a helper method which splits an armored message into its
-// session key packet and symmetrically encrypted data packet.
-func SplitArmor(encrypted string) (*PGPSplitMessage, error) {
-	message, err := NewPGPMessageFromArmored(encrypted)
-	if err != nil {
-		return nil, err
-	}
-
-	return message.SeparateKeyAndData(len(encrypted), -1)
-}
-
 // DecryptAttachment takes a PGPSplitMessage, containing a session key packet and symmetrically encrypted data
 func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) ([]byte, error) {
 	privKeyEntries := keyRing.entities

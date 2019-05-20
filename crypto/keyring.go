@@ -33,8 +33,6 @@ type pgpKeyObject struct {
 	ID          string
 	Version     int
 	Flags       int
-	Fingerprint string
-	PublicKey   string `json:",omitempty"`
 	PrivateKey  string
 	Primary int
 }

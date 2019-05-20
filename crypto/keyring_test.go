@@ -119,3 +119,48 @@ func TestFilterExpiredKeys(t *testing.T) {
 	assert.Len(t, unexpired, 1)
 	assert.Exactly(t, unexpired[0], testPrivateKeyRing)
 }
+
+func TestGetPublicKey(t *testing.T) {
+	publicKey, err := testPrivateKeyRing.GetPublicKey()
+	if err != nil {
+		t.Fatal("Expected no error while obtaining public key, got:", err)
+	}
+
+	publicKeyRing, err := pgp.BuildKeyRing(publicKey)
+	if err != nil {
+		t.Fatal("Expected no error while creating public key ring, got:", err)
+	}
+
+	privateFingerprint, err := testPrivateKeyRing.GetFingerprint()
+	if err != nil {
+		t.Fatal("Expected no error while extracting private fingerprint, got:", err)
+	}
+
+	publicFingerprint, err := publicKeyRing.GetFingerprint()
+	if err != nil {
+		t.Fatal("Expected no error while extracting public fingerprint, got:", err)
+	}
+
+	assert.Exactly(t, privateFingerprint, publicFingerprint)
+}
+
+func TestKeyIds(t *testing.T) {
+	keyIDs := testPrivateKeyRing.KeyIds()
+	var assertKeyIDs = []uint64{4518840640391470884}
+	assert.Exactly(t, assertKeyIDs, keyIDs)
+}
+
+func TestUnMarshal(t *testing.T) {
+	decodedKeyRing := &KeyRing{}
+	err = decodedKeyRing.UnmarshalJSON([]byte(readTestFile("keyring_jsonKeys", false)))
+	if err != nil {
+		t.Fatal("Expected no error while Unmarshaling JSON, got:", err)
+	}
+
+	fingerprint, err := decodedKeyRing.GetFingerprint()
+	if err != nil {
+		t.Fatal("Expected no error while extracting fingerprint, got:", err)
+	}
+
+	assert.Exactly(t, "91eacacca6837890efa7000470e569d5c182bef6", fingerprint)
+}

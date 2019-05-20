@@ -1,11 +1,14 @@
 package crypto
 
 import (
+	"encoding/base64"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"golang.org/x/crypto/rsa"
 )
 
 const name = "richard.stallman"
@@ -124,4 +127,36 @@ func TestIsArmoredKeyExpired(t *testing.T) {
 	assert.Exactly(t, true, futureRes)
 	assert.EqualError(t, expErr, "keys expired")
 	assert.EqualError(t, futureErr, "keys expired")
+}
+
+func TestGenerateKeyWithPrimes(t *testing.T) {
+	prime1 , _ := base64.StdEncoding.DecodeString(
+		"/thF8zjjk6fFx/y9NId35NFx8JTA7jvHEl+gI0dp9dIl9trmeZb+ESZ8f7bNXUmTI8j271kyenlrVJiqwqk80Q==")
+	prime2 , _ := base64.StdEncoding.DecodeString(
+		"0HyyG/TShsw7yObD+DDP9Ze39ye1Redljx+KOZ3iNDmuuwwI1/5y44rD/ezAsE7A188NsotMDTSy5xtfHmu0xQ==")
+	prime3 , _ := base64.StdEncoding.DecodeString(
+		"3OyJpAdnQXNjPNzI1u3BWDmPrzWw099E0UfJj5oJJILSbsAg/DDrmrdrIZDt7f24d06HCnTErCNWjvFJ3Kdq4w==")
+	prime4 , _ := base64.StdEncoding.DecodeString(
+		"58UEDXTX29Q9JqvuE3Tn+Qj275CXBnJbA8IVM4d05cPYAZ6H43bPN01pbJqJTJw/cuFxs+8C+HNw3/MGQOExqw==")
+
+	staticRsaKey, err := pgp.GenerateRSAKeyWithPrimes(name, domain, passphrase, 1024, prime1, prime2, prime3, prime4)
+	if err != nil {
+		t.Fatal("Cannot generate RSA key:", err)
+	}
+	rTest := regexp.MustCompile("(?s)^-----BEGIN PGP PRIVATE KEY BLOCK-----.*-----END PGP PRIVATE KEY BLOCK-----$")
+	assert.Regexp(t, rTest, staticRsaKey)
+
+	staticRsaKeyRing, err := ReadArmoredKeyRing(strings.NewReader(staticRsaKey))
+	if err != nil {
+		t.Fatal("Cannot read RSA key:", err)
+	}
+
+	err = staticRsaKeyRing.UnlockWithPassphrase(passphrase)
+	if err != nil {
+		t.Fatal("Cannot decrypt RSA key:", err)
+	}
+
+	pk := staticRsaKeyRing.GetEntities()[0].PrivateKey.PrivateKey.(*rsa.PrivateKey)
+	assert.Exactly(t, prime1, pk.Primes[1].Bytes())
+	assert.Exactly(t, prime2, pk.Primes[0].Bytes())
 }
