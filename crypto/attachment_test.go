@@ -40,8 +40,9 @@ func TestAttachmentSetKey(t *testing.T) {
 
 func TestAttachnentEncryptDecrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
+	var message = NewBinaryMessage([]byte(testAttachmentCleartext))
 
-	encSplit, err := testPrivateKeyRing.EncryptAttachment([]byte(testAttachmentCleartext), "s.txt")
+	encSplit, err := testPrivateKeyRing.EncryptAttachment(message, "s.txt")
 	if err != nil {
 		t.Fatal("Expected no error while encrypting attachment, got:", err)
 	}
@@ -51,5 +52,5 @@ func TestAttachnentEncryptDecrypt(t *testing.T) {
 		t.Fatal("Expected no error while decrypting attachment, got:", err)
 	}
 
-	assert.Exactly(t, testAttachmentCleartext, string(redecData))
+	assert.Exactly(t, message, redecData)
 }

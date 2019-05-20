@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/ProtonMail/gopenpgp/constants"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -73,7 +72,6 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 		if attachmentProc.err != nil {
 			attachmentProc.err = splitError
 		}
-		split.Algo = constants.AES256
 		attachmentProc.split = split
 	}()
 
@@ -89,13 +87,14 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 	return attachmentProc, nil
 }
 
-// EncryptAttachment encrypts a file. fileName
-func (keyRing *KeyRing) EncryptAttachment(plainData []byte, fileName string) (*PGPSplitMessage, error) {
-	ap, err := keyRing.newAttachmentProcessor(len(plainData), fileName, -1)
+// EncryptAttachment encrypts a file given a BinaryMessage and a fileName.
+// Returns a PGPSplitMessage containing a session key packet and symmetrically encrypted data
+func (keyRing *KeyRing) EncryptAttachment(message *BinaryMessage, fileName string) (*PGPSplitMessage, error) {
+	ap, err := keyRing.newAttachmentProcessor(len(message.GetBinary()), fileName, -1)
 	if err != nil {
 		return nil, err
 	}
-	ap.Process(plainData)
+	ap.Process(message.GetBinary())
 	split, err := ap.Finish()
 	if err != nil {
 		return nil, err
@@ -114,7 +113,8 @@ func (keyRing *KeyRing) NewLowMemoryAttachmentProcessor(
 }
 
 // DecryptAttachment takes a PGPSplitMessage, containing a session key packet and symmetrically encrypted data
-func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) ([]byte, error) {
+// and returns a decrypted BinaryMessage
+func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*BinaryMessage, error) {
 	privKeyEntries := keyRing.entities
 
 	keyReader := bytes.NewReader(message.GetKeyPacket())
@@ -135,5 +135,5 @@ func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) ([]byte, err
 		return nil, err
 	}
 
-	return b, nil
+	return NewBinaryMessage(b), nil
 }

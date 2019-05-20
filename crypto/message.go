@@ -52,7 +52,6 @@ type PGPSignature struct {
 type PGPSplitMessage struct {
 	DataPacket []byte
 	KeyPacket  []byte
-	Algo       string
 }
 
 // ---- GENERATORS -----
@@ -101,11 +100,10 @@ func NewPGPMessageFromArmored(armored string) (*PGPMessage, error) {
 
 // NewPGPSplitMessage generates a new PGPSplitMessage from the binary unarmored keypacket,
 // datapacket, and encryption algorithm.
-func NewPGPSplitMessage(keyPacket []byte, dataPacket []byte, algo string) (*PGPSplitMessage) {
+func NewPGPSplitMessage(keyPacket []byte, dataPacket []byte) (*PGPSplitMessage) {
 	return &PGPSplitMessage {
 		KeyPacket: keyPacket,
 		DataPacket: dataPacket,
-		Algo: algo,
 	}
 }
 

@@ -64,3 +64,49 @@ func TestArmoredTextMessageEncryptionVerification(t *testing.T) {
 
 	assert.Exactly(t, plaintext, decrypted)
 }
+
+func TestAttachmentEncryptionVerification(t *testing.T) {
+	var attachment = []byte("Secret file\r\nRoot password:hunter2")
+
+	keyPacket, dataPacket, signature, err := pgp.EncryptSignAttachmentHelper(
+		readTestFile("keyring_publicKey", false),
+		readTestFile("keyring_privateKey", false),
+		testMailboxPassword,		// Password defined in keyring_test
+		"password.txt",
+		attachment,
+	)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+
+	sig := NewPGPSignature(signature)
+	armoredSig, err := sig.GetArmored()
+	if err != nil {
+		t.Fatal("Expected no error when armoring signature, got:", err)
+	}
+
+	_, err = pgp.DecryptVerifyAttachmentHelper(
+		readTestFile("mime_publicKey", false),		// Wrong public key
+		readTestFile("keyring_privateKey", false),
+		testMailboxPassword,		// Password defined in keyring_test
+		keyPacket,
+		dataPacket,
+		armoredSig,
+	)
+	assert.EqualError(t, err, "gopenpgp: unable to verify attachment")
+
+
+	decrypted, err := pgp.DecryptVerifyAttachmentHelper(
+		readTestFile("keyring_publicKey", false),
+		readTestFile("keyring_privateKey", false),
+		testMailboxPassword,		// Password defined in keyring_test
+		keyPacket,
+		dataPacket,
+		armoredSig,
+	)
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+
+	assert.Exactly(t, attachment, decrypted)
+}
