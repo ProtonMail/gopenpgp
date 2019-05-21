@@ -49,15 +49,15 @@ type Identity struct {
 }
 
 // GetEntities returns openpgp entities contained in this KeyRing.
-func (kr *KeyRing) GetEntities() openpgp.EntityList {
-	return kr.entities
+func (keyRing *KeyRing) GetEntities() openpgp.EntityList {
+	return keyRing.entities
 }
 
 // GetSigningEntity returns first private unlocked signing entity from keyring.
-func (kr *KeyRing) GetSigningEntity() (*openpgp.Entity, error) {
+func (keyRing *KeyRing) GetSigningEntity() (*openpgp.Entity, error) {
 	var signEntity *openpgp.Entity
 
-	for _, e := range kr.entities {
+	for _, e := range keyRing.entities {
 		// Entity.PrivateKey must be a signing key
 		if e.PrivateKey != nil {
 			if !e.PrivateKey.Encrypted {
@@ -79,10 +79,10 @@ func (kr *KeyRing) GetSigningEntity() (*openpgp.Entity, error) {
 // err == nil does not mean that all keys have been successfully decrypted.
 // If err != nil, the password is wrong for every key, and err is the last error
 // encountered.
-func (kr *KeyRing) Unlock(passphrase []byte) error {
+func (keyRing *KeyRing) Unlock(passphrase []byte) error {
 	// Build a list of keys to decrypt
 	var keys []*packet.PrivateKey
-	for _, e := range kr.entities {
+	for _, e := range keyRing.entities {
 		// Entity.PrivateKey must be a signing key
 		if e.PrivateKey != nil {
 			keys = append(keys, e.PrivateKey)
@@ -121,18 +121,18 @@ func (kr *KeyRing) Unlock(passphrase []byte) error {
 }
 
 // UnlockWithPassphrase is a wrapper for Unlock that uses strings
-func (kr *KeyRing) UnlockWithPassphrase(passphrase string) error {
-	return kr.Unlock([]byte(passphrase))
+func (keyRing *KeyRing) UnlockWithPassphrase(passphrase string) error {
+	return keyRing.Unlock([]byte(passphrase))
 }
 
 // WriteArmoredPublicKey outputs armored public keys from the keyring to w.
-func (kr *KeyRing) WriteArmoredPublicKey(w io.Writer) (err error) {
+func (keyRing *KeyRing) WriteArmoredPublicKey(w io.Writer) (err error) {
 	aw, err := armor.Encode(w, openpgp.PublicKeyType, nil)
 	if err != nil {
 		return
 	}
 
-	for _, e := range kr.entities {
+	for _, e := range keyRing.entities {
 		if err = e.Serialize(aw); err != nil {
 			aw.Close()
 			return
@@ -144,9 +144,9 @@ func (kr *KeyRing) WriteArmoredPublicKey(w io.Writer) (err error) {
 }
 
 // GetArmoredPublicKey returns the armored public keys from this keyring.
-func (kr *KeyRing) GetArmoredPublicKey() (s string, err error) {
+func (keyRing *KeyRing) GetArmoredPublicKey() (s string, err error) {
 	b := &bytes.Buffer{}
-	if err = kr.WriteArmoredPublicKey(b); err != nil {
+	if err = keyRing.WriteArmoredPublicKey(b); err != nil {
 		return
 	}
 
@@ -155,8 +155,8 @@ func (kr *KeyRing) GetArmoredPublicKey() (s string, err error) {
 }
 
 // WritePublicKey outputs unarmored public keys from the keyring to w.
-func (kr *KeyRing) WritePublicKey(w io.Writer) (err error) {
-	for _, e := range kr.entities {
+func (keyRing *KeyRing) WritePublicKey(w io.Writer) (err error) {
+	for _, e := range keyRing.entities {
 		if err = e.Serialize(w); err != nil {
 			return
 		}
@@ -166,9 +166,9 @@ func (kr *KeyRing) WritePublicKey(w io.Writer) (err error) {
 }
 
 // GetPublicKey returns the unarmored public keys from this keyring.
-func (kr *KeyRing) GetPublicKey() (b []byte, err error) {
+func (keyRing *KeyRing) GetPublicKey() (b []byte, err error) {
 	var outBuf bytes.Buffer
-	if err = kr.WritePublicKey(&outBuf); err != nil {
+	if err = keyRing.WritePublicKey(&outBuf); err != nil {
 		return
 	}
 
@@ -177,8 +177,8 @@ func (kr *KeyRing) GetPublicKey() (b []byte, err error) {
 }
 
 // GetFingerprint gets the fingerprint from the keyring.
-func (kr *KeyRing) GetFingerprint() (string, error) {
-	for _, entity := range kr.entities {
+func (keyRing *KeyRing) GetFingerprint() (string, error) {
+	for _, entity := range keyRing.entities {
 		fp := entity.PrimaryKey.Fingerprint
 		return hex.EncodeToString(fp[:]), nil
 	}
@@ -186,10 +186,10 @@ func (kr *KeyRing) GetFingerprint() (string, error) {
 }
 
 // CheckPassphrase checks if private key passphrase is correct for every sub key.
-func (kr *KeyRing) CheckPassphrase(passphrase string) bool {
+func (keyRing *KeyRing) CheckPassphrase(passphrase string) bool {
 	var keys []*packet.PrivateKey
 
-	for _, entity := range kr.entities {
+	for _, entity := range keyRing.entities {
 		keys = append(keys, entity.PrivateKey)
 	}
 	var decryptError error
@@ -207,7 +207,7 @@ func (kr *KeyRing) CheckPassphrase(passphrase string) bool {
 }
 
 // readFrom reads unarmored and armored keys from r and adds them to the keyring.
-func (kr *KeyRing) readFrom(r io.Reader, armored bool) error {
+func (keyRing *KeyRing) readFrom(r io.Reader, armored bool) error {
 	var err error
 	var entities openpgp.EntityList
 	if armored {
@@ -254,27 +254,27 @@ func (kr *KeyRing) readFrom(r io.Reader, armored bool) error {
 		return errors.New("gopenpgp: key ring doesn't contain any key")
 	}
 
-	kr.entities = append(kr.entities, entities...)
+	keyRing.entities = append(keyRing.entities, entities...)
 	return nil
 }
 
 // BuildKeyRing reads keyring from binary data
-func (pgp *GopenPGP) BuildKeyRing(binKeys []byte) (kr *KeyRing, err error) {
-	kr = &KeyRing{}
+func (pgp *GopenPGP) BuildKeyRing(binKeys []byte) (keyRing *KeyRing, err error) {
+	keyRing = &KeyRing{}
 	entriesReader := bytes.NewReader(binKeys)
-	err = kr.readFrom(entriesReader, false)
+	err = keyRing.readFrom(entriesReader, false)
 
 	return
 }
 
 // BuildKeyRingNoError does not return error on fail
-func (pgp *GopenPGP) BuildKeyRingNoError(binKeys []byte) (kr *KeyRing) {
-	kr, _ = pgp.BuildKeyRing(binKeys)
+func (pgp *GopenPGP) BuildKeyRingNoError(binKeys []byte) (keyRing *KeyRing) {
+	keyRing, _ = pgp.BuildKeyRing(binKeys)
 	return
 }
 
 // BuildKeyRingArmored reads armored string and returns keyring
-func (pgp *GopenPGP) BuildKeyRingArmored(key string) (kr *KeyRing, err error) {
+func (pgp *GopenPGP) BuildKeyRingArmored(key string) (keyRing *KeyRing, err error) {
 	keyRaw, err := armorUtils.Unarmor(key)
 	if err != nil {
 		return nil, err
@@ -285,8 +285,8 @@ func (pgp *GopenPGP) BuildKeyRingArmored(key string) (kr *KeyRing, err error) {
 }
 
 // UnmarshalJSON implements encoding/json.Unmarshaler.
-func (kr *KeyRing) UnmarshalJSON(b []byte) (err error) {
-	kr.entities = nil
+func (keyRing *KeyRing) UnmarshalJSON(b []byte) (err error) {
+	keyRing.entities = nil
 
 	keyObjs := []pgpKeyObject{}
 	if err = json.Unmarshal(b, &keyObjs); err != nil {
@@ -299,9 +299,9 @@ func (kr *KeyRing) UnmarshalJSON(b []byte) (err error) {
 
 	for i, ko := range keyObjs {
 		if i == 0 {
-			kr.FirstKeyID = ko.ID
+			keyRing.FirstKeyID = ko.ID
 		}
-		err = kr.readFrom(ko.PrivateKeyReader(), true)
+		err = keyRing.readFrom(ko.PrivateKeyReader(), true)
 		if err != nil {
 			return err
 		}
@@ -311,9 +311,9 @@ func (kr *KeyRing) UnmarshalJSON(b []byte) (err error) {
 }
 
 // Identities returns the list of identities associated with this key ring.
-func (kr *KeyRing) Identities() []*Identity {
+func (keyRing *KeyRing) Identities() []*Identity {
 	var identities []*Identity
-	for _, e := range kr.entities {
+	for _, e := range keyRing.entities {
 		for _, id := range e.Identities {
 			identities = append(identities, &Identity{
 				Name:  id.UserId.Name,
@@ -325,25 +325,25 @@ func (kr *KeyRing) Identities() []*Identity {
 }
 
 // KeyIds returns array of IDs of keys in this KeyRing.
-func (kr *KeyRing) KeyIds() []uint64 {
+func (keyRing *KeyRing) KeyIds() []uint64 {
 	var res []uint64
-	for _, e := range kr.entities {
+	for _, e := range keyRing.entities {
 		res = append(res, e.PrimaryKey.KeyId)
 	}
 	return res
 }
 
 // ReadArmoredKeyRing reads an armored data into keyring.
-func ReadArmoredKeyRing(r io.Reader) (kr *KeyRing, err error) {
-	kr = &KeyRing{}
-	err = kr.readFrom(r, true)
+func ReadArmoredKeyRing(r io.Reader) (keyRing *KeyRing, err error) {
+	keyRing = &KeyRing{}
+	err = keyRing.readFrom(r, true)
 	return
 }
 
 // ReadKeyRing reads an binary data into keyring.
-func ReadKeyRing(r io.Reader) (kr *KeyRing, err error) {
-	kr = &KeyRing{}
-	err = kr.readFrom(r, false)
+func ReadKeyRing(r io.Reader) (keyRing *KeyRing, err error) {
+	keyRing = &KeyRing{}
+	err = keyRing.readFrom(r, false)
 	return
 }
 
