@@ -24,21 +24,17 @@ crypto library](https://github.com/ProtonMail/crypto).
 
 ## Download/Install
 
-1. Run `go get -u github.com/ProtonMail/gopenpgp`, or manually `git clone` this
-   repository into `$GOPATH/src/github.com/ProtonMail/gopenpgp`.
+This package uses [Go Modules](https://github.com/golang/go/wiki/Modules), and
+thus requires Go 1.11+. If you're also using Go Modules, simply import it and
+start using it (see [Set up](#set-up)). If not, run:
 
-2. [Install Glide](https://github.com/Masterminds/glide#install):
+```bash
+go get github.com/ProtonMail/gopenpgp # or git clone this repository into the following path
+cd $GOPATH/src/github.com/ProtonMail/gopenpgp
+GO111MODULE=on go mod vendor
+```
 
-   ```bash
-   curl https://glide.sh/get | sh
-   ```
-
-3. Install dependencies using glide:
-
-   ```bash
-   cd $GOPATH/src/github.com/ProtonMail/gopenpgp
-   glide install
-   ```
+(After that, the code will also work in Go 1.10, but you need Go 1.11 for the `go mod` command.)
 
 ## Documentation
 
@@ -57,8 +53,8 @@ Go Mobile wiki: https://github.com/golang/go/wiki/Mobile
 4. Install Android SDK and NDK using Android Studio
 5. Set env: `export ANDROID_HOME="/AndroidSDK"` (path to your SDK)
 6. Init gomobile: `gomobile init -ndk /AndroidSDK/ndk-bundle/` (path to your NDK)
-
-7. Build examples:
+7. Copy Go module dependencies to the vendor directory: `go mod vendor`
+8. Build examples:
    `gomobile build -target=android  #or ios`
 
    Bind examples:
