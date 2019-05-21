@@ -352,7 +352,7 @@ func (keyRing *KeyRing) newKeyRingFromPGPKeyObject(keyObjs []pgpKeyObject) (erro
 		if i == 0 {
 			keyRing.FirstKeyID = ko.ID
 		}
-		err = keyRing.readFrom(ko.PrivateKeyReader(), true)
+		err := keyRing.readFrom(ko.PrivateKeyReader(), true)
 		if err != nil {
 			return err
 		}
@@ -363,7 +363,7 @@ func (keyRing *KeyRing) newKeyRingFromPGPKeyObject(keyObjs []pgpKeyObject) (erro
 // unmarshalJSON implements encoding/json.Unmarshaler.
 func unmarshalJSON(jsonData []byte) ([]pgpKeyObject, error) {
 	keyObjs := []pgpKeyObject{}
-	if err = json.Unmarshal(jsonData, &keyObjs); err != nil {
+	if err := json.Unmarshal(jsonData, &keyObjs); err != nil {
 		return nil, err
 	}
 
