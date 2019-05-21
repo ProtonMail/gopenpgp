@@ -25,10 +25,10 @@ type MIMECallbacks interface {
 }
 
 // DecryptMIMEMessage decrypts a MIME message.
-func (privateKeyRing *KeyRing) DecryptMIMEMessage(
+func (keyRing *KeyRing) DecryptMIMEMessage(
 	message *PGPMessage, verifyKey *KeyRing, callbacks MIMECallbacks, verifyTime int64,
 ) {
-	decryptedMessage, err := privateKeyRing.DecryptMessage(message, verifyKey, verifyTime)
+	decryptedMessage, err := keyRing.DecryptMessage(message, verifyKey, verifyTime)
 	if err != nil {
 		callbacks.OnError(err)
 		return

@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/ProtonMail/gopenpgp/constants"
-
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -101,79 +99,4 @@ func (keyRing *KeyRing) EncryptSessionKey(sessionSplit *SymmetricKey) ([]byte, e
 		return nil, err
 	}
 	return outbuf.Bytes(), nil
-}
-
-// DecryptSessionKeySymmetric decrypts the binary symmetrically encrypted
-// session key packet and returns the session key.
-func (pgp *GopenPGP) DecryptSessionKeySymmetric(keyPacket []byte, password string) (*SymmetricKey, error) {
-	keyReader := bytes.NewReader(keyPacket)
-	packets := packet.NewReader(keyReader)
-
-	var symKeys []*packet.SymmetricKeyEncrypted
-	for {
-
-		var p packet.Packet
-		var err error
-		if p, err = packets.Next(); err != nil {
-			break
-		}
-
-		switch p := p.(type) {
-		case *packet.SymmetricKeyEncrypted:
-			symKeys = append(symKeys, p)
-		}
-	}
-
-	pwdRaw := []byte(password)
-	// Try the symmetric passphrase first
-	if len(symKeys) != 0 && pwdRaw != nil {
-		for _, s := range symKeys {
-			key, cipherFunc, err := s.Decrypt(pwdRaw)
-			if err == nil {
-				return &SymmetricKey{
-					Key:  key,
-					Algo: getAlgo(cipherFunc),
-				}, nil
-			}
-
-		}
-	}
-
-	return nil, errors.New("password incorrect")
-}
-
-// EncryptSessionKeySymmetric encrypts the session key with the password and
-// returns a binary symmetrically encrypted session key packet.
-func (pgp *GopenPGP) EncryptSessionKeySymmetric(sessionSplit *SymmetricKey, password string) ([]byte, error) {
-	outbuf := &bytes.Buffer{}
-
-	cf := sessionSplit.GetCipherFunc()
-
-	if len(password) <= 0 {
-		return nil, errors.New("password can't be empty")
-	}
-
-	pwdRaw := []byte(password)
-
-	config := &packet.Config{
-		DefaultCipher: cf,
-	}
-
-	err := packet.SerializeSymmetricKeyEncryptedReuseKey(outbuf, sessionSplit.Key, pwdRaw, config)
-	if err != nil {
-		return nil, err
-	}
-	return outbuf.Bytes(), nil
-}
-
-func getAlgo(cipher packet.CipherFunction) string {
-	algo := constants.AES256
-	for k, v := range symKeyAlgos {
-		if v == cipher {
-			algo = k
-			break
-		}
-	}
-
-	return algo
 }

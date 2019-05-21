@@ -41,7 +41,7 @@ type PGPMessage struct {
 	Data []byte
 }
 
-// PGPMessage stores a PGP-encoded detached signature.
+// PGPSignature stores a PGP-encoded detached signature.
 type PGPSignature struct {
 	// The content of the message
 	Data []byte

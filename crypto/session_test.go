@@ -57,15 +57,15 @@ func TestSymmetricKeyPacket(t *testing.T) {
 
 	password := "I like encryption"
 
-	keyPacket, err := pgp.EncryptSessionKeySymmetric(symmetricKey, password)
+	keyPacket, err := symmetricKey.EncryptToKeyPacket(password)
 	if err != nil {
 		t.Fatal("Expected no error while generating key packet, got:", err)
 	}
 
-	_, err = pgp.DecryptSessionKeySymmetric(keyPacket, "Wrong password")
-	assert.EqualError(t, err, "password incorrect")
+	_, err = NewSymmetricKeyFromKeyPacket(keyPacket, "Wrong password")
+	assert.EqualError(t, err, "gopenpgp: password incorrect")
 
-	outputSymmetricKey, err := pgp.DecryptSessionKeySymmetric(keyPacket, password)
+	outputSymmetricKey, err := NewSymmetricKeyFromKeyPacket(keyPacket, password)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting key packet, got:", err)
 	}
