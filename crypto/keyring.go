@@ -34,7 +34,9 @@ type pgpKeyObject struct {
 	Version     int
 	Flags       int
 	PrivateKey  string
-	Primary int
+	Primary     int
+	Token       *string `json:",omitempty"`
+	Signature   *string `json:",omitempty"`
 }
 
 // PrivateKeyReader
@@ -284,19 +286,68 @@ func (pgp *GopenPGP) BuildKeyRingArmored(key string) (keyRing *KeyRing, err erro
 	return &KeyRing{entities: keyEntries}, err
 }
 
-// UnmarshalJSON implements encoding/json.Unmarshaler.
-func (keyRing *KeyRing) UnmarshalJSON(b []byte) (err error) {
+// ReadFromJSON reads multiple keys from a json array and fills the keyring
+func (keyRing *KeyRing) ReadFromJSON(jsonData []byte) (err error) {
+	keyObjs, err := unmarshalJSON(jsonData)
+	if err != nil {
+		return err
+	}
+
+	return keyRing.newKeyRingFromPGPKeyObject(keyObjs)
+}
+
+// UnlockJSONKeyRing reads keys from a JSON array, creates a newKeyRing,
+// then tries to unlock them with the provided keyRing using the token in the structure.
+// If the token is not available it will fall back to just reading the keys, and leave them locked.
+func (keyRing *KeyRing) UnlockJSONKeyRing(jsonData []byte) (newKeyRing *KeyRing, err error) {
+	keyObjs, err := unmarshalJSON(jsonData)
+	newKeyRing = &KeyRing{}
+	err = newKeyRing.newKeyRingFromPGPKeyObject(keyObjs)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, ko := range keyObjs {
+		if ko.Token == nil || ko.Signature == nil {
+			continue
+		}
+
+		message, err := NewPGPMessageFromArmored(*ko.Token)
+		if err != nil {
+			return nil, err
+		}
+
+		signature, err := NewPGPSignatureFromArmored(*ko.Signature)
+		if err != nil {
+			return nil, err
+		}
+
+		token, err := keyRing.Decrypt(message, nil, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		token, err = keyRing.Verify(token, signature, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		if !token.IsVerified() {
+			return nil, errors.New("gopenpgp: unable to verify token")
+		}
+
+		err = newKeyRing.Unlock(token.GetBinary())
+		if err != nil {
+			return nil, errors.New("gopenpgp: wrong token")
+		}
+	}
+
+	return newKeyRing, nil
+}
+
+// newKeyRingFromPGPKeyObject fills a KeyRing given an array of pgpKeyObject
+func (keyRing *KeyRing) newKeyRingFromPGPKeyObject(keyObjs []pgpKeyObject) (error) {
 	keyRing.entities = nil
-
-	keyObjs := []pgpKeyObject{}
-	if err = json.Unmarshal(b, &keyObjs); err != nil {
-		return
-	}
-
-	if len(keyObjs) == 0 {
-		return
-	}
-
 	for i, ko := range keyObjs {
 		if i == 0 {
 			keyRing.FirstKeyID = ko.ID
@@ -306,8 +357,21 @@ func (keyRing *KeyRing) UnmarshalJSON(b []byte) (err error) {
 			return err
 		}
 	}
-
 	return nil
+}
+
+// unmarshalJSON implements encoding/json.Unmarshaler.
+func unmarshalJSON(jsonData []byte) ([]pgpKeyObject, error) {
+	keyObjs := []pgpKeyObject{}
+	if err = json.Unmarshal(jsonData, &keyObjs); err != nil {
+		return nil, err
+	}
+
+	if len(keyObjs) == 0 {
+		return nil, errors.New("gopenpgp: no key found")
+	}
+
+	return keyObjs, nil
 }
 
 // Identities returns the list of identities associated with this key ring.
@@ -382,7 +446,7 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 	}
 
 	if len(filteredKeys) == 0 && hasExpiredEntity {
-		return filteredKeys, errors.New("all contacts keys are expired")
+		return filteredKeys, errors.New("gopenpgp: all contacts keys are expired")
 	}
 
 	return filteredKeys, nil

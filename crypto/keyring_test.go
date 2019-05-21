@@ -150,11 +150,11 @@ func TestKeyIds(t *testing.T) {
 	assert.Exactly(t, assertKeyIDs, keyIDs)
 }
 
-func TestUnMarshal(t *testing.T) {
+func TestReadFromJson(t *testing.T) {
 	decodedKeyRing := &KeyRing{}
-	err = decodedKeyRing.UnmarshalJSON([]byte(readTestFile("keyring_jsonKeys", false)))
+	err = decodedKeyRing.ReadFromJSON([]byte(readTestFile("keyring_jsonKeys", false)))
 	if err != nil {
-		t.Fatal("Expected no error while Unmarshaling JSON, got:", err)
+		t.Fatal("Expected no error while reading JSON, got:", err)
 	}
 
 	fingerprint, err := decodedKeyRing.GetFingerprint()
@@ -163,4 +163,25 @@ func TestUnMarshal(t *testing.T) {
 	}
 
 	assert.Exactly(t, "91eacacca6837890efa7000470e569d5c182bef6", fingerprint)
+}
+
+func TestUnlockJson(t *testing.T) {
+	userKeyRing, err := ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_userKey", false)))
+	if err != nil {
+		t.Fatal("Expected no error while creating keyring, got:", err)
+	}
+
+	err = userKeyRing.UnlockWithPassphrase("testpassphrase")
+	if err != nil {
+		t.Fatal("Expected no error while creating keyring, got:", err)
+	}
+
+	addressKeyRing, err := userKeyRing.UnlockJSONKeyRing([]byte(readTestFile("keyring_newJSONKeys", false)))
+	if err != nil {
+		t.Fatal("Expected no error while reading and decrypting JSON, got:", err)
+	}
+
+	for _, e := range addressKeyRing.entities {
+		assert.Exactly(t, false, e.PrivateKey.Encrypted)
+	}
 }
