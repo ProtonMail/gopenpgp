@@ -2,10 +2,10 @@ package crypto
 
 import (
 	"bytes"
+	"crypto"
 	"errors"
 	"io"
 	"io/ioutil"
-	"strings"
 	"math"
 	"time"
 
@@ -17,31 +17,11 @@ import (
 	"github.com/ProtonMail/gopenpgp/internal"
 )
 
-// EncryptMessage encrypts a CleartextMessage, outputs a PGPMessage.
+// Encrypt encrypts a PlainMessage, outputs a PGPMessage.
 // If an unlocked private key is also provided it will also sign the message.
 // plainText : the input
 // privateKey : (optional) to include signature in the message
-// trim : bool true if need to trim new lines
-func (keyRing *KeyRing) EncryptMessage(
-	message *CleartextMessage, privateKey *KeyRing, trimNewlines bool,
-) (*PGPMessage, error) {
-	plainText := message.GetString()
-	if trimNewlines {
-		plainText = internal.TrimNewlines(plainText)
-	}
-	encrypted, err := asymmetricEncrypt([]byte(plainText), keyRing, privateKey, false)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewPGPMessage(encrypted), nil
-}
-
-// EncryptMessage encrypts a BinaryMessage, outputs a PGPMessage.
-// If an unlocked private key is also provided it will also sign the message.
-// plainText : the input
-// privateKey : (optional) to include signature in the message
-func (keyRing *KeyRing) Encrypt(message *BinaryMessage, privateKey *KeyRing) (*PGPMessage, error) {
+func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error) {
 	encrypted, err := asymmetricEncrypt(message.GetBinary(), keyRing, privateKey, true)
 	if err != nil {
 		return nil, err
@@ -50,102 +30,49 @@ func (keyRing *KeyRing) Encrypt(message *BinaryMessage, privateKey *KeyRing) (*P
 	return NewPGPMessage(encrypted), nil
 }
 
-// DecryptMessage decrypts encrypted string using pgp keys, returning a CleartextMessage
+// Decrypt decrypts encrypted string using pgp keys, returning a PlainMessage
 // message    : PGPMessage
 // verifyKey  : Public key for signature verification (optional)
 // verifyTime : Time at verification (necessary only if verifyKey is not nil)
-func (keyRing *KeyRing) DecryptMessage(
-	message *PGPMessage, verifyKey *KeyRing, verifyTime int64,
-) (*CleartextMessage, error) {
-	encryptedIO := bytes.NewReader(message.GetBinary())
-	decrypted, verifyStatus, err := asymmetricDecrypt(encryptedIO, keyRing, verifyKey, verifyTime)
-	if err != nil {
-		return nil, err
-	}
-
-	cleartext := NewCleartextMessage(string(decrypted))
-	cleartext.Verified = verifyStatus
-	return cleartext, nil
-}
-
-// Decrypt decrypts encrypted string using pgp keys, returning a BinaryMessage
-// message    : PGPMessage
-// verifyKey  : Public key for signature verification (optional)
-// verifyTime : Time at verification (necessary only if verifyKey is not nil)
-func (keyRing *KeyRing) Decrypt(
-	message *PGPMessage, verifyKey *KeyRing, verifyTime int64,
-) (*BinaryMessage, error) {
+func (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, error) {
 	decrypted, verifyStatus, err := asymmetricDecrypt(message.NewReader(), keyRing, verifyKey, verifyTime)
 	if err != nil {
 		return nil, err
 	}
 
-	binMessage := NewBinaryMessage(decrypted)
+	binMessage := NewPlainMessage(decrypted)
 	binMessage.Verified = verifyStatus
 	return binMessage, nil
 }
 
-// SignMessage generates a PGPSignature given a CleartextMessage
-func (keyRing *KeyRing) SignMessage (
-	message *CleartextMessage, trimNewlines bool,
-) (*CleartextMessage, *PGPSignature, error) {
-	plainText := message.GetString()
-	if trimNewlines {
-		plainText = internal.TrimNewlines(plainText)
-	}
-
-	att := strings.NewReader(plainText)
+// Sign generates and attaches a PGPSignature to a given PlainMessage
+func (keyRing *KeyRing) Sign(message *PlainMessage) (*PlainMessage, error) {
 	signEntity, err := keyRing.GetSigningEntity()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pgp.getTimeGenerator()}
-	var outBuf bytes.Buffer
-
-	//SignText
-	if err := openpgp.DetachSignText(&outBuf, signEntity, att, config); err != nil {
-		return nil, nil, err
-	}
-
-	return NewCleartextMessage(plainText), NewPGPSignature(outBuf.Bytes()), nil
-}
-
-// SignMessage generates a PGPSignature given a BinaryMessage
-func (keyRing *KeyRing) Sign(message *BinaryMessage) (*BinaryMessage, *PGPSignature, error) {
-	signEntity, err := keyRing.GetSigningEntity()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pgp.getTimeGenerator()}
+	config := &packet.Config{DefaultHash:crypto.SHA512 , Time: pgp.getTimeGenerator()}
 	var outBuf bytes.Buffer
 	//sign bin
 	if err := openpgp.DetachSign(&outBuf, signEntity, message.NewReader(), config); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return message, NewPGPSignature(outBuf.Bytes()), nil
+	message.Signature = NewPGPSignature(outBuf.Bytes())
+	return message, nil
 }
 
-
-// VerifyMessage verifies a PGPSignature given the corresponding CleartextMessage
-// and returns a CleartextMessage with the filled Verified field.
-func (keyRing *KeyRing) VerifyMessage(
-	message *CleartextMessage, signature *PGPSignature, verifyTime int64,
-) (*CleartextMessage, error) {
+// Verify verifies a PlainMessage with embedded a PGPSignature
+// and returns a PlainMessage with the filled Verified field.
+func (keyRing *KeyRing) Verify(message *PlainMessage, verifyTime int64) (*PlainMessage, error) {
 	var err error
-	message.Verified, err = verifySignature(keyRing.GetEntities(), message.NewReader(), signature.GetBinary(), verifyTime)
-	return message, err
-}
-
-// Verify verifies a PGPSignature given the corresponding BinaryMessage
-// and returns a BinaryMessage with the filled Verified field.
-func (keyRing *KeyRing) Verify(
-	message *BinaryMessage, signature *PGPSignature, verifyTime int64,
-) (*BinaryMessage, error) {
-	var err error
-	message.Verified, err = verifySignature(keyRing.GetEntities(), message.NewReader(), signature.GetBinary(), verifyTime)
+	message.Verified, err = verifySignature(
+		keyRing.GetEntities(),
+		message.NewReader(),
+		message.GetSignature().GetBinary(),
+		verifyTime,
+	)
 	return message, err
 }
 

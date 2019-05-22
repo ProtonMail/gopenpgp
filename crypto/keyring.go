@@ -327,7 +327,8 @@ func (keyRing *KeyRing) UnlockJSONKeyRing(jsonData []byte) (newKeyRing *KeyRing,
 			return nil, err
 		}
 
-		token, err = keyRing.Verify(token, signature, 0)
+		token.SetSignature(signature)
+		token, err = keyRing.Verify(token, 0)
 		if err != nil {
 			return nil, err
 		}

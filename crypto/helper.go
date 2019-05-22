@@ -6,14 +6,23 @@ import (
 	"github.com/ProtonMail/gopenpgp/constants"
 )
 
-// EncryptMessageSymmetricHelper encrypts a string with a passphrase and an algorithm chosen from constants.*
-func (pgp *GopenPGP) EncryptMessageSymmetricHelper(passphrase, plaintext, algo string) (ciphertext string, err error){
+// EncryptMessageWithPasswordHelper encrypts a string with a passphrase and an algorithm chosen from constants.*
+func (pgp *GopenPGP) EncryptMessageWithPasswordHelper(
+	passphrase, plaintext string, providedAlgo ...string,
+) (ciphertext string, err error){
 	var pgpMessage *PGPMessage
 
-	var cleartextMessage = NewCleartextMessage(plaintext)
+	var algo string
+	if len(providedAlgo) == 0 {
+		algo = constants.AES256
+	} else {
+		algo = providedAlgo[0]
+	}
+
+	var message = NewPlainMessageFromString(plaintext)
 	var key = NewSymmetricKeyFromPassphrase(passphrase, algo)
 
-	if pgpMessage, err = key.EncryptMessage(cleartextMessage, false); err != nil {
+	if pgpMessage, err = key.Encrypt(message); err != nil {
 		return "", err
 	}
 
@@ -24,10 +33,10 @@ func (pgp *GopenPGP) EncryptMessageSymmetricHelper(passphrase, plaintext, algo s
 	return ciphertext, nil
 }
 
-// DecryptMessageSymmetricHelper decrypts an armored message with a passphrase.
+// DecryptMessageWithPasswordHelper decrypts an armored message with a passphrase.
 // The algorithm is derived from the armoring.
-func (pgp *GopenPGP) DecryptMessageSymmetricHelper(passphrase, ciphertext string) (plaintext string, err error){
-	var cleartextMessage *CleartextMessage
+func (pgp *GopenPGP) DecryptMessageWithPasswordHelper(passphrase, ciphertext string) (plaintext string, err error){
+	var message *PlainMessage
 	var pgpMessage *PGPMessage
 
 	var key = NewSymmetricKeyFromPassphrase(passphrase, "")
@@ -36,21 +45,11 @@ func (pgp *GopenPGP) DecryptMessageSymmetricHelper(passphrase, ciphertext string
 		return "", err
 	}
 
-	if cleartextMessage, err = key.DecryptMessage(pgpMessage); err != nil {
+	if message, err = key.Decrypt(pgpMessage); err != nil {
 		return "", err
 	}
 
-	return cleartextMessage.GetString(), nil
-}
-
-// EncryptMessageAES128Helper encrypts a string with a passphrase using AES-128
-func (pgp *GopenPGP) EncryptMessageAES128Helper(passphrase, plaintext string) (ciphertext string, err error){
-	return pgp.EncryptMessageSymmetricHelper(passphrase, plaintext, constants.AES128)
-}
-
-// EncryptMessageAES256Helper encrypts a string with a passphrase using AES-256
-func (pgp *GopenPGP) EncryptMessageAES256Helper(passphrase, plaintext string) (ciphertext string, err error){
-	return pgp.EncryptMessageSymmetricHelper(passphrase, plaintext, constants.AES256)
+	return message.GetString(), nil
 }
 
 // EncryptMessageArmoredHelper generates an armored PGP message given a plaintext and an armored public key
@@ -58,13 +57,13 @@ func (pgp *GopenPGP) EncryptMessageArmoredHelper(publicKey, plaintext string) (c
 	var publicKeyRing *KeyRing
 	var pgpMessage *PGPMessage
 
-	var cleartextMessage = NewCleartextMessage(plaintext)
+	var message = NewPlainMessageFromString(plaintext)
 
 	if publicKeyRing, err = pgp.BuildKeyRingArmored(publicKey); err != nil {
 		return "", err
 	}
 
-	if pgpMessage, err = publicKeyRing.EncryptMessage(cleartextMessage, nil, false); err != nil {
+	if pgpMessage, err = publicKeyRing.Encrypt(message, nil); err != nil {
 		return "", err
 	}
 
@@ -83,7 +82,7 @@ func (pgp *GopenPGP) EncryptSignMessageArmoredHelper(
 	var publicKeyRing, privateKeyRing *KeyRing
 	var pgpMessage *PGPMessage
 
-	var cleartextMessage = NewCleartextMessage(plaintext)
+	var message = NewPlainMessageFromString(plaintext)
 
 	if publicKeyRing, err = pgp.BuildKeyRingArmored(publicKey); err != nil {
 		return "", err
@@ -97,7 +96,7 @@ func (pgp *GopenPGP) EncryptSignMessageArmoredHelper(
 		return "", err
 	}
 
-	if pgpMessage, err = publicKeyRing.EncryptMessage(cleartextMessage, privateKeyRing, false); err != nil {
+	if pgpMessage, err = publicKeyRing.Encrypt(message, privateKeyRing); err != nil {
 		return "", err
 	}
 
@@ -114,7 +113,7 @@ func (pgp *GopenPGP) DecryptMessageArmoredHelper(
 ) (plaintext string, err error){
 	var privateKeyRing *KeyRing
 	var pgpMessage *PGPMessage
-	var cleartextMessage *CleartextMessage
+	var message *PlainMessage
 
 	if privateKeyRing, err = pgp.BuildKeyRingArmored(privateKey); err != nil {
 		return "", err
@@ -128,11 +127,11 @@ func (pgp *GopenPGP) DecryptMessageArmoredHelper(
 		return "", err
 	}
 
-	if cleartextMessage, err = privateKeyRing.DecryptMessage(pgpMessage, nil, 0); err != nil {
+	if message, err = privateKeyRing.Decrypt(pgpMessage, nil, 0); err != nil {
 		return "", err
 	}
 
-	return cleartextMessage.GetString(), nil
+	return message.GetString(), nil
 }
 
 // DecryptVerifyMessageArmoredHelper decrypts an armored PGP message given a private key and its passphrase
@@ -143,7 +142,7 @@ func (pgp *GopenPGP) DecryptVerifyMessageArmoredHelper(
 ) (plaintext string, err error){
 	var publicKeyRing, privateKeyRing *KeyRing
 	var pgpMessage *PGPMessage
-	var cleartextMessage *CleartextMessage
+	var message *PlainMessage
 
 	if publicKeyRing, err = pgp.BuildKeyRingArmored(publicKey); err != nil {
 		return "", err
@@ -161,15 +160,15 @@ func (pgp *GopenPGP) DecryptVerifyMessageArmoredHelper(
 		return "", err
 	}
 
-	if cleartextMessage, err = privateKeyRing.DecryptMessage(pgpMessage, publicKeyRing, pgp.GetUnixTime()); err != nil {
+	if message, err = privateKeyRing.Decrypt(pgpMessage, publicKeyRing, pgp.GetUnixTime()); err != nil {
 		return "", err
 	}
 
-	if !cleartextMessage.IsVerified() {
+	if !message.IsVerified() {
 		return "", errors.New("gopenpgp: unable to verify message")
 	}
 
-	return cleartextMessage.GetString(), nil
+	return message.GetString(), nil
 }
 
 // EncryptSignAttachmentHelper encrypts an attachment using a detached signature, given a publicKey, a privateKey
@@ -181,9 +180,8 @@ func (pgp *GopenPGP) EncryptSignAttachmentHelper(
 ) (keyPacket, dataPacket, signature []byte, err error){
 	var publicKeyRing, privateKeyRing *KeyRing
 	var packets *PGPSplitMessage
-	var detachedSignature *PGPSignature
 
-	var binMessage = NewBinaryMessage(plainData)
+	var binMessage = NewPlainMessage(plainData)
 
 	if publicKeyRing, err = pgp.BuildKeyRingArmored(publicKey); err != nil {
 		return nil, nil, nil, err
@@ -201,11 +199,11 @@ func (pgp *GopenPGP) EncryptSignAttachmentHelper(
 		return nil, nil, nil, err
 	}
 
-	if binMessage, detachedSignature, err = privateKeyRing.Sign(binMessage); err != nil {
+	if binMessage, err = privateKeyRing.Sign(binMessage); err != nil {
 		return nil, nil, nil, err
 	}
 
-	return packets.GetKeyPacket(), packets.GetDataPacket(), detachedSignature.GetBinary(), nil
+	return packets.GetKeyPacket(), packets.GetDataPacket(), binMessage.GetSignature().GetBinary(), nil
 }
 
 // DecryptVerifyAttachmentHelper decrypts and verifies an attachment split into the keyPacket, dataPacket
@@ -218,7 +216,7 @@ func (pgp *GopenPGP) DecryptVerifyAttachmentHelper(
 ) (plainData []byte, err error){
 	var publicKeyRing, privateKeyRing *KeyRing
 	var detachedSignature *PGPSignature
-	var plainMessage *BinaryMessage
+	var message *PlainMessage
 
 	var packets = NewPGPSplitMessage(keyPacket, dataPacket);
 
@@ -238,17 +236,18 @@ func (pgp *GopenPGP) DecryptVerifyAttachmentHelper(
 		return nil, err
 	}
 
-	if plainMessage, err = privateKeyRing.DecryptAttachment(packets); err != nil {
+	if message, err = privateKeyRing.DecryptAttachment(packets); err != nil {
 		return nil, err
 	}
 
-	if plainMessage, err = publicKeyRing.Verify(plainMessage, detachedSignature, pgp.GetUnixTime()); err != nil {
+	message.SetSignature(detachedSignature)
+	if message, err = publicKeyRing.Verify(message, pgp.GetUnixTime()); err != nil {
 		return nil, errors.New("gopenpgp: unable to verify attachment")
 	}
 
-	if !plainMessage.IsVerified() {
+	if !message.IsVerified() {
 		return nil, errors.New("gopenpgp: unable to verify attachment")
 	}
 
-	return plainMessage.GetBinary(), nil
+	return message.GetBinary(), nil
 }

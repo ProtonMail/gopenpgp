@@ -87,9 +87,9 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 	return attachmentProc, nil
 }
 
-// EncryptAttachment encrypts a file given a BinaryMessage and a fileName.
+// EncryptAttachment encrypts a file given a PlainMessage and a fileName.
 // Returns a PGPSplitMessage containing a session key packet and symmetrically encrypted data
-func (keyRing *KeyRing) EncryptAttachment(message *BinaryMessage, fileName string) (*PGPSplitMessage, error) {
+func (keyRing *KeyRing) EncryptAttachment(message *PlainMessage, fileName string) (*PGPSplitMessage, error) {
 	ap, err := keyRing.newAttachmentProcessor(len(message.GetBinary()), fileName, -1)
 	if err != nil {
 		return nil, err
@@ -113,8 +113,8 @@ func (keyRing *KeyRing) NewLowMemoryAttachmentProcessor(
 }
 
 // DecryptAttachment takes a PGPSplitMessage, containing a session key packet and symmetrically encrypted data
-// and returns a decrypted BinaryMessage
-func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*BinaryMessage, error) {
+// and returns a decrypted PlainMessage
+func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*PlainMessage, error) {
 	privKeyEntries := keyRing.entities
 
 	keyReader := bytes.NewReader(message.GetKeyPacket())
@@ -135,5 +135,5 @@ func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*BinaryMess
 		return nil, err
 	}
 
-	return NewBinaryMessage(b), nil
+	return NewPlainMessage(b), nil
 }

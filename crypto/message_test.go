@@ -10,19 +10,19 @@ import (
 )
 
 func TestTextMessageEncryptionWithPassword(t *testing.T) {
-	var message = NewCleartextMessage("The secret code is... 1, 2, 3, 4, 5")
+	var message = NewPlainMessageFromString("The secret code is... 1, 2, 3, 4, 5")
 
 	// Encrypt data with password
-	encrypted, err := testSymmetricKey.EncryptMessage(message, true)
+	encrypted, err := testSymmetricKey.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 	// Decrypt data with wrong password
-	_, err = testWrongSymmetricKey.DecryptMessage(encrypted)
+	_, err = testWrongSymmetricKey.Decrypt(encrypted)
 	assert.NotNil(t, err)
 
 	// Decrypt data with the good password
-	decrypted, err := testSymmetricKey.DecryptMessage(encrypted)
+	decrypted, err := testSymmetricKey.Decrypt(encrypted)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
@@ -33,7 +33,7 @@ func TestTextMessageEncryptionWithPassword(t *testing.T) {
 
 func TestBinaryMessageEncryptionWithPassword(t *testing.T) {
 	binData, _ := base64.StdEncoding.DecodeString("ExXmnSiQ2QCey20YLH6qlLhkY3xnIBC1AwlIXwK/HvY=")
-	var message = NewBinaryMessage(binData)
+	var message = NewPlainMessage(binData)
 
 	// Encrypt data with password
 	encrypted, err := testSymmetricKey.Encrypt(message)
@@ -55,7 +55,7 @@ func TestBinaryMessageEncryptionWithPassword(t *testing.T) {
 }
 
 func TestTextMessageEncryption(t *testing.T) {
-	var message = NewCleartextMessage("plain text")
+	var message = NewPlainMessageFromString("plain text")
 
 	testPublicKeyRing, _ = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_publicKey", false)))
 	testPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))
@@ -66,12 +66,12 @@ func TestTextMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error unlocking privateKey, got:", err)
 	}
 
-	ciphertext, err := testPublicKeyRing.EncryptMessage(message, testPrivateKeyRing, false)
+	ciphertext, err := testPublicKeyRing.Encrypt(message, testPrivateKeyRing)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	decrypted, err := testPrivateKeyRing.DecryptMessage(ciphertext, testPublicKeyRing, pgp.GetUnixTime())
+	decrypted, err := testPrivateKeyRing.Decrypt(ciphertext, testPublicKeyRing, pgp.GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
@@ -82,7 +82,7 @@ func TestTextMessageEncryption(t *testing.T) {
 
 func TestBinaryMessageEncryption(t *testing.T) {
 	binData, _ := base64.StdEncoding.DecodeString("ExXmnSiQ2QCey20YLH6qlLhkY3xnIBC1AwlIXwK/HvY=")
-	var message = NewBinaryMessage(binData)
+	var message = NewPlainMessage(binData)
 
 	testPublicKeyRing, _ = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_publicKey", false)))
 	testPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))

@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"regexp"
 	"runtime"
+	"strings"
 
 	"github.com/ProtonMail/gopenpgp/armor"
 	"github.com/ProtonMail/gopenpgp/constants"
@@ -19,20 +20,14 @@ import (
 
 // ---- MODELS -----
 
-// PlainTextMessage stores an unencrypted text message.
-type CleartextMessage struct {
-	// The content of the message
-	Text string
-	// If the decoded message was correctly signed. See constants.SIGNATURE* for all values.
- 	Verified int
-}
-
-// BinaryMessage stores an unencrypted binary message.
-type BinaryMessage struct {
+// PlainMessage stores an unencrypted message.
+type PlainMessage struct {
 	// The content of the message
 	Data []byte
 	// If the decoded message was correctly signed. See constants.SIGNATURE* for all values.
  	Verified int
+	// Optional signature
+	Signature *PGPSignature
 }
 
 // PGPMessage stores a PGP-encrypted message.
@@ -43,7 +38,7 @@ type PGPMessage struct {
 
 // PGPSignature stores a PGP-encoded detached signature.
 type PGPSignature struct {
-	// The content of the message
+	// The content of the signature
 	Data []byte
 }
 
@@ -56,22 +51,21 @@ type PGPSplitMessage struct {
 
 // ---- GENERATORS -----
 
-// NewCleartextMessage generates a new CleartextMessage ready for encryption,
-// signature, or verification from the plaintext.
-func NewCleartextMessage(text string) (*CleartextMessage) {
-	return &CleartextMessage {
-		Text: text,
+// NewPlainMessage generates a new PlainMessage ready for encryption,
+// signature, or verification from the unencrypted binary data.
+func NewPlainMessage(data []byte) (*PlainMessage) {
+	return &PlainMessage {
+		Data: data,
 		Verified: constants.SIGNATURE_NOT_SIGNED,
 	}
 }
 
-// NewBinaryMessage generates a new BinaryMessage ready for encryption,
-// signature, or verification from the unencrypted bianry data.
-func NewBinaryMessage(data []byte) (*BinaryMessage) {
-	return &BinaryMessage {
-		Data: data,
-		Verified: constants.SIGNATURE_NOT_SIGNED,
-	}
+// NewPlainMessageFromString generates a new PlainMessage canonicalizing and trimming the newlines,
+// ready for encryption, signature, or verification from an unencrypted string.
+func NewPlainMessageFromString(text string) (*PlainMessage) {
+	text = strings.Replace(strings.Replace(text, "\r\n", "\n", -1), "\n", "\r\n", -1)
+	data := []byte(internal.TrimNewlines(text))
+	return NewPlainMessage(data)
 }
 
 // NewPGPMessage generates a new PGPMessage from the unarmored binary data.
@@ -144,53 +138,64 @@ func NewPGPSignatureFromArmored(armored string) (*PGPSignature, error) {
 
 // ---- MODEL METHODS -----
 
-// GetVerification returns the verification status of a message, to use after the KeyRing.Decrypt* or KeyRing.Verify*
-// functions. The int value returned is to compare to constants.SIGNATURE*.
-func (msg *CleartextMessage) GetVerification() int {
-	return msg.Verified
-}
-
-// IsVerified returns true if the message is signed and the signature is valid.
-// To use after the KeyRing.Decrypt* or KeyRing.Verify* functions.
-func (msg *CleartextMessage) IsVerified() bool {
-	return msg.Verified == constants.SIGNATURE_OK
-}
-
-// GetString returns the content of the message as a string
-func (msg *CleartextMessage) GetString() string {
-	return msg.Text
-}
-
-// NewReader returns a New io.Reader for the text of the message
-func (msg *CleartextMessage) NewReader() io.Reader {
-	return bytes.NewReader(bytes.NewBufferString(msg.GetString()).Bytes())
-}
-
-// GetVerification returns the verification status of a message, to use after the KeyRing.Decrypt* or KeyRing.Verify*
-// functions. The int value returned is to compare to constants.SIGNATURE*.
-func (msg *BinaryMessage) GetVerification() int {
-	return msg.Verified
-}
-
-// IsVerified returns true if the message is signed and the signature is valid.
-// To use after the KeyRing.Decrypt* or KeyRing.Verify* functions.
-func (msg *BinaryMessage) IsVerified() bool {
-	return msg.Verified == constants.SIGNATURE_OK
-}
-
 // GetBinary returns the binary content of the message as a []byte
-func (msg *BinaryMessage) GetBinary() []byte {
+func (msg *PlainMessage) GetBinary() []byte {
 	return msg.Data
 }
 
+// GetString returns the content of the message as a string
+func (msg *PlainMessage) GetString() string {
+	return string(msg.Data)
+}
+
+// GetBase64 returns the base-64 encoded binary content of the message as a string
+func (msg *PlainMessage) GetBase64() string {
+	return base64.StdEncoding.EncodeToString(msg.Data)
+}
+
+// GetVerification returns the verification status of a message, to use after the KeyRing.Decrypt* or KeyRing.Verify*
+// functions. The int value returned is to compare to constants.SIGNATURE*.
+func (msg *PlainMessage) GetVerification() int {
+	return msg.Verified
+}
+
+// IsVerified returns true if the message is signed and the signature is valid.
+// To use after the KeyRing.Decrypt* or KeyRing.Verify* functions.
+func (msg *PlainMessage) IsVerified() bool {
+	return msg.Verified == constants.SIGNATURE_OK
+}
+
 // NewReader returns a New io.Reader for the bianry data of the message
-func (msg *BinaryMessage) NewReader() io.Reader {
+func (msg *PlainMessage) NewReader() io.Reader {
 	return bytes.NewReader(msg.GetBinary())
 }
 
-// GetBinary returns the base-64 encoded binary content of the message as a string
-func (msg *BinaryMessage) GetBase64() string {
-	return base64.StdEncoding.EncodeToString(msg.Data)
+// GetSignature returns the signature of
+func (msg *PlainMessage) GetSignature() *PGPSignature {
+	return msg.Signature
+}
+
+// GetSignature returns the signature of
+func (msg *PlainMessage) SetSignature(sig *PGPSignature) {
+	msg.Signature = sig
+}
+
+// GetArmored returns the armored message as a string
+func (msg *PlainMessage) GetArmored() (string, error) {
+	if msg.Signature == nil {
+		return "", errors.New("gopenpgp: unable to armor unsigned message")
+	}
+
+	return armor.ArmorSignedPlainText(msg.Data, msg.Signature.Data)
+}
+
+// GetArmoredSignature returns the armored detached signature as a string
+func (msg *PlainMessage) GetArmoredSignature() (string, error) {
+	if msg.Signature == nil {
+		return "", errors.New("gopenpgp: unable to armor unsigned message")
+	}
+
+	return msg.Signature.GetArmored()
 }
 
 // GetBinary returns the unarmored binary content of the message as a []byte

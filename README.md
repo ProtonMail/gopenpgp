@@ -89,10 +89,10 @@ var pgp = crypto.GopenPGP{}
 const password = "my secret password"
 
 // Encrypt data with password
-armor, err := pgp.EncryptMessageAES256Helper(password, "my message")
+armor, err := pgp.EncryptMessageWithPasswordHelper(password, "my message")
 
 // Decrypt data with password
-message, err := pgp.DecryptMessageSymmetricHelper(password, armor)
+message, err := pgp.DecryptMessageWithPasswordHelper(password, armor)
 ```
 
 To use more encryption algorithms:
@@ -101,10 +101,10 @@ import "github.com/ProtonMail/gopenpgp/constants"
 var pgp = crypto.GopenPGP{}
 
 // Encrypt data with password
-armor, err := pgp.EncryptMessageSymmetricHelper(password, "my message", constants.ThreeDES)
+armor, err := pgp.EncryptMessageWithPasswordHelper(password, "my message", constants.ThreeDES)
 
 // Decrypt data with password
-message, err := pgp.DecryptMessageSymmetricHelper(password, armor)
+message, err := pgp.DecryptMessageWithPasswordHelper(password, armor)
 ```
 
 To encrypt binary data, reuse the key multiple times, or use more advanced modes:
@@ -113,7 +113,7 @@ import "github.com/ProtonMail/gopenpgp/constants"
 var pgp = crypto.GopenPGP{}
 
 var key = crypto.NewSymmetricKey("my secret password", constants.AES256)
-var message = crypto.BinaryMessage(data)
+var message = crypto.NewPlainMessage(data)
 
 // Encrypt data with password
 encrypted, err := key.Encrypt(message)
@@ -144,7 +144,7 @@ const passphrase = `the passphrase of the private key` // what the privKey is en
 armor, err := pgp.EncryptMessageArmoredHelper(pubkey, "plain text")
 
 // decrypt armored encrypted message using the private key
-decrypted, err := pgp.DecryptMessage(privkey, passphrase, armor)
+decrypted, err := pgp.DecryptMessageArmoredHelper(privkey, passphrase, armor)
 ```
 
 With signatures:
@@ -162,7 +162,7 @@ decrypted, err := pgp.DecryptVerifyMessageArmoredHelper(pubkey, privkey, passphr
 With binary data or advanced modes:
 ```go
 
-var binMessage = NewBinaryMessage(data)
+var binMessage = NewPlainMessage(data)
 
 publicKeyRing, err := pgp.BuildKeyRingArmored(publicKey)
 privateKeyRing, err := pgp.BuildKeyRingArmored(privateKey)
@@ -172,10 +172,10 @@ pgpMessage, err := publicKeyRing.Encrypt(binMessage, privateKeyRing)
 // Armored message in pgpMessage.GetArmored()
 // pgpMessage obtained from NewPGPMessageFromArmored(ciphertext)
 
-cleartextMessage, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, pgp.GetUnixTime())
+message, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, pgp.GetUnixTime())
 
-// Original data in cleartextMessage.GetString()
-if cleartextMessage.IsVerified() {
+// Original data in message.GetString()
+if message.IsVerified() {
   // verification success
 }
 ```
@@ -255,7 +255,7 @@ const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 -----END PGP PRIVATE KEY BLOCK-----` // encrypted private key
 const passphrase = "LongSecret"
 
-var message = NewBinaryMessage(data)
+var message = NewPlainMessage(data)
 
 signingKeyRing, err := pgp.BuildKeyRingArmored(privkey)
 signingKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with passphrase
@@ -277,7 +277,7 @@ const signature = `-----BEGIN PGP SIGNATURE-----
 ...
 -----END PGP SIGNATURE-----`
 
-message := NewBinaryMessage("Verified message")
+message := NewPlainMessage("Verified message")
 pgpSignature, err := NewPGPSignatureFromArmored(signature)
 signingKeyRing, err := pgp.BuildKeyRingArmored(pubkey)
 

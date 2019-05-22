@@ -8,7 +8,6 @@ import (
 	"io"
 
 	"github.com/ProtonMail/gopenpgp/constants"
-	"github.com/ProtonMail/gopenpgp/internal"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
@@ -74,27 +73,10 @@ func newSymmetricKeyFromEncrypted(ek *packet.EncryptedKey) (*SymmetricKey, error
 	return NewSymmetricKey(ek.Key, algo), nil
 }
 
-// EncryptMessage encrypts a CleartextMessage to PGPMessage with a SymmetricKey
-// plainText: CleartextMessage
-// trimNewlines bool: if trim new lines before encryption
+// Encrypt encrypts a PlainMessage to PGPMessage with a SymmetricKey
+// plainText: PlainMessage
 // output: PGPMessage
-func (simmetricKey *SymmetricKey) EncryptMessage(message *CleartextMessage, trimNewlines bool) (*PGPMessage, error) {
-	plainText := message.GetString()
-	if trimNewlines {
-		plainText = internal.TrimNewlines(plainText)
-	}
-	encrypted, err := symmetricEncrypt([]byte(plainText), simmetricKey)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewPGPMessage(encrypted), nil
-}
-
-// Encrypt encrypts a BinaryMessage to PGPMessage with a SymmetricKey
-// plainText: BinaryMessage
-// output: PGPMessage
-func (simmetricKey *SymmetricKey) Encrypt(message *BinaryMessage) (*PGPMessage, error) {
+func (simmetricKey *SymmetricKey) Encrypt(message *PlainMessage) (*PGPMessage, error) {
 	encrypted, err := symmetricEncrypt(message.GetBinary(), simmetricKey)
 	if err != nil {
 		return nil, err
@@ -103,30 +85,16 @@ func (simmetricKey *SymmetricKey) Encrypt(message *BinaryMessage) (*PGPMessage, 
 	return NewPGPMessage(encrypted), nil
 }
 
-// DecryptMessage decrypts a password protected text PGPMessage
-// encrypted: PGPMessage
-// output: CleartextMessage
-func (simmetricKey *SymmetricKey) DecryptMessage(message *PGPMessage) (*CleartextMessage, error) {
-	decrypted, err := symmetricDecrypt(message.NewReader(), simmetricKey)
-	if err != nil {
-		return nil, err
-	}
-
-	cleartext := NewCleartextMessage(string(decrypted))
-	cleartext.Verified = constants.SIGNATURE_NOT_SIGNED
-	return cleartext, nil
-}
-
 // Decrypt decrypts password protected pgp binary messages
 // encrypted: PGPMessage
-// output: BinaryMessage
-func (simmetricKey *SymmetricKey) Decrypt(message *PGPMessage) (*BinaryMessage, error) {
+// output: PlainMessage
+func (simmetricKey *SymmetricKey) Decrypt(message *PGPMessage) (*PlainMessage, error) {
 	decrypted, err := symmetricDecrypt(message.NewReader(), simmetricKey)
 	if err != nil {
 		return nil, err
 	}
 
-	binMessage := NewBinaryMessage(decrypted)
+	binMessage := NewPlainMessage(decrypted)
 	binMessage.Verified = constants.SIGNATURE_NOT_SIGNED
 	return binMessage, nil
 }

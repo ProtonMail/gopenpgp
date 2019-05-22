@@ -40,7 +40,7 @@ func TestAttachmentSetKey(t *testing.T) {
 
 func TestAttachnentEncryptDecrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
-	var message = NewBinaryMessage([]byte(testAttachmentCleartext))
+	var message = NewPlainMessage([]byte(testAttachmentCleartext))
 
 	encSplit, err := testPrivateKeyRing.EncryptAttachment(message, "s.txt")
 	if err != nil {

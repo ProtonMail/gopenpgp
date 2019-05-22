@@ -28,7 +28,7 @@ type MIMECallbacks interface {
 func (keyRing *KeyRing) DecryptMIMEMessage(
 	message *PGPMessage, verifyKey *KeyRing, callbacks MIMECallbacks, verifyTime int64,
 ) {
-	decryptedMessage, err := keyRing.DecryptMessage(message, verifyKey, verifyTime)
+	decryptedMessage, err := keyRing.Decrypt(message, verifyKey, verifyTime)
 	if err != nil {
 		callbacks.OnError(err)
 		return
