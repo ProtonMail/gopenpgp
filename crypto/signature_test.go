@@ -33,19 +33,12 @@ func TestSignTextDetached(t *testing.T) {
 		t.Fatal("Cannot decrypt private key:", err)
 	}
 
-	message, err = signingKeyRing.Sign(NewPlainMessageFromString(signedPlainText))
+	message, textSignature, err = signingKeyRing.SignDetached(NewPlainMessageFromString(signedPlainText))
 	if err != nil {
 		t.Fatal("Cannot generate signature:", err)
 	}
 
-	armored, err :=  message.GetArmored()
-	if err != nil {
-		t.Fatal("Cannot armor message:", err)
-	}
-
-	assert.Regexp(t, signedMessageTest, armored)
-
-	armoredSignature, err :=  message.GetArmoredSignature()
+	armoredSignature, err :=  textSignature.GetArmored()
 	if err != nil {
 		t.Fatal("Cannot armor signature:", err)
 	}
@@ -54,7 +47,7 @@ func TestSignTextDetached(t *testing.T) {
 }
 
 func TestVerifyTextDetachedSig(t *testing.T) {
-	signedMessage, err := signingKeyRing.Verify(message, testTime)
+	signedMessage, err := signingKeyRing.VerifyDetached(message, textSignature, testTime)
 	if err != nil {
 		t.Fatal("Cannot verify plaintext signature:", err)
 	}
@@ -64,8 +57,7 @@ func TestVerifyTextDetachedSig(t *testing.T) {
 
 func TestVerifyTextDetachedSigWrong(t *testing.T) {
 	fakeMessage := NewPlainMessageFromString("wrong text")
-	fakeMessage.SetSignature(message.GetSignature())
-	signedMessage, err := signingKeyRing.Verify(fakeMessage, testTime)
+	signedMessage, err := signingKeyRing.VerifyDetached(fakeMessage, textSignature, testTime)
 
 	assert.EqualError(t, err, "gopenpgp: signer is empty")
 	assert.Exactly(t, constants.SIGNATURE_FAILED, signedMessage.GetVerification())
@@ -74,12 +66,12 @@ func TestVerifyTextDetachedSigWrong(t *testing.T) {
 func TestSignBinDetached(t *testing.T) {
 	var err error
 
-	message, err = signingKeyRing.Sign(NewPlainMessage([]byte(signedPlainText)))
+	message, binSignature, err = signingKeyRing.SignDetached(NewPlainMessage([]byte(signedPlainText)))
 	if err != nil {
 		t.Fatal("Cannot generate signature:", err)
 	}
 
-	armoredSignature, err :=  message.GetArmoredSignature()
+	armoredSignature, err :=  binSignature.GetArmored()
 	if err != nil {
 		t.Fatal("Cannot armor signature:", err)
 	}
@@ -88,7 +80,7 @@ func TestSignBinDetached(t *testing.T) {
 }
 
 func TestVerifyBinDetachedSig(t *testing.T) {
-	signedMessage, err := signingKeyRing.Verify(message, testTime)
+	signedMessage, err := signingKeyRing.VerifyDetached(message, binSignature, testTime)
 	if err != nil {
 		t.Fatal("Cannot verify binary signature:", err)
 	}

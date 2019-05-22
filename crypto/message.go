@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"regexp"
 	"runtime"
-	"strings"
 
 	"github.com/ProtonMail/gopenpgp/armor"
 	"github.com/ProtonMail/gopenpgp/constants"
@@ -26,8 +25,6 @@ type PlainMessage struct {
 	Data []byte
 	// If the decoded message was correctly signed. See constants.SIGNATURE* for all values.
  	Verified int
-	// Optional signature
-	Signature *PGPSignature
 	// if the content is text or binary
 	TextType bool
 }
@@ -59,7 +56,6 @@ func NewPlainMessage(data []byte) (*PlainMessage) {
 	return &PlainMessage {
 		Data: data,
 		Verified: constants.SIGNATURE_NOT_SIGNED,
-		Signature: nil,
 		TextType: false,
 	}
 }
@@ -70,7 +66,6 @@ func NewPlainMessageFromString(text string) (*PlainMessage) {
 	return &PlainMessage {
 		Data: []byte(text),
 		Verified: constants.SIGNATURE_NOT_SIGNED,
-		Signature: nil,
 		TextType: true,
 	}
 }
@@ -177,34 +172,6 @@ func (msg *PlainMessage) NewReader() io.Reader {
 	return bytes.NewReader(msg.GetBinary())
 }
 
-// GetSignature returns the signature of
-func (msg *PlainMessage) GetSignature() *PGPSignature {
-	return msg.Signature
-}
-
-// GetSignature returns the signature of
-func (msg *PlainMessage) SetSignature(sig *PGPSignature) {
-	msg.Signature = sig
-}
-
-// GetArmored returns the armored message as a string
-func (msg *PlainMessage) GetArmored() (string, error) {
-	if msg.Signature == nil {
-		return "", errors.New("gopenpgp: unable to armor unsigned message")
-	}
-
-	return armor.ArmorSignedPlainText(msg.Data, msg.Signature.Data)
-}
-
-// GetArmoredSignature returns the armored detached signature as a string
-func (msg *PlainMessage) GetArmoredSignature() (string, error) {
-	if msg.Signature == nil {
-		return "", errors.New("gopenpgp: unable to armor unsigned message")
-	}
-
-	return msg.Signature.GetArmored()
-}
-
 // IsText returns whether the message is a text message
 func (msg *PlainMessage) IsText() bool {
 	return msg.TextType
@@ -213,22 +180,6 @@ func (msg *PlainMessage) IsText() bool {
 // IsBinary returns whether the message is a binary message
 func (msg *PlainMessage) IsBinary() bool {
 	return !msg.TextType
-}
-
-// CanonicalizeAndTrim alters the message data canonicalizing and trimming the newlines
-func (msg *PlainMessage) CanonicalizeAndTrim() error {
-	if msg.IsText() == false {
-		return errors.New("gopenpgp: cannot trim and canonicalize message binary message")
-	}
-
-	if msg.Signature != nil {
-		return errors.New("gopenpgp: cannot trim and canonicalize message once signed")
-	}
-
-	text := internal.TrimNewlines(msg.GetString())
-	text = strings.Replace(strings.Replace(text, "\r\n", "\n", -1), "\n", "\r\n", -1)
-	msg.Data = []byte(text)
-	return nil
 }
 
 // GetBinary returns the unarmored binary content of the message as a []byte
@@ -336,7 +287,6 @@ func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)
 	if encryptedKey == nil {
 		return nil, errors.New("gopenpgp: packets don't include an encrypted key packet")
 	}
-
 
 	var buf bytes.Buffer
 	if err := encryptedKey.Serialize(&buf); err != nil {

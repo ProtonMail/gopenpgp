@@ -106,10 +106,3 @@ func TestBinaryMessageEncryption(t *testing.T) {
 	assert.Exactly(t, constants.SIGNATURE_OK, decrypted.GetVerification())
 	assert.Exactly(t, true, decrypted.IsVerified())
 }
-
-func TestMessageCanonicalizeAndTrim(t *testing.T) {
-	text := "Hi  \ntest!\r\n\n"
-	message := NewPlainMessageFromString(text)
-	message.CanonicalizeAndTrim()
-	assert.Exactly(t, "Hi\r\ntest!\r\n\r\n", message.GetString())
-}

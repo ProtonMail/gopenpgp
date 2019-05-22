@@ -98,6 +98,13 @@ type PGPSignature struct {
 
 
 # API changes
+## armor.go
+### ReadClearSignedMessage
+Added signature info to returned info.
+```
+ReadClearSignedMessage(signedMessage string) (string, error):
+```
+
 ## attachment.go
 ### AttachmentProcessor
 No change.
@@ -106,7 +113,7 @@ No change.
 Change encryption parameters to messages: either contextual signature with helper or using messages.
 ```
 (pm *PmCrypto) EncryptAttachment(plainData []byte, fileName string, publicKey *KeyRing) (*models.EncryptedSplit, error):
-* (pgp *GopenPGP) EncryptSignAttachmentHelper(publicKey, privateKey, passphrase, fileName string, plainData []byte) (keyPacket, dataPacket, signature []byte, err error)
+* (helper) EncryptSignAttachment(publicKey, privateKey, passphrase, fileName string, plainData []byte) (keyPacket, dataPacket, signature []byte, err error)
 * (keyRing *KeyRing) EncryptAttachment(message *PlainMessage, fileName string) (*PGPSplitMessage, error)
 ```
 
@@ -128,7 +135,7 @@ SplitArmor(encrypted string) (*models.EncryptedSplit, error):
 Same as `EncryptAttachment`.
 ```
 (pm *PmCrypto) DecryptAttachment(keyPacket []byte, dataPacket []byte, kr *KeyRing, passphrase string) ([]byte, error):
-* (pgp *GopenPGP) DecryptVerifyAttachmentHelper(publicKey, privateKey, passphrase string, keyPacket, dataPacket []byte, armoredSignature string) (plainData []byte, err error)
+* (helper) DecryptVerifyAttachment(publicKey, privateKey, passphrase string, keyPacket, dataPacket []byte, armoredSignature string) (plainData []byte, err error)
 * (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*PlainMessage, error)
 ```
 
@@ -212,8 +219,8 @@ This function has been divided in different sub-functions and wrappers have been
 ```
 (kr *KeyRing) Encrypt(w io.Writer, sign *KeyRing, filename string, canonicalizeText bool) (io.WriteCloser, error):
 * (if binary data) (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error)
-* (if plain text, wrapped) (pgp *GopenPGP) EncryptMessageArmoredHelper(publicKey, plaintext string) (ciphertext string, err error)
-* (if plain text, wrapped, signed) (pgp *GopenPGP) EncryptSignMessageArmoredHelper(publicKey, privateKey, passphrase, plaintext string) (ciphertext string, err error)
+* (if plain text, wrapped) (helper) EncryptMessageArmored(publicKey, plaintext string) (ciphertext string, err error)
+* (if plain text, wrapped, signed) (helper) EncryptSignMessageArmored(publicKey, privateKey, passphrase, plaintext string) (ciphertext string, err error)
 ```
 ### EncryptCore
 Made an internal function.
@@ -232,8 +239,8 @@ Same as Encrypt*
 ```
 (kr *KeyRing) DecryptString(encrypted string) (SignedString, error):
 * (if binary data) func (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, error)
-* (if plain text, wrapped) (pgp *GopenPGP) DecryptMessageArmoredHelper(privateKey, passphrase, ciphertext string) (plaintext string, err error)
-* (if plain text, wrapped, verified) (pgp *GopenPGP) DecryptVerifyMessageArmoredHelper(publicKey, privateKey, passphrase, ciphertext string) (plaintext string, err error)
+* (if plain text, wrapped) (helper) DecryptMessageArmored(privateKey, passphrase, ciphertext string) (plaintext string, err error)
+* (if plain text, wrapped, verified) (helper) DecryptVerifyMessageArmored(publicKey, privateKey, passphrase, ciphertext string) (plaintext string, err error)
 ```
 
 ### DecryptStringIfNeeded
@@ -248,15 +255,14 @@ Replaced by signing methods.
 ```
 (kr *KeyRing) SignString(message string, canonicalizeText bool) (signed string, err error):
 (kr *KeyRing) DetachedSign(w io.Writer, toSign io.Reader, canonicalizeText bool, armored bool):
-* (keyRing *KeyRing) Sign(message *PlainMessage) (*PlainMessage, error)
+* (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PlainMessage, *PGPSignature, error)
 ```
 
 ### VerifyString
 Same as signing.
 ```
 (kr *KeyRing) VerifyString(message, signature string, sign *KeyRing) (err error):
-* (to attach signature to message) (msg *PlainMessage) SetSignature(sig *PGPSignature)
-* (to verify) (keyRing *KeyRing) Verify(message *PlainMessage, verifyTime int64) (*PlainMessage, error)
+* (to verify) (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) (*PlainMessage, error)
 ```
 
 ### Unlock
@@ -314,8 +320,8 @@ See Encrypt*
 ```
 (pm *PmCrypto) EncryptMessage(plainText string, publicKey *KeyRing, privateKey *KeyRing, passphrase string, trim bool) (string, error):
 * (if binary data) (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error)
-* (if plain text, wrapped) (pgp *GopenPGP) EncryptMessageArmoredHelper(publicKey, plaintext string) (ciphertext string, err error)
-* (if plain text, wrapped, signed) (pgp *GopenPGP) EncryptSignMessageArmoredHelper(publicKey, privateKey, passphrase, plaintext string) (ciphertext string, err error)
+* (if plain text, wrapped) (helper) EncryptMessageArmored(publicKey, plaintext string) (ciphertext string, err error)
+* (if plain text, wrapped, signed) (helper) EncryptSignMessageArmored(publicKey, privateKey, passphrase, plaintext string) (ciphertext string, err error)
 ```
 
 ### DecryptMessage, DecryptMessageVerify, DecryptMessageStringKey
@@ -324,9 +330,9 @@ See Decrypt*
 (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey *KeyRing, passphrase string) (string, error):
 (pm *PmCrypto) DecryptMessageStringKey(encryptedText string, privateKey string, passphrase string) (string, error):
 (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey *KeyRing, privateKeyRing *KeyRing, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) :
-* (if binary data) func (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, error)
-* (if plain text, wrapped) (pgp *GopenPGP) DecryptMessageArmoredHelper(privateKey, passphrase, ciphertext string) (plaintext string, err error)
-* (if plain text, wrapped, verified) (pgp *GopenPGP) DecryptVerifyMessageArmoredHelper(publicKey, privateKey, passphrase, ciphertext string) (plaintext string, err error)
+* (if binary data) (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, error)
+* (if plain text, wrapped) (helper) DecryptMessageArmored(privateKey, passphrase, ciphertext string) (plaintext string, err error)
+* (if plain text, wrapped, verified) (helper) DecryptVerifyMessageArmored(publicKey, privateKey, passphrase, ciphertext string) (plaintext string, err error)
 ```
 
 ### EncryptMessageWithPassword
@@ -334,7 +340,7 @@ The function has been moved to `SymmetricKey` to allow more encryption modes. Pr
 ```
 (pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string) (string, error):
 * (if binary data) (simmetricKey *SymmetricKey) Encrypt(message *PlainMessage) (*PGPMessage, error)
-* (if plain text, wrapped) (pgp *GopenPGP) EncryptMessageSymmetricHelper(passphrase, plaintext string, algo ...string) (ciphertext string, err error)
+* (if plain text, wrapped) (helper) EncryptMessageSymmetric(passphrase, plaintext string, algo ...string) (ciphertext string, err error)
 ```
 
 ### DecryptMessageWithPassword
@@ -342,7 +348,7 @@ See `EncryptMessageWithPassword`.
 ```
 (pm *PmCrypto) DecryptMessageWithPassword(encrypted string, password string) (string, error):
 * (if binary data) (simmetricKey *SymmetricKey) Decrypt(message *PGPMessage) (*PlainMessage, error)
-* (if plain text, wrapped, for all ciphers) (pgp *GopenPGP) DecryptMessageSymmetricHelper(passphrase, ciphertext string) (plaintext string, err error)
+* (if plain text, wrapped, for all ciphers) (helper) DecryptMessageSymmetric(passphrase, ciphertext string) (plaintext string, err error)
 ```
 
 ## mime.go
@@ -398,14 +404,16 @@ Renamed, moved to `SymmetricKey`.
 Moved to `KeyRing`, changed to `Sign`.
 ```
 (pm *PmCrypto) SignTextDetached(plainText string, privateKey *KeyRing, passphrase string, trim bool) (string, error):
-* (keyRing *KeyRing) Sign(message *PlainMessage) (*PlainMessage, error)
+* (if just signature) (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PlainMessage, *PGPSignature, error)
+* (if PGP SIGNED MESSAGE) (helper) SignCleartextMessage(keyRing *crypto.KeyRing, text string) (string, error)
+* (if PGP SIGNED MESSAGE) (helper) SignCleartextMessageArmored(privateKey, passphrase, text string) (string, error)
 ```
 
 ### SignBinDetached
 Moved to `KeyRing`.
 ```
 (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey *KeyRing, passphrase string) (string, error):
-* (keyRing *KeyRing) Sign(message *PlainMessage) (*PlainMessage, error)
+* (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PlainMessage, *PGPSignature, error)
 ```
 
 ### VerifyTextSignDetachedBinKey, VerifyBinSignDetachedBinKey
@@ -414,8 +422,9 @@ See signature_test.go for use examples.
 ```
 (pm *PmCrypto) VerifyTextSignDetachedBinKey(signature string, plainText string, publicKey *KeyRing, verifyTime int64) (bool, error):
 (pm *PmCrypto) VerifyBinSignDetachedBinKey(signature string, plainData []byte, publicKey *KeyRing, verifyTime int64) (bool, error):
-* (to attach signature to message) (msg *PlainMessage) SetSignature(sig *PGPSignature)
-* (to verify) (keyRing *KeyRing) Verify(message *PlainMessage, verifyTime int64) (*PlainMessage, error)
+* (to verify) (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) (*PlainMessage, error)
+* (if PGP SIGNED MESSAGE) (helper) VerifyCleartextMessage(keyRing *crypto.KeyRing, armored string, verifyTime int64) (string, error)
+* (if PGP SIGNED MESSAGE) (helper) VerifyCleartextMessageArmored(publicKey, armored string, verifyTime int64) (string, error)
 ```
 
 ## signature_collector.go

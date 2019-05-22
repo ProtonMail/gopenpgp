@@ -46,35 +46,32 @@ func (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyT
 }
 
 // Sign generates and attaches a PGPSignature to a given PlainMessage
-func (keyRing *KeyRing) Sign(message *PlainMessage) (*PlainMessage, error) {
-	if message.IsText() {
-		message.CanonicalizeAndTrim()
-	}
-
+func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PlainMessage, *PGPSignature, error) {
 	signEntity, err := keyRing.GetSigningEntity()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	config := &packet.Config{DefaultHash:crypto.SHA512 , Time: pgp.getTimeGenerator()}
 	var outBuf bytes.Buffer
 	//sign bin
 	if err := openpgp.DetachSign(&outBuf, signEntity, message.NewReader(), config); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	message.SetSignature(NewPGPSignature(outBuf.Bytes()))
-	return message, nil
+	return message, NewPGPSignature(outBuf.Bytes()), nil
 }
 
 // Verify verifies a PlainMessage with embedded a PGPSignature
 // and returns a PlainMessage with the filled Verified field.
-func (keyRing *KeyRing) Verify(message *PlainMessage, verifyTime int64) (*PlainMessage, error) {
+func (keyRing *KeyRing) VerifyDetached(
+	message *PlainMessage, signature *PGPSignature, verifyTime int64,
+) (*PlainMessage, error) {
 	var err error
 	message.Verified, err = verifySignature(
 		keyRing.GetEntities(),
 		message.NewReader(),
-		message.GetSignature().GetBinary(),
+		signature.GetBinary(),
 		verifyTime,
 	)
 	return message, err

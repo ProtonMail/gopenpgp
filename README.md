@@ -260,7 +260,7 @@ var message = NewPlainMessage(data)
 signingKeyRing, err := pgp.BuildKeyRingArmored(privkey)
 signingKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with passphrase
 
-message, pgpSignature, err := signingKeyRing.Sign(message)
+message, pgpSignature, err := signingKeyRing.SignDetached(message)
 
 // The armored signature is in pgpSignature.GetArmored()
 // The signed text is in message.GetBinary()
@@ -281,7 +281,7 @@ message := NewPlainMessage("Verified message")
 pgpSignature, err := NewPGPSignatureFromArmored(signature)
 signingKeyRing, err := pgp.BuildKeyRingArmored(pubkey)
 
-message, err := signingKeyRing.Verify(message, pgpSignature, pgp.GetUnixTime())
+message, err := signingKeyRing.VerifyDetached(message, pgpSignature, pgp.GetUnixTime())
 
 if message.IsVerified() {
   // verification success
