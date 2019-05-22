@@ -47,6 +47,10 @@ func (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyT
 
 // Sign generates and attaches a PGPSignature to a given PlainMessage
 func (keyRing *KeyRing) Sign(message *PlainMessage) (*PlainMessage, error) {
+	if message.IsText() {
+		message.CanonicalizeAndTrim()
+	}
+
 	signEntity, err := keyRing.GetSigningEntity()
 	if err != nil {
 		return nil, err
@@ -59,7 +63,7 @@ func (keyRing *KeyRing) Sign(message *PlainMessage) (*PlainMessage, error) {
 		return nil, err
 	}
 
-	message.Signature = NewPGPSignature(outBuf.Bytes())
+	message.SetSignature(NewPGPSignature(outBuf.Bytes()))
 	return message, nil
 }
 

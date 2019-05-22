@@ -26,7 +26,7 @@ func TestTextMessageEncryptionWithPassword(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
-	assert.Exactly(t, message, decrypted)
+	assert.Exactly(t, message.GetString(), decrypted.GetString())
 	assert.Exactly(t, constants.SIGNATURE_NOT_SIGNED, decrypted.GetVerification())
 	assert.Exactly(t, false, decrypted.IsVerified())
 }
@@ -105,4 +105,11 @@ func TestBinaryMessageEncryption(t *testing.T) {
 	assert.Exactly(t, message.GetBinary(), decrypted.GetBinary())
 	assert.Exactly(t, constants.SIGNATURE_OK, decrypted.GetVerification())
 	assert.Exactly(t, true, decrypted.IsVerified())
+}
+
+func TestMessageCanonicalizeAndTrim(t *testing.T) {
+	text := "Hi  \ntest!\r\n\n"
+	message := NewPlainMessageFromString(text)
+	message.CanonicalizeAndTrim()
+	assert.Exactly(t, "Hi\r\ntest!\r\n\r\n", message.GetString())
 }
