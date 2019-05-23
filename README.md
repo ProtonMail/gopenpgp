@@ -11,14 +11,15 @@ crypto library](https://github.com/ProtonMail/crypto).
 - [Documentation](#documentation)
 - [Using with Go Mobile](#using-with-go-mobile)
 - [Other notes](#other-notes)
+- [Full documentation](#full-documentation)
 - [Examples](#examples)
     - [Set up](#set-up)
-    - [Encrypt and decrypt](#encrypt-and-decrypt)
-        - [Encrypt / Decrypt with password](#encrypt--decrypt-with-password)
-        - [Encrypt / Decrypt with PGP keys](#encrypt--decrypt-with-pgp-keys)
+    - [Encrypt / Decrypt with password](#encrypt--decrypt-with-password)
+    - [Encrypt / Decrypt with PGP keys](#encrypt--decrypt-with-pgp-keys)
     - [Generate key](#generate-key)
-    - [Sign plain text messages](#sign-plain-text-messages)
+    - [Detached signatures for plain text messages](#detached-signatures-for-plain-text-messages)
     - [Detached signatures for binary data](#detached-signatures-for-binary-data)
+    - [Cleartext signed messages](#cleartext-signed-messages)
 
 <!-- /TOC -->
 
@@ -218,7 +219,7 @@ var message = NewPlaintextMessage("Verified message")
 signingKeyRing, err := pgp.BuildKeyRingArmored(privkey)
 signingKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with passphrase
 
-message, pgpSignature, err := signingKeyRing.SignDetached(message, trimNewlines)
+pgpSignature, err := signingKeyRing.SignDetached(message, trimNewlines)
 
 // The armored signature is in pgpSignature.GetArmored()
 // The signed text is in message.GetString()
@@ -263,7 +264,7 @@ var message = NewPlainMessage(data)
 signingKeyRing, err := pgp.BuildKeyRingArmored(privkey)
 signingKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with passphrase
 
-message, pgpSignature, err := signingKeyRing.SignDetached(message)
+pgpSignature, err := signingKeyRing.SignDetached(message)
 
 // The armored signature is in pgpSignature.GetArmored()
 // The signed text is in message.GetBinary()
