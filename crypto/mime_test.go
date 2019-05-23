@@ -1,8 +1,8 @@
 package crypto
 
 import (
-	"github.com/stretchr/testify/assert"
 	"github.com/ProtonMail/gopenpgp/internal"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"testing"
 )

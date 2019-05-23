@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/ProtonMail/gopenpgp/constants"
+	"github.com/stretchr/testify/assert"
 )
 
 const signedPlainText = "Signed message\n"
@@ -39,7 +39,7 @@ func TestSignTextDetached(t *testing.T) {
 		t.Fatal("Cannot generate signature:", err)
 	}
 
-	armoredSignature, err :=  textSignature.GetArmored()
+	armoredSignature, err := textSignature.GetArmored()
 	if err != nil {
 		t.Fatal("Cannot armor signature:", err)
 	}
@@ -72,7 +72,7 @@ func TestSignBinDetached(t *testing.T) {
 		t.Fatal("Cannot generate signature:", err)
 	}
 
-	armoredSignature, err :=  binSignature.GetArmored()
+	armoredSignature, err := binSignature.GetArmored()
 	if err != nil {
 		t.Fatal("Cannot armor signature:", err)
 	}

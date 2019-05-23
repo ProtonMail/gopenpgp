@@ -30,13 +30,13 @@ type KeyRing struct {
 
 // A keypair contains a private key and a public key.
 type pgpKeyObject struct {
-	ID          string
-	Version     int
-	Flags       int
-	PrivateKey  string
-	Primary     int
-	Token       *string `json:",omitempty"`
-	Signature   *string `json:",omitempty"`
+	ID         string
+	Version    int
+	Flags      int
+	PrivateKey string
+	Primary    int
+	Token      *string `json:",omitempty"`
+	Signature  *string `json:",omitempty"`
 }
 
 // PrivateKeyReader
@@ -346,7 +346,7 @@ func (keyRing *KeyRing) UnlockJSONKeyRing(jsonData []byte) (newKeyRing *KeyRing,
 }
 
 // newKeyRingFromPGPKeyObject fills a KeyRing given an array of pgpKeyObject
-func (keyRing *KeyRing) newKeyRingFromPGPKeyObject(keyObjs []pgpKeyObject) (error) {
+func (keyRing *KeyRing) newKeyRingFromPGPKeyObject(keyObjs []pgpKeyObject) error {
 	keyRing.entities = nil
 	for i, ko := range keyObjs {
 		if i == 0 {

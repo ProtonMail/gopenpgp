@@ -106,10 +106,9 @@ func TestIdentities(t *testing.T) {
 	assert.Exactly(t, identities[0], testIdentity)
 }
 
-
 func TestFilterExpiredKeys(t *testing.T) {
 	expiredKey, _ := ReadArmoredKeyRing(strings.NewReader(readTestFile("key_expiredKey", false)))
-	keys := []*KeyRing {testPrivateKeyRing, expiredKey}
+	keys := []*KeyRing{testPrivateKeyRing, expiredKey}
 	unexpired, err := FilterExpiredKeys(keys)
 
 	if err != nil {

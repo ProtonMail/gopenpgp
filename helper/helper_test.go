@@ -3,8 +3,8 @@ package helper
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/ProtonMail/gopenpgp/crypto"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAESEncryption(t *testing.T) {
@@ -39,7 +39,7 @@ func TestArmoredTextMessageEncryption(t *testing.T) {
 
 	decrypted, err := DecryptMessageArmored(
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword,		// Password defined in base_test
+		testMailboxPassword, // Password defined in base_test
 		armored,
 	)
 	if err != nil {
@@ -55,7 +55,7 @@ func TestArmoredTextMessageEncryptionVerification(t *testing.T) {
 	armored, err := EncryptSignMessageArmored(
 		readTestFile("keyring_publicKey", false),
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword,		// Password defined in base_test
+		testMailboxPassword, // Password defined in base_test
 		plaintext,
 	)
 	if err != nil {
@@ -65,18 +65,17 @@ func TestArmoredTextMessageEncryptionVerification(t *testing.T) {
 	assert.Exactly(t, true, pgp.IsPGPMessage(armored))
 
 	_, err = DecryptVerifyMessageArmored(
-		readTestFile("mime_publicKey", false),		// Wrong public key
+		readTestFile("mime_publicKey", false), // Wrong public key
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword,		// Password defined in base_test
+		testMailboxPassword, // Password defined in base_test
 		armored,
 	)
 	assert.EqualError(t, err, "gopenpgp: unable to verify message")
 
-
 	decrypted, err := DecryptVerifyMessageArmored(
 		readTestFile("keyring_publicKey", false),
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword,		// Password defined in base_test
+		testMailboxPassword, // Password defined in base_test
 		armored,
 	)
 	if err != nil {
@@ -92,7 +91,7 @@ func TestAttachmentEncryptionVerification(t *testing.T) {
 	keyPacket, dataPacket, signature, err := EncryptSignAttachment(
 		readTestFile("keyring_publicKey", false),
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword,		// Password defined in base_test
+		testMailboxPassword, // Password defined in base_test
 		"password.txt",
 		attachment,
 	)
@@ -107,20 +106,19 @@ func TestAttachmentEncryptionVerification(t *testing.T) {
 	}
 
 	_, err = DecryptVerifyAttachment(
-		readTestFile("mime_publicKey", false),		// Wrong public key
+		readTestFile("mime_publicKey", false), // Wrong public key
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword,		// Password defined in base_test
+		testMailboxPassword, // Password defined in base_test
 		keyPacket,
 		dataPacket,
 		armoredSig,
 	)
 	assert.EqualError(t, err, "gopenpgp: unable to verify attachment")
 
-
 	decrypted, err := DecryptVerifyAttachment(
 		readTestFile("keyring_publicKey", false),
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword,		// Password defined in base_test
+		testMailboxPassword, // Password defined in base_test
 		keyPacket,
 		dataPacket,
 		armoredSig,

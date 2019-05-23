@@ -130,13 +130,13 @@ func TestIsArmoredKeyExpired(t *testing.T) {
 }
 
 func TestGenerateKeyWithPrimes(t *testing.T) {
-	prime1 , _ := base64.StdEncoding.DecodeString(
+	prime1, _ := base64.StdEncoding.DecodeString(
 		"/thF8zjjk6fFx/y9NId35NFx8JTA7jvHEl+gI0dp9dIl9trmeZb+ESZ8f7bNXUmTI8j271kyenlrVJiqwqk80Q==")
-	prime2 , _ := base64.StdEncoding.DecodeString(
+	prime2, _ := base64.StdEncoding.DecodeString(
 		"0HyyG/TShsw7yObD+DDP9Ze39ye1Redljx+KOZ3iNDmuuwwI1/5y44rD/ezAsE7A188NsotMDTSy5xtfHmu0xQ==")
-	prime3 , _ := base64.StdEncoding.DecodeString(
+	prime3, _ := base64.StdEncoding.DecodeString(
 		"3OyJpAdnQXNjPNzI1u3BWDmPrzWw099E0UfJj5oJJILSbsAg/DDrmrdrIZDt7f24d06HCnTErCNWjvFJ3Kdq4w==")
-	prime4 , _ := base64.StdEncoding.DecodeString(
+	prime4, _ := base64.StdEncoding.DecodeString(
 		"58UEDXTX29Q9JqvuE3Tn+Qj275CXBnJbA8IVM4d05cPYAZ6H43bPN01pbJqJTJw/cuFxs+8C+HNw3/MGQOExqw==")
 
 	staticRsaKey, err := pgp.GenerateRSAKeyWithPrimes(name, domain, passphrase, 1024, prime1, prime2, prime3, prime4)

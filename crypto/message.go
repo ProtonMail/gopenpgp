@@ -1,8 +1,8 @@
 package crypto
 
 import (
-	"encoding/base64"
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -56,32 +56,32 @@ type PGPSplitMessage struct {
 
 // NewPlainMessage generates a new binary PlainMessage ready for encryption,
 // signature, or verification from the unencrypted binary data.
-func NewPlainMessage(data []byte) (*PlainMessage) {
-	return &PlainMessage {
-		Data: data,
+func NewPlainMessage(data []byte) *PlainMessage {
+	return &PlainMessage{
+		Data:     data,
 		TextType: false,
 	}
 }
 
 // NewPlainMessageFromString generates a new text PlainMessage,
 // ready for encryption, signature, or verification from an unencrypted string.
-func NewPlainMessageFromString(text string) (*PlainMessage) {
-	return &PlainMessage {
-		Data: []byte(text),
+func NewPlainMessageFromString(text string) *PlainMessage {
+	return &PlainMessage{
+		Data:     []byte(text),
 		TextType: true,
 	}
 }
 
 // newVerification returns a new instance of *Verification with the specified value
-func newVerification(value int) (*Verification) {
-	return &Verification {
+func newVerification(value int) *Verification {
+	return &Verification{
 		Verified: value,
 	}
 }
 
 // NewPGPMessage generates a new PGPMessage from the unarmored binary data.
-func NewPGPMessage(data []byte) (*PGPMessage) {
-	return &PGPMessage {
+func NewPGPMessage(data []byte) *PGPMessage {
+	return &PGPMessage{
 		Data: data,
 	}
 }
@@ -98,23 +98,23 @@ func NewPGPMessageFromArmored(armored string) (*PGPMessage, error) {
 		return nil, err
 	}
 
-	return &PGPMessage {
+	return &PGPMessage{
 		Data: message,
 	}, nil
 }
 
 // NewPGPSplitMessage generates a new PGPSplitMessage from the binary unarmored keypacket,
 // datapacket, and encryption algorithm.
-func NewPGPSplitMessage(keyPacket []byte, dataPacket []byte) (*PGPSplitMessage) {
-	return &PGPSplitMessage {
-		KeyPacket: keyPacket,
+func NewPGPSplitMessage(keyPacket []byte, dataPacket []byte) *PGPSplitMessage {
+	return &PGPSplitMessage{
+		KeyPacket:  keyPacket,
 		DataPacket: dataPacket,
 	}
 }
 
 // NewPGPSplitMessageFromArmored generates a new PGPSplitMessage by splitting an armored message into its
 // session key packet and symmetrically encrypted data packet.
-func NewPGPSplitMessageFromArmored (encrypted string) (*PGPSplitMessage, error) {
+func NewPGPSplitMessageFromArmored(encrypted string) (*PGPSplitMessage, error) {
 	message, err := NewPGPMessageFromArmored(encrypted)
 	if err != nil {
 		return nil, err
@@ -124,8 +124,8 @@ func NewPGPSplitMessageFromArmored (encrypted string) (*PGPSplitMessage, error) 
 }
 
 // NewPGPSignature generates a new PGPSignature from the unarmored binary data.
-func NewPGPSignature(data []byte) (*PGPSignature) {
-	return &PGPSignature {
+func NewPGPSignature(data []byte) *PGPSignature {
+	return &PGPSignature{
 		Data: data,
 	}
 }
@@ -142,7 +142,7 @@ func NewPGPSignatureFromArmored(armored string) (*PGPSignature, error) {
 		return nil, err
 	}
 
-	return &PGPSignature {
+	return &PGPSignature{
 		Data: signature,
 	}, nil
 }
@@ -218,7 +218,7 @@ func (msg *PGPSplitMessage) GetKeyPacket() []byte {
 }
 
 // SeparateKeyAndData returns the first keypacket and the (hopefully unique) dataPacket (not verified)
-func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)(outSplit *PGPSplitMessage, err error) {
+func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int) (outSplit *PGPSplitMessage, err error) {
 	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
 	packets := packet.NewReader(bytes.NewReader(msg.Data))
 	outSplit = &PGPSplitMessage{}
@@ -322,6 +322,6 @@ func (msg *PGPSignature) GetArmored() (string, error) {
 // IsPGPMessage checks if data if has armored PGP message format.
 func (pgp *GopenPGP) IsPGPMessage(data string) bool {
 	re := regexp.MustCompile("^-----BEGIN " + constants.PGPMessageHeader + "-----(?s:.+)-----END " +
-		constants.PGPMessageHeader + "-----");
-	return re.MatchString(data);
+		constants.PGPMessageHeader + "-----")
+	return re.MatchString(data)
 }

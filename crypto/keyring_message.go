@@ -52,7 +52,7 @@ func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, erro
 		return nil, err
 	}
 
-	config := &packet.Config{DefaultHash:crypto.SHA512 , Time: pgp.getTimeGenerator()}
+	config := &packet.Config{DefaultHash: crypto.SHA512, Time: pgp.getTimeGenerator()}
 	var outBuf bytes.Buffer
 	//sign bin
 	if err := openpgp.DetachSign(&outBuf, signEntity, message.NewReader(), config); err != nil {
@@ -80,7 +80,7 @@ func (keyRing *KeyRing) VerifyDetached(
 // ------ INTERNAL FUNCTIONS -------
 
 // Core for encryption+signature functions
-func asymmetricEncrypt (data []byte, publicKey *KeyRing, privateKey *KeyRing, isBinary bool) ([]byte, error) {
+func asymmetricEncrypt(data []byte, publicKey *KeyRing, privateKey *KeyRing, isBinary bool) ([]byte, error) {
 	var outBuf bytes.Buffer
 	var encryptWriter io.WriteCloser
 	var signEntity *openpgp.Entity
@@ -120,9 +120,8 @@ func asymmetricEncrypt (data []byte, publicKey *KeyRing, privateKey *KeyRing, is
 	return outBuf.Bytes(), nil
 }
 
-
 // Core for decryption+verification functions
-func asymmetricDecrypt (
+func asymmetricDecrypt(
 	encryptedIO io.Reader, privateKey *KeyRing, verifyKey *KeyRing, verifyTime int64,
 ) (plaintext []byte, verified int, err error) {
 	privKeyEntries := privateKey.GetEntities()
@@ -207,7 +206,6 @@ func verifyDetailsSignature(md *openpgp.MessageDetails, verifierKey *KeyRing) (i
 
 	return constants.SIGNATURE_NOT_SIGNED, ""
 }
-
 
 // verifySignature verifies if a signature is valid with the entity list
 func verifySignature(

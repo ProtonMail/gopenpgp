@@ -4,11 +4,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/ProtonMail/gopenpgp/constants"
+	"github.com/stretchr/testify/assert"
 )
 
 var testRandomToken []byte
+
 func TestRandomToken(t *testing.T) {
 	var err error
 	testRandomToken, err = pgp.RandomToken()
@@ -25,10 +26,9 @@ func TestRandomToken(t *testing.T) {
 	assert.Len(t, token40, 40)
 }
 
-
 func TestAsymmetricKeyPacket(t *testing.T) {
 	symmetricKey := &SymmetricKey{
-		Key:	testRandomToken,
+		Key:  testRandomToken,
 		Algo: constants.AES256,
 	}
 
@@ -51,7 +51,7 @@ func TestAsymmetricKeyPacket(t *testing.T) {
 
 func TestSymmetricKeyPacket(t *testing.T) {
 	symmetricKey := &SymmetricKey{
-		Key:	testRandomToken,
+		Key:  testRandomToken,
 		Algo: constants.AES256,
 	}
 

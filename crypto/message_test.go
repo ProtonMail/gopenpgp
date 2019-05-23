@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/ProtonMail/gopenpgp/constants"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTextMessageEncryptionWithPassword(t *testing.T) {
