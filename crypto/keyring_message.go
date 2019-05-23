@@ -45,7 +45,7 @@ func (keyRing *KeyRing) Decrypt(
 	return NewPlainMessage(decrypted), newVerification(verifyStatus), nil
 }
 
-// Sign generates and attaches a PGPSignature to a given PlainMessage
+// SignDetached generates and returns a PGPSignature for a given PlainMessage
 func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, error) {
 	signEntity, err := keyRing.GetSigningEntity()
 	if err != nil {
@@ -62,8 +62,8 @@ func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, erro
 	return NewPGPSignature(outBuf.Bytes()), nil
 }
 
-// Verify verifies a PlainMessage with embedded a PGPSignature
-// and returns a PlainMessage with the filled Verified field.
+// VerifyDetached verifies a PlainMessage with embedded a PGPSignature
+// and returns a Verification with the filled Verified field.
 func (keyRing *KeyRing) VerifyDetached(
 	message *PlainMessage, signature *PGPSignature, verifyTime int64,
 ) (*Verification, error) {

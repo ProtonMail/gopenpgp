@@ -17,7 +17,7 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-// IsBinKeyExpired checks whether the given (unarmored, binary) key is expired.
+// IsKeyExpired checks whether the given (unarmored, binary) key is expired.
 func (pgp *GopenPGP) IsKeyExpired(publicKey []byte) (bool, error) {
 	now := pgp.getNow()
 	pubKeyReader := bytes.NewReader(publicKey)
@@ -69,7 +69,7 @@ func (pgp *GopenPGP) IsKeyExpired(publicKey []byte) (bool, error) {
 	return true, errors.New("keys expired")
 }
 
-// IsKeyStringExpired checks whether the given armored key is expired.
+// IsArmoredKeyExpired checks whether the given armored key is expired.
 func (pgp *GopenPGP) IsArmoredKeyExpired(publicKey string) (bool, error) {
 	rawPubKey, err := armor.Unarmor(publicKey)
 	if err != nil {

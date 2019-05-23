@@ -11,7 +11,6 @@ import (
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
-
 )
 
 // SymmetricKey stores a decrypted session key.
@@ -33,25 +32,25 @@ var symKeyAlgos = map[string]packet.CipherFunction{
 
 // GetCipherFunc returns the cipher function corresponding to the algorithm used
 // with this SymmetricKey.
-func (simmetricKey *SymmetricKey) GetCipherFunc() packet.CipherFunction {
-	cf, ok := symKeyAlgos[simmetricKey.Algo]
+func (symmetricKey *SymmetricKey) GetCipherFunc() packet.CipherFunction {
+	cf, ok := symKeyAlgos[symmetricKey.Algo]
 	if ok {
 		return cf
 	}
 
-	panic("gopenpgp: unsupported cipher function: " + simmetricKey.Algo)
+	panic("gopenpgp: unsupported cipher function: " + symmetricKey.Algo)
 }
 
 // GetBase64Key returns the session key as base64 encoded string.
-func (simmetricKey *SymmetricKey) GetBase64Key() string {
-	return base64.StdEncoding.EncodeToString(simmetricKey.Key)
+func (symmetricKey *SymmetricKey) GetBase64Key() string {
+	return base64.StdEncoding.EncodeToString(symmetricKey.Key)
 }
 
-func NewSymmetricKeyFromPassphrase(passphrase, algo string) (*SymmetricKey) {
+func NewSymmetricKeyFromPassphrase(passphrase, algo string) *SymmetricKey {
 	return NewSymmetricKey([]byte(passphrase), algo)
 }
 
-func NewSymmetricKey(key []byte, algo string) (*SymmetricKey) {
+func NewSymmetricKey(key []byte, algo string) *SymmetricKey {
 	return &SymmetricKey{
 		Key:  key,
 		Algo: algo,
@@ -76,8 +75,8 @@ func newSymmetricKeyFromEncrypted(ek *packet.EncryptedKey) (*SymmetricKey, error
 // Encrypt encrypts a PlainMessage to PGPMessage with a SymmetricKey
 // message : The plain data as a PlainMessage
 // output  : The encrypted data as PGPMessage
-func (simmetricKey *SymmetricKey) Encrypt(message *PlainMessage) (*PGPMessage, error) {
-	encrypted, err := symmetricEncrypt(message.GetBinary(), simmetricKey)
+func (symmetricKey *SymmetricKey) Encrypt(message *PlainMessage) (*PGPMessage, error) {
+	encrypted, err := symmetricEncrypt(message.GetBinary(), symmetricKey)
 	if err != nil {
 		return nil, err
 	}
@@ -88,8 +87,8 @@ func (simmetricKey *SymmetricKey) Encrypt(message *PlainMessage) (*PGPMessage, e
 // Decrypt decrypts password protected pgp binary messages
 // encrypted: PGPMessage
 // output: PlainMessage
-func (simmetricKey *SymmetricKey) Decrypt(message *PGPMessage) (*PlainMessage, error) {
-	decrypted, err := symmetricDecrypt(message.NewReader(), simmetricKey)
+func (symmetricKey *SymmetricKey) Decrypt(message *PGPMessage) (*PlainMessage, error) {
+	decrypted, err := symmetricDecrypt(message.NewReader(), symmetricKey)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +166,7 @@ func symmetricEncrypt(message []byte, sk *SymmetricKey) ([]byte, error) {
 	var outBuf bytes.Buffer
 
 	config := &packet.Config{
-		Time: pgp.getTimeGenerator(),
+		Time:          pgp.getTimeGenerator(),
 		DefaultCipher: sk.GetCipherFunc(),
 	}
 

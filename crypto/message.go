@@ -312,7 +312,7 @@ func (msg *PGPSignature) GetBinary() []byte {
 	return msg.Data
 }
 
-// GetBinary returns the base-64 encoded binary content of the signature as a string
+// GetArmored returns the armored signature as a string
 func (msg *PGPSignature) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.Data, constants.PGPSignatureHeader)
 }

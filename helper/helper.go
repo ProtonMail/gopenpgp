@@ -9,7 +9,7 @@ import (
 
 var pgp = crypto.GetGopenPGP()
 
-// EncryptMessageWithPasswordAlgo encrypts using AES256 a string with a passphrase
+// EncryptMessageWithPassword encrypts a string with a passphrase using AES256
 func EncryptMessageWithPassword(
 	passphrase, plaintext string,
 ) (ciphertext string, err error){

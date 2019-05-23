@@ -16,12 +16,12 @@ func TestAttachmentGetKey(t *testing.T) {
 		t.Fatal("Expected no error while decoding base64 KeyPacket, got:", err)
 	}
 
-	simmetricKey, err := testPrivateKeyRing.DecryptSessionKey(testKeyPacketsDecoded)
+	symmetricKey, err := testPrivateKeyRing.DecryptSessionKey(testKeyPacketsDecoded)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting KeyPacket, got:", err)
 	}
 
-	assert.Exactly(t, testSymmetricKey, simmetricKey)
+	assert.Exactly(t, testSymmetricKey, symmetricKey)
 }
 
 func TestAttachmentSetKey(t *testing.T) {
@@ -30,12 +30,12 @@ func TestAttachmentSetKey(t *testing.T) {
 		t.Fatal("Expected no error while encrypting attachment key, got:", err)
 	}
 
-	simmetricKey, err := testPrivateKeyRing.DecryptSessionKey(keyPackets)
+	symmetricKey, err := testPrivateKeyRing.DecryptSessionKey(keyPackets)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting attachment key, got:", err)
 	}
 
-	assert.Exactly(t, testSymmetricKey, simmetricKey)
+	assert.Exactly(t, testSymmetricKey, symmetricKey)
 }
 
 func TestAttachnentEncryptDecrypt(t *testing.T) {
