@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
-	"time"
 
 	"github.com/ProtonMail/gopenpgp/armor"
 	"github.com/ProtonMail/gopenpgp/constants"
@@ -25,45 +24,9 @@ func (pgp *GopenPGP) IsKeyExpired(publicKey []byte) (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	candidateSubkey := -1
 	for _, e := range pubKeyEntries {
-		var maxTime time.Time
-		for i, subkey := range e.Subkeys {
-			if subkey.Sig.FlagsValid &&
-				subkey.Sig.FlagEncryptCommunications &&
-				subkey.PublicKey.PubKeyAlgo.CanEncrypt() &&
-				!subkey.PublicKey.KeyExpired(subkey.Sig, now) &&
-				(maxTime.IsZero() || subkey.Sig.CreationTime.After(maxTime)) {
-				candidateSubkey = i
-				maxTime = subkey.Sig.CreationTime
-			}
-		}
-
-		if candidateSubkey != -1 {
+		if _, ok := e.EncryptionKey(now); ok {
 			return false, nil
-		}
-
-		// If we don't have any candidate subkeys for encryption and
-		// the primary key doesn't have any usage metadata then we
-		// assume that the primary key is ok. Or, if the primary key is
-		// marked as ok to encrypt to, then we can obviously use it.
-		var firstIdentity *openpgp.Identity
-		for _, ident := range e.Identities {
-			if firstIdentity == nil {
-				firstIdentity = ident
-			}
-			if ident.SelfSignature.IsPrimaryId != nil && *ident.SelfSignature.IsPrimaryId {
-				firstIdentity = ident
-				break
-			}
-		}
-		if firstIdentity != nil {
-			i := firstIdentity
-			if !i.SelfSignature.FlagsValid || i.SelfSignature.FlagEncryptCommunications &&
-				e.PrimaryKey.PubKeyAlgo.CanEncrypt() &&
-				!e.PrimaryKey.KeyExpired(i.SelfSignature, now) {
-				return false, nil
-			}
 		}
 	}
 	return true, errors.New("keys expired")

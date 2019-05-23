@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 
-	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
 
@@ -70,22 +69,8 @@ func (keyRing *KeyRing) EncryptSessionKey(sessionSplit *SymmetricKey) ([]byte, e
 
 	var pub *packet.PublicKey
 	for _, e := range keyRing.GetEntities() {
-		for _, subKey := range e.Subkeys {
-			if !subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage || subKey.Sig.FlagEncryptCommunications {
-				pub = subKey.PublicKey
-				break
-			}
-		}
-		if pub == nil && len(e.Identities) > 0 {
-			var i *openpgp.Identity
-			for _, i = range e.Identities {
-				break
-			}
-			if i.SelfSignature.FlagsValid || i.SelfSignature.FlagEncryptStorage || i.SelfSignature.FlagEncryptCommunications {
-				pub = e.PrimaryKey
-			}
-		}
-		if pub != nil {
+		if encryptionKey, ok := e.EncryptionKey(pgp.getNow()); ok {
+			pub = encryptionKey.PublicKey
 			break
 		}
 	}

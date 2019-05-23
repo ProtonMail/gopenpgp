@@ -8,4 +8,4 @@ require (
 	golang.org/x/crypto v0.0.0-20190513172903-22d7a77e9e5f
 )
 
-replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20190427044656-efb430e751f2
+replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20190604143603-d3d8a14a4d4f
