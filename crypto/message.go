@@ -23,10 +23,14 @@ import (
 type PlainMessage struct {
 	// The content of the message
 	Data []byte
-	// If the decoded message was correctly signed. See constants.SIGNATURE* for all values.
- 	Verified int
 	// if the content is text or binary
 	TextType bool
+}
+
+// Verification for a PlainMessage
+type Verification struct {
+	// If the decoded message was correctly signed. See constants.SIGNATURE* for all values.
+	Verified int
 }
 
 // PGPMessage stores a PGP-encrypted message.
@@ -55,7 +59,6 @@ type PGPSplitMessage struct {
 func NewPlainMessage(data []byte) (*PlainMessage) {
 	return &PlainMessage {
 		Data: data,
-		Verified: constants.SIGNATURE_NOT_SIGNED,
 		TextType: false,
 	}
 }
@@ -65,8 +68,14 @@ func NewPlainMessage(data []byte) (*PlainMessage) {
 func NewPlainMessageFromString(text string) (*PlainMessage) {
 	return &PlainMessage {
 		Data: []byte(text),
-		Verified: constants.SIGNATURE_NOT_SIGNED,
 		TextType: true,
+	}
+}
+
+// newVerification returns a new instance of *Verification with the specified value
+func newVerification(value int) (*Verification) {
+	return &Verification {
+		Verified: value,
 	}
 }
 
@@ -155,16 +164,17 @@ func (msg *PlainMessage) GetBase64() string {
 	return base64.StdEncoding.EncodeToString(msg.Data)
 }
 
-// GetVerification returns the verification status of a message, to use after the KeyRing.Decrypt* or KeyRing.Verify*
-// functions. The int value returned is to compare to constants.SIGNATURE*.
-func (msg *PlainMessage) GetVerification() int {
-	return msg.Verified
+// GetVerification returns the verification status of a verification,
+// to use after the KeyRing.Decrypt* or KeyRing.Verify* functions.
+// The int value returned is to compare to constants.SIGNATURE*.
+func (ver *Verification) GetVerification() int {
+	return ver.Verified
 }
 
-// IsVerified returns true if the message is signed and the signature is valid.
+// IsValid returns true if the message is signed and the signature is valid.
 // To use after the KeyRing.Decrypt* or KeyRing.Verify* functions.
-func (msg *PlainMessage) IsVerified() bool {
-	return msg.Verified == constants.SIGNATURE_OK
+func (ver *Verification) IsValid() bool {
+	return ver.Verified == constants.SIGNATURE_OK
 }
 
 // NewReader returns a New io.Reader for the bianry data of the message

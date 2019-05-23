@@ -95,7 +95,6 @@ func (simmetricKey *SymmetricKey) Decrypt(message *PGPMessage) (*PlainMessage, e
 	}
 
 	binMessage := NewPlainMessage(decrypted)
-	binMessage.Verified = constants.SIGNATURE_NOT_SIGNED
 	return binMessage, nil
 }
 

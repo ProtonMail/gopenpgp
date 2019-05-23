@@ -322,17 +322,17 @@ func (keyRing *KeyRing) UnlockJSONKeyRing(jsonData []byte) (newKeyRing *KeyRing,
 			return nil, err
 		}
 
-		token, err := keyRing.Decrypt(message, nil, 0)
+		token, _, err := keyRing.Decrypt(message, nil, 0)
 		if err != nil {
 			return nil, err
 		}
 
-		token, err = keyRing.VerifyDetached(token, signature, 0)
+		ver, err := keyRing.VerifyDetached(token, signature, 0)
 		if err != nil {
 			return nil, err
 		}
 
-		if !token.IsVerified() {
+		if !ver.IsValid() {
 			return nil, errors.New("gopenpgp: unable to verify token")
 		}
 

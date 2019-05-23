@@ -130,7 +130,7 @@ func DecryptMessageArmored(
 		return "", err
 	}
 
-	if message, err = privateKeyRing.Decrypt(pgpMessage, nil, 0); err != nil {
+	if message, _, err = privateKeyRing.Decrypt(pgpMessage, nil, 0); err != nil {
 		return "", err
 	}
 
@@ -146,6 +146,7 @@ func DecryptVerifyMessageArmored(
 	var publicKeyRing, privateKeyRing *crypto.KeyRing
 	var pgpMessage *crypto.PGPMessage
 	var message *crypto.PlainMessage
+	var verification *crypto.Verification
 
 	if publicKeyRing, err = pgp.BuildKeyRingArmored(publicKey); err != nil {
 		return "", err
@@ -163,11 +164,11 @@ func DecryptVerifyMessageArmored(
 		return "", err
 	}
 
-	if message, err = privateKeyRing.Decrypt(pgpMessage, publicKeyRing, pgp.GetUnixTime()); err != nil {
+	if message, verification, err = privateKeyRing.Decrypt(pgpMessage, publicKeyRing, pgp.GetUnixTime()); err != nil {
 		return "", err
 	}
 
-	if !message.IsVerified() {
+	if !verification.IsValid() {
 		return "", errors.New("gopenpgp: unable to verify message")
 	}
 
@@ -221,6 +222,7 @@ func DecryptVerifyAttachment(
 	var publicKeyRing, privateKeyRing *crypto.KeyRing
 	var detachedSignature *crypto.PGPSignature
 	var message *crypto.PlainMessage
+	var verification *crypto.Verification
 
 	var packets = crypto.NewPGPSplitMessage(keyPacket, dataPacket);
 
@@ -244,11 +246,11 @@ func DecryptVerifyAttachment(
 		return nil, err
 	}
 
-	if message, err = publicKeyRing.VerifyDetached(message, detachedSignature, pgp.GetUnixTime()); err != nil {
+	if verification, err = publicKeyRing.VerifyDetached(message, detachedSignature, pgp.GetUnixTime()); err != nil {
 		return nil, errors.New("gopenpgp: unable to verify attachment")
 	}
 
-	if !message.IsVerified() {
+	if !verification.IsValid() {
 		return nil, errors.New("gopenpgp: unable to verify attachment")
 	}
 

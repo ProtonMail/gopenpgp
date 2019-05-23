@@ -28,7 +28,7 @@ type MIMECallbacks interface {
 func (keyRing *KeyRing) DecryptMIMEMessage(
 	message *PGPMessage, verifyKey *KeyRing, callbacks MIMECallbacks, verifyTime int64,
 ) {
-	decryptedMessage, err := keyRing.Decrypt(message, verifyKey, verifyTime)
+	decryptedMessage, verification, err := keyRing.Decrypt(message, verifyKey, verifyTime)
 	if err != nil {
 		callbacks.OnError(err)
 		return
@@ -45,8 +45,8 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 		callbacks.OnAttachment(attachmentHeaders[i], []byte(attachments[i]))
 	}
 	callbacks.OnEncryptedHeaders("")
-	if decryptedMessage.GetVerification() != constants.SIGNATURE_NOT_SIGNED {
-		callbacks.OnVerified(decryptedMessage.GetVerification())
+	if verification.GetVerification() != constants.SIGNATURE_NOT_SIGNED {
+		callbacks.OnVerified(verification.GetVerification())
 	} else {
 		callbacks.OnVerified(verified)
 	}

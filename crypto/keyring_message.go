@@ -34,15 +34,15 @@ func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PG
 // message    : The encrypted input as a PGPMessage
 // verifyKey  : Public key for signature verification (optional)
 // verifyTime : Time at verification (necessary only if verifyKey is not nil)
-func (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, error) {
+func (keyRing *KeyRing) Decrypt(
+	message *PGPMessage, verifyKey *KeyRing, verifyTime int64,
+) (*PlainMessage, *Verification, error) {
 	decrypted, verifyStatus, err := asymmetricDecrypt(message.NewReader(), keyRing, verifyKey, verifyTime)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	binMessage := NewPlainMessage(decrypted)
-	binMessage.Verified = verifyStatus
-	return binMessage, nil
+	return NewPlainMessage(decrypted), newVerification(verifyStatus), nil
 }
 
 // Sign generates and attaches a PGPSignature to a given PlainMessage
@@ -66,15 +66,15 @@ func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PlainMessage, *PGP
 // and returns a PlainMessage with the filled Verified field.
 func (keyRing *KeyRing) VerifyDetached(
 	message *PlainMessage, signature *PGPSignature, verifyTime int64,
-) (*PlainMessage, error) {
+) (*Verification, error) {
 	var err error
-	message.Verified, err = verifySignature(
+	verifyVal, err := verifySignature(
 		keyRing.GetEntities(),
 		message.NewReader(),
 		signature.GetBinary(),
 		verifyTime,
 	)
-	return message, err
+	return newVerification(verifyVal), err
 }
 
 // ------ INTERNAL FUNCTIONS -------

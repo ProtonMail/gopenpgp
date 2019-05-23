@@ -27,8 +27,6 @@ func TestTextMessageEncryptionWithPassword(t *testing.T) {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
-	assert.Exactly(t, constants.SIGNATURE_NOT_SIGNED, decrypted.GetVerification())
-	assert.Exactly(t, false, decrypted.IsVerified())
 }
 
 func TestBinaryMessageEncryptionWithPassword(t *testing.T) {
@@ -50,8 +48,6 @@ func TestBinaryMessageEncryptionWithPassword(t *testing.T) {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 	assert.Exactly(t, message, decrypted)
-	assert.Exactly(t, constants.SIGNATURE_NOT_SIGNED, decrypted.GetVerification())
-	assert.Exactly(t, false, decrypted.IsVerified())
 }
 
 func TestTextMessageEncryption(t *testing.T) {
@@ -71,13 +67,13 @@ func TestTextMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	decrypted, err := testPrivateKeyRing.Decrypt(ciphertext, testPublicKeyRing, pgp.GetUnixTime())
+	decrypted, ver, err := testPrivateKeyRing.Decrypt(ciphertext, testPublicKeyRing, pgp.GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
-	assert.Exactly(t, constants.SIGNATURE_OK, decrypted.GetVerification())
-	assert.Exactly(t, true, decrypted.IsVerified())
+	assert.Exactly(t, constants.SIGNATURE_OK, ver.GetVerification())
+	assert.Exactly(t, true, ver.IsValid())
 }
 
 func TestBinaryMessageEncryption(t *testing.T) {
@@ -98,11 +94,11 @@ func TestBinaryMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	decrypted, err := testPrivateKeyRing.Decrypt(ciphertext, testPublicKeyRing, pgp.GetUnixTime())
+	decrypted, ver, err := testPrivateKeyRing.Decrypt(ciphertext, testPublicKeyRing, pgp.GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 	assert.Exactly(t, message.GetBinary(), decrypted.GetBinary())
-	assert.Exactly(t, constants.SIGNATURE_OK, decrypted.GetVerification())
-	assert.Exactly(t, true, decrypted.IsVerified())
+	assert.Exactly(t, constants.SIGNATURE_OK, ver.GetVerification())
+	assert.Exactly(t, true, ver.IsValid())
 }

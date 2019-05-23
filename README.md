@@ -171,10 +171,10 @@ pgpMessage, err := publicKeyRing.Encrypt(binMessage, privateKeyRing)
 // Armored message in pgpMessage.GetArmored()
 // pgpMessage can be obtained from NewPGPMessageFromArmored(ciphertext)
 
-message, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, pgp.GetUnixTime())
+message, verification, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, pgp.GetUnixTime())
 
 // Original data in message.GetString()
-if message.IsVerified() {
+if verification.IsValid() {
   // verification success
 }
 ```
@@ -241,9 +241,9 @@ message := NewPlaintextMessage("Verified message")
 pgpSignature, err := NewPGPSignatureFromArmored(signature)
 signingKeyRing, err := pgp.BuildKeyRingArmored(pubkey)
 
-message, err := signingKeyRing.VerifyDetached(message, pgpSignature, pgp.GetUnixTime())
+verification, err := signingKeyRing.VerifyDetached(message, pgpSignature, pgp.GetUnixTime())
 
-if message.IsVerified() {
+if verification.IsValid() {
   // verification success
 }
 ```
@@ -286,9 +286,9 @@ message := NewPlainMessage("Verified message")
 pgpSignature, err := NewPGPSignatureFromArmored(signature)
 signingKeyRing, err := pgp.BuildKeyRingArmored(pubkey)
 
-message, err := signingKeyRing.VerifyDetached(message, pgpSignature, pgp.GetUnixTime())
+verification, err := signingKeyRing.VerifyDetached(message, pgpSignature, pgp.GetUnixTime())
 
-if message.IsVerified() {
+if verification.IsValid() {
   // verification success
 }
 ```

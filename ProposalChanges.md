@@ -238,7 +238,7 @@ Dropped, now the procedure is split in two parts.
 Same as Encrypt*
 ```
 (kr *KeyRing) DecryptString(encrypted string) (SignedString, error):
-* (if binary data) func (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, error)
+* (if binary data) func (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, *Verification, error)
 * (if plain text, wrapped) (helper) DecryptMessageArmored(privateKey, passphrase, ciphertext string) (plaintext string, err error)
 * (if plain text, wrapped, verified) (helper) DecryptVerifyMessageArmored(publicKey, privateKey, passphrase, ciphertext string) (plaintext string, err error)
 ```
@@ -262,7 +262,7 @@ Replaced by signing methods.
 Same as signing.
 ```
 (kr *KeyRing) VerifyString(message, signature string, sign *KeyRing) (err error):
-* (to verify) (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) (*PlainMessage, error)
+* (to verify) (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) (*Verification, error)
 ```
 
 ### Unlock
@@ -330,7 +330,7 @@ See Decrypt*
 (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey *KeyRing, passphrase string) (string, error):
 (pm *PmCrypto) DecryptMessageStringKey(encryptedText string, privateKey string, passphrase string) (string, error):
 (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey *KeyRing, privateKeyRing *KeyRing, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) :
-* (if binary data) (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, error)
+* (if binary data) (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, *Verification, error)
 * (if plain text, wrapped) (helper) DecryptMessageArmored(privateKey, passphrase, ciphertext string) (plaintext string, err error)
 * (if plain text, wrapped, verified) (helper) DecryptVerifyMessageArmored(publicKey, privateKey, passphrase, ciphertext string) (plaintext string, err error)
 ```
@@ -425,7 +425,7 @@ See signature_test.go for use examples.
 ```
 (pm *PmCrypto) VerifyTextSignDetachedBinKey(signature string, plaintext string, publicKey *KeyRing, verifyTime int64) (bool, error):
 (pm *PmCrypto) VerifyBinSignDetachedBinKey(signature string, plainData []byte, publicKey *KeyRing, verifyTime int64) (bool, error):
-* (to verify) (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) (*PlainMessage, error)
+* (to verify) (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) (*Verification, error)
 * (if PGP SIGNED MESSAGE) (helper) VerifyCleartextMessage(keyRing *crypto.KeyRing, armored string, verifyTime int64) (string, error)
 * (if PGP SIGNED MESSAGE) (helper) VerifyCleartextMessageArmored(publicKey, armored string, verifyTime int64) (string, error)
 ```

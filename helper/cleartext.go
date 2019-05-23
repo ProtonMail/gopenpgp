@@ -60,12 +60,12 @@ func VerifyCleartextMessage(keyRing *crypto.KeyRing, armored string, verifyTime 
 
 	message := crypto.NewPlainMessageFromString(text)
 	signature := crypto.NewPGPSignature(signatureData)
-	message, err = keyRing.VerifyDetached(message, signature, verifyTime)
+	ver, err := keyRing.VerifyDetached(message, signature, verifyTime)
 	if err != nil {
 		return "", err
 	}
 
-	if !message.IsVerified() {
+	if !ver.IsValid() {
 		return "", errors.New("gopenpgp: unable to verify attachment")
 	}
 
