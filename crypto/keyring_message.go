@@ -19,8 +19,8 @@ import (
 
 // Encrypt encrypts a PlainMessage, outputs a PGPMessage.
 // If an unlocked private key is also provided it will also sign the message.
-// plainText : the input
-// privateKey : (optional) to include signature in the message
+// message    : The plaintext input as a PlainMessage
+// privateKey : (optional) an unlocked private keyring to include signature in the message
 func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error) {
 	encrypted, err := asymmetricEncrypt(message.GetBinary(), keyRing, privateKey, true)
 	if err != nil {
@@ -31,7 +31,7 @@ func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PG
 }
 
 // Decrypt decrypts encrypted string using pgp keys, returning a PlainMessage
-// message    : PGPMessage
+// message    : The encrypted input as a PGPMessage
 // verifyKey  : Public key for signature verification (optional)
 // verifyTime : Time at verification (necessary only if verifyKey is not nil)
 func (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, error) {
@@ -124,7 +124,7 @@ func asymmetricEncrypt (data []byte, publicKey *KeyRing, privateKey *KeyRing, is
 // Core for decryption+verification functions
 func asymmetricDecrypt (
 	encryptedIO io.Reader, privateKey *KeyRing, verifyKey *KeyRing, verifyTime int64,
-) (plainText []byte, verified int, err error) {
+) (plaintext []byte, verified int, err error) {
 	privKeyEntries := privateKey.GetEntities()
 	var additionalEntries openpgp.EntityList
 

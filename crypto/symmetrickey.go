@@ -74,8 +74,8 @@ func newSymmetricKeyFromEncrypted(ek *packet.EncryptedKey) (*SymmetricKey, error
 }
 
 // Encrypt encrypts a PlainMessage to PGPMessage with a SymmetricKey
-// plainText: PlainMessage
-// output: PGPMessage
+// message : The plain data as a PlainMessage
+// output  : The encrypted data as PGPMessage
 func (simmetricKey *SymmetricKey) Encrypt(message *PlainMessage) (*PGPMessage, error) {
 	encrypted, err := symmetricEncrypt(message.GetBinary(), simmetricKey)
 	if err != nil {

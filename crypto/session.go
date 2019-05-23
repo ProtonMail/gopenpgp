@@ -10,17 +10,16 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-// RandomToken generates a random token with the specified key size, defaulting to the keysize of the default cipher.
-func (pgp *GopenPGP) RandomToken(size ...int) ([]byte, error) {
-	var KeySize int
+// RandomToken generated a random token of the same size of the keysize of the default cipher.
+func (pgp *GopenPGP) RandomToken() ([]byte, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256}
-	if len(size) == 0 {
-		KeySize = config.DefaultCipher.KeySize()
-	} else {
-		KeySize = size[0]
-	}
+	return pgp.RandomTokenSize(config.DefaultCipher.KeySize())
+}
 
-	symKey := make([]byte, KeySize)
+// RandomTokenSize generates a random token with the specified key size
+func (pgp *GopenPGP) RandomTokenSize(size int) ([]byte, error) {
+	config := &packet.Config{DefaultCipher: packet.CipherAES256}
+	symKey := make([]byte, size)
 	if _, err := io.ReadFull(config.Random(), symKey); err != nil {
 		return nil, err
 	}

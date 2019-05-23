@@ -318,7 +318,7 @@ Many functions are duplicates of keyring.go
 ### EncryptMessage
 See Encrypt*
 ```
-(pm *PmCrypto) EncryptMessage(plainText string, publicKey *KeyRing, privateKey *KeyRing, passphrase string, trim bool) (string, error):
+(pm *PmCrypto) EncryptMessage(plaintext string, publicKey *KeyRing, privateKey *KeyRing, passphrase string, trim bool) (string, error):
 * (if binary data) (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error)
 * (if plain text, wrapped) (helper) EncryptMessageArmored(publicKey, plaintext string) (ciphertext string, err error)
 * (if plain text, wrapped, signed) (helper) EncryptSignMessageArmored(publicKey, privateKey, passphrase, plaintext string) (ciphertext string, err error)
@@ -338,9 +338,10 @@ See Decrypt*
 ### EncryptMessageWithPassword
 The function has been moved to `SymmetricKey` to allow more encryption modes. Previously AES-128 (! not 256 as stated) was used.
 ```
-(pm *PmCrypto) EncryptMessageWithPassword(plainText string, password string) (string, error):
+(pm *PmCrypto) EncryptMessageWithPassword(plaintext string, password string) (string, error):
 * (if binary data) (simmetricKey *SymmetricKey) Encrypt(message *PlainMessage) (*PGPMessage, error)
-* (if plain text, wrapped) (helper) EncryptMessageSymmetric(passphrase, plaintext string, algo ...string) (ciphertext string, err error)
+* (if plain text, wrapped) (helper) EncryptMessageWithPassword(passphrase, plaintext string) (ciphertext string, err error)
+* (if plain text, wrapped) (helper) EncryptMessageWithPasswordAlgo(passphrase, plaintext, algo string) (ciphertext string, err error)
 ```
 
 ### DecryptMessageWithPassword
@@ -348,7 +349,7 @@ See `EncryptMessageWithPassword`.
 ```
 (pm *PmCrypto) DecryptMessageWithPassword(encrypted string, password string) (string, error):
 * (if binary data) (simmetricKey *SymmetricKey) Decrypt(message *PGPMessage) (*PlainMessage, error)
-* (if plain text, wrapped, for all ciphers) (helper) DecryptMessageSymmetric(passphrase, ciphertext string) (plaintext string, err error)
+* (if plain text, wrapped, for all ciphers) (helper) DecryptMessageWithPassword(passphrase, ciphertext string) (plaintext string, err error)
 ```
 
 ## mime.go
@@ -361,12 +362,14 @@ Moved to `KeyRing`.
 ```
 
 ## session.go
-### RandomToken, RandomTokenWith
-Functions merged, with optional parameter size, in bytes.
+### RandomToken
+No change.
+
+### RandomTokenWith
+Renamed.
 ```
-(pm *PmCrypto) RandomToken() ([]byte, error):
 (pm *PmCrypto) RandomTokenWith(size int) ([]byte, error):
-* (pgp *GopenPGP) RandomToken(size ...int) ([]byte, error)
+* (pgp *GopenPGP) RandomTokenSize(size int) ([]byte, error)
 ```
 
 ### GetSessionFromKeyPacket
@@ -403,7 +406,7 @@ Renamed, moved to `SymmetricKey`.
 ### SignTextDetached
 Moved to `KeyRing`, changed to `Sign`.
 ```
-(pm *PmCrypto) SignTextDetached(plainText string, privateKey *KeyRing, passphrase string, trim bool) (string, error):
+(pm *PmCrypto) SignTextDetached(plaintext string, privateKey *KeyRing, passphrase string, trim bool) (string, error):
 * (if just signature) (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PlainMessage, *PGPSignature, error)
 * (if PGP SIGNED MESSAGE) (helper) SignCleartextMessage(keyRing *crypto.KeyRing, text string) (string, error)
 * (if PGP SIGNED MESSAGE) (helper) SignCleartextMessageArmored(privateKey, passphrase, text string) (string, error)
@@ -420,7 +423,7 @@ Moved to `KeyRing`.
 Moved to `KeyRing`, changed to Verify.
 See signature_test.go for use examples.
 ```
-(pm *PmCrypto) VerifyTextSignDetachedBinKey(signature string, plainText string, publicKey *KeyRing, verifyTime int64) (bool, error):
+(pm *PmCrypto) VerifyTextSignDetachedBinKey(signature string, plaintext string, publicKey *KeyRing, verifyTime int64) (bool, error):
 (pm *PmCrypto) VerifyBinSignDetachedBinKey(signature string, plainData []byte, publicKey *KeyRing, verifyTime int64) (bool, error):
 * (to verify) (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) (*PlainMessage, error)
 * (if PGP SIGNED MESSAGE) (helper) VerifyCleartextMessage(keyRing *crypto.KeyRing, armored string, verifyTime int64) (string, error)

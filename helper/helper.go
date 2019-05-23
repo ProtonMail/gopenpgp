@@ -9,18 +9,18 @@ import (
 
 var pgp = crypto.GetGopenPGP()
 
-// EncryptMessageWithPassword encrypts a string with a passphrase and an algorithm chosen from constants.*
+// EncryptMessageWithPasswordAlgo encrypts using AES256 a string with a passphrase
 func EncryptMessageWithPassword(
-	passphrase, plaintext string, providedAlgo ...string,
+	passphrase, plaintext string,
+) (ciphertext string, err error){
+	return EncryptMessageWithPasswordAlgo(passphrase, plaintext, constants.AES256)
+}
+
+// EncryptMessageWithPasswordAlgo encrypts a string with a passphrase and an algorithm chosen from constants.*
+func EncryptMessageWithPasswordAlgo(
+	passphrase, plaintext, algo string,
 ) (ciphertext string, err error){
 	var pgpMessage *crypto.PGPMessage
-
-	var algo string
-	if len(providedAlgo) == 0 {
-		algo = constants.AES256
-	} else {
-		algo = providedAlgo[0]
-	}
 
 	var message = crypto.NewPlainMessageFromString(plaintext)
 	var key = crypto.NewSymmetricKeyFromPassphrase(passphrase, algo)
