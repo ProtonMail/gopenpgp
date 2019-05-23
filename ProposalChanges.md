@@ -255,7 +255,7 @@ Replaced by signing methods.
 ```
 (kr *KeyRing) SignString(message string, canonicalizeText bool) (signed string, err error):
 (kr *KeyRing) DetachedSign(w io.Writer, toSign io.Reader, canonicalizeText bool, armored bool):
-* (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PlainMessage, *PGPSignature, error)
+* (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, error)
 ```
 
 ### VerifyString
@@ -407,7 +407,7 @@ Renamed, moved to `SymmetricKey`.
 Moved to `KeyRing`, changed to `Sign`.
 ```
 (pm *PmCrypto) SignTextDetached(plaintext string, privateKey *KeyRing, passphrase string, trim bool) (string, error):
-* (if just signature) (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PlainMessage, *PGPSignature, error)
+* (if just signature) (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, error)
 * (if PGP SIGNED MESSAGE) (helper) SignCleartextMessage(keyRing *crypto.KeyRing, text string) (string, error)
 * (if PGP SIGNED MESSAGE) (helper) SignCleartextMessageArmored(privateKey, passphrase, text string) (string, error)
 ```
@@ -416,7 +416,7 @@ Moved to `KeyRing`, changed to `Sign`.
 Moved to `KeyRing`.
 ```
 (pm *PmCrypto) SignBinDetached(plainData []byte, privateKey *KeyRing, passphrase string) (string, error):
-* (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PlainMessage, *PGPSignature, error)
+* (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, error)
 ```
 
 ### VerifyTextSignDetachedBinKey, VerifyBinSignDetachedBinKey

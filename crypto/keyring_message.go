@@ -46,20 +46,20 @@ func (keyRing *KeyRing) Decrypt(
 }
 
 // Sign generates and attaches a PGPSignature to a given PlainMessage
-func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PlainMessage, *PGPSignature, error) {
+func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, error) {
 	signEntity, err := keyRing.GetSigningEntity()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	config := &packet.Config{DefaultHash:crypto.SHA512 , Time: pgp.getTimeGenerator()}
 	var outBuf bytes.Buffer
 	//sign bin
 	if err := openpgp.DetachSign(&outBuf, signEntity, message.NewReader(), config); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return message, NewPGPSignature(outBuf.Bytes()), nil
+	return NewPGPSignature(outBuf.Bytes()), nil
 }
 
 // Verify verifies a PlainMessage with embedded a PGPSignature

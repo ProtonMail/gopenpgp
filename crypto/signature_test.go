@@ -33,7 +33,8 @@ func TestSignTextDetached(t *testing.T) {
 		t.Fatal("Cannot decrypt private key:", err)
 	}
 
-	message, textSignature, err = signingKeyRing.SignDetached(NewPlainMessageFromString(signedPlainText))
+	message = NewPlainMessageFromString(signedPlainText)
+	textSignature, err = signingKeyRing.SignDetached(message)
 	if err != nil {
 		t.Fatal("Cannot generate signature:", err)
 	}
@@ -66,7 +67,7 @@ func TestVerifyTextDetachedSigWrong(t *testing.T) {
 func TestSignBinDetached(t *testing.T) {
 	var err error
 
-	message, binSignature, err = signingKeyRing.SignDetached(NewPlainMessage([]byte(signedPlainText)))
+	binSignature, err = signingKeyRing.SignDetached(NewPlainMessage([]byte(signedPlainText)))
 	if err != nil {
 		t.Fatal("Cannot generate signature:", err)
 	}

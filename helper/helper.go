@@ -204,7 +204,7 @@ func EncryptSignAttachment(
 		return nil, nil, nil, err
 	}
 
-	if binMessage, signatureObj, err = privateKeyRing.SignDetached(binMessage); err != nil {
+	if signatureObj, err = privateKeyRing.SignDetached(binMessage); err != nil {
 		return nil, nil, nil, err
 	}
 

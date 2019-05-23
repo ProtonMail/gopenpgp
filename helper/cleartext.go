@@ -42,7 +42,7 @@ func SignCleartextMessage(keyRing *crypto.KeyRing, text string) (string, error) 
 	text = canonicalizeAndTrim(text)
 	message := crypto.NewPlainMessageFromString(text)
 
-	message, signature, err := keyRing.SignDetached(message)
+	signature, err := keyRing.SignDetached(message)
 	if err != nil {
 		return "", err
 	}
