@@ -9,21 +9,21 @@ import (
 
 var pgp = crypto.GetGopenPGP()
 
-// EncryptMessageWithPassword encrypts a string with a passphrase using AES256
-func EncryptMessageWithPassword(
+// EncryptMessageWithToken encrypts a string with a passphrase using AES256
+func EncryptMessageWithToken(
 	passphrase, plaintext string,
 ) (ciphertext string, err error) {
-	return EncryptMessageWithPasswordAlgo(passphrase, plaintext, constants.AES256)
+	return EncryptMessageWithTokenAlgo(passphrase, plaintext, constants.AES256)
 }
 
-// EncryptMessageWithPasswordAlgo encrypts a string with a passphrase and an algorithm chosen from constants.*
-func EncryptMessageWithPasswordAlgo(
-	passphrase, plaintext, algo string,
+// EncryptMessageWithTokenAlgo encrypts a string with a random token and an algorithm chosen from constants.*
+func EncryptMessageWithTokenAlgo(
+	token, plaintext, algo string,
 ) (ciphertext string, err error) {
 	var pgpMessage *crypto.PGPMessage
 
 	var message = crypto.NewPlainMessageFromString(plaintext)
-	var key = crypto.NewSymmetricKeyFromPassphrase(passphrase, algo)
+	var key = crypto.NewSymmetricKeyFromToken(token, algo)
 
 	if pgpMessage, err = key.Encrypt(message); err != nil {
 		return "", err
@@ -36,13 +36,13 @@ func EncryptMessageWithPasswordAlgo(
 	return ciphertext, nil
 }
 
-// DecryptMessageWithPassword decrypts an armored message with a passphrase.
+// DecryptMessageWithToken decrypts an armored message with a random token.
 // The algorithm is derived from the armoring.
-func DecryptMessageWithPassword(passphrase, ciphertext string) (plaintext string, err error) {
+func DecryptMessageWithToken(token, ciphertext string) (plaintext string, err error) {
 	var message *crypto.PlainMessage
 	var pgpMessage *crypto.PGPMessage
 
-	var key = crypto.NewSymmetricKeyFromPassphrase(passphrase, "")
+	var key = crypto.NewSymmetricKeyFromToken(token, "")
 
 	if pgpMessage, err = crypto.NewPGPMessageFromArmored(ciphertext); err != nil {
 		return "", err

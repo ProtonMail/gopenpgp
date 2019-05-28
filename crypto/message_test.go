@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTextMessageEncryptionWithPassword(t *testing.T) {
+func TestTextMessageEncryptionWithSymmetricKey(t *testing.T) {
 	var message = NewPlainMessageFromString("The secret code is... 1, 2, 3, 4, 5")
 
 	// Encrypt data with password
@@ -29,7 +29,7 @@ func TestTextMessageEncryptionWithPassword(t *testing.T) {
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
 }
 
-func TestBinaryMessageEncryptionWithPassword(t *testing.T) {
+func TestBinaryMessageEncryptionWithSymmetricKey(t *testing.T) {
 	binData, _ := base64.StdEncoding.DecodeString("ExXmnSiQ2QCey20YLH6qlLhkY3xnIBC1AwlIXwK/HvY=")
 	var message = NewPlainMessage(binData)
 

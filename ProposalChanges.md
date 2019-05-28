@@ -336,12 +336,12 @@ See Decrypt*
 ```
 
 ### EncryptMessageWithPassword
-The function has been moved to `SymmetricKey` to allow more encryption modes. Previously AES-128 (! not 256 as stated) was used.
+The function has been renamed and moved to `SymmetricKey` to allow more encryption modes. Previously AES-128 (! not 256 as stated) was used.
 ```
 (pm *PmCrypto) EncryptMessageWithPassword(plaintext string, password string) (string, error):
 * (if binary data) (symmetricKey *SymmetricKey) Encrypt(message *PlainMessage) (*PGPMessage, error)
-* (if plain text, wrapped) (helper) EncryptMessageWithPassword(passphrase, plaintext string) (ciphertext string, err error)
-* (if plain text, wrapped) (helper) EncryptMessageWithPasswordAlgo(passphrase, plaintext, algo string) (ciphertext string, err error)
+* (if plain text, wrapped) (helper) EncryptMessageWithToken(token, plaintext string) (ciphertext string, err error)
+* (if plain text, wrapped) (helper) EncryptMessageWithTokenAlgo(token, plaintext, algo string) (ciphertext string, err error)
 ```
 
 ### DecryptMessageWithPassword
@@ -349,7 +349,7 @@ See `EncryptMessageWithPassword`.
 ```
 (pm *PmCrypto) DecryptMessageWithPassword(encrypted string, password string) (string, error):
 * (if binary data) (symmetricKey *SymmetricKey) Decrypt(message *PGPMessage) (*PlainMessage, error)
-* (if plain text, wrapped, for all ciphers) (helper) DecryptMessageWithPassword(passphrase, ciphertext string) (plaintext string, err error)
+* (if plain text, wrapped, for all ciphers) (helper) DecryptMessageWithToken(token, ciphertext string) (plaintext string, err error)
 ```
 
 ## mime.go

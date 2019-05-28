@@ -90,10 +90,10 @@ import "github.com/ProtonMail/gopenpgp/helper"
 const password = "my secret password"
 
 // Encrypt data with password
-armor, err := helper.EncryptMessageWithPassword(password, "my message")
+armor, err := helper.EncryptMessageWithToken(password, "my message")
 
 // Decrypt data with password
-message, err := helper.DecryptMessageWithPassword(password, armor)
+message, err := helper.DecryptMessageWithToken(password, armor)
 ```
 
 To use more encryption algorithms:
@@ -102,10 +102,10 @@ import "github.com/ProtonMail/gopenpgp/constants"
 import "github.com/ProtonMail/gopenpgp/helper"
 
 // Encrypt data with password
-armor, err := helper.EncryptMessageWithPasswordAlgo(password, "my message", constants.ThreeDES)
+armor, err := helper.EncryptMessageWithTokenAlgo(password, "my message", constants.ThreeDES)
 
 // Decrypt data with password
-message, err := helper.DecryptMessageWithPassword(password, armor)
+message, err := helper.DecryptMessageWithToken(password, armor)
 ```
 
 To encrypt binary data, reuse the key multiple times, or use more advanced modes:

@@ -46,7 +46,7 @@ func (symmetricKey *SymmetricKey) GetBase64Key() string {
 	return base64.StdEncoding.EncodeToString(symmetricKey.Key)
 }
 
-func NewSymmetricKeyFromPassphrase(passphrase, algo string) *SymmetricKey {
+func NewSymmetricKeyFromToken(passphrase, algo string) *SymmetricKey {
 	return NewSymmetricKey([]byte(passphrase), algo)
 }
 
