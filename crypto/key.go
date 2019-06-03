@@ -79,17 +79,16 @@ func (pgp *GopenPGP) IsArmoredKeyExpired(publicKey string) (bool, error) {
 }
 
 func (pgp *GopenPGP) generateKey(
-	userName, domain, passphrase, keyType string,
+	name, email, passphrase, keyType string,
 	bits int,
 	prime1, prime2, prime3, prime4 []byte,
 ) (string, error) {
-	if len(userName) <= 0 {
-		return "", errors.New("invalid user name format")
+	if len(email) <= 0 {
+		return "", errors.New("invalid email format")
 	}
-	var email = userName
 
-	if len(domain) > 0 {
-		email = email + "@" + domain
+	if len(name) <= 0 {
+		return "", errors.New("invalid name format")
 	}
 
 	comments := ""
@@ -120,7 +119,7 @@ func (pgp *GopenPGP) generateKey(
 		cfg.RSAPrimes = bigPrimes[:]
 	}
 
-	newEntity, err := openpgp.NewEntity(email, comments, email, cfg)
+	newEntity, err := openpgp.NewEntity(name, comments, email, cfg)
 	if err != nil {
 		return "", err
 	}
@@ -154,18 +153,18 @@ func (pgp *GopenPGP) generateKey(
 
 // GenerateRSAKeyWithPrimes generates a RSA key using the given primes.
 func (pgp *GopenPGP) GenerateRSAKeyWithPrimes(
-	userName, domain, passphrase string,
+	name, email, passphrase string,
 	bits int,
 	primeone, primetwo, primethree, primefour []byte,
 ) (string, error) {
-	return pgp.generateKey(userName, domain, passphrase, "rsa", bits, primeone, primetwo, primethree, primefour)
+	return pgp.generateKey(name, email, passphrase, "rsa", bits, primeone, primetwo, primethree, primefour)
 }
 
 // GenerateKey generates a key of the given keyType ("rsa" or "x25519").
 // If keyType is "rsa", bits is the RSA bitsize of the key.
 // If keyType is "x25519" bits is unused.
-func (pgp *GopenPGP) GenerateKey(userName, domain, passphrase, keyType string, bits int) (string, error) {
-	return pgp.generateKey(userName, domain, passphrase, keyType, bits, nil, nil, nil, nil)
+func (pgp *GopenPGP) GenerateKey(name, email, passphrase, keyType string, bits int) (string, error) {
+	return pgp.generateKey(name, email, passphrase, keyType, bits, nil, nil, nil, nil)
 }
 
 // UpdatePrivateKeyPassphrase decrypts the given armored privateKey with oldPassphrase,

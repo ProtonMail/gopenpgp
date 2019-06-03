@@ -182,10 +182,22 @@ Renamed.
 ```
 
 ### GenerateRSAKeyWithPrimes
-No change.
+`userName` and `domain` joined in `email`.
+Added `name` parameter.
+To emulate the old behaviour `name = email = userName + "@" + domain`.
+```
+(pm *PmCrypto) GenerateRSAKeyWithPrimes(userName, domain, passphrase, keyType string, bits int, prime1, prime2, prime3, prime4 []byte) (string, error):
+* (pgp *GopenPGP) GenerateRSAKeyWithPrimes(name, email, passphrase, keyType string, bits int, prime1, prime2, prime3, prime4 []byte) (string, error):
+```
 
 ### GenerateKey
-No change.
+`userName` and `domain` joined in `email`.
+Added `name` parameter.
+To emulate the old behaviour `name = email = userName + "@" + domain`.
+```
+(pm *PmCrypto) GenerateKey(userName, domain, passphrase, keyType string, bits int) (string, error) :
+* (pgp *GopenPGP) GenerateKey(name, email, passphrase, keyType string, bits int) (string, error):
+```
 
 ### UpdatePrivateKeyPassphrase
 No change.

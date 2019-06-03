@@ -11,8 +11,8 @@ import (
 	"golang.org/x/crypto/rsa"
 )
 
-const name = "richard.stallman"
-const domain = "protonmail.ch"
+const name = "Richard M. Stallman"
+const domain = "rms@protonmail.ch"
 
 var passphrase = "I love GNU"
 var rsaKey, ecKey, rsaPublicKey, ecPublicKey string
