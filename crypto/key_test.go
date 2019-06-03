@@ -6,12 +6,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ProtonMail/gopenpgp/constants"
 	"github.com/stretchr/testify/assert"
+
+	"golang.org/x/crypto/rsa"
 )
 
-const name = "richard.stallman"
-const domain = "protonmail.ch"
+const name = "Richard M. Stallman"
+const domain = "rms@protonmail.ch"
 
 var passphrase = "I love GNU"
 var rsaKey, ecKey, rsaPublicKey, ecPublicKey string
@@ -55,7 +56,7 @@ func TestGenerateKeyRings(t *testing.T) {
 		t.Fatal("Cannot read RSA public key:", err)
 	}
 
-	err = rsaPrivateKeyRing.Unlock([]byte(passphrase))
+	err = rsaPrivateKeyRing.UnlockWithPassphrase(passphrase)
 	if err != nil {
 		t.Fatal("Cannot decrypt RSA key:", err)
 	}
@@ -75,38 +76,10 @@ func TestGenerateKeyRings(t *testing.T) {
 		t.Fatal("Cannot read EC public key:", err)
 	}
 
-	err = ecPrivateKeyRing.Unlock([]byte(passphrase))
+	err = ecPrivateKeyRing.UnlockWithPassphrase(passphrase)
 	if err != nil {
 		t.Fatal("Cannot decrypt EC key:", err)
 	}
-}
-
-func TestEncryptDecryptKeys(t *testing.T) {
-	var pass, _ = base64.StdEncoding.DecodeString("H2CAwzpdexjxXucVYMERDiAc/td8aGPrr6ZhfMnZlLI=")
-	var testSymmetricKey = &SymmetricKey{
-		Key:  pass,
-		Algo: constants.AES256,
-	}
-
-	packet, err := rsaPublicKeyRing.EncryptKey(testSymmetricKey)
-	if err != nil {
-		t.Fatal("Cannot encrypt keypacket with RSA keyring", err)
-	}
-	rsaTestSymmetricKey, err := DecryptAttKey(rsaPrivateKeyRing, packet)
-	if err != nil {
-		t.Fatal("Cannot decrypt keypacket with RSA keyring", err)
-	}
-	assert.Exactly(t, testSymmetricKey, rsaTestSymmetricKey)
-
-	packet, err = ecPublicKeyRing.EncryptKey(testSymmetricKey)
-	if err != nil {
-		t.Fatal("Cannot encrypt keypacket with EC keyring", err)
-	}
-	ecTestSymmetricKey, err := DecryptAttKey(ecPrivateKeyRing, packet)
-	if err != nil {
-		t.Fatal("Cannot decrypt keypacket with EC keyring", err)
-	}
-	assert.Exactly(t, testSymmetricKey, ecTestSymmetricKey)
 }
 
 func TestUpdatePrivateKeysPassphrase(t *testing.T) {
@@ -124,20 +97,20 @@ func TestUpdatePrivateKeysPassphrase(t *testing.T) {
 	passphrase = newPassphrase
 }
 
-func ExampleCheckKeys() {
-	_, _ = pgp.CheckKey(readTestFile("keyring_publicKey", false))
+func ExamplePrintFingerprints() {
+	_, _ = pgp.PrintFingerprints(readTestFile("keyring_publicKey", false))
 	// Output:
 	// SubKey:37e4bcf09b36e34012d10c0247dc67b5cb8267f6
 	// PrimaryKey:6e8ba229b0cccaf6962f97953eb6259edf21df24
 }
 
-func TestIsKeyExpired(t *testing.T) {
-	rsaRes, err := pgp.IsKeyExpired(rsaPublicKey)
+func TestIsArmoredKeyExpired(t *testing.T) {
+	rsaRes, err := pgp.IsArmoredKeyExpired(rsaPublicKey)
 	if err != nil {
 		t.Fatal("Error in checking expiration of RSA key:", err)
 	}
 
-	ecRes, err := pgp.IsKeyExpired(ecPublicKey)
+	ecRes, err := pgp.IsArmoredKeyExpired(ecPublicKey)
 	if err != nil {
 		t.Fatal("Error in checking expiration of EC key:", err)
 	}
@@ -147,11 +120,43 @@ func TestIsKeyExpired(t *testing.T) {
 
 	pgp.UpdateTime(1557754627) // 2019-05-13T13:37:07+00:00
 
-	expRes, expErr := pgp.IsKeyExpired(readTestFile("key_expiredKey", false))
-	futureRes, futureErr := pgp.IsKeyExpired(readTestFile("key_futureKey", false))
+	expRes, expErr := pgp.IsArmoredKeyExpired(readTestFile("key_expiredKey", false))
+	futureRes, futureErr := pgp.IsArmoredKeyExpired(readTestFile("key_futureKey", false))
 
 	assert.Exactly(t, true, expRes)
 	assert.Exactly(t, true, futureRes)
 	assert.EqualError(t, expErr, "keys expired")
 	assert.EqualError(t, futureErr, "keys expired")
+}
+
+func TestGenerateKeyWithPrimes(t *testing.T) {
+	prime1, _ := base64.StdEncoding.DecodeString(
+		"/thF8zjjk6fFx/y9NId35NFx8JTA7jvHEl+gI0dp9dIl9trmeZb+ESZ8f7bNXUmTI8j271kyenlrVJiqwqk80Q==")
+	prime2, _ := base64.StdEncoding.DecodeString(
+		"0HyyG/TShsw7yObD+DDP9Ze39ye1Redljx+KOZ3iNDmuuwwI1/5y44rD/ezAsE7A188NsotMDTSy5xtfHmu0xQ==")
+	prime3, _ := base64.StdEncoding.DecodeString(
+		"3OyJpAdnQXNjPNzI1u3BWDmPrzWw099E0UfJj5oJJILSbsAg/DDrmrdrIZDt7f24d06HCnTErCNWjvFJ3Kdq4w==")
+	prime4, _ := base64.StdEncoding.DecodeString(
+		"58UEDXTX29Q9JqvuE3Tn+Qj275CXBnJbA8IVM4d05cPYAZ6H43bPN01pbJqJTJw/cuFxs+8C+HNw3/MGQOExqw==")
+
+	staticRsaKey, err := pgp.GenerateRSAKeyWithPrimes(name, domain, passphrase, 1024, prime1, prime2, prime3, prime4)
+	if err != nil {
+		t.Fatal("Cannot generate RSA key:", err)
+	}
+	rTest := regexp.MustCompile("(?s)^-----BEGIN PGP PRIVATE KEY BLOCK-----.*-----END PGP PRIVATE KEY BLOCK-----$")
+	assert.Regexp(t, rTest, staticRsaKey)
+
+	staticRsaKeyRing, err := ReadArmoredKeyRing(strings.NewReader(staticRsaKey))
+	if err != nil {
+		t.Fatal("Cannot read RSA key:", err)
+	}
+
+	err = staticRsaKeyRing.UnlockWithPassphrase(passphrase)
+	if err != nil {
+		t.Fatal("Cannot decrypt RSA key:", err)
+	}
+
+	pk := staticRsaKeyRing.GetEntities()[0].PrivateKey.PrivateKey.(*rsa.PrivateKey)
+	assert.Exactly(t, prime1, pk.Primes[1].Bytes())
+	assert.Exactly(t, prime2, pk.Primes[0].Bytes())
 }

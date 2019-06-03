@@ -19,13 +19,16 @@ var testSymmetricKey = &SymmetricKey{
 	Algo: constants.AES256,
 }
 
+var testWrongSymmetricKey = &SymmetricKey{
+	Key:  []byte("WrongPass"),
+	Algo: constants.AES256,
+}
+
 // Corresponding key in testdata/keyring_privateKey
 const testMailboxPassword = "apple"
 
 // Corresponding key in testdata/keyring_privateKeyLegacy
 // const testMailboxPasswordLegacy = "123"
-
-const testToken = "d79ca194a22810a5363eeddfdef7dfbc327c6229"
 
 var (
 	testPrivateKeyRing *KeyRing
@@ -50,41 +53,10 @@ func init() {
 		panic(err)
 	}
 
-	err = testPrivateKeyRing.Unlock([]byte(testMailboxPassword))
+	err = testPrivateKeyRing.UnlockWithPassphrase(testMailboxPassword)
 	if err != nil {
 		panic(err)
 	}
-}
-
-func TestKeyRing_Decrypt(t *testing.T) {
-	decString, err := testPrivateKeyRing.DecryptMessageIfNeeded(readTestFile("keyring_token", false))
-	if err != nil {
-		t.Fatal("Cannot decrypt token:", err)
-	}
-
-	assert.Exactly(t, testToken, decString)
-}
-
-func TestKeyRing_Encrypt(t *testing.T) {
-	encrypted, err := testPublicKeyRing.EncryptMessage(testToken, testPrivateKeyRing)
-	if err != nil {
-		t.Fatal("Cannot encrypt token:", err)
-	}
-
-	// We can't just check if encrypted == testEncryptedToken
-	// Decrypt instead
-	ss, err := testPrivateKeyRing.DecryptMessage(encrypted)
-	if err != nil {
-		t.Fatal("Cannot decrypt token:", err)
-	}
-
-	assert.Exactly(t, testToken, ss.String)
-
-	signatureKeyRing := ss.Signed.KeyRing()
-	assert.Exactly(t, testPrivateKeyRing, signatureKeyRing)
-
-	isby := ss.Signed.IsBy(testPublicKeyRing)
-	assert.Exactly(t, true, isby)
 }
 
 func TestKeyRing_ArmoredPublicKeyString(t *testing.T) {
@@ -134,10 +106,9 @@ func TestIdentities(t *testing.T) {
 	assert.Exactly(t, identities[0], testIdentity)
 }
 
-
 func TestFilterExpiredKeys(t *testing.T) {
 	expiredKey, _ := ReadArmoredKeyRing(strings.NewReader(readTestFile("key_expiredKey", false)))
-	keys := []*KeyRing {testPrivateKeyRing, expiredKey}
+	keys := []*KeyRing{testPrivateKeyRing, expiredKey}
 	unexpired, err := FilterExpiredKeys(keys)
 
 	if err != nil {
@@ -146,4 +117,70 @@ func TestFilterExpiredKeys(t *testing.T) {
 
 	assert.Len(t, unexpired, 1)
 	assert.Exactly(t, unexpired[0], testPrivateKeyRing)
+}
+
+func TestGetPublicKey(t *testing.T) {
+	publicKey, err := testPrivateKeyRing.GetPublicKey()
+	if err != nil {
+		t.Fatal("Expected no error while obtaining public key, got:", err)
+	}
+
+	publicKeyRing, err := pgp.BuildKeyRing(publicKey)
+	if err != nil {
+		t.Fatal("Expected no error while creating public key ring, got:", err)
+	}
+
+	privateFingerprint, err := testPrivateKeyRing.GetFingerprint()
+	if err != nil {
+		t.Fatal("Expected no error while extracting private fingerprint, got:", err)
+	}
+
+	publicFingerprint, err := publicKeyRing.GetFingerprint()
+	if err != nil {
+		t.Fatal("Expected no error while extracting public fingerprint, got:", err)
+	}
+
+	assert.Exactly(t, privateFingerprint, publicFingerprint)
+}
+
+func TestKeyIds(t *testing.T) {
+	keyIDs := testPrivateKeyRing.KeyIds()
+	var assertKeyIDs = []uint64{4518840640391470884}
+	assert.Exactly(t, assertKeyIDs, keyIDs)
+}
+
+func TestReadFromJson(t *testing.T) {
+	decodedKeyRing := &KeyRing{}
+	err = decodedKeyRing.ReadFromJSON([]byte(readTestFile("keyring_jsonKeys", false)))
+	if err != nil {
+		t.Fatal("Expected no error while reading JSON, got:", err)
+	}
+
+	fingerprint, err := decodedKeyRing.GetFingerprint()
+	if err != nil {
+		t.Fatal("Expected no error while extracting fingerprint, got:", err)
+	}
+
+	assert.Exactly(t, "91eacacca6837890efa7000470e569d5c182bef6", fingerprint)
+}
+
+func TestUnlockJson(t *testing.T) {
+	userKeyRing, err := ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_userKey", false)))
+	if err != nil {
+		t.Fatal("Expected no error while creating keyring, got:", err)
+	}
+
+	err = userKeyRing.UnlockWithPassphrase("testpassphrase")
+	if err != nil {
+		t.Fatal("Expected no error while creating keyring, got:", err)
+	}
+
+	addressKeyRing, err := userKeyRing.UnlockJSONKeyRing([]byte(readTestFile("keyring_newJSONKeys", false)))
+	if err != nil {
+		t.Fatal("Expected no error while reading and decrypting JSON, got:", err)
+	}
+
+	for _, e := range addressKeyRing.entities {
+		assert.Exactly(t, false, e.PrivateKey.Encrypted)
+	}
 }

@@ -2,271 +2,326 @@ package crypto
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math"
-	"time"
+	"regexp"
+	"runtime"
 
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/armor"
-	pgpErrors "golang.org/x/crypto/openpgp/errors"
-	"golang.org/x/crypto/openpgp/packet"
-
-	armorUtils "github.com/ProtonMail/gopenpgp/armor"
+	"github.com/ProtonMail/gopenpgp/armor"
 	"github.com/ProtonMail/gopenpgp/constants"
 	"github.com/ProtonMail/gopenpgp/internal"
-	"github.com/ProtonMail/gopenpgp/models"
+
+	"golang.org/x/crypto/openpgp/packet"
 )
 
-// DecryptMessageStringKey decrypts encrypted message use private key (string)
-// encryptedText : string armored encrypted
-// privateKey : armored private use to decrypt message
-// passphrase : match with private key to decrypt message
-func (pgp *GopenPGP) DecryptMessageStringKey(
-	encryptedText, privateKey, passphrase string,
-) (string, error) {
-	privKeyRaw, err := armorUtils.Unarmor(privateKey)
-	if err != nil {
-		return "", err
-	}
-	privKeyReader := bytes.NewReader(privKeyRaw)
-	privKeyEntries, err := openpgp.ReadKeyRing(privKeyReader)
-	if err != nil {
-		return "", err
-	}
+// ---- MODELS -----
 
-	return pgp.DecryptMessage(encryptedText, &KeyRing{entities: privKeyEntries}, passphrase)
+// PlainMessage stores an unencrypted message.
+type PlainMessage struct {
+	// The content of the message
+	Data []byte
+	// if the content is text or binary
+	TextType bool
 }
 
-// DecryptMessage decrypts encrypted string using keyring
-// encryptedText : string armored encrypted
-// privateKey : keyring with private key to decrypt message, could be multiple keys
-// passphrase : match with private key to decrypt message
-func (pgp *GopenPGP) DecryptMessage(encryptedText string, privateKey *KeyRing, passphrase string) (string, error) {
-	md, err := decryptCore(encryptedText, nil, privateKey, passphrase, pgp.getTimeGenerator())
-	if err != nil {
-		return "", err
-	}
-
-	decrypted := md.UnverifiedBody
-	b, err := ioutil.ReadAll(decrypted)
-	if err != nil {
-		return "", err
-	}
-
-	return string(b), nil
+// Verification for a PlainMessage
+type Verification struct {
+	// If the decoded message was correctly signed. See constants.SIGNATURE* for all values.
+	Verified int
 }
 
-func decryptCore(
-	encryptedText string, additionalEntries openpgp.EntityList,
-	privKey *KeyRing, passphrase string,
-	timeFunc func() time.Time,
-) (*openpgp.MessageDetails, error) {
-	rawPwd := []byte(passphrase)
-	if err := privKey.Unlock(rawPwd); err != nil {
-		err = fmt.Errorf("gopenpgp: cannot decrypt passphrase: %v", err)
-		return nil, err
-	}
-
-	privKeyEntries := privKey.entities
-
-	if additionalEntries != nil {
-		privKeyEntries = append(privKeyEntries, additionalEntries...)
-	}
-
-	encryptedio, err := internal.Unarmor(encryptedText)
-	if err != nil {
-		return nil, err
-	}
-
-	config := &packet.Config{Time: timeFunc}
-
-	md, err := openpgp.ReadMessage(encryptedio.Body, privKeyEntries, nil, config)
-	return md, err
+// PGPMessage stores a PGP-encrypted message.
+type PGPMessage struct {
+	// The content of the message
+	Data []byte
 }
 
-// DecryptMessageVerify decrypts message and verify the signature
-// encryptedText:  string armored encrypted
-// verifierKey    []byte: unarmored verifier keys
-// privateKeyRing []byte: unarmored private key to decrypt. could be multiple
-// passphrase:    match with private key to decrypt message
-func (pgp *GopenPGP) DecryptMessageVerify(
-	encryptedText string, verifierKey, privateKeyRing *KeyRing,
-	passphrase string, verifyTime int64,
-) (*models.DecryptSignedVerify, error) {
-	out := &models.DecryptSignedVerify{}
-	out.Verify = failed
+// PGPSignature stores a PGP-encoded detached signature.
+type PGPSignature struct {
+	// The content of the signature
+	Data []byte
+}
 
-	var verifierEntries openpgp.EntityList
-	if len(verifierKey.entities) == 0 {
-		out.Verify = noVerifier
+// PGPSplitMessage contains a separate session key packet and symmetrically
+// encrypted data packet.
+type PGPSplitMessage struct {
+	DataPacket []byte
+	KeyPacket  []byte
+}
+
+// ---- GENERATORS -----
+
+// NewPlainMessage generates a new binary PlainMessage ready for encryption,
+// signature, or verification from the unencrypted binary data.
+func NewPlainMessage(data []byte) *PlainMessage {
+	return &PlainMessage{
+		Data:     data,
+		TextType: false,
 	}
+}
 
-	md, err := decryptCore(
-		encryptedText,
-		verifierEntries,
-		privateKeyRing,
-		passphrase,
-		func() time.Time { return time.Unix(0, 0) }) // TODO: I doubt this time is correct
+// NewPlainMessageFromString generates a new text PlainMessage,
+// ready for encryption, signature, or verification from an unencrypted string.
+func NewPlainMessageFromString(text string) *PlainMessage {
+	return &PlainMessage{
+		Data:     []byte(text),
+		TextType: true,
+	}
+}
 
+// newVerification returns a new instance of *Verification with the specified value
+func newVerification(value int) *Verification {
+	return &Verification{
+		Verified: value,
+	}
+}
+
+// NewPGPMessage generates a new PGPMessage from the unarmored binary data.
+func NewPGPMessage(data []byte) *PGPMessage {
+	return &PGPMessage{
+		Data: data,
+	}
+}
+
+// NewPGPMessageFromArmored generates a new PGPMessage from an armored string ready for decryption.
+func NewPGPMessageFromArmored(armored string) (*PGPMessage, error) {
+	encryptedIO, err := internal.Unarmor(armored)
 	if err != nil {
 		return nil, err
 	}
 
-	decrypted := md.UnverifiedBody
-	b, err := ioutil.ReadAll(decrypted)
+	message, err := ioutil.ReadAll(encryptedIO.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	processSignatureExpiration(md, verifyTime)
+	return &PGPMessage{
+		Data: message,
+	}, nil
+}
 
-	out.Plaintext = string(b)
-	if md.IsSigned {
-		if md.SignedBy != nil {
-			if len(verifierKey.entities) > 0 {
-				matches := verifierKey.entities.KeysById(md.SignedByKeyId)
-				if len(matches) > 0 {
-					if md.SignatureError == nil {
-						out.Verify = ok
-					} else {
-						out.Message = md.SignatureError.Error()
-						out.Verify = failed
-					}
+// NewPGPSplitMessage generates a new PGPSplitMessage from the binary unarmored keypacket,
+// datapacket, and encryption algorithm.
+func NewPGPSplitMessage(keyPacket []byte, dataPacket []byte) *PGPSplitMessage {
+	return &PGPSplitMessage{
+		KeyPacket:  keyPacket,
+		DataPacket: dataPacket,
+	}
+}
+
+// NewPGPSplitMessageFromArmored generates a new PGPSplitMessage by splitting an armored message into its
+// session key packet and symmetrically encrypted data packet.
+func NewPGPSplitMessageFromArmored(encrypted string) (*PGPSplitMessage, error) {
+	message, err := NewPGPMessageFromArmored(encrypted)
+	if err != nil {
+		return nil, err
+	}
+
+	return message.SeparateKeyAndData(len(encrypted), -1)
+}
+
+// NewPGPSignature generates a new PGPSignature from the unarmored binary data.
+func NewPGPSignature(data []byte) *PGPSignature {
+	return &PGPSignature{
+		Data: data,
+	}
+}
+
+// NewPGPSignatureFromArmored generates a new PGPSignature from the armored string ready for verification.
+func NewPGPSignatureFromArmored(armored string) (*PGPSignature, error) {
+	encryptedIO, err := internal.Unarmor(armored)
+	if err != nil {
+		return nil, err
+	}
+
+	signature, err := ioutil.ReadAll(encryptedIO.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PGPSignature{
+		Data: signature,
+	}, nil
+}
+
+// ---- MODEL METHODS -----
+
+// GetBinary returns the binary content of the message as a []byte
+func (msg *PlainMessage) GetBinary() []byte {
+	return msg.Data
+}
+
+// GetString returns the content of the message as a string
+func (msg *PlainMessage) GetString() string {
+	return string(msg.Data)
+}
+
+// GetBase64 returns the base-64 encoded binary content of the message as a string
+func (msg *PlainMessage) GetBase64() string {
+	return base64.StdEncoding.EncodeToString(msg.Data)
+}
+
+// GetVerification returns the verification status of a verification,
+// to use after the KeyRing.Decrypt* or KeyRing.Verify* functions.
+// The int value returned is to compare to constants.SIGNATURE*.
+func (ver *Verification) GetVerification() int {
+	return ver.Verified
+}
+
+// IsValid returns true if the message is signed and the signature is valid.
+// To use after the KeyRing.Decrypt* or KeyRing.Verify* functions.
+func (ver *Verification) IsValid() bool {
+	return ver.Verified == constants.SIGNATURE_OK
+}
+
+// NewReader returns a New io.Reader for the bianry data of the message
+func (msg *PlainMessage) NewReader() io.Reader {
+	return bytes.NewReader(msg.GetBinary())
+}
+
+// IsText returns whether the message is a text message
+func (msg *PlainMessage) IsText() bool {
+	return msg.TextType
+}
+
+// IsBinary returns whether the message is a binary message
+func (msg *PlainMessage) IsBinary() bool {
+	return !msg.TextType
+}
+
+// GetBinary returns the unarmored binary content of the message as a []byte
+func (msg *PGPMessage) GetBinary() []byte {
+	return msg.Data
+}
+
+// NewReader returns a New io.Reader for the unarmored bianry data of the message
+func (msg *PGPMessage) NewReader() io.Reader {
+	return bytes.NewReader(msg.GetBinary())
+}
+
+// GetArmored returns the armored message as a string
+func (msg *PGPMessage) GetArmored() (string, error) {
+	return armor.ArmorWithType(msg.Data, constants.PGPMessageHeader)
+}
+
+// GetDataPacket returns the unarmored binary datapacket as a []byte
+func (msg *PGPSplitMessage) GetDataPacket() []byte {
+	return msg.DataPacket
+}
+
+// GetKeyPacket returns the unarmored binary keypacket as a []byte
+func (msg *PGPSplitMessage) GetKeyPacket() []byte {
+	return msg.KeyPacket
+}
+
+// SeparateKeyAndData returns the first keypacket and the (hopefully unique) dataPacket (not verified)
+func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int) (outSplit *PGPSplitMessage, err error) {
+	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
+	packets := packet.NewReader(bytes.NewReader(msg.Data))
+	outSplit = &PGPSplitMessage{}
+	gcCounter := 0
+
+	// Store encrypted key and symmetrically encrypted packet separately
+	var encryptedKey *packet.EncryptedKey
+	var decryptErr error
+	for {
+		var p packet.Packet
+		if p, err = packets.Next(); err == io.EOF {
+			err = nil
+			break
+		}
+		switch p := p.(type) {
+		case *packet.EncryptedKey:
+			if encryptedKey != nil && encryptedKey.Key != nil {
+				break
+			}
+			encryptedKey = p
+
+		case *packet.SymmetricallyEncrypted:
+			// FIXME: add support for multiple keypackets
+			var b bytes.Buffer
+			// 2^16 is an estimation of the size difference between input and output, the size difference is most probably
+			// 16 bytes at a maximum though.
+			// We need to avoid triggering a grow from the system as this will allocate too much memory causing problems
+			// in low-memory environments
+			b.Grow(1<<16 + estimatedLength)
+			// empty encoded length + start byte
+			b.Write(make([]byte, 6))
+			b.WriteByte(byte(1))
+			actualLength := 1
+			block := make([]byte, 128)
+			for {
+				n, err := p.Contents.Read(block)
+				if err == io.EOF {
+					break
 				}
+				b.Write(block[:n])
+				actualLength += n
+				gcCounter += n
+				if gcCounter > garbageCollector && garbageCollector > 0 {
+					runtime.GC()
+					gcCounter = 0
+				}
+			}
+
+			// quick encoding
+			symEncryptedData := b.Bytes()
+			if actualLength < 192 {
+				symEncryptedData[4] = byte(210)
+				symEncryptedData[5] = byte(actualLength)
+				symEncryptedData = symEncryptedData[4:]
+			} else if actualLength < 8384 {
+				actualLength = actualLength - 192
+				symEncryptedData[3] = byte(210)
+				symEncryptedData[4] = 192 + byte(actualLength>>8)
+				symEncryptedData[5] = byte(actualLength)
+				symEncryptedData = symEncryptedData[3:]
 			} else {
-				out.Verify = noVerifier
+				symEncryptedData[0] = byte(210)
+				symEncryptedData[1] = byte(255)
+				symEncryptedData[2] = byte(actualLength >> 24)
+				symEncryptedData[3] = byte(actualLength >> 16)
+				symEncryptedData[4] = byte(actualLength >> 8)
+				symEncryptedData[5] = byte(actualLength)
 			}
-		} else {
-			out.Verify = noVerifier
-		}
-	} else {
-		out.Verify = notSigned
-	}
-	return out, nil
-}
 
-// processSignatureExpiration handles signature time verification manually, so we can add a margin to the
-// creationTime check.
-func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
-	if md.SignatureError == pgpErrors.ErrSignatureExpired {
-		if verifyTime > 0 {
-			created := md.Signature.CreationTime.Unix()
-			expires := int64(math.MaxInt64)
-			if md.Signature.SigLifetimeSecs != nil {
-				expires = int64(*md.Signature.SigLifetimeSecs) + created
-			}
-			if created-internal.CreationTimeOffset <= verifyTime && verifyTime <= expires {
-				md.SignatureError = nil
-			}
-		} else {
-			// verifyTime = 0: time check disabled, everything is okay
-			md.SignatureError = nil
+			outSplit.DataPacket = symEncryptedData
 		}
 	}
+	if decryptErr != nil {
+		return nil, fmt.Errorf("gopenpgp: cannot decrypt encrypted key packet: %v", decryptErr)
+	}
+	if encryptedKey == nil {
+		return nil, errors.New("gopenpgp: packets don't include an encrypted key packet")
+	}
+
+	var buf bytes.Buffer
+	if err := encryptedKey.Serialize(&buf); err != nil {
+		return nil, fmt.Errorf("gopenpgp: cannot serialize encrypted key: %v", err)
+	}
+	outSplit.KeyPacket = buf.Bytes()
+
+	return outSplit, nil
 }
 
-// EncryptMessageWithPassword encrypts a plain text to pgp message with a password
-// plainText string: clear text
-// output string: armored pgp message
-func (pgp *GopenPGP) EncryptMessageWithPassword(plainText string, password string) (string, error) {
-	var outBuf bytes.Buffer
-	w, err := armor.Encode(&outBuf, constants.PGPMessageHeader, internal.ArmorHeaders)
-	if err != nil {
-		return "", err
-	}
-
-	config := &packet.Config{Time: pgp.getTimeGenerator()}
-	plaintext, err := openpgp.SymmetricallyEncrypt(w, []byte(password), nil, config)
-	if err != nil {
-		return "", err
-	}
-	message := []byte(plainText)
-	_, err = plaintext.Write(message)
-	if err != nil {
-		return "", err
-	}
-	err = plaintext.Close()
-	if err != nil {
-		return "", err
-	}
-	w.Close()
-
-	return outBuf.String(), nil
+// GetBinary returns the unarmored binary content of the signature as a []byte
+func (msg *PGPSignature) GetBinary() []byte {
+	return msg.Data
 }
 
-// EncryptMessage encrypts message with unarmored public key, if pass private key and passphrase will also sign
-// the message
-// publicKey : bytes unarmored public key
-// plainText : the input
-// privateKey : optional required when you want to sign
-// passphrase : optional required when you pass the private key and this passphrase should decrypt the private key
-// trim : bool true if need to trim new lines
-func (pgp *GopenPGP) EncryptMessage(
-	plainText string, publicKey, privateKey *KeyRing,
-	passphrase string, trim bool,
-) (string, error) {
-	if trim {
-		plainText = internal.TrimNewlines(plainText)
-	}
-	var outBuf bytes.Buffer
-	w, err := armor.Encode(&outBuf, constants.PGPMessageHeader, internal.ArmorHeaders)
-	if err != nil {
-		return "", err
-	}
-
-	var signEntity *openpgp.Entity
-
-	if len(passphrase) > 0 && len(privateKey.entities) > 0 {
-		var err error
-		signEntity, err = privateKey.GetSigningEntity(passphrase)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	ew, err := EncryptCore(w, publicKey.entities, signEntity, "", false, pgp.getTimeGenerator())
-	if err != nil {
-		return "", err
-	}
-
-	_, err = ew.Write([]byte(plainText))
-	ew.Close()
-	w.Close()
-	return outBuf.String(), err
+// GetArmored returns the armored signature as a string
+func (msg *PGPSignature) GetArmored() (string, error) {
+	return armor.ArmorWithType(msg.Data, constants.PGPSignatureHeader)
 }
 
-// DecryptMessageWithPassword decrypts a pgp message with a password
-// encrypted string : armored pgp message
-// output string : clear text
-func (pgp *GopenPGP) DecryptMessageWithPassword(encrypted string, password string) (string, error) {
-	encryptedio, err := internal.Unarmor(encrypted)
-	if err != nil {
-		return "", err
-	}
+// ---- UTILS -----
 
-	firstTimeCalled := true
-	var prompt = func(keys []openpgp.Key, symmetric bool) ([]byte, error) {
-		if firstTimeCalled {
-			firstTimeCalled = false
-			return []byte(password), nil
-		}
-		return nil, errors.New("password incorrect")
-	}
-
-	config := &packet.Config{Time: pgp.getTimeGenerator()}
-	md, err := openpgp.ReadMessage(encryptedio.Body, nil, prompt, config)
-	if err != nil {
-		return "", err
-	}
-
-	messageBuf := bytes.NewBuffer(nil)
-	_, err = io.Copy(messageBuf, md.UnverifiedBody)
-	if err != nil {
-		return "", err
-	}
-
-	return messageBuf.String(), nil
+// IsPGPMessage checks if data if has armored PGP message format.
+func (pgp *GopenPGP) IsPGPMessage(data string) bool {
+	re := regexp.MustCompile("^-----BEGIN " + constants.PGPMessageHeader + "-----(?s:.+)-----END " +
+		constants.PGPMessageHeader + "-----")
+	return re.MatchString(data)
 }

@@ -17,8 +17,8 @@ func (pgp *GopenPGP) UpdateTime(newTime int64) {
 	pgp.latestClientTime = time.Now()
 }
 
-// GetTimeUnix gets latest cached time
-func (pgp *GopenPGP) GetTimeUnix() int64 {
+// GetUnixTime gets latest cached time
+func (pgp *GopenPGP) GetUnixTime() int64 {
 	return pgp.getNow().Unix()
 }
 
@@ -27,6 +27,9 @@ func (pgp *GopenPGP) GetTime() time.Time {
 	return pgp.getNow()
 }
 
+// ----- INTERNAL FUNCTIONS -----
+
+// getNow returns current time
 func (pgp *GopenPGP) getNow() time.Time {
 	if pgp.latestServerTime > 0 && !pgp.latestClientTime.IsZero() {
 		// Until is monotonic, it uses a monotonic clock in this case instead of the wall clock
@@ -37,6 +40,7 @@ func (pgp *GopenPGP) getNow() time.Time {
 	return time.Now()
 }
 
+// getTimeGenerator Returns a time generator function
 func (pgp *GopenPGP) getTimeGenerator() func() time.Time {
 	return func() time.Time {
 		return pgp.getNow()

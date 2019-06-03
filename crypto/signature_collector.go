@@ -8,6 +8,7 @@ import (
 	"net/textproto"
 
 	gomime "github.com/ProtonMail/go-mime"
+	"github.com/ProtonMail/gopenpgp/constants"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
@@ -51,7 +52,7 @@ func (sc *SignatureCollector) Accept(
 				}
 			}
 			if len(multiparts) != 2 {
-				sc.verified = notSigned
+				sc.verified = constants.SIGNATURE_NOT_SIGNED
 				// Invalid multipart/signed format just pass along
 				_, err = ioutil.ReadAll(rawBody)
 				if err != nil {
@@ -96,12 +97,12 @@ func (sc *SignatureCollector) Accept(
 				_, err = openpgp.CheckArmoredDetachedSignature(sc.keyring, rawBody, bytes.NewReader(buffer), sc.config)
 
 				if err != nil {
-					sc.verified = failed
+					sc.verified = constants.SIGNATURE_FAILED
 				} else {
-					sc.verified = ok
+					sc.verified = constants.SIGNATURE_OK
 				}
 			} else {
-				sc.verified = noVerifier
+				sc.verified = constants.SIGNATURE_NO_VERIFIER
 			}
 			return nil
 		}

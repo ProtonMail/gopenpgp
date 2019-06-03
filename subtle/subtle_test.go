@@ -1,8 +1,8 @@
 package subtle
 
 import (
-	"github.com/stretchr/testify/assert"
 	"encoding/hex"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
