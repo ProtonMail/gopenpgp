@@ -142,13 +142,13 @@ func asymmetricDecrypt(
 		return nil, constants.SIGNATURE_NOT_SIGNED, err
 	}
 
-	if verifyKey != nil {
-		processSignatureExpiration(messageDetails, verifyTime)
-	}
-
 	body, err := ioutil.ReadAll(messageDetails.UnverifiedBody)
 	if err != nil {
 		return nil, constants.SIGNATURE_NOT_SIGNED, err
+	}
+
+	if verifyKey != nil {
+		processSignatureExpiration(messageDetails, verifyTime)
 	}
 
 	if verifyKey != nil {
