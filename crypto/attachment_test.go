@@ -54,3 +54,49 @@ func TestAttachnentEncryptDecrypt(t *testing.T) {
 
 	assert.Exactly(t, message, redecData)
 }
+
+func TestAttachnentEncrypt(t *testing.T) {
+	var testAttachmentCleartext = "cc,\ndille."
+	var message = NewPlainMessage([]byte(testAttachmentCleartext))
+
+	encSplit, err := testPrivateKeyRing.EncryptAttachment(message, "s.txt")
+	if err != nil {
+		t.Fatal("Expected no error while encrypting attachment, got:", err)
+	}
+
+	pgpMessage := NewPGPMessage(append(encSplit.GetKeyPacket(), encSplit.GetDataPacket()...))
+
+	redecData, _, err := testPrivateKeyRing.Decrypt(pgpMessage, nil, 0)
+	if err != nil {
+		t.Fatal("Expected no error while decrypting attachment, got:", err)
+	}
+
+	assert.Exactly(t, message, redecData)
+}
+
+func TestAttachnentDecrypt(t *testing.T) {
+	var testAttachmentCleartext = "cc,\ndille."
+	var message = NewPlainMessage([]byte(testAttachmentCleartext))
+
+	encrypted, err := testPrivateKeyRing.Encrypt(message, nil)
+	if err != nil {
+		t.Fatal("Expected no error while encrypting attachment, got:", err)
+	}
+
+	armored, err := encrypted.GetArmored()
+	if err != nil {
+		t.Fatal("Expected no error while armoring, got:", err)
+	}
+
+	pgpSplitMessage, err := NewPGPSplitMessageFromArmored(armored)
+	if err != nil {
+		t.Fatal("Expected no error while unarmoring, got:", err)
+	}
+
+	redecData, err := testPrivateKeyRing.DecryptAttachment(pgpSplitMessage)
+	if err != nil {
+		t.Fatal("Expected no error while decrypting attachment, got:", err)
+	}
+
+	assert.Exactly(t, message, redecData)
+}
