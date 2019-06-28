@@ -66,7 +66,7 @@ func TestAttachnentEncrypt(t *testing.T) {
 
 	pgpMessage := NewPGPMessage(append(encSplit.GetKeyPacket(), encSplit.GetDataPacket()...))
 
-	redecData, _, err := testPrivateKeyRing.Decrypt(pgpMessage, nil, 0)
+	redecData, err := testPrivateKeyRing.Decrypt(pgpMessage, nil, 0)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting attachment, got:", err)
 	}

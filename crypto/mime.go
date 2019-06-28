@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	gomime "github.com/ProtonMail/go-mime"
-	"github.com/ProtonMail/gopenpgp/constants"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
@@ -28,13 +27,13 @@ type MIMECallbacks interface {
 func (keyRing *KeyRing) DecryptMIMEMessage(
 	message *PGPMessage, verifyKey *KeyRing, callbacks MIMECallbacks, verifyTime int64,
 ) {
-	decryptedMessage, verification, err := keyRing.Decrypt(message, verifyKey, verifyTime)
+	decryptedMessage, err := keyRing.Decrypt(message, verifyKey, verifyTime)
 	if err != nil {
 		callbacks.OnError(err)
 		return
 	}
 
-	body, verified, attachments, attachmentHeaders, err := pgp.parseMIME(decryptedMessage.GetString(), verifyKey)
+	body, attachments, attachmentHeaders, err := pgp.parseMIME(decryptedMessage.GetString(), verifyKey)
 	if err != nil {
 		callbacks.OnError(err)
 		return
@@ -45,28 +44,23 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 		callbacks.OnAttachment(attachmentHeaders[i], []byte(attachments[i]))
 	}
 	callbacks.OnEncryptedHeaders("")
-	if verification.GetVerification() != constants.SIGNATURE_NOT_SIGNED {
-		callbacks.OnVerified(verification.GetVerification())
-	} else {
-		callbacks.OnVerified(verified)
-	}
 }
 
 // ----- INTERNAL FUNCTIONS -----
 
 func (pgp GopenPGP) parseMIME(
 	mimeBody string, verifierKey *KeyRing,
-) (*gomime.BodyCollector, int, []string, []string, error) {
+) (*gomime.BodyCollector, []string, []string, error) {
 	mm, err := mail.ReadMessage(strings.NewReader(mimeBody))
 	if err != nil {
-		return nil, 0, nil, nil, err
+		return nil, nil, nil, err
 	}
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pgp.getTimeGenerator()}
 
 	h := textproto.MIMEHeader(mm.Header)
 	mmBodyData, err := ioutil.ReadAll(mm.Body)
 	if err != nil {
-		return nil, 0, nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	printAccepter := gomime.NewMIMEPrinter()
@@ -82,11 +76,12 @@ func (pgp GopenPGP) parseMIME(
 	signatureCollector := newSignatureCollector(mimeVisitor, pgpKering, config)
 
 	err = gomime.VisitAll(bytes.NewReader(mmBodyData), h, signatureCollector)
+	if err == nil && verifierKey != nil {
+		err = signatureCollector.verified;
+	}
 
-	verified := signatureCollector.verified
-	body := bodyCollector
-	atts := attachmentsCollector.GetAttachments()
-	attHeaders := attachmentsCollector.GetAttHeaders()
-
-	return body, verified, atts, attHeaders, err
+	return bodyCollector,
+		attachmentsCollector.GetAttachments(),
+		attachmentsCollector.GetAttHeaders(),
+		err
 }

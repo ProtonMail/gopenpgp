@@ -27,12 +27,6 @@ type PlainMessage struct {
 	TextType bool
 }
 
-// Verification for a PlainMessage
-type Verification struct {
-	// If the decoded message was correctly signed. See constants.SIGNATURE* for all values.
-	Verified int
-}
-
 // PGPMessage stores a PGP-encrypted message.
 type PGPMessage struct {
 	// The content of the message
@@ -69,13 +63,6 @@ func NewPlainMessageFromString(text string) *PlainMessage {
 	return &PlainMessage{
 		Data:     []byte(text),
 		TextType: true,
-	}
-}
-
-// newVerification returns a new instance of *Verification with the specified value
-func newVerification(value int) *Verification {
-	return &Verification{
-		Verified: value,
 	}
 }
 
@@ -162,19 +149,6 @@ func (msg *PlainMessage) GetString() string {
 // GetBase64 returns the base-64 encoded binary content of the message as a string
 func (msg *PlainMessage) GetBase64() string {
 	return base64.StdEncoding.EncodeToString(msg.Data)
-}
-
-// GetVerification returns the verification status of a verification,
-// to use after the KeyRing.Decrypt* or KeyRing.Verify* functions.
-// The int value returned is to compare to constants.SIGNATURE*.
-func (ver *Verification) GetVerification() int {
-	return ver.Verified
-}
-
-// IsValid returns true if the message is signed and the signature is valid.
-// To use after the KeyRing.Decrypt* or KeyRing.Verify* functions.
-func (ver *Verification) IsValid() bool {
-	return ver.Verified == constants.SIGNATURE_OK
 }
 
 // NewReader returns a New io.Reader for the bianry data of the message

@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ProtonMail/gopenpgp/constants"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -67,13 +66,11 @@ func TestTextMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	decrypted, ver, err := testPrivateKeyRing.Decrypt(ciphertext, testPublicKeyRing, pgp.GetUnixTime())
+	decrypted, err := testPrivateKeyRing.Decrypt(ciphertext, testPublicKeyRing, pgp.GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
-	assert.Exactly(t, constants.SIGNATURE_OK, ver.GetVerification())
-	assert.Exactly(t, true, ver.IsValid())
 }
 
 func TestBinaryMessageEncryption(t *testing.T) {
@@ -94,13 +91,11 @@ func TestBinaryMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	decrypted, ver, err := testPrivateKeyRing.Decrypt(ciphertext, testPublicKeyRing, pgp.GetUnixTime())
+	decrypted, err := testPrivateKeyRing.Decrypt(ciphertext, testPublicKeyRing, pgp.GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 	assert.Exactly(t, message.GetBinary(), decrypted.GetBinary())
-	assert.Exactly(t, constants.SIGNATURE_OK, ver.GetVerification())
-	assert.Exactly(t, true, ver.IsValid())
 }
 
 func TestIssue11(t *testing.T) {
@@ -126,11 +121,10 @@ func TestIssue11(t *testing.T) {
 		t.Fatal("Expected no error while unlocking private keyring, got:", err)
 	}
 
-	plainMessage, verification, err := myKeyring.Decrypt(pgpMessage, senderKeyring, 0)
+	plainMessage, err := myKeyring.Decrypt(pgpMessage, senderKeyring, 0)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting/verifying, got:", err)
 	}
 
 	assert.Exactly(t, "message from sender", plainMessage.GetString())
-	assert.Exactly(t, true, verification.IsValid())
 }

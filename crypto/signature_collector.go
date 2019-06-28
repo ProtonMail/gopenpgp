@@ -8,7 +8,6 @@ import (
 	"net/textproto"
 
 	gomime "github.com/ProtonMail/go-mime"
-	"github.com/ProtonMail/gopenpgp/constants"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
@@ -20,7 +19,7 @@ type SignatureCollector struct {
 	keyring   openpgp.KeyRing
 	target    gomime.VisitAcceptor
 	signature string
-	verified  int
+	verified  error
 }
 
 func newSignatureCollector(
@@ -52,7 +51,7 @@ func (sc *SignatureCollector) Accept(
 				}
 			}
 			if len(multiparts) != 2 {
-				sc.verified = constants.SIGNATURE_NOT_SIGNED
+				sc.verified = newSignatureNotSigned()
 				// Invalid multipart/signed format just pass along
 				_, err = ioutil.ReadAll(rawBody)
 				if err != nil {
@@ -97,12 +96,12 @@ func (sc *SignatureCollector) Accept(
 				_, err = openpgp.CheckArmoredDetachedSignature(sc.keyring, rawBody, bytes.NewReader(buffer), sc.config)
 
 				if err != nil {
-					sc.verified = constants.SIGNATURE_FAILED
+					sc.verified = newSignatureFailed()
 				} else {
-					sc.verified = constants.SIGNATURE_OK
+					sc.verified = nil
 				}
 			} else {
-				sc.verified = constants.SIGNATURE_NO_VERIFIER
+				sc.verified = newSignatureNoVerifier()
 			}
 			return nil
 		}

@@ -70,7 +70,7 @@ func TestArmoredTextMessageEncryptionVerification(t *testing.T) {
 		testMailboxPassword, // Password defined in base_test
 		armored,
 	)
-	assert.EqualError(t, err, "gopenpgp: unable to verify message")
+	assert.EqualError(t, err, "Signature Verification Error: No matching signature")
 
 	decrypted, err := DecryptVerifyMessageArmored(
 		readTestFile("keyring_publicKey", false),
@@ -78,6 +78,7 @@ func TestArmoredTextMessageEncryptionVerification(t *testing.T) {
 		testMailboxPassword, // Password defined in base_test
 		armored,
 	)
+
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
