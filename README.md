@@ -172,12 +172,10 @@ pgpMessage, err := publicKeyRing.Encrypt(binMessage, privateKeyRing)
 // Armored message in pgpMessage.GetArmored()
 // pgpMessage can be obtained from NewPGPMessageFromArmored(ciphertext)
 
-message, verification, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, pgp.GetUnixTime())
+message, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, pgp.GetUnixTime())
 
 // Original data in message.GetString()
-if verification.IsValid() {
-  // verification success
-}
+// `err` can be a SignatureVerificationError
 ```
 ### Generate key
 
@@ -242,9 +240,9 @@ message := NewPlaintextMessage("Verified message")
 pgpSignature, err := NewPGPSignatureFromArmored(signature)
 signingKeyRing, err := pgp.BuildKeyRingArmored(pubkey)
 
-verification, err := signingKeyRing.VerifyDetached(message, pgpSignature, pgp.GetUnixTime())
+err := signingKeyRing.VerifyDetached(message, pgpSignature, pgp.GetUnixTime())
 
-if verification.IsValid() {
+if err == nil {
   // verification success
 }
 ```
@@ -287,9 +285,9 @@ message := NewPlainMessage("Verified message")
 pgpSignature, err := NewPGPSignatureFromArmored(signature)
 signingKeyRing, err := pgp.BuildKeyRingArmored(pubkey)
 
-verification, err := signingKeyRing.VerifyDetached(message, pgpSignature, pgp.GetUnixTime())
+err := signingKeyRing.VerifyDetached(message, pgpSignature, pgp.GetUnixTime())
 
-if verification.IsValid() {
+if err == nil {
   // verification success
 }
 ```

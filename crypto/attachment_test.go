@@ -38,7 +38,7 @@ func TestAttachmentSetKey(t *testing.T) {
 	assert.Exactly(t, testSymmetricKey, symmetricKey)
 }
 
-func TestAttachnentEncryptDecrypt(t *testing.T) {
+func TestAttachmentEncryptDecrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
 	var message = NewPlainMessage([]byte(testAttachmentCleartext))
 
@@ -55,7 +55,7 @@ func TestAttachnentEncryptDecrypt(t *testing.T) {
 	assert.Exactly(t, message, redecData)
 }
 
-func TestAttachnentEncrypt(t *testing.T) {
+func TestAttachmentEncrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
 	var message = NewPlainMessage([]byte(testAttachmentCleartext))
 
@@ -74,7 +74,7 @@ func TestAttachnentEncrypt(t *testing.T) {
 	assert.Exactly(t, message, redecData)
 }
 
-func TestAttachnentDecrypt(t *testing.T) {
+func TestAttachmentDecrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
 	var message = NewPlainMessage([]byte(testAttachmentCleartext))
 

@@ -15,15 +15,22 @@ import (
 	"github.com/ProtonMail/gopenpgp/internal"
 )
 
+// SignatureVerificationError is returned from Decrypt and VerifyDetached functions when signature verification fails
 type SignatureVerificationError struct {
 	Status int
 	Message string
 }
 
+// Error is the base method for all errors
 func (e SignatureVerificationError) Error() string {
 	return fmt.Sprintf("Signature Verification Error: %v", e.Message)
 }
 
+// ------------------
+// Internal functions
+// ------------------
+
+// newSignatureFailed creates a new SignatureVerificationError, type SIGNATURE_FAILED
 func newSignatureFailed() SignatureVerificationError {
 	return SignatureVerificationError {
 		constants.SIGNATURE_FAILED,
@@ -31,6 +38,7 @@ func newSignatureFailed() SignatureVerificationError {
 	}
 }
 
+// newSignatureNotSigned creates a new SignatureVerificationError, type SIGNATURE_NOT_SIGNED
 func newSignatureNotSigned() SignatureVerificationError {
 	return SignatureVerificationError {
 		constants.SIGNATURE_NOT_SIGNED,
@@ -38,6 +46,7 @@ func newSignatureNotSigned() SignatureVerificationError {
 	}
 }
 
+// newSignatureNoVerifier creates a new SignatureVerificationError, type SIGNATURE_NO_VERIFIER
 func newSignatureNoVerifier() SignatureVerificationError {
 	return SignatureVerificationError {
 		constants.SIGNATURE_NO_VERIFIER,
