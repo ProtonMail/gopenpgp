@@ -14,6 +14,7 @@ import (
 	"github.com/ProtonMail/gopenpgp/constants"
 	"github.com/ProtonMail/gopenpgp/internal"
 
+	"golang.org/x/crypto/openpgp/clearsign"
 	"golang.org/x/crypto/openpgp/packet"
 )
 
@@ -44,6 +45,12 @@ type PGPSignature struct {
 type PGPSplitMessage struct {
 	DataPacket []byte
 	KeyPacket  []byte
+}
+
+// ClearTextMessage, split signed clear text message container
+type ClearTextMessage struct {
+	Data []byte
+	Signature []byte
 }
 
 // ---- GENERATORS -----
@@ -132,6 +139,29 @@ func NewPGPSignatureFromArmored(armored string) (*PGPSignature, error) {
 	return &PGPSignature{
 		Data: signature,
 	}, nil
+}
+
+// NewClearTextMessage generates a new ClearTextMessage from data and signature
+func NewClearTextMessage(data []byte, signature []byte) *ClearTextMessage {
+	return &ClearTextMessage{
+		Data:  data,
+		Signature: signature,
+	}
+}
+
+// NewClearTextMessageFromArmored returns the message body and unarmored signature from a clearsigned message.
+func NewClearTextMessageFromArmored(signedMessage string) (*ClearTextMessage, error) {
+	modulusBlock, rest := clearsign.Decode([]byte(signedMessage))
+	if len(rest) != 0 {
+		return nil, errors.New("pmapi: extra data after modulus")
+	}
+
+	signature, err := ioutil.ReadAll(modulusBlock.ArmoredSignature.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewClearTextMessage(modulusBlock.Bytes, signature), nil
 }
 
 // ---- MODEL METHODS -----
@@ -289,6 +319,36 @@ func (msg *PGPSignature) GetBinary() []byte {
 // GetArmored returns the armored signature as a string
 func (msg *PGPSignature) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.Data, constants.PGPSignatureHeader)
+}
+
+// GetBinary returns the unarmored signed data as a []byte
+func (msg *ClearTextMessage) GetBinary() []byte {
+	return msg.Data
+}
+
+// GetString returns the unarmored signed data as a string
+func (msg *ClearTextMessage) GetString() string {
+	return string(msg.Data)
+}
+
+// GetSignature returns the unarmored binary signature as a []byte
+func (msg *ClearTextMessage) GetSignature() []byte {
+	return msg.Signature
+}
+
+// GetArmored armors plaintext and signature with the PGP SIGNED MESSAGE armoring
+func (msg *ClearTextMessage) GetArmored() (string, error) {
+	armSignature, err := armor.ArmorWithType(msg.GetSignature(), constants.PGPSignatureHeader)
+	if err != nil {
+		return "", err
+	}
+
+	str := "-----BEGIN PGP SIGNED MESSAGE-----\r\nHash:SHA512\r\n\r\n"
+	str += msg.GetString()
+	str += "\r\n"
+	str += armSignature
+
+	return str, nil
 }
 
 // ---- UTILS -----
