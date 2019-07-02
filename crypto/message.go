@@ -14,6 +14,7 @@ import (
 	"github.com/ProtonMail/gopenpgp/constants"
 	"github.com/ProtonMail/gopenpgp/internal"
 
+	"golang.org/x/crypto/openpgp/clearsign"
 	"golang.org/x/crypto/openpgp/packet"
 )
 
@@ -25,12 +26,6 @@ type PlainMessage struct {
 	Data []byte
 	// if the content is text or binary
 	TextType bool
-}
-
-// Verification for a PlainMessage
-type Verification struct {
-	// If the decoded message was correctly signed. See constants.SIGNATURE* for all values.
-	Verified int
 }
 
 // PGPMessage stores a PGP-encrypted message.
@@ -52,6 +47,12 @@ type PGPSplitMessage struct {
 	KeyPacket  []byte
 }
 
+// ClearTextMessage, split signed clear text message container
+type ClearTextMessage struct {
+	Data []byte
+	Signature []byte
+}
+
 // ---- GENERATORS -----
 
 // NewPlainMessage generates a new binary PlainMessage ready for encryption,
@@ -69,13 +70,6 @@ func NewPlainMessageFromString(text string) *PlainMessage {
 	return &PlainMessage{
 		Data:     []byte(text),
 		TextType: true,
-	}
-}
-
-// newVerification returns a new instance of *Verification with the specified value
-func newVerification(value int) *Verification {
-	return &Verification{
-		Verified: value,
 	}
 }
 
@@ -147,6 +141,29 @@ func NewPGPSignatureFromArmored(armored string) (*PGPSignature, error) {
 	}, nil
 }
 
+// NewClearTextMessage generates a new ClearTextMessage from data and signature
+func NewClearTextMessage(data []byte, signature []byte) *ClearTextMessage {
+	return &ClearTextMessage{
+		Data:  data,
+		Signature: signature,
+	}
+}
+
+// NewClearTextMessageFromArmored returns the message body and unarmored signature from a clearsigned message.
+func NewClearTextMessageFromArmored(signedMessage string) (*ClearTextMessage, error) {
+	modulusBlock, rest := clearsign.Decode([]byte(signedMessage))
+	if len(rest) != 0 {
+		return nil, errors.New("pmapi: extra data after modulus")
+	}
+
+	signature, err := ioutil.ReadAll(modulusBlock.ArmoredSignature.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewClearTextMessage(modulusBlock.Bytes, signature), nil
+}
+
 // ---- MODEL METHODS -----
 
 // GetBinary returns the binary content of the message as a []byte
@@ -162,19 +179,6 @@ func (msg *PlainMessage) GetString() string {
 // GetBase64 returns the base-64 encoded binary content of the message as a string
 func (msg *PlainMessage) GetBase64() string {
 	return base64.StdEncoding.EncodeToString(msg.Data)
-}
-
-// GetVerification returns the verification status of a verification,
-// to use after the KeyRing.Decrypt* or KeyRing.Verify* functions.
-// The int value returned is to compare to constants.SIGNATURE*.
-func (ver *Verification) GetVerification() int {
-	return ver.Verified
-}
-
-// IsValid returns true if the message is signed and the signature is valid.
-// To use after the KeyRing.Decrypt* or KeyRing.Verify* functions.
-func (ver *Verification) IsValid() bool {
-	return ver.Verified == constants.SIGNATURE_OK
 }
 
 // NewReader returns a New io.Reader for the bianry data of the message
@@ -315,6 +319,36 @@ func (msg *PGPSignature) GetBinary() []byte {
 // GetArmored returns the armored signature as a string
 func (msg *PGPSignature) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.Data, constants.PGPSignatureHeader)
+}
+
+// GetBinary returns the unarmored signed data as a []byte
+func (msg *ClearTextMessage) GetBinary() []byte {
+	return msg.Data
+}
+
+// GetString returns the unarmored signed data as a string
+func (msg *ClearTextMessage) GetString() string {
+	return string(msg.Data)
+}
+
+// GetSignature returns the unarmored binary signature as a []byte
+func (msg *ClearTextMessage) GetSignature() []byte {
+	return msg.Signature
+}
+
+// GetArmored armors plaintext and signature with the PGP SIGNED MESSAGE armoring
+func (msg *ClearTextMessage) GetArmored() (string, error) {
+	armSignature, err := armor.ArmorWithType(msg.GetSignature(), constants.PGPSignatureHeader)
+	if err != nil {
+		return "", err
+	}
+
+	str := "-----BEGIN PGP SIGNED MESSAGE-----\r\nHash:SHA512\r\n\r\n"
+	str += msg.GetString()
+	str += "\r\n"
+	str += armSignature
+
+	return str, nil
 }
 
 // ---- UTILS -----

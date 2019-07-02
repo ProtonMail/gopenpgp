@@ -48,20 +48,20 @@ func TestSignTextDetached(t *testing.T) {
 }
 
 func TestVerifyTextDetachedSig(t *testing.T) {
-	signedMessage, err := signingKeyRing.VerifyDetached(message, textSignature, testTime)
-	if err != nil {
+	verificationError := signingKeyRing.VerifyDetached(message, textSignature, testTime)
+	if verificationError != nil {
 		t.Fatal("Cannot verify plaintext signature:", err)
 	}
-
-	assert.Exactly(t, constants.SIGNATURE_OK, signedMessage.GetVerification())
 }
 
 func TestVerifyTextDetachedSigWrong(t *testing.T) {
 	fakeMessage := NewPlainMessageFromString("wrong text")
-	signedMessage, err := signingKeyRing.VerifyDetached(fakeMessage, textSignature, testTime)
+	verificationError := signingKeyRing.VerifyDetached(fakeMessage, textSignature, testTime)
 
-	assert.EqualError(t, err, "gopenpgp: signer is empty")
-	assert.Exactly(t, constants.SIGNATURE_FAILED, signedMessage.GetVerification())
+	assert.EqualError(t, verificationError, "Signature Verification Error: Invalid signature")
+
+	err, _ := verificationError.(SignatureVerificationError)
+	assert.Exactly(t, constants.SIGNATURE_FAILED, err.Status)
 }
 
 func TestSignBinDetached(t *testing.T) {
@@ -81,10 +81,8 @@ func TestSignBinDetached(t *testing.T) {
 }
 
 func TestVerifyBinDetachedSig(t *testing.T) {
-	signedMessage, err := signingKeyRing.VerifyDetached(message, binSignature, testTime)
-	if err != nil {
+	verificationError := signingKeyRing.VerifyDetached(message, binSignature, testTime)
+	if verificationError != nil {
 		t.Fatal("Cannot verify binary signature:", err)
 	}
-
-	assert.Exactly(t, constants.SIGNATURE_OK, signedMessage.GetVerification())
 }

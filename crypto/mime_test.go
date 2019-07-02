@@ -1,10 +1,9 @@
 package crypto
 
 import (
-	"github.com/ProtonMail/gopenpgp/internal"
-	"github.com/stretchr/testify/assert"
-	"io/ioutil"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // Corresponding key in testdata/mime_privateKey
@@ -38,21 +37,8 @@ func TestDecrypt(t *testing.T) {
 	callbacks := Callbacks{
 		Testing: t,
 	}
+	privateKeyRing, _ := pgp.BuildKeyRingArmored(readTestFile("mime_privateKey", false))
 
-	block, err := internal.Unarmor(readTestFile("mime_publicKey", false))
-	if err != nil {
-		t.Fatal("Cannot unarmor public key: ", err)
-	}
-
-	publicKeyUnarmored, _ := ioutil.ReadAll(block.Body)
-
-	block, err = internal.Unarmor(readTestFile("mime_privateKey", false))
-	if err != nil {
-		t.Fatal("Cannot unarmor private key:", err)
-	}
-
-	privateKeyUnarmored, _ := ioutil.ReadAll(block.Body)
-	privateKeyRing, _ := pgp.BuildKeyRing(privateKeyUnarmored)
 	err = privateKeyRing.UnlockWithPassphrase(privateKeyPassword)
 	if err != nil {
 		t.Fatal("Cannot unlock private key:", err)
@@ -65,13 +51,13 @@ func TestDecrypt(t *testing.T) {
 
 	privateKeyRing.DecryptMIMEMessage(
 		message,
-		pgp.BuildKeyRingNoError(publicKeyUnarmored),
+		nil,
 		&callbacks,
 		pgp.GetUnixTime())
 }
 
 func TestParse(t *testing.T) {
-	body, _, atts, attHeaders, err := pgp.parseMIME(readTestFile("mime_testMessage", false), nil)
+	body, atts, attHeaders, err := pgp.parseMIME(readTestFile("mime_testMessage", false), nil)
 
 	if err != nil {
 		t.Error("Expected no error while parsing message, got:", err)

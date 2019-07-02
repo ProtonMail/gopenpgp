@@ -4,7 +4,6 @@ package armor
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"io/ioutil"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/ProtonMail/gopenpgp/internal"
 
 	"golang.org/x/crypto/openpgp/armor"
-	"golang.org/x/crypto/openpgp/clearsign"
 )
 
 // ArmorKey armors input as a public key.
@@ -50,34 +48,4 @@ func Unarmor(input string) ([]byte, error) {
 		return nil, err
 	}
 	return ioutil.ReadAll(b.Body)
-}
-
-// ReadClearSignedMessage returns the message body and unarmored signature from a clearsigned message.
-func ReadClearSignedMessage(signedMessage string) (string, []byte, error) {
-	modulusBlock, rest := clearsign.Decode([]byte(signedMessage))
-	if len(rest) != 0 {
-		return "", nil, errors.New("pmapi: extra data after modulus")
-	}
-
-	signature, err := ioutil.ReadAll(modulusBlock.ArmoredSignature.Body)
-	if err != nil {
-		return "", nil, err
-	}
-
-	return string(modulusBlock.Bytes), signature, nil
-}
-
-// ArmorClearSignedMessage armors plaintext and signature with the PGP SIGNED MESSAGE armoring
-func ArmorClearSignedMessage(plaintext []byte, signature []byte) (string, error) {
-	armSignature, err := ArmorWithType(signature, constants.PGPSignatureHeader)
-	if err != nil {
-		return "", err
-	}
-
-	str := "-----BEGIN PGP SIGNED MESSAGE-----\r\nHash:SHA512\r\n\r\n"
-	str += string(plaintext)
-	str += "\r\n"
-	str += armSignature
-
-	return str, nil
 }

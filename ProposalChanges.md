@@ -63,19 +63,29 @@ type pgpKeyObject struct {
 }
 ```
 
-## Dropped
-### Signature
-```
-type Signature struct {
-	md *openpgp.MessageDetails
-}
-```
 ### SignedString
 ```
 // SignedString wraps string with Signature
 type SignedString struct {
 	String string
 	Signed *Signature
+}
+```
+is now
+```
+// ClearTextMessage, split signed clear text message container
+type ClearTextMessage struct {
+	Data []byte
+	Signature []byte
+}
+
+```
+
+## Dropped
+### Signature
+```
+type Signature struct {
+	md *openpgp.MessageDetails
 }
 ```
 ## New
@@ -87,6 +97,7 @@ type PGPMessage struct {
 	Data []byte
 }
 ```
+
 ### PGPSignature
 ```
 // PGPSignature stores a PGP-encoded detached signature.
@@ -96,13 +107,31 @@ type PGPSignature struct {
 }
 ```
 
+### SignatureVerificationError
+```
+// SignatureVerificationError is returned from Decrypt and VerifyDetached functions when signature verification fails
+type SignatureVerificationError struct {
+	Status int
+	Message string
+}
+```
+
 
 # API changes
 ## armor.go
 ### ReadClearSignedMessage
-Added signature info to returned info.
+Moved to crypto package. Changed to return ClearTextMessage.
 ```
 ReadClearSignedMessage(signedMessage string) (string, error):
+* NewClearTextMessageFromArmored(signedMessage string) (*ClearTextMessage, error)
+```
+In addition, were added:
+```
+* NewClearTextMessage(data []byte, signature []byte) *ClearTextMessage
+* (msg *ClearTextMessage) GetBinary() []byte
+* (msg *ClearTextMessage) GetString() string
+* (msg *ClearTextMessage) GetSignature() []byte
+* (msg *ClearTextMessage) GetArmored() (string, error)
 ```
 
 ## attachment.go
@@ -247,10 +276,10 @@ Dropped, now the procedure is split in two parts.
 ```
 
 ### DecryptString, Decrypt, DecryptArmored
-Same as Encrypt*
+Same as Encrypt*. If signature verification fails it will return a SignatureVerificationError.
 ```
 (kr *KeyRing) DecryptString(encrypted string) (SignedString, error):
-* (if binary data) func (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, *Verification, error)
+* (if binary data) func (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, error)
 * (if plain text, wrapped) (helper) DecryptMessageArmored(privateKey, passphrase, ciphertext string) (plaintext string, err error)
 * (if plain text, wrapped, verified) (helper) DecryptVerifyMessageArmored(publicKey, privateKey, passphrase, ciphertext string) (plaintext string, err error)
 ```
@@ -271,10 +300,10 @@ Replaced by signing methods.
 ```
 
 ### VerifyString
-Same as signing.
+Same as signing. Returns SignatureVerificationError if the verification fails.
 ```
 (kr *KeyRing) VerifyString(message, signature string, sign *KeyRing) (err error):
-* (to verify) (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) (*Verification, error)
+* (to verify) (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) error
 ```
 
 ### Unlock
@@ -342,7 +371,7 @@ See Decrypt*
 (pm *PmCrypto) DecryptMessage(encryptedText string, privateKey *KeyRing, passphrase string) (string, error):
 (pm *PmCrypto) DecryptMessageStringKey(encryptedText string, privateKey string, passphrase string) (string, error):
 (pm *PmCrypto) DecryptMessageVerify(encryptedText string, verifierKey *KeyRing, privateKeyRing *KeyRing, passphrase string, verifyTime int64) (*models.DecryptSignedVerify, error) :
-* (if binary data) (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, *Verification, error)
+* (if binary data) (keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, error)
 * (if plain text, wrapped) (helper) DecryptMessageArmored(privateKey, passphrase, ciphertext string) (plaintext string, err error)
 * (if plain text, wrapped, verified) (helper) DecryptVerifyMessageArmored(publicKey, privateKey, passphrase, ciphertext string) (plaintext string, err error)
 ```
@@ -437,7 +466,7 @@ See signature_test.go for use examples.
 ```
 (pm *PmCrypto) VerifyTextSignDetachedBinKey(signature string, plaintext string, publicKey *KeyRing, verifyTime int64) (bool, error):
 (pm *PmCrypto) VerifyBinSignDetachedBinKey(signature string, plainData []byte, publicKey *KeyRing, verifyTime int64) (bool, error):
-* (to verify) (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) (*Verification, error)
+* (to verify) (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) (error)
 * (if PGP SIGNED MESSAGE) (helper) VerifyCleartextMessage(keyRing *crypto.KeyRing, armored string, verifyTime int64) (string, error)
 * (if PGP SIGNED MESSAGE) (helper) VerifyCleartextMessageArmored(publicKey, armored string, verifyTime int64) (string, error)
 ```

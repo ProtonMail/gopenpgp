@@ -1,10 +1,8 @@
 package helper
 
 import (
-	"errors"
 	"strings"
 
-	"github.com/ProtonMail/gopenpgp/armor"
 	"github.com/ProtonMail/gopenpgp/crypto"
 	"github.com/ProtonMail/gopenpgp/internal"
 )
@@ -47,26 +45,22 @@ func SignCleartextMessage(keyRing *crypto.KeyRing, text string) (string, error) 
 		return "", err
 	}
 
-	return armor.ArmorClearSignedMessage(message.GetBinary(), signature.GetBinary())
+	return crypto.NewClearTextMessage(message.GetBinary(), signature.GetBinary()).GetArmored()
 }
 
 // VerifyCleartextMessage verifies PGP-compliant armored signed plain text given the public keyring
 // and returns the text or err if the verification fails
 func VerifyCleartextMessage(keyRing *crypto.KeyRing, armored string, verifyTime int64) (string, error) {
-	text, signatureData, err := armor.ReadClearSignedMessage(armored)
+	clearTextMessage, err := crypto.NewClearTextMessageFromArmored(armored)
 	if err != nil {
 		return "", err
 	}
 
-	message := crypto.NewPlainMessageFromString(text)
-	signature := crypto.NewPGPSignature(signatureData)
-	ver, err := keyRing.VerifyDetached(message, signature, verifyTime)
+	message := crypto.NewPlainMessageFromString(clearTextMessage.GetString())
+	signature := crypto.NewPGPSignature(clearTextMessage.GetSignature())
+	err = keyRing.VerifyDetached(message, signature, verifyTime)
 	if err != nil {
 		return "", err
-	}
-
-	if !ver.IsValid() {
-		return "", errors.New("gopenpgp: unable to verify attachment")
 	}
 
 	return message.GetString(), nil
