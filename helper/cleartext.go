@@ -57,7 +57,7 @@ func VerifyCleartextMessage(keyRing *crypto.KeyRing, armored string, verifyTime 
 	}
 
 	message := crypto.NewPlainMessageFromString(clearTextMessage.GetString())
-	signature := crypto.NewPGPSignature(clearTextMessage.GetSignature())
+	signature := crypto.NewPGPSignature(clearTextMessage.GetBinarySignature())
 	err = keyRing.VerifyDetached(message, signature, verifyTime)
 	if err != nil {
 		return "", err

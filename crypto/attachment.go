@@ -117,8 +117,8 @@ func (keyRing *KeyRing) NewLowMemoryAttachmentProcessor(
 func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*PlainMessage, error) {
 	privKeyEntries := keyRing.entities
 
-	keyReader := bytes.NewReader(message.GetKeyPacket())
-	dataReader := bytes.NewReader(message.GetDataPacket())
+	keyReader := bytes.NewReader(message.GetBinaryKeyPacket())
+	dataReader := bytes.NewReader(message.GetBinaryDataPacket())
 
 	encryptedReader := io.MultiReader(keyReader, dataReader)
 

@@ -130,7 +130,7 @@ In addition, were added:
 * NewClearTextMessage(data []byte, signature []byte) *ClearTextMessage
 * (msg *ClearTextMessage) GetBinary() []byte
 * (msg *ClearTextMessage) GetString() string
-* (msg *ClearTextMessage) GetSignature() []byte
+* (msg *ClearTextMessage) GetBinarySignature() []byte
 * (msg *ClearTextMessage) GetArmored() (string, error)
 ```
 
