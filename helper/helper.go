@@ -203,7 +203,7 @@ func EncryptSignAttachment(
 		return nil, nil, nil, err
 	}
 
-	return packets.GetKeyPacket(), packets.GetDataPacket(), signatureObj.GetBinary(), nil
+	return packets.GetBinaryKeyPacket(), packets.GetBinaryDataPacket(), signatureObj.GetBinary(), nil
 }
 
 // DecryptVerifyAttachment decrypts and verifies an attachment split into the keyPacket, dataPacket

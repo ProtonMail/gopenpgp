@@ -211,13 +211,13 @@ func (msg *PGPMessage) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.Data, constants.PGPMessageHeader)
 }
 
-// GetDataPacket returns the unarmored binary datapacket as a []byte
-func (msg *PGPSplitMessage) GetDataPacket() []byte {
+// GetBinaryDataPacket returns the unarmored binary datapacket as a []byte
+func (msg *PGPSplitMessage) GetBinaryDataPacket() []byte {
 	return msg.DataPacket
 }
 
-// GetKeyPacket returns the unarmored binary keypacket as a []byte
-func (msg *PGPSplitMessage) GetKeyPacket() []byte {
+// GetBinaryKeyPacket returns the unarmored binary keypacket as a []byte
+func (msg *PGPSplitMessage) GetBinaryKeyPacket() []byte {
 	return msg.KeyPacket
 }
 
@@ -331,14 +331,14 @@ func (msg *ClearTextMessage) GetString() string {
 	return string(msg.Data)
 }
 
-// GetSignature returns the unarmored binary signature as a []byte
-func (msg *ClearTextMessage) GetSignature() []byte {
+// GetBinarySignature returns the unarmored binary signature as a []byte
+func (msg *ClearTextMessage) GetBinarySignature() []byte {
 	return msg.Signature
 }
 
 // GetArmored armors plaintext and signature with the PGP SIGNED MESSAGE armoring
 func (msg *ClearTextMessage) GetArmored() (string, error) {
-	armSignature, err := armor.ArmorWithType(msg.GetSignature(), constants.PGPSignatureHeader)
+	armSignature, err := armor.ArmorWithType(msg.GetBinarySignature(), constants.PGPSignatureHeader)
 	if err != nil {
 		return "", err
 	}
