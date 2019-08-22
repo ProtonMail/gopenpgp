@@ -96,6 +96,13 @@ func TestBinaryMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 	assert.Exactly(t, message.GetBinary(), decrypted.GetBinary())
+
+	// Decrypt without verifying
+	decrypted, err = testPrivateKeyRing.Decrypt(ciphertext, nil, 0)
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+	assert.Exactly(t, message.GetString(), decrypted.GetString())
 }
 
 func TestIssue11(t *testing.T) {
@@ -127,4 +134,25 @@ func TestIssue11(t *testing.T) {
 	}
 
 	assert.Exactly(t, "message from sender", plainMessage.GetString())
+}
+
+func TestSignedMessageDecryption(t *testing.T) {
+	testPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))
+
+	// Password defined in keyring_test
+	err = testPrivateKeyRing.UnlockWithPassphrase(testMailboxPassword)
+	if err != nil {
+		t.Fatal("Expected no error unlocking privateKey, got:", err)
+	}
+
+	pgpMessage, err := NewPGPMessageFromArmored(readTestFile("message_signed", false))
+	if err != nil {
+		t.Fatal("Expected no error when unarmoring, got:", err)
+	}
+
+	decrypted, err := testPrivateKeyRing.Decrypt(pgpMessage, nil, 0)
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+	assert.Exactly(t, readTestFile("message_plaintext", true), decrypted.GetString())
 }

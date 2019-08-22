@@ -153,7 +153,7 @@ func NewClearTextMessage(data []byte, signature []byte) *ClearTextMessage {
 func NewClearTextMessageFromArmored(signedMessage string) (*ClearTextMessage, error) {
 	modulusBlock, rest := clearsign.Decode([]byte(signedMessage))
 	if len(rest) != 0 {
-		return nil, errors.New("pmapi: extra data after modulus")
+		return nil, errors.New("gopenpgp: extra data after modulus")
 	}
 
 	signature, err := ioutil.ReadAll(modulusBlock.ArmoredSignature.Body)

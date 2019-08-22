@@ -296,6 +296,11 @@ func (keyRing *KeyRing) ReadFromJSON(jsonData []byte) (err error) {
 	return keyRing.newKeyRingFromPGPKeyObject(keyObjs)
 }
 
+// UnmarshalJSON is an alias for ReadFromJSON to implement the encoding/json.Unmarshaler interface
+func (keyRing *KeyRing) UnmarshalJSON(jsonData []byte) (err error) {
+	return keyRing.ReadFromJSON(jsonData)
+}
+
 // UnlockJSONKeyRing reads keys from a JSON array, creates a newKeyRing,
 // then tries to unlock them with the provided keyRing using the token in the structure.
 // If the token is not available it will fall back to just reading the keys, and leave them locked.
@@ -356,15 +361,11 @@ func (keyRing *KeyRing) newKeyRingFromPGPKeyObject(keyObjs []pgpKeyObject) error
 	return nil
 }
 
-// unmarshalJSON implements encoding/json.Unmarshaler.
+// unmarshalJSON decodes key json from the API
 func unmarshalJSON(jsonData []byte) ([]pgpKeyObject, error) {
 	keyObjs := []pgpKeyObject{}
 	if err := json.Unmarshal(jsonData, &keyObjs); err != nil {
 		return nil, err
-	}
-
-	if len(keyObjs) == 0 {
-		return nil, errors.New("gopenpgp: no key found")
 	}
 
 	return keyObjs, nil
