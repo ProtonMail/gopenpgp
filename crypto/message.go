@@ -75,8 +75,12 @@ func NewPlainMessageFromString(text string) *PlainMessage {
 
 // NewPGPMessage generates a new PGPMessage from the unarmored binary data.
 func NewPGPMessage(data []byte) *PGPMessage {
+	// Hotfix: Additional copy to prevent Swift's garbage collector from freeing
+	// the memory containing the message, when used with Gomobile on iOS
+	tmp := make([]byte, len(data))
+	copy(tmp, data)
 	return &PGPMessage{
-		Data: data,
+		Data: tmp,
 	}
 }
 
