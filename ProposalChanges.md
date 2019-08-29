@@ -332,11 +332,7 @@ No change.
 No change.
 
 ### UnmarshalJSON
-Renamed.
-```
-(kr *KeyRing) UnmarshalJSON(b []byte) (err error):
-* (keyRing *KeyRing) ReadFromJSON(jsonData []byte) (err error)
-```
+No change.
 
 ### Identities
 No change

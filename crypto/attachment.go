@@ -88,7 +88,8 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 }
 
 // EncryptAttachment encrypts a file given a PlainMessage and a fileName.
-// Returns a PGPSplitMessage containing a session key packet and symmetrically encrypted data
+// Returns a PGPSplitMessage containing a session key packet and symmetrically encrypted data.
+// Specifically designed for attachments rather than text messages.
 func (keyRing *KeyRing) EncryptAttachment(message *PlainMessage, fileName string) (*PGPSplitMessage, error) {
 	ap, err := keyRing.newAttachmentProcessor(len(message.GetBinary()), fileName, -1)
 	if err != nil {
@@ -114,6 +115,7 @@ func (keyRing *KeyRing) NewLowMemoryAttachmentProcessor(
 
 // DecryptAttachment takes a PGPSplitMessage, containing a session key packet and symmetrically encrypted data
 // and returns a decrypted PlainMessage
+// Specifically designed for attachments rather than text messages.
 func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*PlainMessage, error) {
 	privKeyEntries := keyRing.entities
 

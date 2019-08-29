@@ -20,7 +20,7 @@ import (
 
 // ---- MODELS -----
 
-// PlainMessage stores an unencrypted message.
+// PlainMessage stores a plain text / unencrypted message.
 type PlainMessage struct {
 	// The content of the message
 	Data []byte
@@ -47,7 +47,9 @@ type PGPSplitMessage struct {
 	KeyPacket  []byte
 }
 
-// ClearTextMessage, split signed clear text message container
+// ClearTextMessage, split signed clear text message container.
+// A Cleartext message is a signed PGP message, that is not encrypted,
+// i.e. the ones beginning with -----BEGIN PGP SIGNED MESSAGE-----
 type ClearTextMessage struct {
 	Data []byte
 	Signature []byte
@@ -153,7 +155,7 @@ func NewClearTextMessage(data []byte, signature []byte) *ClearTextMessage {
 func NewClearTextMessageFromArmored(signedMessage string) (*ClearTextMessage, error) {
 	modulusBlock, rest := clearsign.Decode([]byte(signedMessage))
 	if len(rest) != 0 {
-		return nil, errors.New("pmapi: extra data after modulus")
+		return nil, errors.New("gopenpgp: extra data after modulus")
 	}
 
 	signature, err := ioutil.ReadAll(modulusBlock.ArmoredSignature.Body)
@@ -221,7 +223,19 @@ func (msg *PGPSplitMessage) GetBinaryKeyPacket() []byte {
 	return msg.KeyPacket
 }
 
+// GetBinary returns the unarmored binary joined packets as a []byte
+func (msg *PGPSplitMessage) GetBinary() []byte {
+	return append(msg.KeyPacket , msg.DataPacket...)
+}
+
+// GetArmored returns the armored message as a string, with joined data and key packets
+func (msg *PGPSplitMessage) GetArmored() (string, error) {
+	return armor.ArmorWithType(msg.GetBinary(), constants.PGPMessageHeader)
+}
+
 // SeparateKeyAndData returns the first keypacket and the (hopefully unique) dataPacket (not verified)
+// * estimatedLength is the estimate length of the message
+// * garbageCollector > 0 activates the garbage collector
 func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int) (outSplit *PGPSplitMessage, err error) {
 	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
 	packets := packet.NewReader(bytes.NewReader(msg.Data))
