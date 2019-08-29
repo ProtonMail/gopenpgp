@@ -164,7 +164,7 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
 
 	testPublicKeyRing, _ = pgp.BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
-	err = testPublicKeyRing.readFrom(strings.NewReader(readTestFile("mime_publicKey", false)), true)
+	err = testPublicKeyRing.ReadFrom(strings.NewReader(readTestFile("mime_publicKey", false)), true)
 	if err != nil {
 		t.Fatal("Expected no error adding second public key, got:", err)
 	}
