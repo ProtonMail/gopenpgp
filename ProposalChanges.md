@@ -332,12 +332,7 @@ No change.
 No change.
 
 ### UnmarshalJSON
-Renamed, but an alias is available.
-```
-(kr *KeyRing) UnmarshalJSON(b []byte) (err error):
-* (keyRing *KeyRing) ReadFromJSON(jsonData []byte) (err error)
-* (alias)(keyRing *KeyRing) UnmarshalJSON(jsonData []byte) (err error) 
-```
+No change.
 
 ### Identities
 No change

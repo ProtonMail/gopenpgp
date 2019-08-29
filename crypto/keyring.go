@@ -286,8 +286,8 @@ func (pgp *GopenPGP) BuildKeyRingArmored(key string) (keyRing *KeyRing, err erro
 	return &KeyRing{entities: keyEntries}, err
 }
 
-// ReadFromJSON reads multiple keys from a json array and fills the keyring
-func (keyRing *KeyRing) ReadFromJSON(jsonData []byte) (err error) {
+// UnmarshalJSON reads multiple keys from a json array and fills the keyring
+func (keyRing *KeyRing) UnmarshalJSON(jsonData []byte) (err error) {
 	keyObjs, err := unmarshalJSON(jsonData)
 	if err != nil {
 		return err
@@ -296,16 +296,15 @@ func (keyRing *KeyRing) ReadFromJSON(jsonData []byte) (err error) {
 	return keyRing.newKeyRingFromPGPKeyObject(keyObjs)
 }
 
-// UnmarshalJSON is an alias for ReadFromJSON to implement the encoding/json.Unmarshaler interface
-func (keyRing *KeyRing) UnmarshalJSON(jsonData []byte) (err error) {
-	return keyRing.ReadFromJSON(jsonData)
-}
-
 // UnlockJSONKeyRing reads keys from a JSON array, creates a newKeyRing,
 // then tries to unlock them with the provided keyRing using the token in the structure.
 // If the token is not available it will fall back to just reading the keys, and leave them locked.
 func (keyRing *KeyRing) UnlockJSONKeyRing(jsonData []byte) (newKeyRing *KeyRing, err error) {
 	keyObjs, err := unmarshalJSON(jsonData)
+	if err != nil {
+		return nil, err
+	}
+
 	newKeyRing = &KeyRing{}
 	err = newKeyRing.newKeyRingFromPGPKeyObject(keyObjs)
 	if err != nil {
@@ -447,4 +446,13 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 	}
 
 	return filteredKeys, nil
+}
+
+// FirstKey returns a KeyRing with only the first key of the original one
+func (keyRing *KeyRing) FirstKey() *KeyRing {
+	newKeyRing := &KeyRing{}
+	newKeyRing.FirstKeyID = keyRing.FirstKeyID
+	newKeyRing.entities = keyRing.entities[:1]
+
+	return newKeyRing;
 }

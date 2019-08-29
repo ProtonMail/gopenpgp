@@ -43,12 +43,12 @@ var testIdentity = &Identity{
 func init() {
 	var err error
 
-	testPrivateKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))
+	testPrivateKeyRing, err = pgp.BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
 	if err != nil {
 		panic(err)
 	}
 
-	testPublicKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_publicKey", false)))
+	testPublicKeyRing, err = pgp.BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
 	if err != nil {
 		panic(err)
 	}
@@ -92,7 +92,7 @@ func TestKeyRing_ArmoredPublicKeyString(t *testing.T) {
 }
 
 func TestCheckPassphrase(t *testing.T) {
-	encryptedKeyRing, _ := ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))
+	encryptedKeyRing, _ := pgp.BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
 	isCorrect := encryptedKeyRing.CheckPassphrase("Wrong password")
 	assert.Exactly(t, false, isCorrect)
 
@@ -107,7 +107,7 @@ func TestIdentities(t *testing.T) {
 }
 
 func TestFilterExpiredKeys(t *testing.T) {
-	expiredKey, _ := ReadArmoredKeyRing(strings.NewReader(readTestFile("key_expiredKey", false)))
+	expiredKey, _ := pgp.BuildKeyRingArmored(readTestFile("key_expiredKey", false))
 	keys := []*KeyRing{testPrivateKeyRing, expiredKey}
 	unexpired, err := FilterExpiredKeys(keys)
 
@@ -149,9 +149,9 @@ func TestKeyIds(t *testing.T) {
 	assert.Exactly(t, assertKeyIDs, keyIDs)
 }
 
-func TestReadFromJson(t *testing.T) {
+func TestUnmarshalJSON(t *testing.T) {
 	decodedKeyRing := &KeyRing{}
-	err = decodedKeyRing.ReadFromJSON([]byte(readTestFile("keyring_jsonKeys", false)))
+	err = decodedKeyRing.UnmarshalJSON([]byte(readTestFile("keyring_jsonKeys", false)))
 	if err != nil {
 		t.Fatal("Expected no error while reading JSON, got:", err)
 	}
@@ -165,14 +165,14 @@ func TestReadFromJson(t *testing.T) {
 }
 
 func TestUnlockJson(t *testing.T) {
-	userKeyRing, err := ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_userKey", false)))
+	userKeyRing, err := pgp.BuildKeyRingArmored(readTestFile("keyring_userKey", false))
 	if err != nil {
 		t.Fatal("Expected no error while creating keyring, got:", err)
 	}
 
 	err = userKeyRing.UnlockWithPassphrase("testpassphrase")
 	if err != nil {
-		t.Fatal("Expected no error while creating keyring, got:", err)
+		t.Fatal("Expected no error while decrypting keyring, got:", err)
 	}
 
 	addressKeyRing, err := userKeyRing.UnlockJSONKeyRing([]byte(readTestFile("keyring_newJSONKeys", false)))
@@ -183,4 +183,38 @@ func TestUnlockJson(t *testing.T) {
 	for _, e := range addressKeyRing.entities {
 		assert.Exactly(t, false, e.PrivateKey.Encrypted)
 	}
+
+	addressKeyRing, err = userKeyRing.UnlockJSONKeyRing([]byte(readTestFile("keyring_jsonKeys", false)))
+	if err != nil {
+		t.Fatal("Expected no error while reading and decrypting JSON, got:", err)
+	}
+
+	for _, e := range addressKeyRing.entities {
+		assert.Exactly(t, true, e.PrivateKey.Encrypted)
+	}
+}
+
+func TestMutlipleKeyRing(t *testing.T) {
+	testPublicKeyRing, _ = pgp.BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
+	assert.Exactly(t, 1, len(testPublicKeyRing.entities))
+
+	ids := testPublicKeyRing.KeyIds()
+	assert.Exactly(t, uint64(0x3eb6259edf21df24), ids[0])
+
+	err = testPublicKeyRing.readFrom(strings.NewReader(readTestFile("mime_publicKey", false)), true)
+	if err != nil {
+		t.Fatal("Expected no error while adding a key to the keyring, got:", err)
+	}
+
+	assert.Exactly(t, 2, len(testPublicKeyRing.entities))
+
+	ids = testPublicKeyRing.KeyIds()
+	assert.Exactly(t, uint64(0x3eb6259edf21df24), ids[0])
+	assert.Exactly(t, uint64(0x374130b32ee1e5ea), ids[1])
+
+	singleKey := testPublicKeyRing.FirstKey()
+	assert.Exactly(t, 1, len(singleKey.entities))
+
+	ids = singleKey.KeyIds()
+	assert.Exactly(t, uint64(0x3eb6259edf21df24), ids[0])
 }

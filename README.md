@@ -309,3 +309,22 @@ var verifyTime = pgp.GetUnixTime()
 
 verifiedPlainText, err := VerifyCleartextMessageArmored(publicKey, armored, verifyTime)
 ```
+
+### Encrypting and decrypting session Keys
+```go
+// Keys initialization as before (omitted)
+
+symmetricKey := &SymmetricKey{
+  Key:  "RandomTokenabcdef",
+  Algo: constants.AES256,
+}
+
+keyPacket, err := publicKey.EncryptSessionKey(symmetricKey)
+```
+`KeyPacket` is a `[]byte` containing the session key encrypted with the private key.
+
+
+```go
+outputSymmetricKey, err := privateKey.DecryptSessionKey(keyPacket)
+```
+`outputSymmetricKey` is an object of type `*SymmetricKey` that can be used to decrypt the correspondig message.

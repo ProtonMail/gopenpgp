@@ -27,6 +27,8 @@ func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PG
 // * message    : The encrypted input as a PGPMessage
 // * verifyKey  : Public key for signature verification (optional)
 // * verifyTime : Time at verification (necessary only if verifyKey is not nil)
+//
+// When verifyKey is not provided, then verifyTime should be zero, and signature verification will be ignored
 func (keyRing *KeyRing) Decrypt(
 	message *PGPMessage, verifyKey *KeyRing, verifyTime int64,
 ) (*PlainMessage, error) {
