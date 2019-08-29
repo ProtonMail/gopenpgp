@@ -356,11 +356,3 @@ func (keyRing *KeyRing) FirstKey() *KeyRing {
 
 	return newKeyRing
 }
-
-// NewKeyRing creates a new keyring given an entity list
-func NewKeyRing(entities openpgp.EntityList, firstKeyID string) *KeyRing {
-	return &KeyRing{
-		entities: entities,
-		FirstKeyID: firstKeyID,
-	}
-}
