@@ -450,9 +450,12 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 
 // FirstKey returns a KeyRing with only the first key of the original one
 func (keyRing *KeyRing) FirstKey() *KeyRing {
+	if len(keyRing.entities) == 0 {
+		return nil
+	}
 	newKeyRing := &KeyRing{}
 	newKeyRing.FirstKeyID = keyRing.FirstKeyID
 	newKeyRing.entities = keyRing.entities[:1]
 
-	return newKeyRing;
+	return newKeyRing
 }
