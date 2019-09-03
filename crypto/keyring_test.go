@@ -149,51 +149,6 @@ func TestKeyIds(t *testing.T) {
 	assert.Exactly(t, assertKeyIDs, keyIDs)
 }
 
-func TestUnmarshalJSON(t *testing.T) {
-	decodedKeyRing := &KeyRing{}
-	err = decodedKeyRing.UnmarshalJSON([]byte(readTestFile("keyring_jsonKeys", false)))
-	if err != nil {
-		t.Fatal("Expected no error while reading JSON, got:", err)
-	}
-
-	fingerprint, err := decodedKeyRing.GetFingerprint()
-	if err != nil {
-		t.Fatal("Expected no error while extracting fingerprint, got:", err)
-	}
-
-	assert.Exactly(t, "91eacacca6837890efa7000470e569d5c182bef6", fingerprint)
-}
-
-func TestUnlockJson(t *testing.T) {
-	userKeyRing, err := pgp.BuildKeyRingArmored(readTestFile("keyring_userKey", false))
-	if err != nil {
-		t.Fatal("Expected no error while creating keyring, got:", err)
-	}
-
-	err = userKeyRing.UnlockWithPassphrase("testpassphrase")
-	if err != nil {
-		t.Fatal("Expected no error while decrypting keyring, got:", err)
-	}
-
-	addressKeyRing, err := userKeyRing.UnlockJSONKeyRing([]byte(readTestFile("keyring_newJSONKeys", false)))
-	if err != nil {
-		t.Fatal("Expected no error while reading and decrypting JSON, got:", err)
-	}
-
-	for _, e := range addressKeyRing.entities {
-		assert.Exactly(t, false, e.PrivateKey.Encrypted)
-	}
-
-	addressKeyRing, err = userKeyRing.UnlockJSONKeyRing([]byte(readTestFile("keyring_jsonKeys", false)))
-	if err != nil {
-		t.Fatal("Expected no error while reading and decrypting JSON, got:", err)
-	}
-
-	for _, e := range addressKeyRing.entities {
-		assert.Exactly(t, true, e.PrivateKey.Encrypted)
-	}
-}
-
 func TestMutlipleKeyRing(t *testing.T) {
 	testPublicKeyRing, _ = pgp.BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
 	assert.Exactly(t, 1, len(testPublicKeyRing.entities))
@@ -201,7 +156,7 @@ func TestMutlipleKeyRing(t *testing.T) {
 	ids := testPublicKeyRing.KeyIds()
 	assert.Exactly(t, uint64(0x3eb6259edf21df24), ids[0])
 
-	err = testPublicKeyRing.readFrom(strings.NewReader(readTestFile("mime_publicKey", false)), true)
+	err = testPublicKeyRing.ReadFrom(strings.NewReader(readTestFile("mime_publicKey", false)), true)
 	if err != nil {
 		t.Fatal("Expected no error while adding a key to the keyring, got:", err)
 	}

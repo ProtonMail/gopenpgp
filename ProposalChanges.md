@@ -38,31 +38,6 @@ crypto.PlainMessage struct {
 }
 ```
 
-### pmKeyObject
-```
-type pmKeyObject struct {
-	ID          string
-	Version     int
-	Flags       int
-	Fingerprint string
-	PublicKey   string `json:",omitempty"`
-	PrivateKey  string
-	Primary int
-}
-```
-is now
-```
-type pgpKeyObject struct {
-	ID          string
-	Version     int
-	Flags       int
-	PrivateKey  string
-	Primary     int
-	Token       string `json:",omitempty"`
-	Signature   string `json:",omitempty"`
-}
-```
-
 ### SignedString
 ```
 // SignedString wraps string with Signature
@@ -88,6 +63,20 @@ type Signature struct {
 	md *openpgp.MessageDetails
 }
 ```
+
+### pmKeyObject
+```
+type pmKeyObject struct {
+	ID          string
+	Version     int
+	Flags       int
+	Fingerprint string
+	PublicKey   string `json:",omitempty"`
+	PrivateKey  string
+	Primary int
+}
+```
+
 ## New
 ### PGPMessage
 ```
@@ -332,7 +321,7 @@ No change.
 No change.
 
 ### UnmarshalJSON
-No change.
+Dropped.
 
 ### Identities
 No change

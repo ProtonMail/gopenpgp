@@ -5,10 +5,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/rsa"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"io"
-	"strings"
 	"time"
 
 	"golang.org/x/crypto/openpgp"
@@ -26,22 +24,6 @@ type KeyRing struct {
 
 	// FirstKeyID as obtained from API to match salt
 	FirstKeyID string
-}
-
-// A keypair contains a private key and a public key.
-type pgpKeyObject struct {
-	ID         string
-	Version    int
-	Flags      int
-	PrivateKey string
-	Primary    int
-	Token      *string `json:",omitempty"`
-	Signature  *string `json:",omitempty"`
-}
-
-// PrivateKeyReader
-func (ko *pgpKeyObject) PrivateKeyReader() io.Reader {
-	return strings.NewReader(ko.PrivateKey)
 }
 
 // Identity contains the name and the email of a key holder.
@@ -208,8 +190,8 @@ func (keyRing *KeyRing) CheckPassphrase(passphrase string) bool {
 	return n != 0
 }
 
-// readFrom reads unarmored and armored keys from r and adds them to the keyring.
-func (keyRing *KeyRing) readFrom(r io.Reader, armored bool) error {
+// ReadFrom reads unarmored and armored keys from r and adds them to the keyring.
+func (keyRing *KeyRing) ReadFrom(r io.Reader, armored bool) error {
 	var err error
 	var entities openpgp.EntityList
 	if armored {
@@ -264,7 +246,7 @@ func (keyRing *KeyRing) readFrom(r io.Reader, armored bool) error {
 func (pgp *GopenPGP) BuildKeyRing(binKeys []byte) (keyRing *KeyRing, err error) {
 	keyRing = &KeyRing{}
 	entriesReader := bytes.NewReader(binKeys)
-	err = keyRing.readFrom(entriesReader, false)
+	err = keyRing.ReadFrom(entriesReader, false)
 
 	return
 }
@@ -284,90 +266,6 @@ func (pgp *GopenPGP) BuildKeyRingArmored(key string) (keyRing *KeyRing, err erro
 	keyReader := bytes.NewReader(keyRaw)
 	keyEntries, err := openpgp.ReadKeyRing(keyReader)
 	return &KeyRing{entities: keyEntries}, err
-}
-
-// UnmarshalJSON reads multiple keys from a json array and fills the keyring
-func (keyRing *KeyRing) UnmarshalJSON(jsonData []byte) (err error) {
-	keyObjs, err := unmarshalJSON(jsonData)
-	if err != nil {
-		return err
-	}
-
-	return keyRing.newKeyRingFromPGPKeyObject(keyObjs)
-}
-
-// UnlockJSONKeyRing reads keys from a JSON array, creates a newKeyRing,
-// then tries to unlock them with the provided keyRing using the token in the structure.
-// If the token is not available it will fall back to just reading the keys, and leave them locked.
-func (keyRing *KeyRing) UnlockJSONKeyRing(jsonData []byte) (newKeyRing *KeyRing, err error) {
-	keyObjs, err := unmarshalJSON(jsonData)
-	if err != nil {
-		return nil, err
-	}
-
-	newKeyRing = &KeyRing{}
-	err = newKeyRing.newKeyRingFromPGPKeyObject(keyObjs)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, ko := range keyObjs {
-		if ko.Token == nil || ko.Signature == nil {
-			continue
-		}
-
-		message, err := NewPGPMessageFromArmored(*ko.Token)
-		if err != nil {
-			return nil, err
-		}
-
-		signature, err := NewPGPSignatureFromArmored(*ko.Signature)
-		if err != nil {
-			return nil, err
-		}
-
-		token, err := keyRing.Decrypt(message, nil, 0)
-		if err != nil {
-			return nil, err
-		}
-
-		err = keyRing.VerifyDetached(token, signature, 0)
-		if err != nil {
-			return nil, err
-		}
-
-		err = newKeyRing.Unlock(token.GetBinary())
-		if err != nil {
-			return nil, errors.New("gopenpgp: wrong token")
-		}
-	}
-
-	return newKeyRing, nil
-}
-
-// newKeyRingFromPGPKeyObject fills a KeyRing given an array of pgpKeyObject
-func (keyRing *KeyRing) newKeyRingFromPGPKeyObject(keyObjs []pgpKeyObject) error {
-	keyRing.entities = nil
-	for i, ko := range keyObjs {
-		if i == 0 {
-			keyRing.FirstKeyID = ko.ID
-		}
-		err := keyRing.readFrom(ko.PrivateKeyReader(), true)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// unmarshalJSON decodes key json from the API
-func unmarshalJSON(jsonData []byte) ([]pgpKeyObject, error) {
-	keyObjs := []pgpKeyObject{}
-	if err := json.Unmarshal(jsonData, &keyObjs); err != nil {
-		return nil, err
-	}
-
-	return keyObjs, nil
 }
 
 // Identities returns the list of identities associated with this key ring.
@@ -396,14 +294,14 @@ func (keyRing *KeyRing) KeyIds() []uint64 {
 // ReadArmoredKeyRing reads an armored data into keyring.
 func ReadArmoredKeyRing(r io.Reader) (keyRing *KeyRing, err error) {
 	keyRing = &KeyRing{}
-	err = keyRing.readFrom(r, true)
+	err = keyRing.ReadFrom(r, true)
 	return
 }
 
 // ReadKeyRing reads an binary data into keyring.
 func ReadKeyRing(r io.Reader) (keyRing *KeyRing, err error) {
 	keyRing = &KeyRing{}
-	err = keyRing.readFrom(r, false)
+	err = keyRing.ReadFrom(r, false)
 	return
 }
 
@@ -454,7 +352,6 @@ func (keyRing *KeyRing) FirstKey() *KeyRing {
 		return nil
 	}
 	newKeyRing := &KeyRing{}
-	newKeyRing.FirstKeyID = keyRing.FirstKeyID
 	newKeyRing.entities = keyRing.entities[:1]
 
 	return newKeyRing
