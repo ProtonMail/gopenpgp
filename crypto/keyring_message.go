@@ -15,7 +15,7 @@ import (
 // * message    : The plaintext input as a PlainMessage
 // * privateKey : (optional) an unlocked private keyring to include signature in the message
 func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error) {
-	encrypted, err := asymmetricEncrypt(message.GetBinary(), keyRing, privateKey, true)
+	encrypted, err := asymmetricEncrypt(message.GetBinary(), keyRing, privateKey, message.IsBinary())
 	if err != nil {
 		return nil, err
 	}
