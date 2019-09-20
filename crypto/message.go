@@ -51,7 +51,7 @@ type PGPSplitMessage struct {
 // A Cleartext message is a signed PGP message, that is not encrypted,
 // i.e. the ones beginning with -----BEGIN PGP SIGNED MESSAGE-----
 type ClearTextMessage struct {
-	Data []byte
+	Data      []byte
 	Signature []byte
 }
 
@@ -146,7 +146,7 @@ func NewPGPSignatureFromArmored(armored string) (*PGPSignature, error) {
 // NewClearTextMessage generates a new ClearTextMessage from data and signature
 func NewClearTextMessage(data []byte, signature []byte) *ClearTextMessage {
 	return &ClearTextMessage{
-		Data:  data,
+		Data:      data,
 		Signature: signature,
 	}
 }
@@ -225,7 +225,7 @@ func (msg *PGPSplitMessage) GetBinaryKeyPacket() []byte {
 
 // GetBinary returns the unarmored binary joined packets as a []byte
 func (msg *PGPSplitMessage) GetBinary() []byte {
-	return append(msg.KeyPacket , msg.DataPacket...)
+	return append(msg.KeyPacket, msg.DataPacket...)
 }
 
 // GetArmored returns the armored message as a string, with joined data and key packets

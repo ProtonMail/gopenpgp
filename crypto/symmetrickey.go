@@ -53,6 +53,15 @@ func NewSymmetricKeyFromToken(passphrase, algo string) *SymmetricKey {
 	}
 }
 
+// CreateSymmetricKey this name should be NewSymmetricKeyFromKey.
+// to use Create to avoid function name conflicts with gomobile android target
+func CreateSymmetricKey(key []byte, algo string) *SymmetricKey {
+	return &SymmetricKey{
+		Key:  key,
+		Algo: algo,
+	}
+}
+
 func newSymmetricKeyFromEncrypted(ek *packet.EncryptedKey) (*SymmetricKey, error) {
 	var algo string
 	for k, v := range symKeyAlgos {
@@ -69,7 +78,7 @@ func newSymmetricKeyFromEncrypted(ek *packet.EncryptedKey) (*SymmetricKey, error
 		Key:  ek.Key,
 		Algo: algo,
 	}
-	
+
 	return symmetricKey, nil
 }
 

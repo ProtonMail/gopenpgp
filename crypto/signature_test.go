@@ -45,6 +45,13 @@ func TestSignTextDetached(t *testing.T) {
 	}
 
 	assert.Regexp(t, signatureTest, armoredSignature)
+
+	signature, _ := NewPGPSignatureFromArmored(armoredSignature)
+	// verificationError := signingKeyRing.VerifyDetached(message, textSignature, testTime)
+	verificationError := signingKeyRing.VerifyDetached(message, signature, testTime)
+	if verificationError != nil {
+		t.Fatal("Cannot verify plaintext signature:", err)
+	}
 }
 
 func TestVerifyTextDetachedSig(t *testing.T) {

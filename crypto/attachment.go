@@ -118,7 +118,6 @@ func (keyRing *KeyRing) NewLowMemoryAttachmentProcessor(
 // Specifically designed for attachments rather than text messages.
 func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*PlainMessage, error) {
 	privKeyEntries := keyRing.entities
-
 	keyReader := bytes.NewReader(message.GetBinaryKeyPacket())
 	dataReader := bytes.NewReader(message.GetBinaryDataPacket())
 
