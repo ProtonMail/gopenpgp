@@ -46,7 +46,14 @@ func (symmetricKey *SymmetricKey) GetBase64Key() string {
 	return base64.StdEncoding.EncodeToString(symmetricKey.Key)
 }
 
-func NewSymmetricKeyFromToken(passphrase, algo string) *SymmetricKey {
+func NewSymmetricKey(passphrase []byte, algo string) *SymmetricKey {
+	return &SymmetricKey{
+		Key:  passphrase,
+		Algo: algo,
+	}
+}
+
+func NewSymmetricKeyFromString(passphrase, algo string) *SymmetricKey {
 	return &SymmetricKey{
 		Key:  []byte(passphrase),
 		Algo: algo,
@@ -69,7 +76,7 @@ func newSymmetricKeyFromEncrypted(ek *packet.EncryptedKey) (*SymmetricKey, error
 		Key:  ek.Key,
 		Algo: algo,
 	}
-	
+
 	return symmetricKey, nil
 }
 
@@ -100,7 +107,7 @@ func (symmetricKey *SymmetricKey) Decrypt(message *PGPMessage) (*PlainMessage, e
 
 // NewSymmetricKeyFromKeyPacket decrypts the binary symmetrically encrypted
 // session key packet and returns the session key.
-func NewSymmetricKeyFromKeyPacket(keyPacket []byte, password string) (*SymmetricKey, error) {
+func NewSymmetricKeyFromKeyPacket(keyPacket []byte, password []byte) (*SymmetricKey, error) {
 	keyReader := bytes.NewReader(keyPacket)
 	packets := packet.NewReader(keyReader)
 
@@ -119,11 +126,10 @@ func NewSymmetricKeyFromKeyPacket(keyPacket []byte, password string) (*Symmetric
 		}
 	}
 
-	pwdRaw := []byte(password)
 	// Try the symmetric passphrase first
-	if len(symKeys) != 0 && pwdRaw != nil {
+	if len(symKeys) != 0 && password != nil {
 		for _, s := range symKeys {
-			key, cipherFunc, err := s.Decrypt(pwdRaw)
+			key, cipherFunc, err := s.Decrypt(password)
 			if err == nil {
 				return &SymmetricKey{
 					Key:  key,

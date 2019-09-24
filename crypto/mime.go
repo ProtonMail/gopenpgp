@@ -3,9 +3,9 @@ package crypto
 import (
 	"bytes"
 	"io/ioutil"
+	"io"
 	"net/mail"
 	"net/textproto"
-	"strings"
 
 	gomime "github.com/ProtonMail/go-mime"
 
@@ -33,7 +33,7 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 		return
 	}
 
-	body, attachments, attachmentHeaders, err := pgp.parseMIME(decryptedMessage.GetString(), verifyKey)
+	body, attachments, attachmentHeaders, err := pgp.parseMIME(bytes.NewReader(decryptedMessage.GetBinary()), verifyKey)
 	if err != nil {
 		callbacks.OnError(err)
 		return
@@ -49,9 +49,9 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 // ----- INTERNAL FUNCTIONS -----
 
 func (pgp GopenPGP) parseMIME(
-	mimeBody string, verifierKey *KeyRing,
+	mimeBody io.Reader, verifierKey *KeyRing,
 ) (*gomime.BodyCollector, []string, []string, error) {
-	mm, err := mail.ReadMessage(strings.NewReader(mimeBody))
+	mm, err := mail.ReadMessage(mimeBody)
 	if err != nil {
 		return nil, nil, nil, err
 	}

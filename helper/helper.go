@@ -23,7 +23,7 @@ func EncryptMessageWithTokenAlgo(
 	var pgpMessage *crypto.PGPMessage
 
 	var message = crypto.NewPlainMessageFromString(plaintext)
-	var key = crypto.NewSymmetricKeyFromToken(token, algo)
+	var key = crypto.NewSymmetricKeyFromString(token, algo)
 
 	if pgpMessage, err = key.Encrypt(message); err != nil {
 		return "", err
@@ -42,7 +42,7 @@ func DecryptMessageWithToken(token, ciphertext string) (plaintext string, err er
 	var message *crypto.PlainMessage
 	var pgpMessage *crypto.PGPMessage
 
-	var key = crypto.NewSymmetricKeyFromToken(token, "")
+	var key = crypto.NewSymmetricKeyFromString(token, "")
 
 	if pgpMessage, err = crypto.NewPGPMessageFromArmored(ciphertext); err != nil {
 		return "", err

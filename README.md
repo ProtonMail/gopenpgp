@@ -112,7 +112,7 @@ To encrypt binary data, reuse the key multiple times, or use more advanced modes
 ```go
 import "github.com/ProtonMail/gopenpgp/constants"
 
-var key = crypto.NewSymmetricKeyFromToken("my secret password", constants.AES256)
+var key = crypto.NewSymmetricKeyFromString("my secret password", constants.AES256)
 var message = crypto.NewPlainMessage(data)
 
 // Encrypt data with password

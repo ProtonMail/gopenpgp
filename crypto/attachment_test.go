@@ -100,3 +100,21 @@ func TestAttachmentDecrypt(t *testing.T) {
 
 	assert.Exactly(t, message, redecData)
 }
+
+func TestAttachmentRoundtrip(t *testing.T) {
+	var testAttachmentCleartext = "cc,\ndille."
+	var message = NewPlainMessage([]byte(testAttachmentCleartext))
+
+	encrypted, err := testPrivateKeyRing.EncryptAttachment(message, "s.txt")
+	if err != nil {
+		t.Fatal("Expected no error while encrypting attachment, got:", err)
+	}
+
+	pgpSplitMessage := NewPGPSplitMessage(encrypted.KeyPacket, encrypted.DataPacket)
+	redecData, err := testPrivateKeyRing.DecryptAttachment(pgpSplitMessage)
+	if err != nil {
+		t.Fatal("Expected no error while decrypting attachment, got:", err)
+	}
+
+	assert.Exactly(t, message, redecData)
+}

@@ -417,7 +417,7 @@ Dropped, use now `EncryptSessionKey`.
 Renamed, moved to `SymmetricKey`.
 ```
 (pm *PmCrypto) GetSessionFromSymmetricPacket(keyPackage []byte, password string) (*SymmetricKey, error):
-* NewSymmetricKeyFromKeyPacket(keyPacket []byte, password string) (*SymmetricKey, error)
+* NewSymmetricKeyFromKeyPacket(keyPacket []byte, password []byte) (*SymmetricKey, error)
 ```
 
 ### SymmetricKeyPacketWithPassword

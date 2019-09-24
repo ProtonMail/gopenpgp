@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -57,7 +58,7 @@ func TestDecrypt(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	body, atts, attHeaders, err := pgp.parseMIME(readTestFile("mime_testMessage", false), nil)
+	body, atts, attHeaders, err := pgp.parseMIME(strings.NewReader(readTestFile("mime_testMessage", false)), nil)
 
 	if err != nil {
 		t.Error("Expected no error while parsing message, got:", err)
