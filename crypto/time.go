@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"time"
+	"errors"
 )
 
 var pgp = GopenPGP{}
@@ -25,6 +26,30 @@ func (pgp *GopenPGP) GetUnixTime() int64 {
 // GetTime gets latest cached time
 func (pgp *GopenPGP) GetTime() time.Time {
 	return pgp.getNow()
+}
+
+func (pgp *GopenPGP) DebugGetDiff() (int64, error) {
+	if pgp.latestServerTime > 0 && !pgp.latestClientTime.IsZero() {
+		return int64(time.Until(pgp.latestClientTime).Seconds()), nil
+	}
+
+	return 0, errors.New("Latest server time not available")
+}
+
+func (pgp *GopenPGP) DebugGetOldDiff() (int64, error) {
+	if pgp.latestServerTime > 0 && !pgp.latestClientTime.IsZero() {
+		return int64(pgp.latestClientTime.Sub(time.Now()).Seconds()), nil
+	}
+
+	return 0, errors.New("Latest server time not available")
+}
+
+func (pgp *GopenPGP) DebugGetLatestServerTime() (int64) {
+	return pgp.latestServerTime
+}
+
+func (pgp *GopenPGP) DebugGetLatestClientTime() (time.Time) {
+	return pgp.latestClientTime
 }
 
 // ----- INTERNAL FUNCTIONS -----
