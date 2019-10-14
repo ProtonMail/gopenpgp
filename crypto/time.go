@@ -29,19 +29,7 @@ func (pgp *GopenPGP) GetTime() time.Time {
 }
 
 func (pgp *GopenPGP) DebugGetDiff() (int64, error) {
-	if pgp.latestServerTime > 0 && !pgp.latestClientTime.IsZero() {
-		return int64(time.Until(pgp.latestClientTime).Seconds()), nil
-	}
-
-	return 0, errors.New("Latest server time not available")
-}
-
-func (pgp *GopenPGP) DebugGetOldDiff() (int64, error) {
-	if pgp.latestServerTime > 0 && !pgp.latestClientTime.IsZero() {
-		return int64(pgp.latestClientTime.Sub(time.Now()).Seconds()), nil
-	}
-
-	return 0, errors.New("Latest server time not available")
+	return pgp.getDiff()
 }
 
 func (pgp *GopenPGP) DebugGetLatestServerTime() (int64) {
@@ -56,13 +44,22 @@ func (pgp *GopenPGP) DebugGetLatestClientTime() (time.Time) {
 
 // getNow returns current time
 func (pgp *GopenPGP) getNow() time.Time {
-	if pgp.latestServerTime > 0 && !pgp.latestClientTime.IsZero() {
-		// Until is monotonic, it uses a monotonic clock in this case instead of the wall clock
-		extrapolate := int64(time.Until(pgp.latestClientTime).Seconds())
-		return time.Unix(pgp.latestServerTime+extrapolate, 0)
+	extrapolate, err := pgp.getDiff()
+
+	if err != nil {
+		return time.Now()
 	}
 
-	return time.Now()
+	return time.Unix(pgp.latestServerTime+extrapolate, 0)
+}
+
+func (pgp *GopenPGP) getDiff() (int64, error) {
+	if pgp.latestServerTime > 0 && !pgp.latestClientTime.IsZero() {
+		// Since is monotonic, it uses a monotonic clock in this case instead of the wall clock
+		return int64(time.Since(pgp.latestClientTime).Seconds()), nil
+	}
+
+	return 0, errors.New("Latest server time not available")
 }
 
 // getTimeGenerator Returns a time generator function
