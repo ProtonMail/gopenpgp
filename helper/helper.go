@@ -2,12 +2,13 @@ package helper
 
 import (
 	"errors"
-
+	"time"
+	
 	"github.com/ProtonMail/gopenpgp/constants"
 	"github.com/ProtonMail/gopenpgp/crypto"
 )
 
-var pgp = crypto.GetGopenPGP()
+var pgp = crypto.GopenPGPFactory(time.Now().Unix())
 
 // EncryptMessageWithToken encrypts a string with a passphrase using AES256
 func EncryptMessageWithToken(

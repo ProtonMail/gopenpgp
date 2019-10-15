@@ -183,7 +183,7 @@ Keys are generated with the `GenerateKey` function, that returns the armored key
 The library supports RSA with different key lengths or Curve25519 keys.
 
 ```go
-var pgp = crypto.GetGopenPGP()
+var pgp = crypto.GopenPGPFactory(time.Now().Unix())
 
 const (
   localPart = "name.surname"
@@ -226,7 +226,7 @@ pgpSignature, err := signingKeyRing.SignDetached(message, trimNewlines)
 To verify a signature either private or public keyring can be provided.
 
 ```go
-var pgp = crypto.GetGopenPGP()
+var pgp = crypto.GopenPGPFactory(time.Now().Unix())
 
 const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 ...
@@ -250,7 +250,7 @@ if err == nil {
 ### Detached signatures for binary data
 
 ```go
-var pgp = crypto.GetGopenPGP()
+var pgp = crypto.GopenPGPFactory(time.Now().Unix())
 
 const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 ...
@@ -271,7 +271,7 @@ pgpSignature, err := signingKeyRing.SignDetached(message)
 To verify a signature either private or public keyring can be provided.
 
 ```go
-var pgp = crypto.GetGopenPGP()
+var pgp = crypto.GopenPGPFactory(time.Now().Unix())
 
 const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 ...
@@ -304,7 +304,7 @@ If verification fails an error will be returned.
 ```go
 // Keys initialization as before (omitted)
 
-var pgp = crypto.GetGopenPGP()
+var pgp = crypto.GopenPGPFactory(time.Now().Unix())
 var verifyTime = pgp.GetUnixTime()
 
 verifiedPlainText, err := VerifyCleartextMessageArmored(publicKey, armored, verifyTime)

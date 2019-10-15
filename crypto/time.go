@@ -5,13 +5,6 @@ import (
 	"errors"
 )
 
-var pgp = GopenPGP{}
-
-// GetGopenPGP return global GopenPGP
-func GetGopenPGP() *GopenPGP {
-	return &pgp
-}
-
 // UpdateTime updates cached time
 func (pgp *GopenPGP) UpdateTime(newTime int64) {
 	pgp.latestServerTime = newTime
@@ -47,10 +40,10 @@ func (pgp *GopenPGP) getNow() time.Time {
 	extrapolate, err := pgp.getDiff()
 
 	if err != nil {
-		return time.Now()
+		panic(err)
 	}
 
-	return time.Unix(pgp.latestServerTime+extrapolate, 0)
+	return time.Unix(pgp.latestServerTime + extrapolate, 0)
 }
 
 func (pgp *GopenPGP) getDiff() (int64, error) {

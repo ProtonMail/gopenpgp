@@ -3,9 +3,12 @@ package crypto
 import (
 	"io/ioutil"
 	"strings"
+	"time"
 )
 
 var err error
+
+var _ = GopenPGPFactory(time.Now().Unix())
 
 func readTestFile(name string, trimNewlines bool) string {
 	data, err := ioutil.ReadFile("testdata/" + name)
