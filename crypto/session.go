@@ -10,13 +10,13 @@ import (
 )
 
 // RandomToken generated a random token of the same size of the keysize of the default cipher.
-func (pgp *GopenPGP) RandomToken() ([]byte, error) {
+func RandomToken() ([]byte, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256}
-	return pgp.RandomTokenSize(config.DefaultCipher.KeySize())
+	return RandomTokenSize(config.DefaultCipher.KeySize())
 }
 
 // RandomTokenSize generates a random token with the specified key size
-func (pgp *GopenPGP) RandomTokenSize(size int) ([]byte, error) {
+func RandomTokenSize(size int) ([]byte, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256}
 	symKey := make([]byte, size)
 	if _, err := io.ReadFull(config.Random(), symKey); err != nil {
@@ -69,7 +69,7 @@ func (keyRing *KeyRing) EncryptSessionKey(sessionSplit *SymmetricKey) ([]byte, e
 
 	var pub *packet.PublicKey
 	for _, e := range keyRing.GetEntities() {
-		if encryptionKey, ok := e.EncryptionKey(pgp.getNow()); ok {
+		if encryptionKey, ok := e.EncryptionKey(getNow()); ok {
 			pub = encryptionKey.PublicKey
 			break
 		}

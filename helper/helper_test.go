@@ -35,7 +35,7 @@ func TestArmoredTextMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	assert.Exactly(t, true, pgp.IsPGPMessage(armored))
+	assert.Exactly(t, true, crypto.IsPGPMessage(armored))
 
 	decrypted, err := DecryptMessageArmored(
 		readTestFile("keyring_privateKey", false),
@@ -62,7 +62,7 @@ func TestArmoredTextMessageEncryptionVerification(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	assert.Exactly(t, true, pgp.IsPGPMessage(armored))
+	assert.Exactly(t, true, crypto.IsPGPMessage(armored))
 
 	_, err = DecryptVerifyMessageArmored(
 		readTestFile("mime_publicKey", false), // Wrong public key

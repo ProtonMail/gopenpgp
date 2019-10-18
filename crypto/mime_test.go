@@ -37,7 +37,7 @@ func TestDecrypt(t *testing.T) {
 	callbacks := Callbacks{
 		Testing: t,
 	}
-	privateKeyRing, _ := pgp.BuildKeyRingArmored(readTestFile("mime_privateKey", false))
+	privateKeyRing, _ := BuildKeyRingArmored(readTestFile("mime_privateKey", false))
 
 	err = privateKeyRing.UnlockWithPassphrase(privateKeyPassword)
 	if err != nil {
@@ -53,11 +53,11 @@ func TestDecrypt(t *testing.T) {
 		message,
 		nil,
 		&callbacks,
-		pgp.GetUnixTime())
+		GetUnixTime())
 }
 
 func TestParse(t *testing.T) {
-	body, atts, attHeaders, err := pgp.parseMIME(readTestFile("mime_testMessage", false), nil)
+	body, atts, attHeaders, err := parseMIME(readTestFile("mime_testMessage", false), nil)
 
 	if err != nil {
 		t.Error("Expected no error while parsing message, got:", err)

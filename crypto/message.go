@@ -368,7 +368,7 @@ func (msg *ClearTextMessage) GetArmored() (string, error) {
 // ---- UTILS -----
 
 // IsPGPMessage checks if data if has armored PGP message format.
-func (pgp *GopenPGP) IsPGPMessage(data string) bool {
+func IsPGPMessage(data string) bool {
 	re := regexp.MustCompile("^-----BEGIN " + constants.PGPMessageHeader + "-----(?s:.+)-----END " +
 		constants.PGPMessageHeader + "-----")
 	return re.MatchString(data)

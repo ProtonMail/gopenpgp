@@ -243,7 +243,7 @@ func (keyRing *KeyRing) ReadFrom(r io.Reader, armored bool) error {
 }
 
 // BuildKeyRing reads keyring from binary data
-func (pgp *GopenPGP) BuildKeyRing(binKeys []byte) (keyRing *KeyRing, err error) {
+func BuildKeyRing(binKeys []byte) (keyRing *KeyRing, err error) {
 	keyRing = &KeyRing{}
 	entriesReader := bytes.NewReader(binKeys)
 	err = keyRing.ReadFrom(entriesReader, false)
@@ -252,13 +252,13 @@ func (pgp *GopenPGP) BuildKeyRing(binKeys []byte) (keyRing *KeyRing, err error) 
 }
 
 // BuildKeyRingNoError does not return error on fail
-func (pgp *GopenPGP) BuildKeyRingNoError(binKeys []byte) (keyRing *KeyRing) {
-	keyRing, _ = pgp.BuildKeyRing(binKeys)
+func BuildKeyRingNoError(binKeys []byte) (keyRing *KeyRing) {
+	keyRing, _ = BuildKeyRing(binKeys)
 	return
 }
 
 // BuildKeyRingArmored reads armored string and returns keyring
-func (pgp *GopenPGP) BuildKeyRingArmored(key string) (keyRing *KeyRing, err error) {
+func BuildKeyRingArmored(key string) (keyRing *KeyRing, err error) {
 	keyRaw, err := armorUtils.Unarmor(key)
 	if err != nil {
 		return nil, err

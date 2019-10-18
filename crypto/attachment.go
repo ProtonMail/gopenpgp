@@ -59,7 +59,7 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 
 	config := &packet.Config{
 		DefaultCipher: packet.CipherAES256,
-		Time:          pgp.getTimeGenerator(),
+		Time:          getTimeGenerator(),
 	}
 
 	reader, writer := io.Pipe()
@@ -124,7 +124,7 @@ func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*PlainMessa
 
 	encryptedReader := io.MultiReader(keyReader, dataReader)
 
-	config := &packet.Config{Time: pgp.getTimeGenerator()}
+	config := &packet.Config{Time: getTimeGenerator()}
 
 	md, err := openpgp.ReadMessage(encryptedReader, privKeyEntries, nil, config)
 	if err != nil {

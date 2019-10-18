@@ -44,7 +44,7 @@ func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, erro
 		return nil, err
 	}
 
-	config := &packet.Config{DefaultHash: crypto.SHA512, Time: pgp.getTimeGenerator()}
+	config := &packet.Config{DefaultHash: crypto.SHA512, Time: getTimeGenerator()}
 	var outBuf bytes.Buffer
 	//sign bin
 	if err := openpgp.DetachSign(&outBuf, signEntity, message.NewReader(), config); err != nil {
@@ -84,7 +84,7 @@ func asymmetricEncrypt(data []byte, publicKey *KeyRing, privateKey *KeyRing, isB
 		}
 	}
 
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pgp.getTimeGenerator()}
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 
 	hints := &openpgp.FileHints{
 		IsBinary: isBinary,
@@ -125,7 +125,7 @@ func asymmetricDecrypt(
 		privKeyEntries = append(privKeyEntries, additionalEntries...)
 	}
 
-	config := &packet.Config{Time: pgp.getTimeGenerator()}
+	config := &packet.Config{Time: getTimeGenerator()}
 
 	messageDetails, err := openpgp.ReadMessage(encryptedIO, privKeyEntries, nil, config)
 	if err != nil {

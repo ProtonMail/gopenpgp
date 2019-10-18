@@ -164,15 +164,15 @@ With binary data or advanced modes:
 // Keys initialization as before (omitted)
 var binMessage = NewPlainMessage(data)
 
-publicKeyRing, err := pgp.BuildKeyRingArmored(publicKey)
-privateKeyRing, err := pgp.BuildKeyRingArmored(privateKey)
+publicKeyRing, err := crypto.BuildKeyRingArmored(publicKey)
+privateKeyRing, err := crypto.BuildKeyRingArmored(privateKey)
 err = privateKeyRing.UnlockWithPassphrase(passphrase)
 pgpMessage, err := publicKeyRing.Encrypt(binMessage, privateKeyRing)
 
 // Armored message in pgpMessage.GetArmored()
 // pgpMessage can be obtained from NewPGPMessageFromArmored(ciphertext)
 
-message, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, pgp.GetUnixTime())
+message, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, crypto.GetUnixTime())
 
 // Original data in message.GetString()
 // `err` can be a SignatureVerificationError
@@ -183,8 +183,6 @@ Keys are generated with the `GenerateKey` function, that returns the armored key
 The library supports RSA with different key lengths or Curve25519 keys.
 
 ```go
-var pgp = crypto.GopenPGPFactory(time.Now().Unix())
-
 const (
   localPart = "name.surname"
   domain = "example.com"
@@ -194,10 +192,10 @@ const (
 )
 
 // RSA
-rsaKey, err := pgp.GenerateKey(localPart, domain, passphrase, "rsa", rsaBits)
+rsaKey, err := crypto.GenerateKey(localPart, domain, passphrase, "rsa", rsaBits)
 
 // Curve25519
-ecKey, err := pgp.GenerateKey(localPart, domain, passphrase, "x25519", ecBits)
+ecKey, err := crypto.GenerateKey(localPart, domain, passphrase, "x25519", ecBits)
 ```
 
 ### Detached signatures for plain text messages
@@ -214,7 +212,7 @@ const trimNewlines = false
 
 var message = NewPlaintextMessage("Verified message")
 
-signingKeyRing, err := pgp.BuildKeyRingArmored(privkey)
+signingKeyRing, err := crypto.BuildKeyRingArmored(privkey)
 signingKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with passphrase
 
 pgpSignature, err := signingKeyRing.SignDetached(message, trimNewlines)
@@ -226,8 +224,6 @@ pgpSignature, err := signingKeyRing.SignDetached(message, trimNewlines)
 To verify a signature either private or public keyring can be provided.
 
 ```go
-var pgp = crypto.GopenPGPFactory(time.Now().Unix())
-
 const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 ...
 -----END PGP PUBLIC KEY BLOCK-----`
@@ -238,9 +234,9 @@ const signature = `-----BEGIN PGP SIGNATURE-----
 
 message := NewPlaintextMessage("Verified message")
 pgpSignature, err := NewPGPSignatureFromArmored(signature)
-signingKeyRing, err := pgp.BuildKeyRingArmored(pubkey)
+signingKeyRing, err := crypto.BuildKeyRingArmored(pubkey)
 
-err := signingKeyRing.VerifyDetached(message, pgpSignature, pgp.GetUnixTime())
+err := signingKeyRing.VerifyDetached(message, pgpSignature, crypto.GetUnixTime())
 
 if err == nil {
   // verification success
@@ -250,8 +246,6 @@ if err == nil {
 ### Detached signatures for binary data
 
 ```go
-var pgp = crypto.GopenPGPFactory(time.Now().Unix())
-
 const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 ...
 -----END PGP PRIVATE KEY BLOCK-----` // encrypted private key
@@ -259,7 +253,7 @@ const passphrase = "LongSecret"
 
 var message = NewPlainMessage(data)
 
-signingKeyRing, err := pgp.BuildKeyRingArmored(privkey)
+signingKeyRing, err := crypto.BuildKeyRingArmored(privkey)
 signingKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with passphrase
 
 pgpSignature, err := signingKeyRing.SignDetached(message)
@@ -271,8 +265,6 @@ pgpSignature, err := signingKeyRing.SignDetached(message)
 To verify a signature either private or public keyring can be provided.
 
 ```go
-var pgp = crypto.GopenPGPFactory(time.Now().Unix())
-
 const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 ...
 -----END PGP PUBLIC KEY BLOCK-----`
@@ -283,9 +275,9 @@ const signature = `-----BEGIN PGP SIGNATURE-----
 
 message := NewPlainMessage("Verified message")
 pgpSignature, err := NewPGPSignatureFromArmored(signature)
-signingKeyRing, err := pgp.BuildKeyRingArmored(pubkey)
+signingKeyRing, err := crypto.BuildKeyRingArmored(pubkey)
 
-err := signingKeyRing.VerifyDetached(message, pgpSignature, pgp.GetUnixTime())
+err := signingKeyRing.VerifyDetached(message, pgpSignature, crypto.GetUnixTime())
 
 if err == nil {
   // verification success
@@ -304,8 +296,7 @@ If verification fails an error will be returned.
 ```go
 // Keys initialization as before (omitted)
 
-var pgp = crypto.GopenPGPFactory(time.Now().Unix())
-var verifyTime = pgp.GetUnixTime()
+var verifyTime = crypto.GetUnixTime()
 
 verifiedPlainText, err := VerifyCleartextMessageArmored(publicKey, armored, verifyTime)
 ```

@@ -12,12 +12,12 @@ var testRandomToken []byte
 
 func TestRandomToken(t *testing.T) {
 	var err error
-	testRandomToken, err = pgp.RandomToken()
+	testRandomToken, err = RandomToken()
 	if err != nil {
 		t.Fatal("Expected no error while generating default length random token, got:", err)
 	}
 
-	token40, err := pgp.RandomTokenSize(40)
+	token40, err := RandomTokenSize(40)
 	if err != nil {
 		t.Fatal("Expected no error while generating random token, got:", err)
 	}

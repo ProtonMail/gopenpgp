@@ -2,13 +2,10 @@ package helper
 
 import (
 	"errors"
-	"time"
-	
+
 	"github.com/ProtonMail/gopenpgp/constants"
 	"github.com/ProtonMail/gopenpgp/crypto"
 )
-
-var pgp = crypto.GopenPGPFactory(time.Now().Unix())
 
 // EncryptMessageWithToken encrypts a string with a passphrase using AES256
 func EncryptMessageWithToken(
@@ -63,7 +60,7 @@ func EncryptMessageArmored(publicKey, plaintext string) (ciphertext string, err 
 
 	var message = crypto.NewPlainMessageFromString(plaintext)
 
-	if publicKeyRing, err = pgp.BuildKeyRingArmored(publicKey); err != nil {
+	if publicKeyRing, err = crypto.BuildKeyRingArmored(publicKey); err != nil {
 		return "", err
 	}
 
@@ -88,11 +85,11 @@ func EncryptSignMessageArmored(
 
 	var message = crypto.NewPlainMessageFromString(plaintext)
 
-	if publicKeyRing, err = pgp.BuildKeyRingArmored(publicKey); err != nil {
+	if publicKeyRing, err = crypto.BuildKeyRingArmored(publicKey); err != nil {
 		return "", err
 	}
 
-	if privateKeyRing, err = pgp.BuildKeyRingArmored(privateKey); err != nil {
+	if privateKeyRing, err = crypto.BuildKeyRingArmored(privateKey); err != nil {
 		return "", err
 	}
 
@@ -119,7 +116,7 @@ func DecryptMessageArmored(
 	var pgpMessage *crypto.PGPMessage
 	var message *crypto.PlainMessage
 
-	if privateKeyRing, err = pgp.BuildKeyRingArmored(privateKey); err != nil {
+	if privateKeyRing, err = crypto.BuildKeyRingArmored(privateKey); err != nil {
 		return "", err
 	}
 
@@ -148,11 +145,11 @@ func DecryptVerifyMessageArmored(
 	var pgpMessage *crypto.PGPMessage
 	var message *crypto.PlainMessage
 
-	if publicKeyRing, err = pgp.BuildKeyRingArmored(publicKey); err != nil {
+	if publicKeyRing, err = crypto.BuildKeyRingArmored(publicKey); err != nil {
 		return "", err
 	}
 
-	if privateKeyRing, err = pgp.BuildKeyRingArmored(privateKey); err != nil {
+	if privateKeyRing, err = crypto.BuildKeyRingArmored(privateKey); err != nil {
 		return "", err
 	}
 
@@ -164,7 +161,7 @@ func DecryptVerifyMessageArmored(
 		return "", err
 	}
 
-	if message, err = privateKeyRing.Decrypt(pgpMessage, publicKeyRing, pgp.GetUnixTime()); err != nil {
+	if message, err = privateKeyRing.Decrypt(pgpMessage, publicKeyRing, crypto.GetUnixTime()); err != nil {
 		return "", err
 	}
 
@@ -184,11 +181,11 @@ func EncryptSignAttachment(
 
 	var binMessage = crypto.NewPlainMessage(plainData)
 
-	if publicKeyRing, err = pgp.BuildKeyRingArmored(publicKey); err != nil {
+	if publicKeyRing, err = crypto.BuildKeyRingArmored(publicKey); err != nil {
 		return nil, nil, nil, err
 	}
 
-	if privateKeyRing, err = pgp.BuildKeyRingArmored(privateKey); err != nil {
+	if privateKeyRing, err = crypto.BuildKeyRingArmored(privateKey); err != nil {
 		return nil, nil, nil, err
 	}
 
@@ -221,11 +218,11 @@ func DecryptVerifyAttachment(
 
 	var packets = crypto.NewPGPSplitMessage(keyPacket, dataPacket)
 
-	if publicKeyRing, err = pgp.BuildKeyRingArmored(publicKey); err != nil {
+	if publicKeyRing, err = crypto.BuildKeyRingArmored(publicKey); err != nil {
 		return nil, err
 	}
 
-	if privateKeyRing, err = pgp.BuildKeyRingArmored(privateKey); err != nil {
+	if privateKeyRing, err = crypto.BuildKeyRingArmored(privateKey); err != nil {
 		return nil, err
 	}
 
@@ -241,7 +238,7 @@ func DecryptVerifyAttachment(
 		return nil, err
 	}
 
-	if publicKeyRing.VerifyDetached(message, detachedSignature, pgp.GetUnixTime()) != nil {
+	if publicKeyRing.VerifyDetached(message, detachedSignature, crypto.GetUnixTime()) != nil {
 		return nil, errors.New("gopenpgp: unable to verify attachment")
 	}
 

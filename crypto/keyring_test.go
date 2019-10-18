@@ -43,12 +43,12 @@ var testIdentity = &Identity{
 func init() {
 	var err error
 
-	testPrivateKeyRing, err = pgp.BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
+	testPrivateKeyRing, err = BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
 	if err != nil {
 		panic(err)
 	}
 
-	testPublicKeyRing, err = pgp.BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
+	testPublicKeyRing, err = BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
 	if err != nil {
 		panic(err)
 	}
@@ -92,7 +92,7 @@ func TestKeyRing_ArmoredPublicKeyString(t *testing.T) {
 }
 
 func TestCheckPassphrase(t *testing.T) {
-	encryptedKeyRing, _ := pgp.BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
+	encryptedKeyRing, _ := BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
 	isCorrect := encryptedKeyRing.CheckPassphrase("Wrong password")
 	assert.Exactly(t, false, isCorrect)
 
@@ -107,7 +107,7 @@ func TestIdentities(t *testing.T) {
 }
 
 func TestFilterExpiredKeys(t *testing.T) {
-	expiredKey, _ := pgp.BuildKeyRingArmored(readTestFile("key_expiredKey", false))
+	expiredKey, _ := BuildKeyRingArmored(readTestFile("key_expiredKey", false))
 	keys := []*KeyRing{testPrivateKeyRing, expiredKey}
 	unexpired, err := FilterExpiredKeys(keys)
 
@@ -125,7 +125,7 @@ func TestGetPublicKey(t *testing.T) {
 		t.Fatal("Expected no error while obtaining public key, got:", err)
 	}
 
-	publicKeyRing, err := pgp.BuildKeyRing(publicKey)
+	publicKeyRing, err := BuildKeyRing(publicKey)
 	if err != nil {
 		t.Fatal("Expected no error while creating public key ring, got:", err)
 	}
@@ -150,7 +150,7 @@ func TestKeyIds(t *testing.T) {
 }
 
 func TestMutlipleKeyRing(t *testing.T) {
-	testPublicKeyRing, _ = pgp.BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
+	testPublicKeyRing, _ = BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
 	assert.Exactly(t, 1, len(testPublicKeyRing.entities))
 
 	ids := testPublicKeyRing.KeyIds()
