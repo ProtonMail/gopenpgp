@@ -21,18 +21,6 @@ func (pgp *GopenPGP) GetTime() time.Time {
 	return pgp.getNow()
 }
 
-func (pgp *GopenPGP) DebugGetDiff() (int64, error) {
-	return pgp.getDiff()
-}
-
-func (pgp *GopenPGP) DebugGetLatestServerTime() (int64) {
-	return pgp.latestServerTime
-}
-
-func (pgp *GopenPGP) DebugGetLatestClientTime() (time.Time) {
-	return pgp.latestClientTime
-}
-
 // ----- INTERNAL FUNCTIONS -----
 
 // getNow returns current time
