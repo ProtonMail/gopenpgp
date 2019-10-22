@@ -9,3 +9,5 @@ type GopenPGP struct {
 	latestServerTime int64
 	latestClientTime time.Time
 }
+
+var pgp = GopenPGP{}

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/ProtonMail/gopenpgp/crypto"
 )
 
 const signedPlainText = "Signed message\n"
@@ -29,7 +30,7 @@ func TestSignClearText(t *testing.T) {
 	verified, err := VerifyCleartextMessageArmored(
 		readTestFile("keyring_publicKey", false),
 		armored,
-		pgp.GetUnixTime(),
+		crypto.GetUnixTime(),
 	)
 	if err != nil {
 		t.Fatal("Cannot verify message:", err)

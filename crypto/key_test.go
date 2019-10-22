@@ -25,12 +25,12 @@ var (
 )
 
 func TestGenerateKeys(t *testing.T) {
-	rsaKey, err = pgp.GenerateKey(name, domain, passphrase, "rsa", 1024)
+	rsaKey, err = GenerateKey(name, domain, passphrase, "rsa", 1024)
 	if err != nil {
 		t.Fatal("Cannot generate RSA key:", err)
 	}
 
-	ecKey, err = pgp.GenerateKey(name, domain, passphrase, "x25519", 256)
+	ecKey, err = GenerateKey(name, domain, passphrase, "x25519", 256)
 	if err != nil {
 		t.Fatal("Cannot generate EC key:", err)
 	}
@@ -84,12 +84,12 @@ func TestGenerateKeyRings(t *testing.T) {
 
 func TestUpdatePrivateKeysPassphrase(t *testing.T) {
 	newPassphrase := "I like GNU"
-	rsaKey, err = pgp.UpdatePrivateKeyPassphrase(rsaKey, passphrase, newPassphrase)
+	rsaKey, err = UpdatePrivateKeyPassphrase(rsaKey, passphrase, newPassphrase)
 	if err != nil {
 		t.Fatal("Error in changing RSA key's passphrase:", err)
 	}
 
-	ecKey, err = pgp.UpdatePrivateKeyPassphrase(ecKey, passphrase, newPassphrase)
+	ecKey, err = UpdatePrivateKeyPassphrase(ecKey, passphrase, newPassphrase)
 	if err != nil {
 		t.Fatal("Error in changing EC key's passphrase:", err)
 	}
@@ -98,19 +98,19 @@ func TestUpdatePrivateKeysPassphrase(t *testing.T) {
 }
 
 func ExamplePrintFingerprints() {
-	_, _ = pgp.PrintFingerprints(readTestFile("keyring_publicKey", false))
+	_, _ = PrintFingerprints(readTestFile("keyring_publicKey", false))
 	// Output:
 	// SubKey:37e4bcf09b36e34012d10c0247dc67b5cb8267f6
 	// PrimaryKey:6e8ba229b0cccaf6962f97953eb6259edf21df24
 }
 
 func TestIsArmoredKeyExpired(t *testing.T) {
-	rsaRes, err := pgp.IsArmoredKeyExpired(rsaPublicKey)
+	rsaRes, err := IsArmoredKeyExpired(rsaPublicKey)
 	if err != nil {
 		t.Fatal("Error in checking expiration of RSA key:", err)
 	}
 
-	ecRes, err := pgp.IsArmoredKeyExpired(ecPublicKey)
+	ecRes, err := IsArmoredKeyExpired(ecPublicKey)
 	if err != nil {
 		t.Fatal("Error in checking expiration of EC key:", err)
 	}
@@ -118,10 +118,10 @@ func TestIsArmoredKeyExpired(t *testing.T) {
 	assert.Exactly(t, false, rsaRes)
 	assert.Exactly(t, false, ecRes)
 
-	pgp.UpdateTime(1557754627) // 2019-05-13T13:37:07+00:00
+	UpdateTime(1557754627) // 2019-05-13T13:37:07+00:00
 
-	expRes, expErr := pgp.IsArmoredKeyExpired(readTestFile("key_expiredKey", false))
-	futureRes, futureErr := pgp.IsArmoredKeyExpired(readTestFile("key_futureKey", false))
+	expRes, expErr := IsArmoredKeyExpired(readTestFile("key_expiredKey", false))
+	futureRes, futureErr := IsArmoredKeyExpired(readTestFile("key_futureKey", false))
 
 	assert.Exactly(t, true, expRes)
 	assert.Exactly(t, true, futureRes)
@@ -139,7 +139,7 @@ func TestGenerateKeyWithPrimes(t *testing.T) {
 	prime4, _ := base64.StdEncoding.DecodeString(
 		"58UEDXTX29Q9JqvuE3Tn+Qj275CXBnJbA8IVM4d05cPYAZ6H43bPN01pbJqJTJw/cuFxs+8C+HNw3/MGQOExqw==")
 
-	staticRsaKey, err := pgp.GenerateRSAKeyWithPrimes(name, domain, passphrase, 1024, prime1, prime2, prime3, prime4)
+	staticRsaKey, err := GenerateRSAKeyWithPrimes(name, domain, passphrase, 1024, prime1, prime2, prime3, prime4)
 	if err != nil {
 		t.Fatal("Cannot generate RSA key:", err)
 	}

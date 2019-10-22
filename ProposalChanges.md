@@ -189,14 +189,14 @@ SetKey(kr *KeyRing, symKey *SymmetricKey) (packets string, err error):
 Renamed.
 ```
 (pm *PmCrypto) IsKeyExpiredBin(publicKey []byte) (bool, error):
-* (pgp *GopenPGP) IsKeyExpired(publicKey []byte) (bool, error)
+* IsKeyExpired(publicKey []byte) (bool, error)
 ```
 
 ### IsKeyExpired
 Renamed.
 ```
 (pm *PmCrypto) IsKeyExpired(publicKey string) (bool, error):
-* (pgp *GopenPGP) IsArmoredKeyExpired(publicKey string) (bool, error)
+* IsArmoredKeyExpired(publicKey string) (bool, error)
 ```
 
 ### GenerateRSAKeyWithPrimes
@@ -205,7 +205,7 @@ Added `name` parameter.
 To emulate the old behaviour `name = email = userName + "@" + domain`.
 ```
 (pm *PmCrypto) GenerateRSAKeyWithPrimes(userName, domain, passphrase, keyType string, bits int, prime1, prime2, prime3, prime4 []byte) (string, error):
-* (pgp *GopenPGP) GenerateRSAKeyWithPrimes(name, email, passphrase, keyType string, bits int, prime1, prime2, prime3, prime4 []byte) (string, error):
+* GenerateRSAKeyWithPrimes(name, email, passphrase, keyType string, bits int, prime1, prime2, prime3, prime4 []byte) (string, error):
 ```
 
 ### GenerateKey
@@ -214,7 +214,7 @@ Added `name` parameter.
 To emulate the old behaviour `name = email = userName + "@" + domain`.
 ```
 (pm *PmCrypto) GenerateKey(userName, domain, passphrase, keyType string, bits int) (string, error) :
-* (pgp *GopenPGP) GenerateKey(name, email, passphrase, keyType string, bits int) (string, error):
+* GenerateKey(name, email, passphrase, keyType string, bits int) (string, error):
 ```
 
 ### UpdatePrivateKeyPassphrase
@@ -224,7 +224,7 @@ No change.
 Renamed.
 ```
 (pm *PmCrypto) CheckKey(pubKey string) (string, error):
-* (pgp *GopenPGP) PrintFingerprints(pubKey string) (string, error)
+* PrintFingerprints(pubKey string) (string, error)
 ```
 
 ## keyring.go
@@ -277,7 +277,7 @@ Same as Encrypt*. If signature verification fails it will return a SignatureVeri
 Replaced with `IsPGPMessage` + `Decrypt*`.
 ```
 (kr *KeyRing) DecryptStringIfNeeded(data string) (decrypted string, err error):
-* (pgp *GopenPGP) IsPGPMessage(data string) bool
+* IsPGPMessage(data string) bool
 ```
 
 ### SignString, DetachedSign
@@ -395,7 +395,7 @@ No change.
 Renamed.
 ```
 (pm *PmCrypto) RandomTokenWith(size int) ([]byte, error):
-* (pgp *GopenPGP) RandomTokenSize(size int) ([]byte, error)
+* RandomTokenSize(size int) ([]byte, error)
 ```
 
 ### GetSessionFromKeyPacket

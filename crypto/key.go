@@ -17,8 +17,8 @@ import (
 )
 
 // IsKeyExpired checks whether the given (unarmored, binary) key is expired.
-func (pgp *GopenPGP) IsKeyExpired(publicKey []byte) (bool, error) {
-	now := pgp.getNow()
+func IsKeyExpired(publicKey []byte) (bool, error) {
+	now := getNow()
 	pubKeyReader := bytes.NewReader(publicKey)
 	pubKeyEntries, err := openpgp.ReadKeyRing(pubKeyReader)
 	if err != nil {
@@ -33,15 +33,15 @@ func (pgp *GopenPGP) IsKeyExpired(publicKey []byte) (bool, error) {
 }
 
 // IsArmoredKeyExpired checks whether the given armored key is expired.
-func (pgp *GopenPGP) IsArmoredKeyExpired(publicKey string) (bool, error) {
+func IsArmoredKeyExpired(publicKey string) (bool, error) {
 	rawPubKey, err := armor.Unarmor(publicKey)
 	if err != nil {
 		return false, err
 	}
-	return pgp.IsKeyExpired(rawPubKey)
+	return IsKeyExpired(rawPubKey)
 }
 
-func (pgp *GopenPGP) generateKey(
+func generateKey(
 	name, email, passphrase, keyType string,
 	bits int,
 	prime1, prime2, prime3, prime4 []byte,
@@ -59,7 +59,7 @@ func (pgp *GopenPGP) generateKey(
 	cfg := &packet.Config{
 		Algorithm:     packet.PubKeyAlgoRSA,
 		RSABits:       bits,
-		Time:          pgp.getTimeGenerator(),
+		Time:          getTimeGenerator(),
 		DefaultHash:   crypto.SHA256,
 		DefaultCipher: packet.CipherAES256,
 	}
@@ -115,24 +115,24 @@ func (pgp *GopenPGP) generateKey(
 }
 
 // GenerateRSAKeyWithPrimes generates a RSA key using the given primes.
-func (pgp *GopenPGP) GenerateRSAKeyWithPrimes(
+func GenerateRSAKeyWithPrimes(
 	name, email, passphrase string,
 	bits int,
 	primeone, primetwo, primethree, primefour []byte,
 ) (string, error) {
-	return pgp.generateKey(name, email, passphrase, "rsa", bits, primeone, primetwo, primethree, primefour)
+	return generateKey(name, email, passphrase, "rsa", bits, primeone, primetwo, primethree, primefour)
 }
 
 // GenerateKey generates a key of the given keyType ("rsa" or "x25519").
 // If keyType is "rsa", bits is the RSA bitsize of the key.
 // If keyType is "x25519" bits is unused.
-func (pgp *GopenPGP) GenerateKey(name, email, passphrase, keyType string, bits int) (string, error) {
-	return pgp.generateKey(name, email, passphrase, keyType, bits, nil, nil, nil, nil)
+func GenerateKey(name, email, passphrase, keyType string, bits int) (string, error) {
+	return generateKey(name, email, passphrase, keyType, bits, nil, nil, nil, nil)
 }
 
 // UpdatePrivateKeyPassphrase decrypts the given armored privateKey with oldPassphrase,
 // re-encrypts it with newPassphrase, and returns the new armored key.
-func (pgp *GopenPGP) UpdatePrivateKeyPassphrase(
+func UpdatePrivateKeyPassphrase(
 	privateKey string, oldPassphrase string, newPassphrase string,
 ) (string, error) {
 	privKey := strings.NewReader(privateKey)
@@ -178,7 +178,7 @@ func (pgp *GopenPGP) UpdatePrivateKeyPassphrase(
 }
 
 // PrintFingerprints is a debug helper function that prints the key and subkey fingerprints.
-func (pgp *GopenPGP) PrintFingerprints(pubKey string) (string, error) {
+func PrintFingerprints(pubKey string) (string, error) {
 	pubKeyReader := strings.NewReader(pubKey)
 	entries, err := openpgp.ReadArmoredKeyRing(pubKeyReader)
 	if err != nil {

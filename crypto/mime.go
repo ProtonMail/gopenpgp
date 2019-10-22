@@ -33,7 +33,7 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 		return
 	}
 
-	body, attachments, attachmentHeaders, err := pgp.parseMIME(decryptedMessage.GetString(), verifyKey)
+	body, attachments, attachmentHeaders, err := parseMIME(decryptedMessage.GetString(), verifyKey)
 	if err != nil {
 		callbacks.OnError(err)
 		return
@@ -48,14 +48,14 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 
 // ----- INTERNAL FUNCTIONS -----
 
-func (pgp GopenPGP) parseMIME(
+func parseMIME(
 	mimeBody string, verifierKey *KeyRing,
 ) (*gomime.BodyCollector, []string, []string, error) {
 	mm, err := mail.ReadMessage(strings.NewReader(mimeBody))
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: pgp.getTimeGenerator()}
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 
 	h := textproto.MIMEHeader(mm.Header)
 	mmBodyData, err := ioutil.ReadAll(mm.Body)
