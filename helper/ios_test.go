@@ -13,7 +13,7 @@ func TestIOSSignedMessageDecryption(t *testing.T) {
 	testPublicKeyRing, _ := crypto.BuildKeyRingArmored(readTestFile("mime_publicKey", false))
 
 	// Password defined in base_test
-	err := testPrivateKeyRing.UnlockWithPassphrase(testMailboxPassword)
+	err := testPrivateKeyRing.Unlock(testMailboxPassword)
 	if err != nil {
 		t.Fatal("Expected no error unlocking privateKey, got:", err)
 	}

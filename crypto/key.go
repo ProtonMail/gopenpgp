@@ -42,7 +42,9 @@ func IsArmoredKeyExpired(publicKey string) (bool, error) {
 }
 
 func generateKey(
-	name, email, passphrase, keyType string,
+	name, email string,
+	passphrase []byte,
+	keyType string,
 	bits int,
 	prime1, prime2, prime3, prime4 []byte,
 ) (string, error) {
@@ -91,16 +93,15 @@ func generateKey(
 		return "", err
 	}
 
-	rawPwd := []byte(passphrase)
 	if newEntity.PrivateKey != nil && !newEntity.PrivateKey.Encrypted {
-		if err := newEntity.PrivateKey.Encrypt(rawPwd); err != nil {
+		if err := newEntity.PrivateKey.Encrypt(passphrase); err != nil {
 			return "", err
 		}
 	}
 
 	for _, sub := range newEntity.Subkeys {
 		if sub.PrivateKey != nil && !sub.PrivateKey.Encrypted {
-			if err := sub.PrivateKey.Encrypt(rawPwd); err != nil {
+			if err := sub.PrivateKey.Encrypt(passphrase); err != nil {
 				return "", err
 			}
 		}
@@ -116,7 +117,8 @@ func generateKey(
 
 // GenerateRSAKeyWithPrimes generates a RSA key using the given primes.
 func GenerateRSAKeyWithPrimes(
-	name, email, passphrase string,
+	name, email string,
+	passphrase []byte,
 	bits int,
 	primeone, primetwo, primethree, primefour []byte,
 ) (string, error) {
@@ -126,14 +128,15 @@ func GenerateRSAKeyWithPrimes(
 // GenerateKey generates a key of the given keyType ("rsa" or "x25519").
 // If keyType is "rsa", bits is the RSA bitsize of the key.
 // If keyType is "x25519" bits is unused.
-func GenerateKey(name, email, passphrase, keyType string, bits int) (string, error) {
+func GenerateKey(name, email string, passphrase []byte, keyType string, bits int) (string, error) {
 	return generateKey(name, email, passphrase, keyType, bits, nil, nil, nil, nil)
 }
 
 // UpdatePrivateKeyPassphrase decrypts the given armored privateKey with oldPassphrase,
 // re-encrypts it with newPassphrase, and returns the new armored key.
 func UpdatePrivateKeyPassphrase(
-	privateKey string, oldPassphrase string, newPassphrase string,
+	privateKey string,
+	oldPassphrase, newPassphrase []byte,
 ) (string, error) {
 	privKey := strings.NewReader(privateKey)
 	privKeyEntries, err := openpgp.ReadArmoredKeyRing(privKey)
@@ -141,29 +144,27 @@ func UpdatePrivateKeyPassphrase(
 		return "", err
 	}
 
-	oldrawPwd := []byte(oldPassphrase)
-	newRawPwd := []byte(newPassphrase)
 	w := bytes.NewBuffer(nil)
 	for _, e := range privKeyEntries {
 		if e.PrivateKey != nil && e.PrivateKey.Encrypted {
-			if err := e.PrivateKey.Decrypt(oldrawPwd); err != nil {
+			if err := e.PrivateKey.Decrypt(oldPassphrase); err != nil {
 				return "", err
 			}
 		}
 		if e.PrivateKey != nil && !e.PrivateKey.Encrypted {
-			if err := e.PrivateKey.Encrypt(newRawPwd); err != nil {
+			if err := e.PrivateKey.Encrypt(newPassphrase); err != nil {
 				return "", err
 			}
 		}
 
 		for _, sub := range e.Subkeys {
 			if sub.PrivateKey != nil && sub.PrivateKey.Encrypted {
-				if err := sub.PrivateKey.Decrypt(oldrawPwd); err != nil {
+				if err := sub.PrivateKey.Decrypt(oldPassphrase); err != nil {
 					return "", err
 				}
 			}
 			if sub.PrivateKey != nil && !sub.PrivateKey.Encrypted {
-				if err := sub.PrivateKey.Encrypt(newRawPwd); err != nil {
+				if err := sub.PrivateKey.Encrypt(newPassphrase); err != nil {
 					return "", err
 				}
 			}

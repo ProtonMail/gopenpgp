@@ -7,7 +7,7 @@ import (
 )
 
 // Corresponding key in testdata/mime_privateKey
-const privateKeyPassword = "test"
+var privateKeyPassword = [][]byte {[]byte("test")}
 
 // define call back interface
 type Callbacks struct {
@@ -39,7 +39,7 @@ func TestDecrypt(t *testing.T) {
 	}
 	privateKeyRing, _ := BuildKeyRingArmored(readTestFile("mime_privateKey", false))
 
-	err = privateKeyRing.UnlockWithPassphrase(privateKeyPassword)
+	privateKeyRing, err = privateKeyRing.Unlock(privateKeyPassword)
 	if err != nil {
 		t.Fatal("Cannot unlock private key:", err)
 	}

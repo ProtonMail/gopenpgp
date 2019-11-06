@@ -15,7 +15,7 @@ func SignCleartextMessageArmored(privateKey, passphrase, text string) (string, e
 		return "", err
 	}
 
-	err = signingKeyRing.UnlockWithPassphrase(passphrase)
+	err = signingKeyRing.Unlock(passphrase)
 	if err != nil {
 		return "", err
 	}

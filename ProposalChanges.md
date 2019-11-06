@@ -298,7 +298,7 @@ Same as signing. Returns SignatureVerificationError if the verification fails.
 ### Unlock
 No change. Added:
 ```
-(keyRing *KeyRing) UnlockWithPassphrase(passphrase string) error
+(keyRing *KeyRing) Unlock(passphrase string) error
 ```
 
 ### WriteArmoredPublicKey

@@ -6,13 +6,12 @@ import (
 	"crypto/rsa"
 	"encoding/hex"
 	"errors"
-	"io"
-	"time"
-
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/packet"
 	xrsa "golang.org/x/crypto/rsa"
+	"io"
+	"time"
 
 	armorUtils "github.com/ProtonMail/gopenpgp/armor"
 )
@@ -56,57 +55,6 @@ func (keyRing *KeyRing) GetSigningEntity() (*openpgp.Entity, error) {
 	}
 
 	return signEntity, nil
-}
-
-// Unlock tries to unlock as many keys as possible with the following password. Note
-// that keyrings can contain keys locked with different passwords, and thus
-// err == nil does not mean that all keys have been successfully decrypted.
-// If err != nil, the password is wrong for every key, and err is the last error
-// encountered.
-func (keyRing *KeyRing) Unlock(passphrase []byte) error {
-	// Build a list of keys to decrypt
-	var keys []*packet.PrivateKey
-	for _, e := range keyRing.entities {
-		// Entity.PrivateKey must be a signing key
-		if e.PrivateKey != nil {
-			keys = append(keys, e.PrivateKey)
-		}
-
-		// Entity.Subkeys can be used for encryption
-		for _, subKey := range e.Subkeys {
-			if subKey.PrivateKey != nil && (!subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage ||
-				subKey.Sig.FlagEncryptCommunications) {
-
-				keys = append(keys, subKey.PrivateKey)
-			}
-		}
-	}
-
-	if len(keys) == 0 {
-		return errors.New("gopenpgp: cannot unlock key ring, no private key available")
-	}
-
-	var err error
-	var n int
-	for _, key := range keys {
-		if !key.Encrypted {
-			continue // Key already decrypted
-		}
-
-		if err = key.Decrypt(passphrase); err == nil {
-			n++
-		}
-	}
-
-	if n == 0 {
-		return err
-	}
-	return nil
-}
-
-// UnlockWithPassphrase is a wrapper for Unlock that uses strings
-func (keyRing *KeyRing) UnlockWithPassphrase(passphrase string) error {
-	return keyRing.Unlock([]byte(passphrase))
 }
 
 // WriteArmoredPublicKey outputs armored public keys from the keyring to w.
@@ -166,28 +114,96 @@ func (keyRing *KeyRing) GetFingerprint() (string, error) {
 		fp := entity.PrimaryKey.Fingerprint
 		return hex.EncodeToString(fp[:]), nil
 	}
-	return "", errors.New("can't find public key")
+	return "", errors.New("gopenpgp: can not find public key")
 }
 
-// CheckPassphrase checks if private key passphrase is correct for every sub key.
-func (keyRing *KeyRing) CheckPassphrase(passphrase string) bool {
-	var keys []*packet.PrivateKey
-
-	for _, entity := range keyRing.entities {
-		keys = append(keys, entity.PrivateKey)
+// CheckPassphrases checks if the given passphrases fully unlock a locked keyring.
+func (keyRing *KeyRing) CheckPassphrases(passphrases [][]byte) (bool, error) {
+	if !keyRing.IsLocked() {
+		return false, errors.New("gopenpgp: keyring is already unlocked")
 	}
-	var decryptError error
-	var n int
-	for _, key := range keys {
-		if !key.Encrypted {
+
+	unlocked, err := keyRing.Copy()
+	if err != nil {
+		return false, err
+	}
+
+	err = unlocked.unlock(passphrases)
+
+	return err == nil && unlocked.IsUnlocked(), nil
+}
+
+// Unlock fully unlocks a copy of the keyring.
+func (keyRing *KeyRing) Unlock(passphrases [][]byte) (*KeyRing, error) {
+	if !keyRing.IsLocked() {
+		return nil, errors.New("gopenpgp: keyring is already unlocked")
+	}
+
+	unlocked, err := keyRing.Copy()
+	if err != nil {
+		return nil, err
+	}
+
+	err = unlocked.unlock(passphrases)
+
+	if err != nil || !unlocked.IsUnlocked() {
+		return nil, errors.New("gopenpgp: unable to unlock keyring")
+	}
+
+	return unlocked, nil
+}
+
+type MPI struct {
+	bytes     []byte
+	bitLength uint16
+}
+
+// Copy creates a deep copy of the keyring
+func (keyRing *KeyRing) Copy() (*KeyRing, error) {
+	newKeyRing := &KeyRing{}
+
+	entities := make([]*openpgp.Entity, len(keyRing.entities))
+	for id, entity := range keyRing.entities {
+		var buffer bytes.Buffer
+		err := entity.SerializePrivateNoSign(&buffer, nil)
+
+		if err != nil {
+			return nil, errors.New("gopenpgp: unable to copy key: error in serializing entity: " + err.Error())
+		}
+
+		bt := buffer.Bytes()
+		entities[id], err = openpgp.ReadEntity(packet.NewReader(bytes.NewReader(bt)))
+
+		if err != nil {
+			return nil, errors.New("gopenpgp: unable to copy key: error in reading entity: " + err.Error())
+		}
+	}
+	newKeyRing.entities = entities
+	newKeyRing.FirstKeyID = keyRing.FirstKeyID
+
+	return newKeyRing, nil
+}
+
+// IsLocked checks if a keyring is fully locked
+func (keyRing *KeyRing) IsLocked() bool {
+	for _, entity := range keyRing.entities {
+		if entity.PrivateKey.Encrypted {
+			continue // Key still encrypted
+		}
+		return false
+	}
+	return true
+}
+
+// IsUnlocked checks if a keyring is fully unlocked
+func (keyRing *KeyRing) IsUnlocked() bool {
+	for _, entity := range keyRing.entities {
+		if !entity.PrivateKey.Encrypted {
 			continue // Key already decrypted
 		}
-		if decryptError = key.Decrypt([]byte(passphrase)); decryptError == nil {
-			n++
-		}
+		return false
 	}
-
-	return n != 0
+	return true
 }
 
 // ReadFrom reads unarmored and armored keys from r and adds them to the keyring.
@@ -355,4 +371,48 @@ func (keyRing *KeyRing) FirstKey() *KeyRing {
 	newKeyRing.entities = keyRing.entities[:1]
 
 	return newKeyRing
+}
+
+// unlock tries to unlock as many keys as possible with the given passwords. Note
+// that keyrings can contain keys locked with different passwords, and thus
+// err == nil does not mean that all keys have been successfully decrypted,
+// rather that all keys are well-formed
+func (keyRing *KeyRing) unlock(passphrases [][]byte) error {
+	// Build a list of keys to decrypt
+	var keys []*packet.PrivateKey
+	for _, e := range keyRing.entities {
+		// Entity.PrivateKey must be a signing key
+		if e.PrivateKey != nil {
+			keys = append(keys, e.PrivateKey)
+		}
+
+		// Entity.Subkeys can be used for encryption
+		for _, subKey := range e.Subkeys {
+			if subKey.PrivateKey != nil && (!subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage ||
+				subKey.Sig.FlagEncryptCommunications) {
+
+				keys = append(keys, subKey.PrivateKey)
+			}
+		}
+	}
+
+	if len(keys) == 0 {
+		return errors.New("gopenpgp: cannot unlock key ring, no private key available")
+	}
+
+	var err error
+	var n int
+	for _, passphrase := range passphrases {
+		for _, key := range keys {
+			if !key.Encrypted {
+				continue // Key already decrypted
+			}
+
+			if err = key.Decrypt(passphrase); err == nil {
+				n++
+			}
+		}
+	}
+
+	return nil
 }

@@ -59,7 +59,7 @@ func TestTextMessageEncryption(t *testing.T) {
 	testPrivateKeyRing, err = BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
 
 	// Password defined in keyring_test
-	err = testPrivateKeyRing.UnlockWithPassphrase(testMailboxPassword)
+	testPrivateKeyRing, err = testPrivateKeyRing.Unlock(testMailboxPassword)
 	if err != nil {
 		t.Fatal("Expected no error unlocking privateKey, got:", err)
 	}
@@ -84,7 +84,7 @@ func TestBinaryMessageEncryption(t *testing.T) {
 	testPrivateKeyRing, err = BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
 
 	// Password defined in keyring_test
-	err = testPrivateKeyRing.UnlockWithPassphrase(testMailboxPassword)
+	testPrivateKeyRing, err = testPrivateKeyRing.Unlock(testMailboxPassword)
 	if err != nil {
 		t.Fatal("Expected no error unlocking privateKey, got:", err)
 	}
@@ -109,12 +109,13 @@ func TestBinaryMessageEncryption(t *testing.T) {
 }
 
 func TestIssue11(t *testing.T) {
-	myKeyring, err := BuildKeyRingArmored(readTestFile("issue11_privatekey", false))
+	var issue11Password = [][]byte{ []byte("1234") }
+	issue11Keyring, err := BuildKeyRingArmored(readTestFile("issue11_privatekey", false))
 	if err != nil {
 		t.Fatal("Expected no error while bulding private keyring, got:", err)
 	}
 
-	err = myKeyring.UnlockWithPassphrase("1234");
+	issue11Keyring, err = issue11Keyring.Unlock(issue11Password);
 	if err != nil {
 		t.Fatal("Expected no error while unlocking private keyring, got:", err)
 	}
@@ -131,7 +132,7 @@ func TestIssue11(t *testing.T) {
 		t.Fatal("Expected no error while unlocking private keyring, got:", err)
 	}
 
-	plainMessage, err := myKeyring.Decrypt(pgpMessage, senderKeyring, 0)
+	plainMessage, err := issue11Keyring.Decrypt(pgpMessage, senderKeyring, 0)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting/verifying, got:", err)
 	}
@@ -143,7 +144,7 @@ func TestSignedMessageDecryption(t *testing.T) {
 	testPrivateKeyRing, err = BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
 
 	// Password defined in keyring_test
-	err = testPrivateKeyRing.UnlockWithPassphrase(testMailboxPassword)
+	testPrivateKeyRing, err = testPrivateKeyRing.Unlock(testMailboxPassword)
 	if err != nil {
 		t.Fatal("Expected no error unlocking privateKey, got:", err)
 	}
@@ -174,7 +175,7 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 	testPrivateKeyRing, err = BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
 
 	// Password defined in keyring_test
-	err = testPrivateKeyRing.UnlockWithPassphrase(testMailboxPassword)
+	testPrivateKeyRing, err = testPrivateKeyRing.Unlock(testMailboxPassword)
 	if err != nil {
 		t.Fatal("Expected no error unlocking privateKey, got:", err)
 	}

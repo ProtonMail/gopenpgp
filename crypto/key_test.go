@@ -2,19 +2,20 @@ package crypto
 
 import (
 	"encoding/base64"
+	"github.com/stretchr/testify/assert"
 	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"golang.org/x/crypto/rsa"
 )
 
-const name = "Richard M. Stallman"
-const domain = "rms@protonmail.ch"
+const name = "Max Mustermann"
+const domain = "max.mustermann@protonmail.ch"
 
-var passphrase = "I love GNU"
+var passphrase = []byte("I love GNU")
+var passphrases = [][]byte{ passphrase }
+
 var rsaKey, ecKey, rsaPublicKey, ecPublicKey string
 
 var (
@@ -56,7 +57,7 @@ func TestGenerateKeyRings(t *testing.T) {
 		t.Fatal("Cannot read RSA public key:", err)
 	}
 
-	err = rsaPrivateKeyRing.UnlockWithPassphrase(passphrase)
+	_, err = rsaPrivateKeyRing.Unlock(passphrases)
 	if err != nil {
 		t.Fatal("Cannot decrypt RSA key:", err)
 	}
@@ -76,14 +77,14 @@ func TestGenerateKeyRings(t *testing.T) {
 		t.Fatal("Cannot read EC public key:", err)
 	}
 
-	err = ecPrivateKeyRing.UnlockWithPassphrase(passphrase)
+	_, err = ecPrivateKeyRing.Unlock(passphrases)
 	if err != nil {
 		t.Fatal("Cannot decrypt EC key:", err)
 	}
 }
 
 func TestUpdatePrivateKeysPassphrase(t *testing.T) {
-	newPassphrase := "I like GNU"
+	newPassphrase := []byte("I like GNU")
 	rsaKey, err = UpdatePrivateKeyPassphrase(rsaKey, passphrase, newPassphrase)
 	if err != nil {
 		t.Fatal("Error in changing RSA key's passphrase:", err)
@@ -95,6 +96,7 @@ func TestUpdatePrivateKeysPassphrase(t *testing.T) {
 	}
 
 	passphrase = newPassphrase
+	passphrases = [][]byte{ passphrase }
 }
 
 func ExamplePrintFingerprints() {
@@ -150,8 +152,7 @@ func TestGenerateKeyWithPrimes(t *testing.T) {
 	if err != nil {
 		t.Fatal("Cannot read RSA key:", err)
 	}
-
-	err = staticRsaKeyRing.UnlockWithPassphrase(passphrase)
+	staticRsaKeyRing, err = staticRsaKeyRing.Unlock(passphrases)
 	if err != nil {
 		t.Fatal("Cannot decrypt RSA key:", err)
 	}

@@ -93,7 +93,7 @@ func EncryptSignMessageArmored(
 		return "", err
 	}
 
-	if err = privateKeyRing.UnlockWithPassphrase(passphrase); err != nil {
+	if err = privateKeyRing.Unlock(passphrase); err != nil {
 		return "", err
 	}
 
@@ -120,7 +120,7 @@ func DecryptMessageArmored(
 		return "", err
 	}
 
-	if err = privateKeyRing.UnlockWithPassphrase(passphrase); err != nil {
+	if err = privateKeyRing.Unlock(passphrase); err != nil {
 		return "", err
 	}
 
@@ -153,7 +153,7 @@ func DecryptVerifyMessageArmored(
 		return "", err
 	}
 
-	if err = privateKeyRing.UnlockWithPassphrase(passphrase); err != nil {
+	if err = privateKeyRing.Unlock(passphrase); err != nil {
 		return "", err
 	}
 
@@ -189,7 +189,7 @@ func EncryptSignAttachment(
 		return nil, nil, nil, err
 	}
 
-	if err = privateKeyRing.UnlockWithPassphrase(passphrase); err != nil {
+	if err = privateKeyRing.Unlock(passphrase); err != nil {
 		return nil, nil, nil, err
 	}
 
@@ -226,7 +226,7 @@ func DecryptVerifyAttachment(
 		return nil, err
 	}
 
-	if err = privateKeyRing.UnlockWithPassphrase(passphrase); err != nil {
+	if err = privateKeyRing.Unlock(passphrase); err != nil {
 		return nil, err
 	}
 

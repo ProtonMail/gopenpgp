@@ -28,7 +28,7 @@ func TestSignTextDetached(t *testing.T) {
 	}
 
 	// Password defined in keyring_test
-	err = signingKeyRing.UnlockWithPassphrase(testMailboxPassword)
+	signingKeyRing, err = signingKeyRing.Unlock(testMailboxPassword)
 	if err != nil {
 		t.Fatal("Cannot decrypt private key:", err)
 	}

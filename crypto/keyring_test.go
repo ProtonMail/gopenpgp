@@ -25,10 +25,11 @@ var testWrongSymmetricKey = &SymmetricKey{
 }
 
 // Corresponding key in testdata/keyring_privateKey
-const testMailboxPassword = "apple"
+var testMailboxPassword = [][]byte{ []byte("apple") }
+var testWrongPassword = [][]byte{ []byte("wrong") }
 
 // Corresponding key in testdata/keyring_privateKeyLegacy
-// const testMailboxPasswordLegacy = "123"
+// const testMailboxPasswordLegacy = [][]byte{ []byte("123") }
 
 var (
 	testPrivateKeyRing *KeyRing
@@ -53,7 +54,7 @@ func init() {
 		panic(err)
 	}
 
-	err = testPrivateKeyRing.UnlockWithPassphrase(testMailboxPassword)
+	testPrivateKeyRing, err = testPrivateKeyRing.Unlock(testMailboxPassword)
 	if err != nil {
 		panic(err)
 	}
@@ -93,10 +94,21 @@ func TestKeyRing_ArmoredPublicKeyString(t *testing.T) {
 
 func TestCheckPassphrase(t *testing.T) {
 	encryptedKeyRing, _ := BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
-	isCorrect := encryptedKeyRing.CheckPassphrase("Wrong password")
+	decryptedKeyRing, err := encryptedKeyRing.Unlock(testMailboxPassword) // Verify that the unlocked keyring is a copy
+
+	isCorrect, err := encryptedKeyRing.CheckPassphrases(testWrongPassword)
+	if err != nil {
+		t.Fatal("Expected no error while checking wrong passphrase, got:", err)
+	}
 	assert.Exactly(t, false, isCorrect)
 
-	isCorrect = encryptedKeyRing.CheckPassphrase(testMailboxPassword)
+	_, err = decryptedKeyRing.CheckPassphrases(testWrongPassword)
+	assert.NotNil(t, err)
+
+	isCorrect, err = encryptedKeyRing.CheckPassphrases(testMailboxPassword)
+	if err != nil {
+		t.Fatal("Expected no error while checking correct passphrase, got:", err)
+	}
 	assert.Exactly(t, true, isCorrect)
 }
 

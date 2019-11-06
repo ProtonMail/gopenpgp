@@ -166,7 +166,7 @@ var binMessage = NewPlainMessage(data)
 
 publicKeyRing, err := crypto.BuildKeyRingArmored(publicKey)
 privateKeyRing, err := crypto.BuildKeyRingArmored(privateKey)
-err = privateKeyRing.UnlockWithPassphrase(passphrase)
+err = privateKeyRing.Unlock(passphrase)
 pgpMessage, err := publicKeyRing.Encrypt(binMessage, privateKeyRing)
 
 // Armored message in pgpMessage.GetArmored()
@@ -213,7 +213,7 @@ const trimNewlines = false
 var message = NewPlaintextMessage("Verified message")
 
 signingKeyRing, err := crypto.BuildKeyRingArmored(privkey)
-signingKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with passphrase
+signingKeyRing.Unlock(passphrase) // if private key is locked with passphrase
 
 pgpSignature, err := signingKeyRing.SignDetached(message, trimNewlines)
 
@@ -254,7 +254,7 @@ const passphrase = "LongSecret"
 var message = NewPlainMessage(data)
 
 signingKeyRing, err := crypto.BuildKeyRingArmored(privkey)
-signingKeyRing.UnlockWithPassphrase(passphrase) // if private key is locked with passphrase
+signingKeyRing.Unlock(passphrase) // if private key is locked with passphrase
 
 pgpSignature, err := signingKeyRing.SignDetached(message)
 

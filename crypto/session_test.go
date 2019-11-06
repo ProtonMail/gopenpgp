@@ -33,7 +33,7 @@ func TestAsymmetricKeyPacket(t *testing.T) {
 	}
 
 	privateKeyRing, _ := ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))
-	_ = privateKeyRing.UnlockWithPassphrase(testMailboxPassword)
+	privateKeyRing, _ = privateKeyRing.Unlock(testMailboxPassword)
 
 	keyPacket, err := privateKeyRing.EncryptSessionKey(symmetricKey)
 	if err != nil {
