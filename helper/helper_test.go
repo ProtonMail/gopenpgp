@@ -39,7 +39,7 @@ func TestArmoredTextMessageEncryption(t *testing.T) {
 
 	decrypted, err := DecryptMessageArmored(
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword, // Password defined in base_test
+		[]byte(testMailboxPassword), // Password defined in base_test
 		armored,
 	)
 	if err != nil {
@@ -55,7 +55,7 @@ func TestArmoredTextMessageEncryptionVerification(t *testing.T) {
 	armored, err := EncryptSignMessageArmored(
 		readTestFile("keyring_publicKey", false),
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword, // Password defined in base_test
+		[]byte(testMailboxPassword), // Password defined in base_test
 		plaintext,
 	)
 	if err != nil {
@@ -67,7 +67,7 @@ func TestArmoredTextMessageEncryptionVerification(t *testing.T) {
 	_, err = DecryptVerifyMessageArmored(
 		readTestFile("mime_publicKey", false), // Wrong public key
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword, // Password defined in base_test
+		[]byte(testMailboxPassword), // Password defined in base_test
 		armored,
 	)
 	assert.EqualError(t, err, "Signature Verification Error: No matching signature")
@@ -75,7 +75,7 @@ func TestArmoredTextMessageEncryptionVerification(t *testing.T) {
 	decrypted, err := DecryptVerifyMessageArmored(
 		readTestFile("keyring_publicKey", false),
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword, // Password defined in base_test
+		[]byte(testMailboxPassword), // Password defined in base_test
 		armored,
 	)
 
@@ -92,7 +92,7 @@ func TestAttachmentEncryptionVerification(t *testing.T) {
 	keyPacket, dataPacket, signature, err := EncryptSignAttachment(
 		readTestFile("keyring_publicKey", false),
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword, // Password defined in base_test
+		[]byte(testMailboxPassword), // Password defined in base_test
 		"password.txt",
 		attachment,
 	)
@@ -109,7 +109,7 @@ func TestAttachmentEncryptionVerification(t *testing.T) {
 	_, err = DecryptVerifyAttachment(
 		readTestFile("mime_publicKey", false), // Wrong public key
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword, // Password defined in base_test
+		[]byte(testMailboxPassword), // Password defined in base_test
 		keyPacket,
 		dataPacket,
 		armoredSig,
@@ -119,7 +119,7 @@ func TestAttachmentEncryptionVerification(t *testing.T) {
 	decrypted, err := DecryptVerifyAttachment(
 		readTestFile("keyring_publicKey", false),
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword, // Password defined in base_test
+		[]byte(testMailboxPassword), // Password defined in base_test
 		keyPacket,
 		dataPacket,
 		armoredSig,

@@ -13,7 +13,7 @@ func TestIOSSignedMessageDecryption(t *testing.T) {
 	testPublicKeyRing, _ := crypto.BuildKeyRingArmored(readTestFile("mime_publicKey", false))
 
 	// Password defined in base_test
-	err := testPrivateKeyRing.Unlock(testMailboxPassword)
+	unlockedKeyRing, err := testPrivateKeyRing.Unlock([][]byte { []byte(testMailboxPassword) })
 	if err != nil {
 		t.Fatal("Expected no error unlocking privateKey, got:", err)
 	}
@@ -23,7 +23,7 @@ func TestIOSSignedMessageDecryption(t *testing.T) {
 		t.Fatal("Expected no error when unarmoring, got:", err)
 	}
 
-	decrypted, err := DecryptExplicitVerify(pgpMessage, testPrivateKeyRing, testPublicKeyRing, crypto.GetUnixTime())
+	decrypted, err := DecryptExplicitVerify(pgpMessage, unlockedKeyRing, testPublicKeyRing, crypto.GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
@@ -33,12 +33,12 @@ func TestIOSSignedMessageDecryption(t *testing.T) {
 
 	testPublicKeyRing, _ = crypto.BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
 
-	pgpMessage, err = testPublicKeyRing.Encrypt(decrypted.Message, testPrivateKeyRing)
+	pgpMessage, err = testPublicKeyRing.Encrypt(decrypted.Message, unlockedKeyRing)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	decrypted, err = DecryptExplicitVerify(pgpMessage, testPrivateKeyRing, testPublicKeyRing, crypto.GetUnixTime())
+	decrypted, err = DecryptExplicitVerify(pgpMessage, unlockedKeyRing, testPublicKeyRing, crypto.GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}

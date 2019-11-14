@@ -17,7 +17,7 @@ func TestSignClearText(t *testing.T) {
 	// Password defined in base_test
 	armored, err := SignCleartextMessageArmored(
 		readTestFile("keyring_privateKey", false),
-		testMailboxPassword,
+		[]byte(testMailboxPassword),
 		signedPlainText,
 	)
 

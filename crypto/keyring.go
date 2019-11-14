@@ -225,7 +225,13 @@ func (keyRing *KeyRing) Copy() (*KeyRing, error) {
 	entities := make([]*openpgp.Entity, len(keyRing.entities))
 	for id, entity := range keyRing.entities {
 		var buffer bytes.Buffer
-		err := entity.SerializePrivateNoSign(&buffer, nil)
+		var err error
+
+		if entity.PrivateKey == nil {
+			err = entity.Serialize(&buffer)
+		} else {
+			err = entity.SerializePrivateNoSign(&buffer, nil)
+		}
 
 		if err != nil {
 			return nil, errors.New("gopenpgp: unable to copy key: error in serializing entity: " + err.Error())
@@ -423,14 +429,14 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 }
 
 // FirstKey returns a KeyRing with only the first key of the original one
-func (keyRing *KeyRing) FirstKey() *KeyRing {
+func (keyRing *KeyRing) FirstKey() (*KeyRing, error) {
 	if len(keyRing.entities) == 0 {
-		return nil
+		return nil, errors.New("gopenpgp: No key available in this keyring")
 	}
 	newKeyRing := &KeyRing{}
 	newKeyRing.entities = keyRing.entities[:1]
 
-	return newKeyRing
+	return newKeyRing.Copy()
 }
 
 // unlock tries to unlock as many keys as possible with the given passwords. Note

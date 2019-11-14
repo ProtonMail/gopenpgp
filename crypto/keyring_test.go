@@ -286,7 +286,10 @@ func TestMutlipleKeyRing(t *testing.T) {
 	assert.Exactly(t, uint64(0x3eb6259edf21df24), ids[0])
 	assert.Exactly(t, uint64(0x374130b32ee1e5ea), ids[1])
 
-	singleKey := testPublicKeyRing.FirstKey()
+	singleKey, err := testPublicKeyRing.FirstKey()
+	if err != nil {
+		t.Fatal("Expected no error while filtering the first key, got:", err)
+	}
 	assert.Exactly(t, 1, len(singleKey.entities))
 
 	ids = singleKey.KeyIds()
