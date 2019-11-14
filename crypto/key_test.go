@@ -10,11 +10,11 @@ import (
 	"golang.org/x/crypto/rsa"
 )
 
-const name = "Max Mustermann"
-const domain = "max.mustermann@protonmail.ch"
+const keyTestName = "Max Mustermann"
+const keyTestDomain = "max.mustermann@protonmail.ch"
 
-var passphrase = []byte("I love GNU")
-var passphrases = [][]byte{ passphrase }
+var keyTestPassphrase = []byte("I love GNU")
+var keyTestPassphrases = [][]byte{keyTestPassphrase}
 
 var rsaKey, ecKey, rsaPublicKey, ecPublicKey string
 
@@ -26,12 +26,12 @@ var (
 )
 
 func TestGenerateKeys(t *testing.T) {
-	rsaKey, err = GenerateKey(name, domain, passphrase, "rsa", 1024)
+	rsaKey, err = GenerateKey(keyTestName, keyTestDomain, keyTestPassphrase, "rsa", 1024)
 	if err != nil {
 		t.Fatal("Cannot generate RSA key:", err)
 	}
 
-	ecKey, err = GenerateKey(name, domain, passphrase, "x25519", 256)
+	ecKey, err = GenerateKey(keyTestName, keyTestDomain, keyTestPassphrase, "x25519", 256)
 	if err != nil {
 		t.Fatal("Cannot generate EC key:", err)
 	}
@@ -57,7 +57,7 @@ func TestGenerateKeyRings(t *testing.T) {
 		t.Fatal("Cannot read RSA public key:", err)
 	}
 
-	_, err = rsaPrivateKeyRing.Unlock(passphrases)
+	_, err = rsaPrivateKeyRing.Unlock(keyTestPassphrases)
 	if err != nil {
 		t.Fatal("Cannot decrypt RSA key:", err)
 	}
@@ -77,7 +77,7 @@ func TestGenerateKeyRings(t *testing.T) {
 		t.Fatal("Cannot read EC public key:", err)
 	}
 
-	_, err = ecPrivateKeyRing.Unlock(passphrases)
+	_, err = ecPrivateKeyRing.Unlock(keyTestPassphrases)
 	if err != nil {
 		t.Fatal("Cannot decrypt EC key:", err)
 	}
@@ -85,18 +85,18 @@ func TestGenerateKeyRings(t *testing.T) {
 
 func TestUpdatePrivateKeysPassphrase(t *testing.T) {
 	newPassphrase := []byte("I like GNU")
-	rsaKey, err = UpdatePrivateKeyPassphrase(rsaKey, passphrase, newPassphrase)
+	rsaKey, err = UpdatePrivateKeyPassphrase(rsaKey, keyTestPassphrase, newPassphrase)
 	if err != nil {
 		t.Fatal("Error in changing RSA key's passphrase:", err)
 	}
 
-	ecKey, err = UpdatePrivateKeyPassphrase(ecKey, passphrase, newPassphrase)
+	ecKey, err = UpdatePrivateKeyPassphrase(ecKey, keyTestPassphrase, newPassphrase)
 	if err != nil {
 		t.Fatal("Error in changing EC key's passphrase:", err)
 	}
 
-	passphrase = newPassphrase
-	passphrases = [][]byte{ passphrase }
+	keyTestPassphrase = newPassphrase
+	keyTestPassphrases = [][]byte{keyTestPassphrase}
 }
 
 func ExamplePrintFingerprints() {
@@ -141,7 +141,7 @@ func TestGenerateKeyWithPrimes(t *testing.T) {
 	prime4, _ := base64.StdEncoding.DecodeString(
 		"58UEDXTX29Q9JqvuE3Tn+Qj275CXBnJbA8IVM4d05cPYAZ6H43bPN01pbJqJTJw/cuFxs+8C+HNw3/MGQOExqw==")
 
-	staticRsaKey, err := GenerateRSAKeyWithPrimes(name, domain, passphrase, 1024, prime1, prime2, prime3, prime4)
+	staticRsaKey, err := GenerateRSAKeyWithPrimes(keyTestName, keyTestDomain, keyTestPassphrase, 1024, prime1, prime2, prime3, prime4)
 	if err != nil {
 		t.Fatal("Cannot generate RSA key:", err)
 	}
@@ -152,7 +152,7 @@ func TestGenerateKeyWithPrimes(t *testing.T) {
 	if err != nil {
 		t.Fatal("Cannot read RSA key:", err)
 	}
-	staticRsaKeyRing, err = staticRsaKeyRing.Unlock(passphrases)
+	staticRsaKeyRing, err = staticRsaKeyRing.Unlock(keyTestPassphrases)
 	if err != nil {
 		t.Fatal("Cannot decrypt RSA key:", err)
 	}

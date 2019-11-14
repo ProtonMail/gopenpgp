@@ -117,8 +117,9 @@ func (keyRing *KeyRing) GetFingerprint() (string, error) {
 	return "", errors.New("gopenpgp: can not find public key")
 }
 
-// CheckPassphrases checks if the given passphrases fully unlock a locked keyring.
-func (keyRing *KeyRing) CheckPassphrases(passphrases [][]byte) (bool, error) {
+// check verifies if the given passphrases fully unlock a locked keyring, and optionally if the public keys match the
+// private key parameters
+func (keyRing *KeyRing) check(passphrases [][]byte, verifyPrivate bool) (bool, error) {
 	if !keyRing.IsLocked() {
 		return false, errors.New("gopenpgp: keyring is already unlocked")
 	}
@@ -130,7 +131,51 @@ func (keyRing *KeyRing) CheckPassphrases(passphrases [][]byte) (bool, error) {
 
 	err = unlocked.unlock(passphrases)
 
-	return err == nil && unlocked.IsUnlocked(), nil
+	if err != nil || !unlocked.IsUnlocked() {
+		return false, nil
+	}
+
+	if !verifyPrivate {
+		return true, nil
+	}
+
+	testSign := []byte("7fJFAX8csfm7QQ3Q0BxDLe8SnCEU8dZO")
+	testReader := bytes.NewReader(testSign)
+
+	var validKeys = 0
+	for _, entity := range unlocked.GetEntities() {
+		if entity.PrivateKey != nil {
+			var signBuf bytes.Buffer
+
+			if err = openpgp.DetachSign(&signBuf, entity, testReader, nil); err != nil {
+				continue
+			}
+
+			testReader = bytes.NewReader(testSign)
+			signer, err := openpgp.CheckDetachedSignature(openpgp.EntityList{ entity }, testReader, &signBuf, nil)
+
+			if signer == nil || err != nil {
+				return false, nil
+			}
+			validKeys++
+		}
+	}
+
+	if validKeys == 0 {
+		return false, errors.New("gopenpgp: unable to find any valid key")
+	}
+	return true, nil
+}
+
+// CheckIntegrity checks if the given passphrases fully unlock a locked keyring, and if the public keys is actually
+// derived from the private keys
+func (keyRing *KeyRing) CheckIntegrity(passphrases [][]byte) (bool, error) {
+	return keyRing.check(passphrases, true)
+}
+
+// CheckPassphrases checks if the given passphrases fully unlock a locked keyring.
+func (keyRing *KeyRing) CheckPassphrases(passphrases [][]byte) (bool, error) {
+	return keyRing.check(passphrases, false)
 }
 
 // Unlock fully unlocks a copy of the keyring.
@@ -153,9 +198,24 @@ func (keyRing *KeyRing) Unlock(passphrases [][]byte) (*KeyRing, error) {
 	return unlocked, nil
 }
 
-type MPI struct {
-	bytes     []byte
-	bitLength uint16
+// Lock fully locks a copy of the keyring.
+func (keyRing *KeyRing) Lock(passphrase []byte) (*KeyRing, error) {
+	if !keyRing.IsUnlocked() {
+		return nil, errors.New("gopenpgp: keyring is not unlocked")
+	}
+
+	locked, err := keyRing.Copy()
+	if err != nil {
+		return nil, err
+	}
+
+	err = locked.lock(passphrase)
+
+	if err != nil || !locked.IsLocked() {
+		return nil, errors.New("gopenpgp: unable to fully lock keyring")
+	}
+
+	return locked, nil
 }
 
 // Copy creates a deep copy of the keyring
@@ -379,7 +439,43 @@ func (keyRing *KeyRing) FirstKey() *KeyRing {
 // rather that all keys are well-formed
 func (keyRing *KeyRing) unlock(passphrases [][]byte) error {
 	// Build a list of keys to decrypt
-	var keys []*packet.PrivateKey
+	keys := keyRing.getPrivatePackets()
+
+	if len(keys) == 0 {
+		return errors.New("gopenpgp: cannot unlock key ring, no private key available")
+	}
+
+	for _, passphrase := range passphrases {
+		for _, key := range keys {
+			if key.Encrypted {
+				_ = key.Decrypt(passphrase)
+			}
+		}
+	}
+
+	return nil
+}
+
+// lock encrypts all unlocked keys with the given password. Note that keyrings can contain one or more keys.
+func (keyRing *KeyRing) lock(passphrase []byte) error {
+	// Build a list of keys to encrypt
+	keys := keyRing.getPrivatePackets()
+
+	if len(keys) == 0 {
+		return errors.New("gopenpgp: cannot lock key ring, no private key available")
+	}
+
+	for _, key := range keys {
+		if !key.Encrypted {
+			_ = key.Encrypt(passphrase)
+		}
+	}
+
+	return nil
+}
+
+func (keyRing *KeyRing) getPrivatePackets() (keys []*packet.PrivateKey) {
+	// Build a list of private packets
 	for _, e := range keyRing.entities {
 		// Entity.PrivateKey must be a signing key
 		if e.PrivateKey != nil {
@@ -395,24 +491,5 @@ func (keyRing *KeyRing) unlock(passphrases [][]byte) error {
 			}
 		}
 	}
-
-	if len(keys) == 0 {
-		return errors.New("gopenpgp: cannot unlock key ring, no private key available")
-	}
-
-	var err error
-	var n int
-	for _, passphrase := range passphrases {
-		for _, key := range keys {
-			if !key.Encrypted {
-				continue // Key already decrypted
-			}
-
-			if err = key.Decrypt(passphrase); err == nil {
-				n++
-			}
-		}
-	}
-
-	return nil
+	return keys
 }

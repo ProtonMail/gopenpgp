@@ -112,6 +112,113 @@ func TestCheckPassphrase(t *testing.T) {
 	assert.Exactly(t, true, isCorrect)
 }
 
+func testLockUnlock(t *testing.T, encryptedKeyRing *KeyRing) {
+	decryptedKeyRing, err := encryptedKeyRing.Unlock(keyTestPassphrases) // Verify that the unlocked keyring is a copy
+	if err != nil {
+		t.Fatal("Expected no error while unlocking keyring, got:", err)
+	}
+
+	locked := encryptedKeyRing.IsLocked()		// Check keyring is a copy
+	assert.Exactly(t, true, locked)
+
+	unlocked := decryptedKeyRing.IsUnlocked()	// Check successful unlocking
+	assert.Exactly(t, true, unlocked)
+
+	_, err = decryptedKeyRing.Unlock(keyTestPassphrases)
+	assert.NotNil(t, err)	// Verify that we can't unlock an unlocked keyring
+
+	relockedKeyring, err := decryptedKeyRing.Lock(keyTestPassphrase)
+	if err != nil {
+		t.Fatal("Expected no error while locking keyring, got:", err)
+	}
+
+	unlocked = decryptedKeyRing.IsUnlocked()	// Check keyring is a copy
+	assert.Exactly(t, true, unlocked)
+
+	relocked := relockedKeyring.IsLocked()		// Check successful locking
+	assert.Exactly(t, true, relocked)
+
+	_, err = encryptedKeyRing.Lock(keyTestPassphrase)
+	assert.NotNil(t, err)	// Verify that we can't lock a locked keyring
+}
+
+func TestLockUnlockRSA (t *testing.T) {
+	armoredKey, err := GenerateKey(keyTestName, keyTestDomain, keyTestPassphrase, "RSA", 1024)
+	if err != nil {
+		t.Fatal("Expected no error while generating key, got:", err)
+	}
+
+	encryptedKeyRing, err := BuildKeyRingArmored(armoredKey)
+	if err != nil {
+		t.Fatal("Expected no error while building keyring, got:", err)
+	}
+
+	testLockUnlock(t, encryptedKeyRing)
+}
+
+func TestLockUnlockECC (t *testing.T) {
+	armoredKey, err := GenerateKey(keyTestName, keyTestDomain, keyTestPassphrase, "x25519", 256)
+	if err != nil {
+		t.Fatal("Expected no error while generating key, got:", err)
+	}
+
+	encryptedKeyRing, err := BuildKeyRingArmored(armoredKey)
+	if err != nil {
+		t.Fatal("Expected no error while building keyring, got:", err)
+	}
+
+	testLockUnlock(t, encryptedKeyRing)
+}
+
+func TestCheckIntegrity(t *testing.T) {
+	encryptedKeyRing, _ := BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
+	isCorrect, err := encryptedKeyRing.CheckIntegrity(testMailboxPassword)
+	if err != nil {
+		t.Fatal("Expected no error while checking correct passphrase, got:", err)
+	}
+	assert.Exactly(t, true, isCorrect)
+}
+
+func TestFailCheckIntegrity(t *testing.T) {
+	// This test is done with ECC because in an RSA key we would need to replace the primes, but maintaining the moduli,
+	// that is a private struct element.
+	eck1, _ := GenerateKey(keyTestName, keyTestDomain, keyTestPassphrase, "x25519", 256)
+	eck2, _ := GenerateKey(keyTestName, keyTestDomain, keyTestPassphrase, "x25519", 256)
+
+	ekr1, _ := ReadArmoredKeyRing(strings.NewReader(eck1))
+	ekr2, _ := ReadArmoredKeyRing(strings.NewReader(eck2))
+
+	kr1, err := ekr1.Unlock(keyTestPassphrases)
+	if err != nil {
+		t.Fatal("Expected no error while locking keyring ekr1, got:", err)
+	}
+
+	kr2, err := ekr2.Unlock(keyTestPassphrases)
+	if err != nil {
+		t.Fatal("Expected no error while locking keyring ekr2, got:", err)
+	}
+
+	kr2.entities[0].PrivateKey.PrivateKey = kr1.entities[0].PrivateKey.PrivateKey // Swap private keys
+
+	kr3, err := kr2.Lock(keyTestPassphrase)
+	if err != nil {
+		t.Fatal("Expected no error while locking keyring kr3, got:", err)
+	}
+
+	isCorrect, err := kr3.CheckPassphrases(keyTestPassphrases)
+	if err != nil {
+		t.Fatal("Expected no error while checking correct passphrase, got:", err)
+	}
+
+	isVerified, err := kr3.CheckIntegrity(keyTestPassphrases)
+	if err != nil {
+		t.Fatal("Expected no error while checking correct passphrase, got:", err)
+	}
+
+	assert.Exactly(t, true, isCorrect)
+	assert.Exactly(t, false, isVerified)
+}
+
 func TestIdentities(t *testing.T) {
 	identities := testPrivateKeyRing.Identities()
 	assert.Len(t, identities, 1)
