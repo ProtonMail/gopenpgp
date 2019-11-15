@@ -117,6 +117,16 @@ func (keyRing *KeyRing) GetFingerprint() (string, error) {
 	return "", errors.New("gopenpgp: can not find public key")
 }
 
+// CountEntities returns the number of entities in the keyring
+func (keyRing *KeyRing) CountEntities() int {
+	return len(keyRing.GetEntities())
+}
+
+// CountDecryptionEntities returns the number of entities in the keyring
+func (keyRing *KeyRing) CountDecryptionEntities() int {
+	return len(keyRing.GetEntities().DecryptionKeys())
+}
+
 // check verifies if the given passphrases fully unlock a locked keyring, and optionally if the public keys match the
 // private key parameters
 func (keyRing *KeyRing) check(passphrases [][]byte, verifyPrivate bool) (bool, error) {
