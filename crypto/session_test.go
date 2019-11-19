@@ -1,7 +1,6 @@
 package crypto
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/ProtonMail/gopenpgp/constants"
@@ -32,16 +31,13 @@ func TestAsymmetricKeyPacket(t *testing.T) {
 		Algo: constants.AES256,
 	}
 
-	privateKeyRing, _ := ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))
-	privateKeyRing, _ = privateKeyRing.Unlock(testMailboxPassword)
-
-	keyPacket, err := privateKeyRing.EncryptSessionKey(symmetricKey)
+	keyPacket, err := keyRingTestPublic.EncryptSessionKey(symmetricKey)
 	if err != nil {
 		t.Fatal("Expected no error while generating key packet, got:", err)
 	}
 
 	// Password defined in keyring_test
-	outputSymmetricKey, err := privateKeyRing.DecryptSessionKey(keyPacket)
+	outputSymmetricKey, err := keyRingTestPrivate.DecryptSessionKey(keyPacket)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting key packet, got:", err)
 	}

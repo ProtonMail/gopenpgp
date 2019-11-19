@@ -68,7 +68,7 @@ func (keyRing *KeyRing) EncryptSessionKey(sessionSplit *SymmetricKey) ([]byte, e
 	cf := sessionSplit.GetCipherFunc()
 
 	var pub *packet.PublicKey
-	for _, e := range keyRing.GetEntities() {
+	for _, e := range keyRing.entities {
 		if encryptionKey, ok := e.EncryptionKey(getNow()); ok {
 			pub = encryptionKey.PublicKey
 			break

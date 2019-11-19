@@ -54,13 +54,18 @@ func DecryptMessageWithToken(token, ciphertext string) (plaintext string, err er
 }
 
 // EncryptMessageArmored generates an armored PGP message given a plaintext and an armored public key
-func EncryptMessageArmored(publicKey, plaintext string) (ciphertext string, err error) {
+func EncryptMessageArmored(key, plaintext string) (ciphertext string, err error) {
+	var publicKey *crypto.Key
 	var publicKeyRing *crypto.KeyRing
 	var pgpMessage *crypto.PGPMessage
 
 	var message = crypto.NewPlainMessageFromString(plaintext)
 
-	if publicKeyRing, err = crypto.BuildKeyRingArmored(publicKey); err != nil {
+	if publicKey, err = crypto.NewKeyFromArmored(key); err != nil {
+		return "", err
+	}
+
+	if publicKeyRing, err = crypto.NewKeyRing(publicKey); err != nil {
 		return "", err
 	}
 
@@ -80,24 +85,33 @@ func EncryptMessageArmored(publicKey, plaintext string) (ciphertext string, err 
 func EncryptSignMessageArmored(
 	publicKey, privateKey string, passphrase []byte, plaintext string,
 ) (ciphertext string, err error) {
-	var publicKeyRing, privateKeyRing, unlockedKeyRing *crypto.KeyRing
+	var publicKeyObj, privateKeyObj, unlockedKeyObj *crypto.Key
+	var publicKeyRing, privateKeyRing *crypto.KeyRing
 	var pgpMessage *crypto.PGPMessage
 
 	var message = crypto.NewPlainMessageFromString(plaintext)
 
-	if publicKeyRing, err = crypto.BuildKeyRingArmored(publicKey); err != nil {
+	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
 		return "", err
 	}
 
-	if privateKeyRing, err = crypto.BuildKeyRingArmored(privateKey); err != nil {
+	if publicKeyRing, err = crypto.NewKeyRing(publicKeyObj); err != nil {
 		return "", err
 	}
 
-	if unlockedKeyRing, err = privateKeyRing.Unlock([][]byte { passphrase }); err != nil {
+	if privateKeyObj, err = crypto.NewKeyFromArmored(privateKey); err != nil {
 		return "", err
 	}
 
-	if pgpMessage, err = publicKeyRing.Encrypt(message, unlockedKeyRing); err != nil {
+	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
+		return "", err
+	}
+
+	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
+		return "", err
+	}
+
+	if pgpMessage, err = publicKeyRing.Encrypt(message, privateKeyRing); err != nil {
 		return "", err
 	}
 
@@ -112,15 +126,20 @@ func EncryptSignMessageArmored(
 func DecryptMessageArmored(
 	privateKey string, passphrase []byte, ciphertext string,
 ) (plaintext string, err error) {
-	var privateKeyRing, unlockedKeyRing *crypto.KeyRing
+	var privateKeyObj, privateKeyUnlocked *crypto.Key
+	var privateKeyRing *crypto.KeyRing
 	var pgpMessage *crypto.PGPMessage
 	var message *crypto.PlainMessage
 
-	if privateKeyRing, err = crypto.BuildKeyRingArmored(privateKey); err != nil {
+	if privateKeyObj, err = crypto.NewKeyFromArmored(privateKey); err != nil {
 		return "", err
 	}
 
-	if unlockedKeyRing, err = privateKeyRing.Unlock([][]byte { passphrase }); err != nil {
+	if privateKeyUnlocked, err = privateKeyObj.Unlock(passphrase); err != nil {
+		return "", err
+	}
+
+	if privateKeyRing, err = crypto.NewKeyRing(privateKeyUnlocked); err != nil {
 		return "", err
 	}
 
@@ -128,7 +147,7 @@ func DecryptMessageArmored(
 		return "", err
 	}
 
-	if message, err = unlockedKeyRing.Decrypt(pgpMessage, nil, 0); err != nil {
+	if message, err = privateKeyRing.Decrypt(pgpMessage, nil, 0); err != nil {
 		return "", err
 	}
 
@@ -141,19 +160,28 @@ func DecryptMessageArmored(
 func DecryptVerifyMessageArmored(
 	publicKey, privateKey string, passphrase []byte, ciphertext string,
 ) (plaintext string, err error) {
-	var publicKeyRing, privateKeyRing, unlockedKeyRing *crypto.KeyRing
+	var publicKeyObj, privateKeyObj, unlockedKeyObj *crypto.Key
+	var publicKeyRing, privateKeyRing *crypto.KeyRing
 	var pgpMessage *crypto.PGPMessage
 	var message *crypto.PlainMessage
 
-	if publicKeyRing, err = crypto.BuildKeyRingArmored(publicKey); err != nil {
+	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
 		return "", err
 	}
 
-	if privateKeyRing, err = crypto.BuildKeyRingArmored(privateKey); err != nil {
+	if publicKeyRing, err = crypto.NewKeyRing(publicKeyObj); err != nil {
 		return "", err
 	}
 
-	if unlockedKeyRing, err = privateKeyRing.Unlock([][]byte { passphrase }); err != nil {
+	if privateKeyObj, err = crypto.NewKeyFromArmored(privateKey); err != nil {
+		return "", err
+	}
+
+	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
+		return "", err
+	}
+
+	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
 		return "", err
 	}
 
@@ -161,7 +189,7 @@ func DecryptVerifyMessageArmored(
 		return "", err
 	}
 
-	if message, err = unlockedKeyRing.Decrypt(pgpMessage, publicKeyRing, crypto.GetUnixTime()); err != nil {
+	if message, err = privateKeyRing.Decrypt(pgpMessage, publicKeyRing, crypto.GetUnixTime()); err != nil {
 		return "", err
 	}
 
@@ -174,21 +202,30 @@ func DecryptVerifyMessageArmored(
 func EncryptSignAttachment(
 	publicKey, privateKey string, passphrase []byte, fileName string, plainData []byte,
 ) (keyPacket, dataPacket, signature []byte, err error) {
-	var publicKeyRing, privateKeyRing, unlockedKeyRing *crypto.KeyRing
+	var publicKeyObj, privateKeyObj, unlockedKeyObj *crypto.Key
+	var publicKeyRing, privateKeyRing *crypto.KeyRing
 	var packets *crypto.PGPSplitMessage
 	var signatureObj *crypto.PGPSignature
 
 	var binMessage = crypto.NewPlainMessage(plainData)
 
-	if publicKeyRing, err = crypto.BuildKeyRingArmored(publicKey); err != nil {
+	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
 		return nil, nil, nil, err
 	}
 
-	if privateKeyRing, err = crypto.BuildKeyRingArmored(privateKey); err != nil {
+	if publicKeyRing, err = crypto.NewKeyRing(publicKeyObj); err != nil {
 		return nil, nil, nil, err
 	}
 
-	if unlockedKeyRing, err = privateKeyRing.Unlock([][]byte { passphrase }); err != nil {
+	if privateKeyObj, err = crypto.NewKeyFromArmored(privateKey); err != nil {
+		return nil, nil, nil, err
+	}
+
+	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
+		return nil, nil, nil, err
+	}
+
+	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
 		return nil, nil, nil, err
 	}
 
@@ -196,7 +233,7 @@ func EncryptSignAttachment(
 		return nil, nil, nil, err
 	}
 
-	if signatureObj, err = unlockedKeyRing.SignDetached(binMessage); err != nil {
+	if signatureObj, err = privateKeyRing.SignDetached(binMessage); err != nil {
 		return nil, nil, nil, err
 	}
 
@@ -211,21 +248,30 @@ func DecryptVerifyAttachment(
 	passphrase, keyPacket, dataPacket []byte,
 	armoredSignature string,
 ) (plainData []byte, err error) {
-	var publicKeyRing, privateKeyRing, unlockedKeyRing *crypto.KeyRing
+	var publicKeyObj, privateKeyObj, unlockedKeyObj *crypto.Key
+	var publicKeyRing, privateKeyRing *crypto.KeyRing
 	var detachedSignature *crypto.PGPSignature
 	var message *crypto.PlainMessage
 
 	var packets = crypto.NewPGPSplitMessage(keyPacket, dataPacket)
 
-	if publicKeyRing, err = crypto.BuildKeyRingArmored(publicKey); err != nil {
+	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
 		return nil, err
 	}
 
-	if privateKeyRing, err = crypto.BuildKeyRingArmored(privateKey); err != nil {
+	if publicKeyRing, err = crypto.NewKeyRing(publicKeyObj); err != nil {
 		return nil, err
 	}
 
-	if unlockedKeyRing, err = privateKeyRing.Unlock([][]byte { passphrase }); err != nil {
+	if privateKeyObj, err = crypto.NewKeyFromArmored(privateKey); err != nil {
+		return nil, err
+	}
+
+	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
+		return nil, err
+	}
+
+	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
 		return nil, err
 	}
 
@@ -233,7 +279,7 @@ func DecryptVerifyAttachment(
 		return nil, err
 	}
 
-	if message, err = unlockedKeyRing.DecryptAttachment(packets); err != nil {
+	if message, err = privateKeyRing.DecryptAttachment(packets); err != nil {
 		return nil, err
 	}
 

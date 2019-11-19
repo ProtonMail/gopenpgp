@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"io"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -55,21 +54,16 @@ func TestBinaryMessageEncryptionWithSymmetricKey(t *testing.T) {
 func TestTextMessageEncryption(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
 
-	testPublicKeyRing, _ = BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
-	testPrivateKeyRing, err = BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
-
-	// Password defined in keyring_test
-	testPrivateKeyRing, err = testPrivateKeyRing.Unlock(testMailboxPassword)
 	if err != nil {
 		t.Fatal("Expected no error unlocking privateKey, got:", err)
 	}
 
-	ciphertext, err := testPublicKeyRing.Encrypt(message, testPrivateKeyRing)
+	ciphertext, err := keyRingTestPublic.Encrypt(message, keyRingTestPrivate)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	decrypted, err := testPrivateKeyRing.Decrypt(ciphertext, testPublicKeyRing, GetUnixTime())
+	decrypted, err := keyRingTestPrivate.Decrypt(ciphertext, keyRingTestPublic, GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
@@ -80,28 +74,19 @@ func TestBinaryMessageEncryption(t *testing.T) {
 	binData, _ := base64.StdEncoding.DecodeString("ExXmnSiQ2QCey20YLH6qlLhkY3xnIBC1AwlIXwK/HvY=")
 	var message = NewPlainMessage(binData)
 
-	testPublicKeyRing, _ = BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
-	testPrivateKeyRing, err = BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
-
-	// Password defined in keyring_test
-	testPrivateKeyRing, err = testPrivateKeyRing.Unlock(testMailboxPassword)
-	if err != nil {
-		t.Fatal("Expected no error unlocking privateKey, got:", err)
-	}
-
-	ciphertext, err := testPublicKeyRing.Encrypt(message, testPrivateKeyRing)
+	ciphertext, err := keyRingTestPublic.Encrypt(message, keyRingTestPrivate)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	decrypted, err := testPrivateKeyRing.Decrypt(ciphertext, testPublicKeyRing, GetUnixTime())
+	decrypted, err := keyRingTestPrivate.Decrypt(ciphertext, keyRingTestPublic, GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 	assert.Exactly(t, message.GetBinary(), decrypted.GetBinary())
 
 	// Decrypt without verifying
-	decrypted, err = testPrivateKeyRing.Decrypt(ciphertext, nil, 0)
+	decrypted, err = keyRingTestPrivate.Decrypt(ciphertext, nil, 0)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
@@ -109,23 +94,33 @@ func TestBinaryMessageEncryption(t *testing.T) {
 }
 
 func TestIssue11(t *testing.T) {
-	var issue11Password = [][]byte{ []byte("1234") }
-	issue11Keyring, err := BuildKeyRingArmored(readTestFile("issue11_privatekey", false))
+	var issue11Password = []byte("1234")
+
+	issue11Key, err := NewKeyFromArmored(readTestFile("issue11_privatekey", false))
+	if err != nil {
+		t.Fatal("Expected no error while unarmoring private keyring, got:", err)
+	}
+
+	issue11Key, err = issue11Key.Unlock(issue11Password)
+	if err != nil {
+		t.Fatal("Expected no error while unlocking private key, got:", err)
+	}
+
+	issue11Keyring, err := NewKeyRing(issue11Key)
 	if err != nil {
 		t.Fatal("Expected no error while bulding private keyring, got:", err)
 	}
 
-	issue11Keyring, err = issue11Keyring.Unlock(issue11Password);
+	senderKey, err := NewKeyFromArmored(readTestFile("issue11_publickey", false))
 	if err != nil {
-		t.Fatal("Expected no error while unlocking private keyring, got:", err)
+		t.Fatal("Expected no error while unarmoring public keyring, got:", err)
 	}
+	assert.Exactly(t, "0x643b3595e6ee4fdf", senderKey.GetID())
 
-	senderKeyring, err := BuildKeyRingArmored(readTestFile("issue11_publickey", false))
+	senderKeyring, err := NewKeyRing(senderKey)
 	if err != nil {
 		t.Fatal("Expected no error while building public keyring, got:", err)
 	}
-
-	assert.Exactly(t, []uint64{0x643b3595e6ee4fdf}, senderKeyring.KeyIds())
 
 	pgpMessage, err := NewPGPMessageFromArmored(readTestFile("issue11_message", false))
 	if err != nil {
@@ -141,20 +136,12 @@ func TestIssue11(t *testing.T) {
 }
 
 func TestSignedMessageDecryption(t *testing.T) {
-	testPrivateKeyRing, err = BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
-
-	// Password defined in keyring_test
-	testPrivateKeyRing, err = testPrivateKeyRing.Unlock(testMailboxPassword)
-	if err != nil {
-		t.Fatal("Expected no error unlocking privateKey, got:", err)
-	}
-
 	pgpMessage, err := NewPGPMessageFromArmored(readTestFile("message_signed", false))
 	if err != nil {
 		t.Fatal("Expected no error when unarmoring, got:", err)
 	}
 
-	decrypted, err := testPrivateKeyRing.Decrypt(pgpMessage, nil, 0)
+	decrypted, err := keyRingTestPrivate.Decrypt(pgpMessage, nil, 0)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
@@ -163,24 +150,9 @@ func TestSignedMessageDecryption(t *testing.T) {
 
 func TestMultipleKeyMessageEncryption(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
+	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
 
-	testPublicKeyRing, _ = BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
-	err = testPublicKeyRing.ReadFrom(strings.NewReader(readTestFile("mime_publicKey", false)), true)
-	if err != nil {
-		t.Fatal("Expected no error adding second public key, got:", err)
-	}
-
-	assert.Exactly(t, 2, len(testPublicKeyRing.entities))
-
-	testPrivateKeyRing, err = BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
-
-	// Password defined in keyring_test
-	testPrivateKeyRing, err = testPrivateKeyRing.Unlock(testMailboxPassword)
-	if err != nil {
-		t.Fatal("Expected no error unlocking privateKey, got:", err)
-	}
-
-	ciphertext, err := testPublicKeyRing.Encrypt(message, testPrivateKeyRing)
+	ciphertext, err := keyRingTestMultiple.Encrypt(message, keyRingTestPrivate)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
@@ -198,9 +170,9 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 				numKeyPackets++
 		}
 	}
-	assert.Exactly(t, 2, numKeyPackets)
+	assert.Exactly(t, 3, numKeyPackets)
 
-	decrypted, err := testPrivateKeyRing.Decrypt(ciphertext, testPublicKeyRing, GetUnixTime())
+	decrypted, err := keyRingTestPrivate.Decrypt(ciphertext, keyRingTestPublic, GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}

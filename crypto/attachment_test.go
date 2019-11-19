@@ -16,7 +16,7 @@ func TestAttachmentGetKey(t *testing.T) {
 		t.Fatal("Expected no error while decoding base64 KeyPacket, got:", err)
 	}
 
-	symmetricKey, err := testPrivateKeyRing.DecryptSessionKey(testKeyPacketsDecoded)
+	symmetricKey, err := keyRingTestPrivate.DecryptSessionKey(testKeyPacketsDecoded)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting KeyPacket, got:", err)
 	}
@@ -25,12 +25,12 @@ func TestAttachmentGetKey(t *testing.T) {
 }
 
 func TestAttachmentSetKey(t *testing.T) {
-	keyPackets, err := testPublicKeyRing.EncryptSessionKey(testSymmetricKey)
+	keyPackets, err := keyRingTestPublic.EncryptSessionKey(testSymmetricKey)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting attachment key, got:", err)
 	}
 
-	symmetricKey, err := testPrivateKeyRing.DecryptSessionKey(keyPackets)
+	symmetricKey, err := keyRingTestPrivate.DecryptSessionKey(keyPackets)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting attachment key, got:", err)
 	}
@@ -42,12 +42,12 @@ func TestAttachmentEncryptDecrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
 	var message = NewPlainMessage([]byte(testAttachmentCleartext))
 
-	encSplit, err := testPrivateKeyRing.EncryptAttachment(message, "s.txt")
+	encSplit, err := keyRingTestPrivate.EncryptAttachment(message, "s.txt")
 	if err != nil {
 		t.Fatal("Expected no error while encrypting attachment, got:", err)
 	}
 
-	redecData, err := testPrivateKeyRing.DecryptAttachment(encSplit)
+	redecData, err := keyRingTestPrivate.DecryptAttachment(encSplit)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting attachment, got:", err)
 	}
@@ -59,14 +59,14 @@ func TestAttachmentEncrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
 	var message = NewPlainMessage([]byte(testAttachmentCleartext))
 
-	encSplit, err := testPrivateKeyRing.EncryptAttachment(message, "s.txt")
+	encSplit, err := keyRingTestPrivate.EncryptAttachment(message, "s.txt")
 	if err != nil {
 		t.Fatal("Expected no error while encrypting attachment, got:", err)
 	}
 
 	pgpMessage := NewPGPMessage(encSplit.GetBinary())
 
-	redecData, err := testPrivateKeyRing.Decrypt(pgpMessage, nil, 0)
+	redecData, err := keyRingTestPrivate.Decrypt(pgpMessage, nil, 0)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting attachment, got:", err)
 	}
@@ -78,7 +78,7 @@ func TestAttachmentDecrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
 	var message = NewPlainMessage([]byte(testAttachmentCleartext))
 
-	encrypted, err := testPrivateKeyRing.Encrypt(message, nil)
+	encrypted, err := keyRingTestPrivate.Encrypt(message, nil)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting attachment, got:", err)
 	}
@@ -93,7 +93,7 @@ func TestAttachmentDecrypt(t *testing.T) {
 		t.Fatal("Expected no error while unarmoring, got:", err)
 	}
 
-	redecData, err := testPrivateKeyRing.DecryptAttachment(pgpSplitMessage)
+	redecData, err := keyRingTestPrivate.DecryptAttachment(pgpSplitMessage)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting attachment, got:", err)
 	}

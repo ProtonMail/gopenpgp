@@ -10,23 +10,33 @@ import (
 // SignCleartextMessageArmored signs text given a private key and its passphrase, canonicalizes and trims the newlines,
 // and returns the PGP-compliant special armoring
 func SignCleartextMessageArmored(privateKey string, passphrase []byte, text string) (string, error) {
-	signingKeyRing, err := crypto.BuildKeyRingArmored(privateKey)
+	signingKey, err := crypto.NewKeyFromArmored(privateKey)
 	if err != nil {
 		return "", err
 	}
 
-	unlockedKeyRing, err := signingKeyRing.Unlock([][]byte { passphrase })
+	unlockedKey, err := signingKey.Unlock(passphrase)
 	if err != nil {
 		return "", err
 	}
 
-	return SignCleartextMessage(unlockedKeyRing, text)
+	keyRing, err := crypto.NewKeyRing(unlockedKey)
+	if err != nil {
+		return "", err
+	}
+
+	return SignCleartextMessage(keyRing, text)
 }
 
 // VerifyCleartextMessageArmored verifies PGP-compliant armored signed plain text given the public key
 // and returns the text or err if the verification fails
 func VerifyCleartextMessageArmored(publicKey, armored string, verifyTime int64) (string, error) {
-	verifyKeyRing, err := crypto.BuildKeyRingArmored(publicKey)
+	signingKey, err := crypto.NewKeyFromArmored(publicKey)
+	if err != nil {
+		return "", err
+	}
+
+	verifyKeyRing, err := crypto.NewKeyRing(signingKey)
 	if err != nil {
 		return "", err
 	}

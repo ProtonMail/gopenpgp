@@ -19,4 +19,4 @@ func readTestFile(name string, trimNewlines bool) string {
 }
 
 // Corresponding key in ../crypto/testdata/keyring_privateKey
-const testMailboxPassword = "apple"
+var testMailboxPassword = []byte("apple")

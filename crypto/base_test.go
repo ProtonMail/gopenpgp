@@ -17,3 +17,11 @@ func readTestFile(name string, trimNewlines bool) string {
 	}
 	return string(data)
 }
+
+func init() {
+	UpdateTime(1557754627) // 2019-05-13T13:37:07+00:00
+
+	initGenerateKeys()
+	initArmoredKeys()
+	initKeyRings()
+}

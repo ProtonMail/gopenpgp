@@ -235,7 +235,7 @@ Dropped with signature.
 Dropped with signature.
 
 ### GetEntities
-No change.
+Dropped. Entities are directly handled by the lib.
 
 ### GetSigningEntity
 KeyRings must be already unlocked when provided to encrypt/decrypt/sign/verify functions.
@@ -315,13 +315,13 @@ Renamed.
 No change.
 
 ### BuildKeyRingNoError
-No change.
+Removed. Use BuildKeyRing and handle errors.
 
 ### BuildKeyRingArmored
-No change.
+Now takes 
 
 ### UnmarshalJSON
-Dropped.
+Dropped. The interface to unmarshal json is not relevant to this library.
 
 ### Identities
 No change
