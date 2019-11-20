@@ -131,6 +131,17 @@ func TestMultipleKeyRing(t *testing.T) {
 	assert.Exactly(t, 3, keyRingTestMultiple.CountEntities())
 	assert.Exactly(t, 3, keyRingTestMultiple.CountDecryptionEntities())
 
+	assert.Exactly(t, 3, len(keyRingTestMultiple.GetKeys()))
+
+	testKey, err := keyRingTestMultiple.GetKey(1)
+	if err != nil {
+		t.Fatal("Expected no error while extracting key, got:", err)
+	}
+	assert.Exactly(t, keyTestEC, testKey)
+
+	_, err = keyRingTestMultiple.GetKey(3)
+	assert.NotNil(t, err)
+
 	singleKeyRing, err := keyRingTestMultiple.FirstKey()
 	if err != nil {
 		t.Fatal("Expected no error while filtering the first key, got:", err)

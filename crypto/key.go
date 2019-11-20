@@ -194,25 +194,6 @@ func (key *Key) Armor() (string, error) {
 	return armor.ArmorWithType(serialized, constants.PrivateKeyHeader)
 }
 
-
-// SerializePublic outputs armored public keys from the key to w.
-func (keyRing *KeyRing) SerializeArmoredPublic(w io.Writer) (err error) {
-	aw, err := xarmor.Encode(w, openpgp.PublicKeyType, nil)
-	if err != nil {
-		return
-	}
-
-	for _, e := range keyRing.entities {
-		if err = e.Serialize(aw); err != nil {
-			aw.Close()
-			return
-		}
-	}
-
-	err = aw.Close()
-	return
-}
-
 // GetArmoredPublicKey returns the armored public keys from this keyring.
 func (key *Key) GetArmoredPublicKey() (s string, err error) {
 	var outBuf bytes.Buffer
@@ -229,7 +210,6 @@ func (key *Key) GetArmoredPublicKey() (s string, err error) {
 	err = aw.Close()
 	return outBuf.String(), err
 }
-
 
 // GetPublicKey returns the unarmored public keys from this keyring.
 func (key *Key) GetPublicKey() (b []byte, err error) {

@@ -53,8 +53,8 @@ func (keyRing *KeyRing) AddKey(key *Key) error {
 // GetKeys returns openpgp keys contained in this KeyRing.
 func (keyRing *KeyRing) GetKeys() []*Key {
 	keys := make([]*Key, keyRing.CountEntities())
-	for _, entity := range keyRing.entities {
-		keys = append(keys, &Key{entity})
+	for i, entity := range keyRing.entities {
+		keys[i] = &Key{entity}
 	}
 	return keys
 }
@@ -214,26 +214,6 @@ func (keyRing *KeyRing) Copy() (*KeyRing, error) {
 }
 
 // INTERNAL FUNCTIONS
-
-func (keyRing *KeyRing) getPrivatePackets() (keys []*packet.PrivateKey) {
-	// Build a list of private packets
-	for _, e := range keyRing.entities {
-		// Entity.PrivateKey must be a signing key
-		if e.PrivateKey != nil {
-			keys = append(keys, e.PrivateKey)
-		}
-
-		// Entity.Subkeys can be used for encryption
-		for _, subKey := range e.Subkeys {
-			if subKey.PrivateKey != nil && (!subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage ||
-				subKey.Sig.FlagEncryptCommunications) {
-
-				keys = append(keys, subKey.PrivateKey)
-			}
-		}
-	}
-	return keys
-}
 
 // append appends the entities from a second keyring
 func (keyRing *KeyRing) append(extend *KeyRing) {
