@@ -54,10 +54,6 @@ func TestBinaryMessageEncryptionWithSymmetricKey(t *testing.T) {
 func TestTextMessageEncryption(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
 
-	if err != nil {
-		t.Fatal("Expected no error unlocking privateKey, got:", err)
-	}
-
 	ciphertext, err := keyRingTestPublic.Encrypt(message, keyRingTestPrivate)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)

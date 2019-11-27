@@ -213,6 +213,12 @@ func (keyRing *KeyRing) Copy() (*KeyRing, error) {
 	return newKeyRing, nil
 }
 
+func (keyRing *KeyRing) ClearPrivateParams() {
+	for _, key := range keyRing.GetKeys() {
+		key.ClearPrivateParams()
+	}
+}
+
 // INTERNAL FUNCTIONS
 
 // append appends the entities from a second keyring

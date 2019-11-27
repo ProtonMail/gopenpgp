@@ -2,10 +2,15 @@ package crypto
 
 import (
 	"encoding/base64"
+	"math/big"
 	"testing"
 
 	"github.com/ProtonMail/gopenpgp/constants"
 	"github.com/stretchr/testify/assert"
+
+	"golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/openpgp/ecdh"
+	"golang.org/x/crypto/rsa"
 )
 
 var decodedSymmetricKey, _ = base64.StdEncoding.DecodeString("ExXmnSiQ2QCey20YLH6qlLhkY3xnIBC1AwlIXwK/HvY=")
@@ -149,4 +154,100 @@ func TestMultipleKeyRing(t *testing.T) {
 	assert.Exactly(t, 1, len(singleKeyRing.entities))
 	assert.Exactly(t, 1, singleKeyRing.CountEntities())
 	assert.Exactly(t, 1, singleKeyRing.CountDecryptionEntities())
+}
+
+func TestClearPrivateKey(t *testing.T) {
+	keyRingCopy, err := keyRingTestMultiple.Copy()
+	if err != nil {
+		t.Fatal("Expected no error while copying keyring, got:", err)
+	}
+
+	for _, key := range keyRingCopy.GetKeys() {
+		assert.Nil(t, clearPrivateKey(key.entity.PrivateKey.PrivateKey))
+	}
+
+	keys := keyRingCopy.GetKeys()
+	assertRSACleared(t, keys[0].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
+	assertEdDSACleared(t, keys[1].entity.PrivateKey.PrivateKey.(ed25519.PrivateKey))
+	assertRSACleared(t, keys[2].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
+}
+
+func TestClearPrivateWithSubkeys(t *testing.T) {
+	keyRingCopy, err := keyRingTestMultiple.Copy()
+	if err != nil {
+		t.Fatal("Expected no error while copying keyring, got:", err)
+	}
+
+	for _, key := range keyRingCopy.GetKeys() {
+		assert.Exactly(t, 2, key.clearPrivateWithSubkeys())
+	}
+
+	keys := keyRingCopy.GetKeys()
+	assertRSACleared(t, keys[0].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
+	assertRSACleared(t, keys[0].entity.Subkeys[0].PrivateKey.PrivateKey.(*rsa.PrivateKey))
+
+	assertEdDSACleared(t, keys[1].entity.PrivateKey.PrivateKey.(ed25519.PrivateKey))
+	assertECDHCleared(t, keys[1].entity.Subkeys[0].PrivateKey.PrivateKey.(*ecdh.PrivateKey))
+
+	assertRSACleared(t, keys[2].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
+	assertRSACleared(t, keys[2].entity.Subkeys[0].PrivateKey.PrivateKey.(*rsa.PrivateKey))
+}
+
+func TestClearPrivateParams(t *testing.T) {
+	keyRingCopy, err := keyRingTestMultiple.Copy()
+	if err != nil {
+		t.Fatal("Expected no error while copying keyring, got:", err)
+	}
+
+	for _, key := range keyRingCopy.GetKeys() {
+		assert.True(t,  key.IsPrivate())
+		assert.True(t,  key.ClearPrivateParams())
+		assert.False(t,  key.IsPrivate())
+		assert.Nil(t, key.entity.PrivateKey)
+		assert.Nil(t, key.entity.Subkeys[0].PrivateKey)
+		assert.False(t,  key.ClearPrivateParams())
+	}
+}
+
+func assertBigIntCleared(t *testing.T, x *big.Int) {
+	w := x.Bits()
+	for k := range w {
+		assert.Exactly(t, big.Word(0x00), w[k])
+	}
+}
+
+func assertMemCleared(t *testing.T, b []byte) {
+	for k := range b {
+		assert.Exactly(t, uint8(0x00), b[k])
+	}
+}
+
+func assertRSACleared(t *testing.T, rsaPriv *rsa.PrivateKey) {
+	assertBigIntCleared(t, rsaPriv.D)
+	for idx := range rsaPriv.Primes {
+		assertBigIntCleared(t, rsaPriv.Primes[idx])
+	}
+	assertBigIntCleared(t, rsaPriv.Precomputed.Qinv)
+	assertBigIntCleared(t, rsaPriv.Precomputed.Dp)
+	assertBigIntCleared(t, rsaPriv.Precomputed.Dq)
+
+	for idx := range rsaPriv.Precomputed.CRTValues {
+		assertBigIntCleared(t, rsaPriv.Precomputed.CRTValues[idx].Exp)
+		assertBigIntCleared(t, rsaPriv.Precomputed.CRTValues[idx].Coeff)
+		assertBigIntCleared(t, rsaPriv.Precomputed.CRTValues[idx].R)
+	}
+
+	return
+}
+
+func assertEdDSACleared(t *testing.T, priv ed25519.PrivateKey) {
+	assertMemCleared(t, priv)
+
+	return
+}
+
+func assertECDHCleared(t *testing.T, priv *ecdh.PrivateKey) {
+	assertMemCleared(t, priv.D)
+
+	return
 }

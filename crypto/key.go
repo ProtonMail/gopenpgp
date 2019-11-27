@@ -3,8 +3,6 @@ package crypto
 import (
 	"bytes"
 	"crypto"
-	"crypto/ecdsa"
-	"crypto/rsa"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -12,7 +10,6 @@ import (
 	"math/big"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/ProtonMail/gopenpgp/armor"
 	"github.com/ProtonMail/gopenpgp/constants"
@@ -20,7 +17,6 @@ import (
 	"golang.org/x/crypto/openpgp"
 	xarmor "golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/packet"
-	xrsa "golang.org/x/crypto/rsa"
 )
 
 type Key struct {
@@ -334,37 +330,6 @@ func (key *Key) readFrom(r io.Reader, armored bool) error {
 	}
 
 	key.entity = entities[0]
-
-	if key.entity.PrivateKey != nil {
-		switch key.entity.PrivateKey.PrivateKey.(type) {
-		// TODO: type mismatch after crypto lib update, fix this:
-		case *rsa.PrivateKey:
-			key.entity.PrimaryKey = packet.NewRSAPublicKey(
-				time.Now(),
-				key.entity.PrivateKey.PrivateKey.(*rsa.PrivateKey).Public().(*xrsa.PublicKey))
-
-		case *ecdsa.PrivateKey:
-			key.entity.PrimaryKey = packet.NewECDSAPublicKey(
-				time.Now(),
-				key.entity.PrivateKey.PrivateKey.(*ecdsa.PrivateKey).Public().(*ecdsa.PublicKey))
-		}
-	}
-	for _, subkey := range key.entity.Subkeys {
-		if subkey.PrivateKey != nil {
-			switch subkey.PrivateKey.PrivateKey.(type) {
-			case *rsa.PrivateKey:
-				subkey.PublicKey = packet.NewRSAPublicKey(
-					time.Now(),
-					subkey.PrivateKey.PrivateKey.(*rsa.PrivateKey).Public().(*xrsa.PublicKey))
-
-			case *ecdsa.PrivateKey:
-				subkey.PublicKey = packet.NewECDSAPublicKey(
-					time.Now(),
-					subkey.PrivateKey.PrivateKey.(*ecdsa.PrivateKey).Public().(*ecdsa.PublicKey))
-			}
-		}
-	}
-
 	return nil
 }
 
