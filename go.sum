@@ -2,6 +2,7 @@ github.com/ProtonMail/crypto v0.0.0-20190814153124-b5b07a6add54 h1:b9Mgk9zYaSxsq
 github.com/ProtonMail/crypto v0.0.0-20190814153124-b5b07a6add54/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
 github.com/ProtonMail/crypto v0.0.0-20191114094918-54a6a945edeb h1:u7vC9JcZ7rCWifzv/Wb58fA2MTLvl6fCRxAyMJLHqNM=
 github.com/ProtonMail/crypto v0.0.0-20191114094918-54a6a945edeb/go.mod h1:MBriIAodHvZ+YvwvMJWCTmseW/LkeVRPWp/iZKvee4g=
+github.com/ProtonMail/crypto v0.0.0-20191122234321-e77a1f03baa0/go.mod h1:MBriIAodHvZ+YvwvMJWCTmseW/LkeVRPWp/iZKvee4g=
 github.com/ProtonMail/go-mime v0.0.0-20190521135552-09454e3dbe72 h1:hGCc4Oc2fD3I5mNnZ1VlREncVc9EXJF8dxW3sw16gWM=
 github.com/ProtonMail/go-mime v0.0.0-20190521135552-09454e3dbe72/go.mod h1:NYt+V3/4rEeDuaev/zw1zCq8uqVEuPHzDPo3OZrlGJ4=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
