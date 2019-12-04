@@ -9,17 +9,17 @@ import (
 
 func TestAESEncryption(t *testing.T) {
 	var plaintext = "Symmetric secret"
-	var passphrase = "passphrase"
+	var passphrase = []byte("passphrase")
 
-	ciphertext, err := EncryptMessageWithToken(passphrase, plaintext)
+	ciphertext, err := EncryptMessageWithPassword(passphrase, plaintext)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	_, err = DecryptMessageWithToken("Wrong passphrase", ciphertext)
+	_, err = DecryptMessageWithPassword([]byte("Wrong passphrase"), ciphertext)
 	assert.EqualError(t, err, "gopenpgp: wrong password in symmetric decryption")
 
-	decrypted, err := DecryptMessageWithToken(passphrase, ciphertext)
+	decrypted, err := DecryptMessageWithPassword(passphrase, ciphertext)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}

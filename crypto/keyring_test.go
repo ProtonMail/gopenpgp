@@ -1,11 +1,8 @@
 package crypto
 
 import (
-	"encoding/base64"
-	"math/big"
 	"testing"
 
-	"github.com/ProtonMail/gopenpgp/constants"
 	"github.com/stretchr/testify/assert"
 
 	"golang.org/x/crypto/ed25519"
@@ -13,17 +10,7 @@ import (
 	"golang.org/x/crypto/rsa"
 )
 
-var decodedSymmetricKey, _ = base64.StdEncoding.DecodeString("ExXmnSiQ2QCey20YLH6qlLhkY3xnIBC1AwlIXwK/HvY=")
-
-var testSymmetricKey = &SymmetricKey{
-	Key:  decodedSymmetricKey,
-	Algo: constants.AES256,
-}
-
-var testWrongSymmetricKey = &SymmetricKey{
-	Key:  []byte("WrongPass"),
-	Algo: constants.AES256,
-}
+var testSymmetricKey []byte
 
 // Corresponding key in testdata/keyring_privateKey
 var testMailboxPassword = []byte("apple")
@@ -44,6 +31,11 @@ var testIdentity = &Identity{
 
 func initKeyRings() {
 	var err error
+
+	testSymmetricKey, err = RandomTokenSize(32)
+	if err != nil {
+		panic("Expected no error while generating random token, got:" + err.Error())
+	}
 
 	privateKey, err := NewKeyFromArmored(readTestFile("keyring_privateKey", false))
 	if err != nil {
@@ -207,47 +199,4 @@ func TestClearPrivateParams(t *testing.T) {
 		assert.Nil(t, key.entity.Subkeys[0].PrivateKey)
 		assert.False(t,  key.ClearPrivateParams())
 	}
-}
-
-func assertBigIntCleared(t *testing.T, x *big.Int) {
-	w := x.Bits()
-	for k := range w {
-		assert.Exactly(t, big.Word(0x00), w[k])
-	}
-}
-
-func assertMemCleared(t *testing.T, b []byte) {
-	for k := range b {
-		assert.Exactly(t, uint8(0x00), b[k])
-	}
-}
-
-func assertRSACleared(t *testing.T, rsaPriv *rsa.PrivateKey) {
-	assertBigIntCleared(t, rsaPriv.D)
-	for idx := range rsaPriv.Primes {
-		assertBigIntCleared(t, rsaPriv.Primes[idx])
-	}
-	assertBigIntCleared(t, rsaPriv.Precomputed.Qinv)
-	assertBigIntCleared(t, rsaPriv.Precomputed.Dp)
-	assertBigIntCleared(t, rsaPriv.Precomputed.Dq)
-
-	for idx := range rsaPriv.Precomputed.CRTValues {
-		assertBigIntCleared(t, rsaPriv.Precomputed.CRTValues[idx].Exp)
-		assertBigIntCleared(t, rsaPriv.Precomputed.CRTValues[idx].Coeff)
-		assertBigIntCleared(t, rsaPriv.Precomputed.CRTValues[idx].R)
-	}
-
-	return
-}
-
-func assertEdDSACleared(t *testing.T, priv ed25519.PrivateKey) {
-	assertMemCleared(t, priv)
-
-	return
-}
-
-func assertECDHCleared(t *testing.T, priv *ecdh.PrivateKey) {
-	assertMemCleared(t, priv.D)
-
-	return
 }

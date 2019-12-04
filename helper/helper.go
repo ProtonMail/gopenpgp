@@ -3,27 +3,19 @@ package helper
 import (
 	"errors"
 
-	"github.com/ProtonMail/gopenpgp/constants"
 	"github.com/ProtonMail/gopenpgp/crypto"
 )
 
-// EncryptMessageWithToken encrypts a string with a passphrase using AES256
-func EncryptMessageWithToken(
-	passphrase, plaintext string,
-) (ciphertext string, err error) {
-	return EncryptMessageWithTokenAlgo(passphrase, plaintext, constants.AES256)
-}
-
-// EncryptMessageWithTokenAlgo encrypts a string with a random token and an algorithm chosen from constants.*
-func EncryptMessageWithTokenAlgo(
-	token, plaintext, algo string,
+// EncryptMessageWithPassword encrypts a string with a passphrase using AES256
+func EncryptMessageWithPassword(
+	password []byte, plaintext string,
 ) (ciphertext string, err error) {
 	var pgpMessage *crypto.PGPMessage
 
 	var message = crypto.NewPlainMessageFromString(plaintext)
-	var key = crypto.NewSymmetricKeyFromToken(token, algo)
 
-	if pgpMessage, err = key.Encrypt(message); err != nil {
+
+	if pgpMessage, err = crypto.EncryptMessageWithPassword(message, password); err != nil {
 		return "", err
 	}
 
@@ -34,19 +26,17 @@ func EncryptMessageWithTokenAlgo(
 	return ciphertext, nil
 }
 
-// DecryptMessageWithToken decrypts an armored message with a random token.
+// DecryptMessageWithPassword decrypts an armored message with a random token.
 // The algorithm is derived from the armoring.
-func DecryptMessageWithToken(token, ciphertext string) (plaintext string, err error) {
+func DecryptMessageWithPassword(password []byte, ciphertext string) (plaintext string, err error) {
 	var message *crypto.PlainMessage
 	var pgpMessage *crypto.PGPMessage
-
-	var key = crypto.NewSymmetricKeyFromToken(token, "")
 
 	if pgpMessage, err = crypto.NewPGPMessageFromArmored(ciphertext); err != nil {
 		return "", err
 	}
 
-	if message, err = key.Decrypt(pgpMessage); err != nil {
+	if message, err = crypto.DecryptMessageWithPassword(pgpMessage, password); err != nil {
 		return "", err
 	}
 

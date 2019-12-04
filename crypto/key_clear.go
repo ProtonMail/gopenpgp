@@ -12,6 +12,11 @@ import (
 	"golang.org/x/crypto/rsa"
 )
 
+func (sk *SessionKey) Clear() (ok bool){
+	clearMem(sk.Key)
+	return true
+}
+
 func (key *Key) ClearPrivateParams() (ok bool) {
 	num := key.clearPrivateWithSubkeys()
 	key.entity.PrivateKey = nil

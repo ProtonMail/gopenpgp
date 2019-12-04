@@ -10,41 +10,41 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-func TestTextMessageEncryptionWithSymmetricKey(t *testing.T) {
+func TestTextMessageEncryptionWithPassword(t *testing.T) {
 	var message = NewPlainMessageFromString("The secret code is... 1, 2, 3, 4, 5")
 
 	// Encrypt data with password
-	encrypted, err := testSymmetricKey.Encrypt(message)
+	encrypted, err := EncryptMessageWithPassword(message, testSymmetricKey)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 	// Decrypt data with wrong password
-	_, err = testWrongSymmetricKey.Decrypt(encrypted)
+	_, err = DecryptMessageWithPassword(encrypted, []byte("Wrong password"))
 	assert.NotNil(t, err)
 
 	// Decrypt data with the good password
-	decrypted, err := testSymmetricKey.Decrypt(encrypted)
+	decrypted, err := DecryptMessageWithPassword(encrypted, testSymmetricKey)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
 }
 
-func TestBinaryMessageEncryptionWithSymmetricKey(t *testing.T) {
+func TestBinaryMessageEncryptionWithPassword(t *testing.T) {
 	binData, _ := base64.StdEncoding.DecodeString("ExXmnSiQ2QCey20YLH6qlLhkY3xnIBC1AwlIXwK/HvY=")
 	var message = NewPlainMessage(binData)
 
 	// Encrypt data with password
-	encrypted, err := testSymmetricKey.Encrypt(message)
+	encrypted, err := EncryptMessageWithPassword(message, testSymmetricKey)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 	// Decrypt data with wrong password
-	_, err = testWrongSymmetricKey.Decrypt(encrypted)
+	_, err = DecryptMessageWithPassword(encrypted, []byte("Wrong password"))
 	assert.NotNil(t, err)
 
 	// Decrypt data with the good password
-	decrypted, err := testSymmetricKey.Decrypt(encrypted)
+	decrypted, err := DecryptMessageWithPassword(encrypted, testSymmetricKey)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}

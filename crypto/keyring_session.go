@@ -4,29 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
-
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-// RandomToken generated a random token of the same size of the keysize of the default cipher.
-func RandomToken() ([]byte, error) {
-	config := &packet.Config{DefaultCipher: packet.CipherAES256}
-	return RandomTokenSize(config.DefaultCipher.KeySize())
-}
-
-// RandomTokenSize generates a random token with the specified key size
-func RandomTokenSize(size int) ([]byte, error) {
-	config := &packet.Config{DefaultCipher: packet.CipherAES256}
-	symKey := make([]byte, size)
-	if _, err := io.ReadFull(config.Random(), symKey); err != nil {
-		return nil, err
-	}
-	return symKey, nil
-}
-
 // DecryptSessionKey returns the decrypted session key from a binary encrypted session key packet.
-func (keyRing *KeyRing) DecryptSessionKey(keyPacket []byte) (*SymmetricKey, error) {
+func (keyRing *KeyRing) DecryptSessionKey(keyPacket []byte) (*SessionKey, error) {
 	keyReader := bytes.NewReader(keyPacket)
 	packets := packet.NewReader(keyReader)
 
@@ -62,7 +44,7 @@ func (keyRing *KeyRing) DecryptSessionKey(keyPacket []byte) (*SymmetricKey, erro
 
 // EncryptSessionKey encrypts the session key with the unarmored
 // publicKey and returns a binary public-key encrypted session key packet.
-func (keyRing *KeyRing) EncryptSessionKey(sessionSplit *SymmetricKey) ([]byte, error) {
+func (keyRing *KeyRing) EncryptSessionKey(sessionSplit *SessionKey) ([]byte, error) {
 	outbuf := &bytes.Buffer{}
 
 	cf := sessionSplit.GetCipherFunc()
