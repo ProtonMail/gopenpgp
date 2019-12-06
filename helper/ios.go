@@ -1,15 +1,16 @@
 package helper
 
 import (
-	"github.com/ProtonMail/gopenpgp/crypto"
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
 )
 
+// ExplicitVerifyMessage contains explicitely the signature verification error, for gomobile users
 type ExplicitVerifyMessage struct {
 	Message *crypto.PlainMessage
 	SignatureVerificationError *crypto.SignatureVerificationError
 }
 
-// DecryptVerifyMessageArmored decrypts an armored PGP message given a private key and its passphrase
+// DecryptExplicitVerify decrypts an armored PGP message given a private key and its passphrase
 // and verifies the embedded signature.
 // Returns the plain data or an error on signature verification failure.
 func DecryptExplicitVerify(

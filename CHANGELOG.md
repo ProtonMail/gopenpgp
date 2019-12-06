@@ -1,0 +1,496 @@
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.0.0] - 2019-12-??
+Since the open-sourcing of the library in May the API has been updated, listening to internal and
+external feedback, in order to have a flexible library, that can be used in a simple settings,
+with batteries included, or by more advanced users that might want to interact directly with
+the inner structure of the PGP messages and keys. 
+
+It allows direct interaction with keys and keyrings, passphrases, as well as session keys.
+It is designed with gomobile users in mind, so that they can use the full power of the library,
+without having to rely on a further wrapper.
+
+This version comes with some design improvements, in particular the introduction of keys
+### Security
+- Dropped the use of strings for secrets
+- New key checking functions
+- Clear memory after use, in an attempt to reduce leftover secrets in RAM.
+- Improved testing, in this and the underlying crypto library
+
+### Fixed
+- `KeyRing`s can now only be unencrypted, removing the problem of mixed encrypted/decrypted keyring, that caused keys not to be recognised.
+- Explicit key decryption and encryption.
+- Underlying crypto library update.
+- Underlying MIME library update.
+- Fixed ECC critical bugs.
+- Removed gopenpgp/pmcrypto object as it could create multiple globals. Methods are now static on the crypto object.
+
+### Removed
+- `Signature` struct
+- `Signature#KeyRing` function
+- `Signature#IsBy` function
+- `pmKeyObject` struct
+- `encodedLength` function, internal and and unused
+- `EncryptCore` is now internal.
+- `RandomTokenWith`, `RandomToken` now takes a size
+- In the `KeyRing` struct:
+    - `KeyRing#GetEntities`, entities are handled by the lib
+    - `KeyRing#GetSigningEntity`, has been made internal
+    - `KeyRing#Unlock`, the unlocking functionalities are on now on the key object
+    - `BuildKeyRingNoError`, `BuildKeyRingArmored`, `BuildKeyRing` use `NewKey` or `NewKeyFromArmored` and handle errors
+then join them into KeyRings. 
+    - `ReadKeyRing`, `ReadArmoredKeyRing`, use `NewKeyFromArmoredReader` or `NewKeyFromReader`.
+    - `UnmarshalJSON`, the interface to unmarshal JSON is not relevant to this library.
+
+
+### Added
+- `Key` struct, to store, import (unserialize) and export (serialize) keys.
+```gotemplate
+// Key contains a single private or public key
+type Key struct {
+	// PGP entities in this keyring.
+	entity *openpgp.Entity
+}
+
+// With the functions
+NewKeyFromArmoredReader(r io.Reader) (key *Key, err error)
+NewKeyFromReader(r io.Reader) (key *Key, err error)
+NewKey(binKeys []byte) (key *Key, err error)
+NewKeyFromArmored(armored string) (key *Key, err error)
+GenerateKey(name, email string, keyType string, bits int) (*Key, error)
+GenerateRSAKeyWithPrimes(name, email string, bits int, primeone, primetwo, primethree, primefour []byte) (*Key, error)
+(key *Key) Copy() (*Key, error)
+(key *Key) Lock(passphrase []byte) (*Key, error)
+(key *Key) Unlock(passphrase []byte) (*Key, error)
+(key *Key) Serialize() ([]byte, error)
+(key *Key) Armor() (string, error)
+(key *Key) GetArmoredPublicKey() (s string, err error)
+(key *Key) GetPublicKey() (b []byte, err error)
+(key *Key) IsExpired() bool
+(key *Key) IsPrivate() bool
+(key *Key) IsLocked() (bool, error)
+(key *Key) IsUnlocked() (bool, error)
+(key *Key) Check() (bool, error)
+(key *Key) PrintFingerprints()
+(key *Key) GetID() string
+(key *Key) GetFingerprint() string
+(key *Key) ClearPrivateParams() (ok bool)
+```
+
+- In the `KeyRing` object:
+```gotemplate
+NewKeyRing(key *Key) (*KeyRing, error)
+(keyRing *KeyRing) AddKey(key *Key) error
+(keyRing *KeyRing) GetKeys() []*Key
+(keyRing *KeyRing) GetKey(n int) (*Key, error)
+(keyRing *KeyRing) CountEntities() int
+(keyRing *KeyRing) CountDecryptionEntities() int
+(keyRing *KeyRing) GetIdentities() []*Identity
+(keyRing *KeyRing) FirstKey() (*KeyRing, error)
+(keyRing *KeyRing) Copy() (*KeyRing, error)
+(keyRing *KeyRing) ClearPrivateParams()
+```
+
+- `PlainMessage` struct, to store un-encrypted messages
+```gotemplate
+// PlainMessage stores a plain text / unencrypted message.
+type PlainMessage struct {
+	// The content of the message
+	Data []byte
+	// if the content is text or binary
+	TextType bool
+}
+
+// With the functions
+NewPlainMessage(data []byte) *PlainMessage
+NewPlainMessageFromString(text string) *PlainMessage
+(msg *PlainMessage) GetBinary()
+(msg *PlainMessage) GetString()
+(msg *PlainMessage) GetBase64()
+(msg *PlainMessage) NewReader()
+(msg *PlainMessage) IsText()
+(msg *PlainMessage) IsBinary()
+```
+
+- `PGPMessage` struct, to store encrypted PGP messages
+```gotemplate
+// PGPMessage stores a PGP-encrypted message.
+type PGPMessage struct {
+	// The content of the message
+	Data []byte
+}
+
+// With the functions
+NewPGPMessage(data []byte) *PGPMessage
+NewPGPMessageFromArmored(armored string) (*PGPMessage, error)
+(msg *PGPMessage) GetBinary() []byte 
+(msg *PGPMessage) NewReader() io.Reader
+(msg *PGPMessage) GetArmored() (string, error)
+(msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int) (outSplit *PGPSplitMessage, err error)
+```
+
+- `PGPSignature` struct, to store detached PGP signatures
+```gotemplate
+// PGPSignature stores a PGP-encoded detached signature.
+type PGPSignature struct {
+	// The content of the message
+	Data []byte
+}
+
+// With the functions
+NewPGPSignature(data []byte) *PGPSignature
+NewPGPSignatureFromArmored(armored string) (*PGPSignature, error) 
+(msg *PGPSignature) GetBinary() []byte
+(msg *PGPSignature) GetArmored() (string, error)
+```
+
+- `SignatureVerificationError` struct, to separate signature verification errors from decryption errors
+```gotemplate
+// SignatureVerificationError is returned from Decrypt and VerifyDetached functions when signature verification fails
+type SignatureVerificationError struct {
+	Status int
+	Message string
+}
+```
+
+### Changed
+- `IsKeyExpiredBin` has been renamed to `IsKeyExpired`
+- `IsKeyExpired` has been renamed to `IsArmoredKeyExpired`
+- `CheckKey` has been renamed to `PrintFingerprints`
+- `KeyRing#ArmoredPublicKeyString` has been renamed to `KeyRing#GetArmoredPublicKey`
+- `GetTimeUnix` was renamed to `GetUnixTime`
+
+- `EncryptedSplit` has been changed to `PGPSplitMessage`
+```gotemplate
+models.EncryptedSplit struct {
+	DataPacket []byte
+	KeyPacket  []byte
+	Algo       string
+}
+// Is now
+crypto.PGPSplitMessage struct {
+	DataPacket []byte
+	KeyPacket  []byte
+}
+
+// With the functions
+NewPGPSplitMessage(keyPacket []byte, dataPacket []byte) *PGPSplitMessage
+NewPGPSplitMessageFromArmored(encrypted string) (*PGPSplitMessage, error)
+(msg *PGPSplitMessage) GetBinaryDataPacket() []byte
+(msg *PGPSplitMessage) GetBinaryKeyPacket() []byte
+(msg *PGPSplitMessage) GetBinary() []byte
+(msg *PGPSplitMessage) GetArmored() (string, error)
+```
+
+- `DecryptSignedVerify` has been changed to `ExplicitVerifyMessage`
+```gotemplate
+models.DecryptSignedVerify struct {
+	//clear text
+	Plaintext string
+	//bitmask verify status : 0
+	Verify int
+	//error message if verify failed
+	Message string
+}
+// Is now
+// ExplicitVerifyMessage contains explicitely the signature verification error, for gomobile users
+type ExplicitVerifyMessage struct {
+	Message *crypto.PlainMessage
+	SignatureVerificationError *crypto.SignatureVerificationError
+}
+// With the new helper
+DecryptExplicitVerify (pgpMessage *crypto.PGPMessage, privateKeyRing, publicKeyRing *crypto.KeyRing, verifyTime int64) (*ExplicitVerifyMessage, error)
+```
+
+- `SignedString` has been changed to `ClearTextMessage`
+```gotemplate
+// SignedString wraps string with Signature
+type SignedString struct {
+	String string
+	Signed *Signature
+}
+// Is now
+// ClearTextMessage, split signed clear text message container
+type ClearTextMessage struct {
+	Data []byte
+	Signature []byte
+}
+
+// With the functions
+NewClearTextMessage(data []byte, signature []byte) *ClearTextMessage
+NewClearTextMessageFromArmored(signedMessage string) (*ClearTextMessage, error)
+(msg *ClearTextMessage) GetBinary() []byte
+(msg *ClearTextMessage) GetString() string
+(msg *ClearTextMessage) GetBinarySignature() []byte
+(msg *ClearTextMessage) GetArmored() (string, error)
+```
+- `SymmetricKey` has been renamed to `SessionKey`
+```gotemplate
+// SessionKey stores a decrypted session key.
+type SessionKey struct {
+	// The decrypted binary session key.
+	Key []byte
+	// The symmetric encryption algorithm used with this key.
+	Algo string
+}
+
+// With the functions
+NewSessionKeyFromToken(token []byte, algo string) *SessionKey
+GenerateSessionKey() (*SessionKey, error)
+GenerateSessionKeyAlgo(algo string) (sk *SessionKey, err error)
+(sk *SessionKey) GetCipherFunc() packet.CipherFunction 
+(sk *SessionKey) GetBase64Key() string
+(sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error)
+(sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error)
+(sk *SessionKey) Clear() (ok bool)
+```
+
+- `ReadClearSignedMessage` moved to crypto package and renamed to `NewClearTextMessageFromArmored`. Changed to return `ClearTextMessage`.
+```gotemplate
+ReadClearSignedMessage(signedMessage string) (string, error)
+// Is now
+NewClearTextMessageFromArmored(signedMessage string) (*ClearTextMessage, error)
+
+// In addition, were added:
+NewClearTextMessage(data []byte, signature []byte) *ClearTextMessage
+(msg *ClearTextMessage) GetBinary() []byte
+(msg *ClearTextMessage) GetString() string
+(msg *ClearTextMessage) GetBinarySignature() []byte
+(msg *ClearTextMessage) GetArmored() (string, error)
+
+// As helpers were added:
+SignCleartextMessageArmored(privateKey string, passphrase []byte, text string) (string, error)
+VerifyCleartextMessageArmored(publicKey, armored string, verifyTime int64) (string, error)
+SignCleartextMessage(keyRing *crypto.KeyRing, text string) (string, error)
+VerifyCleartextMessage(keyRing *crypto.KeyRing, armored string, verifyTime int64) (string, error)
+```
+
+- `EncryptAttachment`'s parameters are changed to messages.
+```gotemplate
+(pm *PmCrypto) EncryptAttachment(plainData []byte, fileName string, publicKey *KeyRing) (*models.EncryptedSplit, error)
+// Is now
+(keyRing *KeyRing) EncryptAttachment(message *PlainMessage, fileName string) (*PGPSplitMessage, error)
+
+// As a helper was added:
+EncryptSignAttachment(publicKey, privateKey string, passphrase []byte, fileName string, plainData []byte) (keyPacket, dataPacket, signature []byte, err error)
+```
+
+- `DecryptAttachment` has been moved to KeyRing struct (like `EncryptAttachment`)
+```gotemplate
+(pm *PmCrypto) DecryptAttachment(keyPacket []byte, dataPacket []byte, kr *KeyRing, passphrase string) ([]byte, error)
+// Is now
+(keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*PlainMessage, error)
+
+// As a helper was added:
+DecryptVerifyAttachment(publicKey, privateKey string, passphrase, keyPacket, dataPacket []byte, armoredSignature string) (plainData []byte, err error)
+```
+
+- `EncryptAttachmentLowMemory` was renamed to `NewLowMemoryAttachmentProcessor`.
+```gotemplate
+(pm *PmCrypto) EncryptAttachmentLowMemory(estimatedSize int, fileName string, publicKey *KeyRing) (*AttachmentProcessor, error)
+// Is now
+(keyRing *KeyRing) NewLowMemoryAttachmentProcessor(estimatedSize int, fileName string) (*AttachmentProcessor, error)
+```
+
+- `SplitArmor` was renamed to `NewPGPSplitMessageFromArmored` and the model changed.
+```gotemplate
+SplitArmor(encrypted string) (*models.EncryptedSplit, error)
+// Is now
+NewPGPSplitMessageFromArmored(encrypted string) (*PGPSplitMessage, error)
+```
+
+- `DecryptAttKey` was renamed to `DecryptSessionKey` and the parameter keypacket changed to `[]byte` as it's binary, not armored.
+```gotemplate
+DecryptAttKey(kr *KeyRing, keyPacket string) (key *SymmetricKey, err error):
+// Is now
+(keyRing *KeyRing) DecryptSessionKey(keyPacket []byte) (*SessionKey, error)
+```
+
+- `SetKey` has been renamed to `EncryptSessionKey`, and the keypacket return value changed to `[]byte`.
+```gotemplate
+SetKey(kr *KeyRing, symKey *SymmetricKey) (packets string, err error):
+// Is now
+(keyRing *KeyRing) EncryptSessionKey(sessionSplit *SessionKey) ([]byte, error)
+```
+
+- `SeparateKeyAndData` has been split in two different function, as it did not only separate the data, but when provided a KeyRing decrypted the session key too.
+```gotemplate
+SeparateKeyAndData(kr *KeyRing, r io.Reader, estimatedLength int, garbageCollector int) (outSplit *models.EncryptedSplit, err error):
+
+// Is now the conjunction of the following function:
+// To separate key and data
+(msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int) (outSplit *PGPSplitMessage, err error)
+// To decrypt the SessionKey
+(keyRing *KeyRing) DecryptSessionKey(keyPacket []byte) (*SessionKey, error)
+```
+
+- `EncryptSymmetric` has been changed, now the procedure is split in two parts: `Encrypt` and `SeparateKeyAndData`
+```gotemplate
+(kr *KeyRing) EncryptSymmetric(textToEncrypt string, canonicalizeText bool) (outSplit *models.EncryptedSplit, err error):
+// Is now the conjunction of the following function:
+// To encrypt
+(keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error)
+// To separate key and data
+(msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int) (outSplit *PGPSplitMessage, err error)
+```
+
+- `GenerateKey`'s signature has been altered:
+  - It now returns a `Key` struct
+  - `userName` and `domain` are now joined in `email`, the `name` parameter was added (To emulate the old behaviour `name = email = userName + "@" + domain`).
+```gotemplate
+(pm *PmCrypto) GenerateKey(userName, domain, passphrase, keyType string, bits int) (string, error) :
+// Is now
+GenerateKey(name, email string, keyType string, bits int) (*Key, error)
+
+// As a helper was added:
+GenerateKey(name, email string, passphrase []byte, keyType string, bits int) (string, error) 
+```
+
+- `GenerateRSAKeyWithPrimes`'s signature has been altered:
+  - It now returns a `Key` struct
+  - `userName` and `domain` are now joined in `email`, the `name` parameter was added (To emulate the old behaviour `name = email = userName + "@" + domain`).
+```gotemplate
+(pm *PmCrypto) GenerateRSAKeyWithPrimes(userName, domain, passphrase, keyType string, bits int, prime1, prime2, prime3, prime4 []byte) (string, error):
+GenerateRSAKeyWithPrimes(name, email string, bits int, primeone, primetwo, primethree, primefour []byte,) (*Key, error)
+```
+
+- `Encrypt`, `EncryptArmored`, `EncryptString`, `EncryptMessage` functions have been changed to return and accept messages.
+```gotemplate
+(kr *KeyRing) Encrypt(w io.Writer, sign *KeyRing, filename string, canonicalizeText bool) (io.WriteCloser, error)
+// Is now
+(keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error)
+
+// As a helpers were added:
+EncryptMessageArmored(publicKey, plaintext string) (ciphertext string, err error)
+EncryptSignMessageArmored(publicKey, privateKey string, passphrase []byte, plaintext string) (ciphertext string, err error) {
+```
+
+- `Decrypt`, `DecryptArmored`, `DecryptString`, `DecryptMessage`, `DecryptMessageVerify`, and `DecryptMessageStringKey` functions have been changed to return and accept messages (Same as Encrypt*).
+If signature verification fails they will return a SignatureVerificationError.
+```gotemplate
+(kr *KeyRing) DecryptString(encrypted string) (SignedString, error)
+// Is now
+(keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, error)
+
+// As a helpers were added:
+DecryptMessageArmored(privateKey string, passphrase []byte, ciphertext string) (plaintext string, err error)
+DecryptVerifyMessageArmored(publicKey, privateKey string, passphrase []byte, ciphertext string) (plaintext string, err error)
+DecryptExplicitVerify(pgpMessage *crypto.PGPMessage, privateKeyRing, publicKeyRing *crypto.KeyRing, verifyTime int64) (*ExplicitVerifyMessage, error) {
+```
+- `DecryptStringIfNeeded` has been replaced with `IsPGPMessage` + `Decrypt*`.
+```gotemplate
+(kr *KeyRing) DecryptStringIfNeeded(data string) (decrypted string, err error)
+// Is now the conjunction of the following function:
+// To check if the data is a PGP message
+IsPGPMessage(data string) bool
+// To decrypt
+(keyRing *KeyRing) Decrypt(message *PGPMessage, verifyKey *KeyRing, verifyTime int64) (*PlainMessage, error)
+```
+
+- `SignString` and `DetachedSign` have been replaced by signing methods.
+```gotemplate
+(kr *KeyRing) SignString(message string, canonicalizeText bool) (signed string, err error)
+(kr *KeyRing) DetachedSign(w io.Writer, toSign io.Reader, canonicalizeText bool, armored bool)
+// Are now
+(keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, error)
+```
+
+- `VerifyString` has been altered in the same way as as signing. 
+Returns SignatureVerificationError if the verification fails.
+```gotemplate
+(kr *KeyRing) VerifyString(message, signature string, sign *KeyRing) (err error)
+// Is now
+(keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) error
+```
+
+- `EncryptMessageWithPassword` uses AES-256 instead of AES-128, and has a new signature.
+```gotemplate
+(pm *PmCrypto) EncryptMessageWithPassword(plaintext string, password string) (string, error)
+// Is now
+EncryptMessageWithPassword(message *PlainMessage, password []byte) (*PGPMessage, error)
+
+// As a helper was added:
+EncryptMessageWithPassword(password []byte, plaintext string) (ciphertext string, err error)
+```
+
+- `DecryptMessageWithPassword` accepts all symmetric algorithms known to the lib, and has a new signature
+```gotemplate
+(pm *PmCrypto) DecryptMessageWithPassword(encrypted string, password string) (string, error)
+// Is now
+DecryptMessageWithPassword(message *PGPMessage, password []byte) (*PlainMessage, error)
+
+// As a helper was added:
+DecryptMessageWithPassword(password []byte, ciphertext string) (plaintext string, err error)
+```
+
+- `DecryptMIMEMessage` was moved to `KeyRing`, and the parameters transformed to messages
+```gotemplate
+(pm *PmCrypto) DecryptMIMEMessage(encryptedText string, verifierKey *KeyRing, privateKeyRing *KeyRing, passphrase string, callbacks MIMECallbacks, verifyTime int64):
+// Is now
+(keyRing *KeyRing) DecryptMIMEMessage(message *PGPMessage, verifyKey *KeyRing, callbacks MIMECallbacks, verifyTime int64)
+```
+
+- `RandomToken` now takes a size
+```gotemplate
+(pm *PmCrypto) RandomToken() ([]byte, error)
+// Is now
+RandomToken(size int) ([]byte, error)
+```
+
+- `GetSessionFromKeyPacket` was changed to `DecryptSessionKey`.
+```gotemplate
+(pm *PmCrypto) GetSessionFromKeyPacket(keyPackage []byte, privateKey *KeyRing, passphrase string) (*SymmetricKey, error)
+// Is now
+(keyRing *KeyRing) DecryptSessionKey(keyPacket []byte) (*SessionKey, error)
+```
+
+- `KeyPacketWithPublicKey` and `KeyPacketWithPublicKeyBin` have been merged to `EncryptSessionKey`.
+```gotemplate
+(pm *PmCrypto) KeyPacketWithPublicKey(sessionSplit *SymmetricKey, publicKey string) ([]byte, error)
+(pm *PmCrypto) KeyPacketWithPublicKeyBin(sessionSplit *SymmetricKey, publicKey []byte) ([]byte, error)
+(keyRing *KeyRing) EncryptSessionKey(sk *SessionKey) ([]byte, error)
+```
+
+- `GetSessionFromSymmetricPacket` was renamed to `DecryptSessionKeyWithPassword`.
+```gotemplate
+(pm *PmCrypto) GetSessionFromSymmetricPacket(keyPackage []byte, password string) (*SymmetricKey, error)
+// Is now
+DecryptSessionKeyWithPassword(keyPacket, password []byte) (*SessionKey, error)
+```
+
+- `SymmetricKeyPacketWithPassword` has been renamed to `EncryptSessionKeyWithPassword`
+```gotemplate
+(pm *PmCrypto) SymmetricKeyPacketWithPassword(sessionSplit *SymmetricKey, password string) ([]byte, error):
+EncryptSessionKeyWithPassword(sk *SessionKey, password []byte]) ([]byte, error)
+```
+
+- `SignTextDetached` and `SignBinDetached` have been changed to `SignDetached`
+```gotemplate
+(pm *PmCrypto) SignTextDetached(plaintext string, privateKey *KeyRing, passphrase string, trim bool) (string, error)
+(pm *PmCrypto) SignBinDetached(plainData []byte, privateKey *KeyRing, passphrase string) (string, error)
+// Are now
+(keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, error)
+
+// As helpers were added:
+SignCleartextMessage(keyRing *crypto.KeyRing, text string) (string, error) 
+SignCleartextMessageArmored(privateKey string, passphrase []byte, text string) (string, error)
+```
+
+- `VerifyTextSignDetachedBinKey` and `VerifyBinSignDetachedBinKey` have been changed to `Verify`.
+```gotemplate
+(pm *PmCrypto) VerifyTextSignDetachedBinKey(signature string, plaintext string, publicKey *KeyRing, verifyTime int64) (bool, error):
+(pm *PmCrypto) VerifyBinSignDetachedBinKey(signature string, plainData []byte, publicKey *KeyRing, verifyTime int64) (bool, error)
+// Are now
+(keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) error
+
+// As helpers were added:
+VerifyCleartextMessage(keyRing *crypto.KeyRing, armored string, verifyTime int64) (string, error)
+VerifyCleartextMessageArmored(publicKey, armored string, verifyTime int64) (string, error)
+```
+
+## [1.0.0] - 2019-05-15
+Initial release, opensourcing of the internal library `PMCrypto`, and subsequent renaming to `gopenpgp`

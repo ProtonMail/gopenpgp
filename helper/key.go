@@ -1,7 +1,7 @@
 package helper
 
 import (
-	"github.com/ProtonMail/gopenpgp/crypto"
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
 )
 
 // UpdatePrivateKeyPassphrase decrypts the given armored privateKey with oldPassphrase,
@@ -25,7 +25,7 @@ func UpdatePrivateKeyPassphrase(
 		return "", err
 	}
 
-	// TODO: delete keys in memory
+	unlocked.ClearPrivateParams()
 	return locked.Armor()
 }
 
@@ -43,6 +43,6 @@ func GenerateKey(name, email string, passphrase []byte, keyType string, bits int
 		return "", err
 	}
 
-	// TODO: delete keys in memory
+	key.ClearPrivateParams()
 	return locked.Armor()
 }

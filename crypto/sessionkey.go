@@ -8,7 +8,7 @@ import (
 	"golang.org/x/crypto/openpgp"
 	"io"
 
-	"github.com/ProtonMail/gopenpgp/constants"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
 
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -46,8 +46,8 @@ func (sk *SessionKey) GetBase64Key() string {
 	return base64.StdEncoding.EncodeToString(sk.Key)
 }
 
-// RandomTokenSize generates a random token with the specified key size
-func RandomTokenSize(size int) ([]byte, error) {
+// RandomToken generates a random token with the specified key size
+func RandomToken(size int) ([]byte, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256}
 	symKey := make([]byte, size)
 	if _, err := io.ReadFull(config.Random(), symKey); err != nil {
@@ -62,7 +62,7 @@ func GenerateSessionKeyAlgo(algo string) (sk *SessionKey, err error) {
 	if !ok {
 		return nil, errors.New("gopenpgp: unknown symmetric key generation algorithm")
 	}
-	r, err := RandomTokenSize(cf.KeySize())
+	r, err := RandomToken(cf.KeySize())
 	if err != nil {
 		return nil, err
 	}
@@ -79,14 +79,14 @@ func GenerateSessionKey() (*SessionKey, error) {
 	return GenerateSessionKeyAlgo(constants.AES256)
 }
 
-func NewSymmetricKeyFromToken(passphrase, algo string) *SessionKey {
+func NewSessionKeyFromToken(token []byte, algo string) *SessionKey {
 	return &SessionKey{
-		Key:  []byte(passphrase),
+		Key:  token,
 		Algo: algo,
 	}
 }
 
-func newSymmetricKeyFromEncrypted(ek *packet.EncryptedKey) (*SessionKey, error) {
+func newSessionKeyFromEncrypted(ek *packet.EncryptedKey) (*SessionKey, error) {
 	var algo string
 	for k, v := range symKeyAlgos {
 		if v == ek.CipherFunc {

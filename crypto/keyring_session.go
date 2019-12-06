@@ -39,15 +39,15 @@ func (keyRing *KeyRing) DecryptSessionKey(keyPacket []byte) (*SessionKey, error)
 		return nil, errors.New("gopenpgp: unable to decrypt session key")
 	}
 
-	return newSymmetricKeyFromEncrypted(ek)
+	return newSessionKeyFromEncrypted(ek)
 }
 
 // EncryptSessionKey encrypts the session key with the unarmored
 // publicKey and returns a binary public-key encrypted session key packet.
-func (keyRing *KeyRing) EncryptSessionKey(sessionSplit *SessionKey) ([]byte, error) {
+func (keyRing *KeyRing) EncryptSessionKey(sk *SessionKey) ([]byte, error) {
 	outbuf := &bytes.Buffer{}
 
-	cf := sessionSplit.GetCipherFunc()
+	cf := sk.GetCipherFunc()
 
 	var pub *packet.PublicKey
 	for _, e := range keyRing.entities {
@@ -60,7 +60,7 @@ func (keyRing *KeyRing) EncryptSessionKey(sessionSplit *SessionKey) ([]byte, err
 		return nil, errors.New("cannot set key: no public key available")
 	}
 
-	if err := packet.SerializeEncryptedKey(outbuf, pub, cf, sessionSplit.Key, nil); err != nil {
+	if err := packet.SerializeEncryptedKey(outbuf, pub, cf, sk.Key, nil); err != nil {
 		err = fmt.Errorf("gopenpgp: cannot set key: %v", err)
 		return nil, err
 	}

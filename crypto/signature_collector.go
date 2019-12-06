@@ -85,7 +85,8 @@ func (sc *SignatureCollector) Accept(
 			if err != nil {
 				return err
 			}
-			buffer, err = gomime.DecodeCharset(buffer, params)
+			mediaType, _, _  := mime.ParseMediaType(header.Get("Content-Type"))
+			buffer, err = gomime.DecodeCharset(buffer, mediaType, params)
 			if err != nil {
 				return err
 			}

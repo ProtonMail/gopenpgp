@@ -39,7 +39,7 @@ func DecryptMessageWithPassword(message *PGPMessage, password []byte) (*PlainMes
 
 // DecryptSessionKeyWithPassword decrypts the binary symmetrically encrypted
 // session key packet and returns the session key.
-func DecryptSessionKeyWithPassword(keyPacket []byte, password string) (*SessionKey, error) {
+func DecryptSessionKeyWithPassword(keyPacket, password []byte) (*SessionKey, error) {
 	keyReader := bytes.NewReader(keyPacket)
 	packets := packet.NewReader(keyReader)
 
@@ -78,7 +78,7 @@ func DecryptSessionKeyWithPassword(keyPacket []byte, password string) (*SessionK
 
 // EncryptSessionKeyWithPassword encrypts the session key with the password and
 // returns a binary symmetrically encrypted session key packet.
-func EncryptSessionKeyWithPassword(sk *SessionKey, password string) ([]byte, error) {
+func EncryptSessionKeyWithPassword(sk *SessionKey, password []byte) ([]byte, error) {
 	outbuf := &bytes.Buffer{}
 
 	cf := sk.GetCipherFunc()

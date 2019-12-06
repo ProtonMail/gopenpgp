@@ -1,9 +1,9 @@
-module github.com/ProtonMail/gopenpgp
+module github.com/ProtonMail/gopenpgp/v2
 
 go 1.12
 
 require (
-	github.com/ProtonMail/go-mime v0.0.0-20190521135552-09454e3dbe72
+	github.com/ProtonMail/go-mime v0.0.0-20190923161245-9b5a4261663a
 	github.com/stretchr/testify v1.2.2
 	golang.org/x/crypto v0.0.0-20190513172903-22d7a77e9e5f
 )

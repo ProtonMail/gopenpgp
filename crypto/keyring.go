@@ -67,8 +67,8 @@ func (keyRing *KeyRing) GetKey(n int) (*Key, error) {
 	return &Key{keyRing.entities[n] }, nil
 }
 
-// GetSigningEntity returns first private unlocked signing entity from keyring.
-func (keyRing *KeyRing) GetSigningEntity() (*openpgp.Entity, error) {
+// getSigningEntity returns first private unlocked signing entity from keyring.
+func (keyRing *KeyRing) getSigningEntity() (*openpgp.Entity, error) {
 	var signEntity *openpgp.Entity
 
 	for _, e := range keyRing.entities {

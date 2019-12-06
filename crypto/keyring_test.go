@@ -32,7 +32,7 @@ var testIdentity = &Identity{
 func initKeyRings() {
 	var err error
 
-	testSymmetricKey, err = RandomTokenSize(32)
+	testSymmetricKey, err = RandomToken(32)
 	if err != nil {
 		panic("Expected no error while generating random token, got:" + err.Error())
 	}

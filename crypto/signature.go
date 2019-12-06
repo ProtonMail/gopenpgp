@@ -11,8 +11,8 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 	pgpErrors "golang.org/x/crypto/openpgp/errors"
 
-	"github.com/ProtonMail/gopenpgp/constants"
-	"github.com/ProtonMail/gopenpgp/internal"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
+	"github.com/ProtonMail/gopenpgp/v2/internal"
 )
 
 // SignatureVerificationError is returned from Decrypt and VerifyDetached functions when signature verification fails

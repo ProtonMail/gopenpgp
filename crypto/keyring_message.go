@@ -39,7 +39,7 @@ func (keyRing *KeyRing) Decrypt(
 
 // SignDetached generates and returns a PGPSignature for a given PlainMessage
 func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, error) {
-	signEntity, err := keyRing.GetSigningEntity()
+	signEntity, err := keyRing.getSigningEntity()
 	if err != nil {
 		return nil, err
 	}
@@ -56,9 +56,7 @@ func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, erro
 
 // VerifyDetached verifies a PlainMessage with embedded a PGPSignature
 // and returns a SignatureVerificationError if fails
-func (keyRing *KeyRing) VerifyDetached(
-	message *PlainMessage, signature *PGPSignature, verifyTime int64,
-) error {
+func (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) error {
 	return verifySignature(
 		keyRing.entities,
 		message.NewReader(),
@@ -78,7 +76,7 @@ func asymmetricEncrypt(data []byte, publicKey *KeyRing, privateKey *KeyRing, isB
 
 	if privateKey != nil && len(privateKey.entities) > 0 {
 		var err error
-		signEntity, err = privateKey.GetSigningEntity()
+		signEntity, err = privateKey.getSigningEntity()
 		if err != nil {
 			return nil, err
 		}

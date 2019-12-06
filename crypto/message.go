@@ -10,9 +10,9 @@ import (
 	"regexp"
 	"runtime"
 
-	"github.com/ProtonMail/gopenpgp/armor"
-	"github.com/ProtonMail/gopenpgp/constants"
-	"github.com/ProtonMail/gopenpgp/internal"
+	"github.com/ProtonMail/gopenpgp/v2/armor"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
+	"github.com/ProtonMail/gopenpgp/v2/internal"
 
 	"golang.org/x/crypto/openpgp/clearsign"
 	"golang.org/x/crypto/openpgp/packet"
@@ -231,6 +231,10 @@ func (msg *PGPSplitMessage) GetBinary() []byte {
 // GetArmored returns the armored message as a string, with joined data and key packets
 func (msg *PGPSplitMessage) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.GetBinary(), constants.PGPMessageHeader)
+}
+
+func (msg *PGPSplitMessage) GetPGPMessage() *PGPMessage {
+	return NewPGPMessage(append(msg.KeyPacket , msg.DataPacket...))
 }
 
 // SeparateKeyAndData returns the first keypacket and the (hopefully unique) dataPacket (not verified)

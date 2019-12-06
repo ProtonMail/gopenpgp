@@ -3,8 +3,8 @@ package helper
 import (
 	"strings"
 
-	"github.com/ProtonMail/gopenpgp/crypto"
-	"github.com/ProtonMail/gopenpgp/internal"
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
+	"github.com/ProtonMail/gopenpgp/v2/internal"
 )
 
 // SignCleartextMessageArmored signs text given a private key and its passphrase, canonicalizes and trims the newlines,

@@ -11,14 +11,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ProtonMail/gopenpgp/armor"
-	"github.com/ProtonMail/gopenpgp/constants"
+	"github.com/ProtonMail/gopenpgp/v2/armor"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
 
 	"golang.org/x/crypto/openpgp"
 	xarmor "golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/packet"
 )
 
+// Key contains a single private or public key
 type Key struct {
 	// PGP entities in this keyring.
 	entity *openpgp.Entity

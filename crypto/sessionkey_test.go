@@ -3,7 +3,7 @@ package crypto
 import (
 	"testing"
 
-	"github.com/ProtonMail/gopenpgp/constants"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +18,7 @@ func init()  {
 }
 
 func TestRandomToken(t *testing.T) {
-	token40, err := RandomTokenSize(40)
+	token40, err := RandomToken(40)
 	if err != nil {
 		t.Fatal("Expected no error while generating random token, got:", err)
 	}
@@ -45,14 +45,14 @@ func TestAsymmetricKeyPacket(t *testing.T) {
 }
 
 func TestSymmetricKeyPacket(t *testing.T) {
-	password := "I like encryption"
+	password := []byte("I like encryption")
 
 	keyPacket, err := EncryptSessionKeyWithPassword(testSessionKey, password)
 	if err != nil {
 		t.Fatal("Expected no error while generating key packet, got:", err)
 	}
 
-	_, err = DecryptSessionKeyWithPassword(keyPacket, "Wrong password")
+	_, err = DecryptSessionKeyWithPassword(keyPacket, []byte("Wrong password"))
 	assert.EqualError(t, err, "gopenpgp: password incorrect")
 
 	outputSymmetricKey, err := DecryptSessionKeyWithPassword(keyPacket, password)
@@ -66,12 +66,12 @@ func TestSymmetricKeyPacket(t *testing.T) {
 func TestDataPacketEncryption(t *testing.T) {
 	var message = NewPlainMessageFromString("The secret code is... 1, 2, 3, 4, 5")
 
-	// Encrypt data with password
+	// Encrypt data with session key
 	dataPacket, err := testSessionKey.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
-	// Decrypt data with wrong password
+	// Decrypt data with wrong session key
 	wrongKey := SessionKey{
 		Key:  []byte("wrong pass"),
 		Algo: constants.AES256,
@@ -79,7 +79,7 @@ func TestDataPacketEncryption(t *testing.T) {
 	_, err = wrongKey.Decrypt(dataPacket)
 	assert.NotNil(t, err)
 
-	// Decrypt data with the good password
+	// Decrypt data with the good session key
 	decrypted, err := testSessionKey.Decrypt(dataPacket)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)

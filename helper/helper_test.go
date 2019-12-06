@@ -3,7 +3,7 @@ package helper
 import (
 	"testing"
 
-	"github.com/ProtonMail/gopenpgp/crypto"
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/stretchr/testify/assert"
 )
 

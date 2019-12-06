@@ -3,13 +3,11 @@ package helper
 import (
 	"errors"
 
-	"github.com/ProtonMail/gopenpgp/crypto"
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
 )
 
 // EncryptMessageWithPassword encrypts a string with a passphrase using AES256
-func EncryptMessageWithPassword(
-	password []byte, plaintext string,
-) (ciphertext string, err error) {
+func EncryptMessageWithPassword(password []byte, plaintext string) (ciphertext string, err error) {
 	var pgpMessage *crypto.PGPMessage
 
 	var message = crypto.NewPlainMessageFromString(plaintext)
