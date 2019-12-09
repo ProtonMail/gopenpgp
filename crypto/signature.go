@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/packet"
 	pgpErrors "golang.org/x/crypto/openpgp/errors"
+	"golang.org/x/crypto/openpgp/packet"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/ProtonMail/gopenpgp/v2/internal"

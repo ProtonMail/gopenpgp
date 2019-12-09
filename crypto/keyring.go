@@ -2,7 +2,7 @@ package crypto
 
 import (
 	"bytes"
-	"errors"
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 	"time"
@@ -197,14 +197,14 @@ func (keyRing *KeyRing) Copy() (*KeyRing, error) {
 		}
 
 		if err != nil {
-			return nil, errors.New("gopenpgp: unable to copy key: error in serializing entity: " + err.Error())
+			return nil, errors.Wrap(err, "gopenpgp: unable to copy key: error in serializing entity")
 		}
 
 		bt := buffer.Bytes()
 		entities[id], err = openpgp.ReadEntity(packet.NewReader(bytes.NewReader(bt)))
 
 		if err != nil {
-			return nil, errors.New("gopenpgp: unable to copy key: error in reading entity: " + err.Error())
+			return nil, errors.Wrap(err, "gopenpgp: unable to copy key: error in reading entity")
 		}
 	}
 	newKeyRing.entities = entities

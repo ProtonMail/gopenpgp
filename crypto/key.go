@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"math/big"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/ProtonMail/gopenpgp/v2/armor"
 	"github.com/ProtonMail/gopenpgp/v2/constants"
+	"github.com/pkg/errors"
 
 	"golang.org/x/crypto/openpgp"
 	xarmor "golang.org/x/crypto/openpgp/armor"
@@ -105,13 +105,13 @@ func (key *Key) Lock(passphrase []byte) (*Key, error) {
 
 	err = lockedKey.entity.PrivateKey.Encrypt(passphrase)
 	if err != nil {
-		return nil, errors.New("gopenpgp: error in locking key: " + err.Error())
+		return nil, errors.Wrap(err, "gopenpgp: error in locking key")
 	}
 
 	for _, sub := range lockedKey.entity.Subkeys {
 		if sub.PrivateKey != nil {
 			if err := sub.PrivateKey.Encrypt(passphrase); err != nil {
-				return nil, errors.New("gopenpgp: error in locking key: " + err.Error())
+				return nil, errors.Wrap(err, "gopenpgp: error in locking key")
 			}
 		}
 	}
@@ -145,13 +145,13 @@ func (key *Key) Unlock(passphrase []byte) (*Key, error) {
 
 	err = unlockedKey.entity.PrivateKey.Decrypt(passphrase)
 	if err != nil {
-		return nil, errors.New("gopenpgp: error in unlocking key: " + err.Error())
+		return nil, errors.Wrap(err, "gopenpgp: error in unlocking key")
 	}
 
 	for _, sub := range unlockedKey.entity.Subkeys {
 		if sub.PrivateKey != nil {
 			if err := sub.PrivateKey.Decrypt(passphrase); err != nil {
-				return nil, errors.New("gopenpgp: error in unlocking key: " + err.Error())
+				return nil, errors.Wrap(err, "gopenpgp: error in unlocking key")
 			}
 		}
 	}
@@ -234,7 +234,7 @@ func (key *Key) IsPrivate() bool {
 // IsLocked checks if a private key is locked
 func (key *Key) IsLocked() (bool, error) {
 	if key.entity.PrivateKey == nil {
-		return true, errors.New("gopenpgp: a public key can not be locked")
+		return true, errors.New("gopenpgp: a public key cannot be locked")
 	}
 
 	for _, sub := range key.entity.Subkeys {
@@ -249,7 +249,7 @@ func (key *Key) IsLocked() (bool, error) {
 // IsUnlocked checks if a private key is unlocked
 func (key *Key) IsUnlocked() (bool, error) {
 	if key.entity.PrivateKey == nil {
-		return true, errors.New("gopenpgp: a public key can not be unlocked")
+		return true, errors.New("gopenpgp: a public key cannot be unlocked")
 	}
 
 	for _, sub := range key.entity.Subkeys {

@@ -33,14 +33,14 @@ func (key *Key) clearPrivateWithSubkeys() (num int) {
 	if key.entity.PrivateKey != nil {
 		err := clearPrivateKey(key.entity.PrivateKey.PrivateKey)
 		if err == nil {
-			num += 1
+			num++
 		}
 	}
 	for k := range key.entity.Subkeys {
 		if key.entity.Subkeys[k].PrivateKey != nil {
 			err := clearPrivateKey(key.entity.Subkeys[k].PrivateKey.PrivateKey)
 			if err == nil {
-				num += 1
+				num++
 			}
 		}
 	}

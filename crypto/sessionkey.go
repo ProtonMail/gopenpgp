@@ -3,13 +3,13 @@ package crypto
 import (
 	"bytes"
 	"encoding/base64"
-	"errors"
 	"fmt"
-	"golang.org/x/crypto/openpgp"
 	"io"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
+	"github.com/pkg/errors"
 
+	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
 
@@ -74,7 +74,7 @@ func GenerateSessionKeyAlgo(algo string) (sk *SessionKey, err error) {
 	return sk, nil
 }
 
-// RandomToken generated a random key with the default cipher
+// GenerateSessionKey generates a random key for the default cipher
 func GenerateSessionKey() (*SessionKey, error) {
 	return GenerateSessionKeyAlgo(constants.AES256)
 }
@@ -119,19 +119,19 @@ func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
 
 	encryptWriter, err := packet.SerializeSymmetricallyEncrypted(&encBuf, config.Cipher(), sk.Key, config)
 	if err != nil {
-		return nil, errors.New("gopenpgp: unable to encrypt: " + err.Error())
+		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt")
 	}
 
 	if algo := config.Compression(); algo != packet.CompressionNone {
 		encryptWriter, err = packet.SerializeCompressed(encryptWriter, algo, config.CompressionConfig)
 		if err != nil {
-			return nil, errors.New("gopenpgp: unable to encrypt: " + err.Error())
+			return nil, errors.Wrap(err, "gopenpgp: unable to encrypt")
 		}
 	}
 
 	encryptWriter, err = packet.SerializeLiteral(encryptWriter, false, "", 0)
 	if err != nil {
-		return nil, errors.New("gopenpgp: unable to serialize: " + err.Error())
+		return nil, errors.Wrap(err, "gopenpgp: unable to serialize")
 	}
 
 	_, err = encryptWriter.Write(message.GetBinary())
@@ -159,7 +159,7 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 	packets := packet.NewReader(messageReader)
 	p, err := packets.Next()
 	if err != nil {
-		return nil, errors.New("gopenpgp: unable to read symmetric packet: " + err.Error())
+		return nil, errors.Wrap(err, "gopenpgp: unable to read symmetric packet")
 	}
 
 	// Decrypt data packet
@@ -167,7 +167,7 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 		case *packet.SymmetricallyEncrypted:
 			decrypted, err = p.Decrypt(sk.GetCipherFunc(), sk.Key)
 			if err != nil {
-				return nil, errors.New("gopenpgp: unable to decrypt symmetric packet: " + err.Error())
+				return nil, errors.Wrap(err, "gopenpgp: unable to decrypt symmetric packet")
 			}
 
 		default:
@@ -175,7 +175,7 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 	}
 	_, err = decBuf.ReadFrom(decrypted)
 	if err != nil {
-		return nil, errors.New("gopenpgp: unable to decrypt symmetric packet: " + err.Error())
+		return nil, errors.Wrap(err, "gopenpgp: unable to decrypt symmetric packet")
 	}
 
 	config := &packet.Config{
@@ -186,7 +186,7 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 	keyring := openpgp.EntityList{} // Ignore signatures, since we have no private key
 	md, err := openpgp.ReadMessage(&decBuf, keyring, nil, config)
 	if err != nil {
-		return nil, errors.New("gopenpgp: unable to decode symmetric packet: " + err.Error())
+		return nil, errors.Wrap(err, "gopenpgp: unable to decode symmetric packet")
 	}
 
 	messageBuf := new(bytes.Buffer)
