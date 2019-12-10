@@ -1,8 +1,8 @@
 package crypto
 
 import (
-	"time"
 	"errors"
+	"time"
 )
 
 // UpdateTime updates cached time
@@ -31,7 +31,7 @@ func getNow() time.Time {
 		return time.Now()
 	}
 
-	return time.Unix(pgp.latestServerTime + extrapolate, 0)
+	return time.Unix(pgp.latestServerTime+extrapolate, 0)
 }
 
 func getDiff() (int64, error) {
@@ -40,12 +40,10 @@ func getDiff() (int64, error) {
 		return int64(time.Since(pgp.latestClientTime).Seconds()), nil
 	}
 
-	return 0, errors.New("Latest server time not available")
+	return 0, errors.New("gopenpgp: latest server time not available")
 }
 
 // getTimeGenerator Returns a time generator function
 func getTimeGenerator() func() time.Time {
-	return func() time.Time {
-		return getNow()
-	}
+	return getNow
 }

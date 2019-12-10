@@ -2,14 +2,15 @@ package crypto
 
 import (
 	"encoding/base64"
-	"github.com/stretchr/testify/assert"
-	"golang.org/x/crypto/openpgp/armor"
 	"io/ioutil"
 	"regexp"
 	"strings"
 	"testing"
 
+	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/rsa"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const keyTestName = "Max Mustermann"
@@ -18,10 +19,10 @@ const keyTestDomain = "max.mustermann@protonmail.ch"
 var keyTestPassphrase = []byte("I love GNU")
 
 var (
-	keyTestArmoredRSA 	string
-	keyTestArmoredEC 	string
-	keyTestRSA			*Key
-	keyTestEC			*Key
+	keyTestArmoredRSA string
+	keyTestArmoredEC  string
+	keyTestRSA        *Key
+	keyTestEC         *Key
 )
 
 func initGenerateKeys() {
@@ -180,8 +181,7 @@ func testLockUnlockKey(t *testing.T, armoredKey string, pass []byte) {
 	}
 }
 
-
-func ExamplePrintFingerprints() {
+func ExampleKey_PrintFingerprints() {
 	keyringKey, _ := NewKeyFromArmored(readTestFile("keyring_publicKey", false))
 	keyringKey.PrintFingerprints()
 	// Output:
@@ -227,7 +227,6 @@ func TestGenerateKeyWithPrimes(t *testing.T) {
 	assert.Exactly(t, prime2, pk.Primes[1].Bytes())
 }
 
-
 func TestCheckIntegrity(t *testing.T) {
 	isVerified, err := keyTestRSA.Check()
 	if err != nil {
@@ -271,7 +270,6 @@ func TestArmorPublicKey(t *testing.T) {
 
 	privateFingerprint := keyTestRSA.GetFingerprint()
 	publicFingerprint := decodedKey.GetFingerprint()
-
 
 	assert.Exactly(t, privateFingerprint, publicFingerprint)
 }

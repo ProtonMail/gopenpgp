@@ -1,3 +1,4 @@
+// helper contains several functions with a simple interface to extend usability and compatibility with gomobile
 package helper
 
 import (
@@ -11,7 +12,6 @@ func EncryptMessageWithPassword(password []byte, plaintext string) (ciphertext s
 	var pgpMessage *crypto.PGPMessage
 
 	var message = crypto.NewPlainMessageFromString(plaintext)
-
 
 	if pgpMessage, err = crypto.EncryptMessageWithPassword(message, password); err != nil {
 		return "", err

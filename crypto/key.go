@@ -111,7 +111,7 @@ func (key *Key) Lock(passphrase []byte) (*Key, error) {
 	for _, sub := range lockedKey.entity.Subkeys {
 		if sub.PrivateKey != nil {
 			if err := sub.PrivateKey.Encrypt(passphrase); err != nil {
-				return nil, errors.Wrap(err, "gopenpgp: error in locking key")
+				return nil, errors.Wrap(err, "gopenpgp: error in locking sub key")
 			}
 		}
 	}
@@ -264,7 +264,7 @@ func (key *Key) IsUnlocked() (bool, error) {
 // Check verifies if the public keys match the private key parameters by signing and verifying
 func (key *Key) Check() (bool, error) {
 	var err error
-	testSign := bytes.Repeat([]byte{ 0x01 }, 64)
+	testSign := bytes.Repeat([]byte{0x01}, 64)
 	testReader := bytes.NewReader(testSign)
 
 	if !key.IsPrivate() {
@@ -278,7 +278,7 @@ func (key *Key) Check() (bool, error) {
 	}
 
 	testReader = bytes.NewReader(testSign)
-	signer, err := openpgp.CheckDetachedSignature(openpgp.EntityList{ key.entity }, testReader, &signBuf, nil)
+	signer, err := openpgp.CheckDetachedSignature(openpgp.EntityList{key.entity}, testReader, &signBuf, nil)
 
 	if signer == nil || err != nil {
 		return false, nil

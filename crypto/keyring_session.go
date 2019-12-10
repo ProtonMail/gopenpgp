@@ -3,7 +3,9 @@ package crypto
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/pkg/errors"
+
 	"golang.org/x/crypto/openpgp/packet"
 )
 

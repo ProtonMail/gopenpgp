@@ -77,7 +77,7 @@ func parseMIME(
 
 	err = gomime.VisitAll(bytes.NewReader(mmBodyData), h, signatureCollector)
 	if err == nil && verifierKey != nil {
-		err = signatureCollector.verified;
+		err = signatureCollector.verified
 	}
 
 	return bodyCollector,

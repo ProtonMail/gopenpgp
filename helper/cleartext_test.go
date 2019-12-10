@@ -4,12 +4,12 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
+	"github.com/stretchr/testify/assert"
 )
 
 const signedPlainText = "Signed message\n"
-const testTime = 1557754627 // 2019-05-13T13:37:07+00:00
+
 var signedMessageTest = regexp.MustCompile(
 	"(?s)^-----BEGIN PGP SIGNED MESSAGE-----.*-----BEGIN PGP SIGNATURE-----.*-----END PGP SIGNATURE-----$")
 
@@ -17,7 +17,7 @@ func TestSignClearText(t *testing.T) {
 	// Password defined in base_test
 	armored, err := SignCleartextMessageArmored(
 		readTestFile("keyring_privateKey", false),
-		[]byte(testMailboxPassword),
+		testMailboxPassword,
 		signedPlainText,
 	)
 

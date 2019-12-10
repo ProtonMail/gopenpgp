@@ -158,12 +158,10 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 	for {
 		var p packet.Packet
 		if p, err = packets.Next(); err == io.EOF {
-			err = nil
 			break
 		}
-		switch p.(type) {
-			case *packet.EncryptedKey:
-				numKeyPackets++
+		if _, ok := p.(*packet.EncryptedKey); ok {
+			numKeyPackets++
 		}
 	}
 	assert.Exactly(t, 3, numKeyPackets)

@@ -4,9 +4,9 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 )
 
-// ExplicitVerifyMessage contains explicitely the signature verification error, for gomobile users
+// ExplicitVerifyMessage contains explicitly the signature verification error, for gomobile users
 type ExplicitVerifyMessage struct {
-	Message *crypto.PlainMessage
+	Message                    *crypto.PlainMessage
 	SignatureVerificationError *crypto.SignatureVerificationError
 }
 
@@ -20,7 +20,7 @@ func DecryptExplicitVerify(
 ) (*ExplicitVerifyMessage, error) {
 	var explicitVerify *ExplicitVerifyMessage
 
-	message, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, verifyTime);
+	message, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, verifyTime)
 
 	if err != nil {
 		castedErr, isType := err.(crypto.SignatureVerificationError)
@@ -29,12 +29,12 @@ func DecryptExplicitVerify(
 		}
 
 		explicitVerify = &ExplicitVerifyMessage{
-			Message: message,
+			Message:                    message,
 			SignatureVerificationError: &castedErr,
 		}
 	} else {
 		explicitVerify = &ExplicitVerifyMessage{
-			Message: message,
+			Message:                    message,
 			SignatureVerificationError: nil,
 		}
 	}

@@ -2,11 +2,12 @@ package crypto
 
 import (
 	"bytes"
-	"github.com/pkg/errors"
 	"io"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
+
+	"github.com/pkg/errors"
 )
 
 // Encrypt encrypts a PlainMessage to PGPMessage with a SymmetricKey
@@ -36,7 +37,6 @@ func DecryptMessageWithPassword(message *PGPMessage, password []byte) (*PlainMes
 	return binMessage, nil
 }
 
-
 // DecryptSessionKeyWithPassword decrypts the binary symmetrically encrypted
 // session key packet and returns the session key.
 func DecryptSessionKeyWithPassword(keyPacket, password []byte) (*SessionKey, error) {
@@ -45,31 +45,27 @@ func DecryptSessionKeyWithPassword(keyPacket, password []byte) (*SessionKey, err
 
 	var symKeys []*packet.SymmetricKeyEncrypted
 	for {
-
 		var p packet.Packet
 		var err error
 		if p, err = packets.Next(); err != nil {
 			break
 		}
 
-		switch p := p.(type) {
-		case *packet.SymmetricKeyEncrypted:
+		if p, ok := p.(*packet.SymmetricKeyEncrypted); ok {
 			symKeys = append(symKeys, p)
 		}
 	}
 
-	pwdRaw := []byte(password)
 	// Try the symmetric passphrase first
-	if len(symKeys) != 0 && pwdRaw != nil {
+	if len(symKeys) != 0 && password != nil {
 		for _, s := range symKeys {
-			key, cipherFunc, err := s.Decrypt(pwdRaw)
+			key, cipherFunc, err := s.Decrypt(password)
 			if err == nil {
 				return &SessionKey{
 					Key:  key,
 					Algo: getAlgo(cipherFunc),
 				}, nil
 			}
-
 		}
 	}
 
@@ -86,17 +82,15 @@ func EncryptSessionKeyWithPassword(sk *SessionKey, password []byte) ([]byte, err
 		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt session key with password")
 	}
 
-	if len(password) <= 0 {
+	if len(password) == 0 {
 		return nil, errors.New("gopenpgp: password can't be empty")
 	}
-
-	pwdRaw := []byte(password)
 
 	config := &packet.Config{
 		DefaultCipher: cf,
 	}
 
-	err = packet.SerializeSymmetricKeyEncryptedReuseKey(outbuf, sk.Key, pwdRaw, config)
+	err = packet.SerializeSymmetricKeyEncryptedReuseKey(outbuf, sk.Key, password, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt session key with password")
 	}
@@ -109,7 +103,7 @@ func passwordEncrypt(message []byte, password []byte) ([]byte, error) {
 	var outBuf bytes.Buffer
 
 	config := &packet.Config{
-		Time:          getTimeGenerator(),
+		Time: getTimeGenerator(),
 	}
 
 	encryptWriter, err := openpgp.SymmetricallyEncrypt(&outBuf, password, nil, config)
@@ -155,4 +149,3 @@ func passwordDecrypt(encryptedIO io.Reader, password []byte) ([]byte, error) {
 
 	return messageBuf.Bytes(), nil
 }
-

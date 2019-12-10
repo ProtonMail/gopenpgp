@@ -17,7 +17,7 @@ import (
 
 // SignatureVerificationError is returned from Decrypt and VerifyDetached functions when signature verification fails
 type SignatureVerificationError struct {
-	Status int
+	Status  int
 	Message string
 }
 
@@ -32,7 +32,7 @@ func (e SignatureVerificationError) Error() string {
 
 // newSignatureFailed creates a new SignatureVerificationError, type SIGNATURE_FAILED
 func newSignatureFailed() SignatureVerificationError {
-	return SignatureVerificationError {
+	return SignatureVerificationError{
 		constants.SIGNATURE_FAILED,
 		"Invalid signature",
 	}
@@ -40,7 +40,7 @@ func newSignatureFailed() SignatureVerificationError {
 
 // newSignatureNotSigned creates a new SignatureVerificationError, type SIGNATURE_NOT_SIGNED
 func newSignatureNotSigned() SignatureVerificationError {
-	return SignatureVerificationError {
+	return SignatureVerificationError{
 		constants.SIGNATURE_NOT_SIGNED,
 		"Missing signature",
 	}
@@ -48,7 +48,7 @@ func newSignatureNotSigned() SignatureVerificationError {
 
 // newSignatureNoVerifier creates a new SignatureVerificationError, type SIGNATURE_NO_VERIFIER
 func newSignatureNoVerifier() SignatureVerificationError {
-	return SignatureVerificationError {
+	return SignatureVerificationError{
 		constants.SIGNATURE_NO_VERIFIER,
 		"No matching signature",
 	}

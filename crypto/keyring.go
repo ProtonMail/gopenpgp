@@ -2,10 +2,11 @@ package crypto
 
 import (
 	"bytes"
+	"time"
+
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
-	"time"
 )
 
 // KeyRing contains multiple private and public keys.
@@ -64,7 +65,7 @@ func (keyRing *KeyRing) GetKey(n int) (*Key, error) {
 	if n >= keyRing.CountEntities() {
 		return nil, errors.New("gopenpgp: out of bound when fetching key")
 	}
-	return &Key{keyRing.entities[n] }, nil
+	return &Key{keyRing.entities[n]}, nil
 }
 
 // getSigningEntity returns first private unlocked signing entity from keyring.
@@ -87,6 +88,7 @@ func (keyRing *KeyRing) getSigningEntity() (*openpgp.Entity, error) {
 
 	return signEntity, nil
 }
+
 // --- Extract info from key
 
 // CountEntities returns the number of entities in the keyring
@@ -115,9 +117,9 @@ func (keyRing *KeyRing) GetIdentities() []*Identity {
 
 // KeyIds returns array of IDs of keys in this KeyRing.
 func (keyRing *KeyRing) KeyIds() []uint64 {
-	var res []uint64
-	for _, e := range keyRing.entities {
-		res = append(res, e.PrimaryKey.KeyId)
+	var res = make([]uint64, len(keyRing.entities))
+	for id, e := range keyRing.entities {
+		res[id] = e.PrimaryKey.KeyId
 	}
 	return res
 }
@@ -221,11 +223,7 @@ func (keyRing *KeyRing) ClearPrivateParams() {
 
 // INTERNAL FUNCTIONS
 
-// append appends the entities from a second keyring
-func (keyRing *KeyRing) append(extend *KeyRing) {
-	keyRing.entities = append(keyRing.entities, extend.entities...)
-}
-
+// append appends a key to the keyring
 func (keyRing *KeyRing) appendKey(key *Key) {
 	keyRing.entities = append(keyRing.entities, key.entity)
 }

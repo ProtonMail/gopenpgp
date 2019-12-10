@@ -1,20 +1,22 @@
 package crypto
 
 import (
-	"github.com/stretchr/testify/assert"
-	"golang.org/x/crypto/ed25519"
-	"golang.org/x/crypto/openpgp/ecdh"
-	"golang.org/x/crypto/rsa"
 	"io/ioutil"
 	"math/big"
 	"strings"
 	"testing"
+
+	"golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/openpgp/ecdh"
+	"golang.org/x/crypto/rsa"
+
+	"github.com/stretchr/testify/assert"
 )
 
-var err error
+const testTime = 1557754627 // 2019-05-13T13:37:07+00:00
 
 func readTestFile(name string, trimNewlines bool) string {
-	data, err := ioutil.ReadFile("testdata/" + name)
+	data, err := ioutil.ReadFile("testdata/" + name) //nolint
 	if err != nil {
 		panic(err)
 	}
@@ -25,13 +27,12 @@ func readTestFile(name string, trimNewlines bool) string {
 }
 
 func init() {
-	UpdateTime(1557754627) // 2019-05-13T13:37:07+00:00
+	UpdateTime(testTime) // 2019-05-13T13:37:07+00:00
 
 	initGenerateKeys()
 	initArmoredKeys()
 	initKeyRings()
 }
-
 
 func assertBigIntCleared(t *testing.T, x *big.Int) {
 	w := x.Bits()
@@ -60,18 +61,12 @@ func assertRSACleared(t *testing.T, rsaPriv *rsa.PrivateKey) {
 		assertBigIntCleared(t, rsaPriv.Precomputed.CRTValues[idx].Coeff)
 		assertBigIntCleared(t, rsaPriv.Precomputed.CRTValues[idx].R)
 	}
-
-	return
 }
 
 func assertEdDSACleared(t *testing.T, priv ed25519.PrivateKey) {
 	assertMemCleared(t, priv)
-
-	return
 }
 
 func assertECDHCleared(t *testing.T, priv *ecdh.PrivateKey) {
 	assertMemCleared(t, priv.D)
-
-	return
 }

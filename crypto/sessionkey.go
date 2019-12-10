@@ -67,7 +67,7 @@ func GenerateSessionKeyAlgo(algo string) (sk *SessionKey, err error) {
 	}
 
 	sk = &SessionKey{
-		Key: r,
+		Key:  r,
 		Algo: algo,
 	}
 	return sk, nil
@@ -101,7 +101,7 @@ func newSessionKeyFromEncrypted(ek *packet.EncryptedKey) (*SessionKey, error) {
 		Key:  ek.Key,
 		Algo: algo,
 	}
-	
+
 	return symmetricKey, nil
 }
 
@@ -169,19 +169,19 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 
 	// Decrypt data packet
 	switch p := p.(type) {
-		case *packet.SymmetricallyEncrypted:
-			dc, err := sk.GetCipherFunc()
-			if err != nil {
-				return nil, errors.Wrap(err, "gopenpgp: unable to decrypt with session key")
-			}
+	case *packet.SymmetricallyEncrypted:
+		dc, err := sk.GetCipherFunc()
+		if err != nil {
+			return nil, errors.Wrap(err, "gopenpgp: unable to decrypt with session key")
+		}
 
-			decrypted, err = p.Decrypt(dc, sk.Key)
-			if err != nil {
-				return nil, errors.Wrap(err, "gopenpgp: unable to decrypt symmetric packet")
-			}
+		decrypted, err = p.Decrypt(dc, sk.Key)
+		if err != nil {
+			return nil, errors.Wrap(err, "gopenpgp: unable to decrypt symmetric packet")
+		}
 
-		default:
-			return nil, errors.New("gopenpgp: invalid packet type")
+	default:
+		return nil, errors.New("gopenpgp: invalid packet type")
 	}
 	_, err = decBuf.ReadFrom(decrypted)
 	if err != nil {

@@ -9,13 +9,10 @@ import (
 )
 
 const signedPlainText = "Signed message\n"
-const testTime = 1557754627 // 2019-05-13T13:37:07+00:00
 
 var textSignature, binSignature *PGPSignature
 var message *PlainMessage
 var signatureTest = regexp.MustCompile("(?s)^-----BEGIN PGP SIGNATURE-----.*-----END PGP SIGNATURE-----$")
-var signedMessageTest = regexp.MustCompile(
-	"(?s)^-----BEGIN PGP SIGNED MESSAGE-----.*-----BEGIN PGP SIGNATURE-----.*-----END PGP SIGNATURE-----$")
 
 func TestSignTextDetached(t *testing.T) {
 	var err error
@@ -37,7 +34,7 @@ func TestSignTextDetached(t *testing.T) {
 func TestVerifyTextDetachedSig(t *testing.T) {
 	verificationError := keyRingTestPublic.VerifyDetached(message, textSignature, testTime)
 	if verificationError != nil {
-		t.Fatal("Cannot verify plaintext signature:", err)
+		t.Fatal("Cannot verify plaintext signature:", verificationError)
 	}
 }
 
@@ -70,6 +67,6 @@ func TestSignBinDetached(t *testing.T) {
 func TestVerifyBinDetachedSig(t *testing.T) {
 	verificationError := keyRingTestPublic.VerifyDetached(message, binSignature, testTime)
 	if verificationError != nil {
-		t.Fatal("Cannot verify binary signature:", err)
+		t.Fatal("Cannot verify binary signature:", verificationError)
 	}
 }

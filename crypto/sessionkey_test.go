@@ -9,7 +9,7 @@ import (
 
 var testSessionKey *SessionKey
 
-func init()  {
+func init() {
 	var err error
 	testSessionKey, err = GenerateSessionKey()
 	if err != nil {
@@ -138,7 +138,6 @@ func TestDataPacketDecryption(t *testing.T) {
 
 	assert.Exactly(t, readTestFile("message_plaintext", true), decrypted.GetString())
 }
-
 
 func TestSessionKeyClear(t *testing.T) {
 	testSessionKey.Clear()

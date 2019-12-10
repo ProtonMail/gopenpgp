@@ -33,11 +33,12 @@ func ArmorWithType(input []byte, armorType string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	_, err = w.Write(input)
-	if err != nil {
+	if _, err = w.Write(input); err != nil {
 		return "", err
 	}
-	w.Close()
+	if err := w.Close(); err != nil {
+		return "", err
+	}
 	return b.String(), nil
 }
 

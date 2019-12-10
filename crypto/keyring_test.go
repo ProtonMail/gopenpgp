@@ -19,9 +19,9 @@ var testMailboxPassword = []byte("apple")
 // const testMailboxPasswordLegacy = [][]byte{ []byte("123") }
 
 var (
-	keyRingTestPrivate   *KeyRing
-	keyRingTestPublic    *KeyRing
-	keyRingTestMultiple  *KeyRing
+	keyRingTestPrivate  *KeyRing
+	keyRingTestPublic   *KeyRing
+	keyRingTestMultiple *KeyRing
 )
 
 var testIdentity = &Identity{
@@ -87,7 +87,6 @@ func initKeyRings() {
 		panic("Expected no error while adding unlocked key to keyring, got:" + err.Error())
 	}
 }
-
 
 func TestIdentities(t *testing.T) {
 	identities := keyRingTestPrivate.GetIdentities()
@@ -192,11 +191,11 @@ func TestClearPrivateParams(t *testing.T) {
 	}
 
 	for _, key := range keyRingCopy.GetKeys() {
-		assert.True(t,  key.IsPrivate())
-		assert.True(t,  key.ClearPrivateParams())
-		assert.False(t,  key.IsPrivate())
+		assert.True(t, key.IsPrivate())
+		assert.True(t, key.ClearPrivateParams())
+		assert.False(t, key.IsPrivate())
 		assert.Nil(t, key.entity.PrivateKey)
 		assert.Nil(t, key.entity.Subkeys[0].PrivateKey)
-		assert.False(t,  key.ClearPrivateParams())
+		assert.False(t, key.ClearPrivateParams())
 	}
 }

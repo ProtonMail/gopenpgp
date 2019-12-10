@@ -12,7 +12,7 @@ import (
 	"golang.org/x/crypto/rsa"
 )
 
-func (sk *SessionKey) Clear() (ok bool){
+func (sk *SessionKey) Clear() (ok bool) {
 	clearMem(sk.Key)
 	return true
 }
@@ -49,20 +49,20 @@ func (key *Key) clearPrivateWithSubkeys() (num int) {
 
 func clearPrivateKey(privateKey interface{}) error {
 	switch priv := privateKey.(type) {
-		case *rsa.PrivateKey:
-			return clearRSAPrivateKey(priv)
-		case *dsa.PrivateKey:
-			return clearDSAPrivateKey(priv)
-		case *elgamal.PrivateKey:
-			return clearElGamalPrivateKey(priv)
-		case *ecdsa.PrivateKey:
-			return clearECDSAPrivateKey(priv)
-		case ed25519.PrivateKey:
-			return clearEdDSAPrivateKey(priv)
-		case *ecdh.PrivateKey:
-			return clearECDHPrivateKey(priv)
-		default:
-			return errors.New("gopenpgp: unknown private key")
+	case *rsa.PrivateKey:
+		return clearRSAPrivateKey(priv)
+	case *dsa.PrivateKey:
+		return clearDSAPrivateKey(priv)
+	case *elgamal.PrivateKey:
+		return clearElGamalPrivateKey(priv)
+	case *ecdsa.PrivateKey:
+		return clearECDSAPrivateKey(priv)
+	case ed25519.PrivateKey:
+		return clearEdDSAPrivateKey(priv)
+	case *ecdh.PrivateKey:
+		return clearECDHPrivateKey(priv)
+	default:
+		return errors.New("gopenpgp: unknown private key")
 	}
 }
 
@@ -73,7 +73,7 @@ func clearBigInt(n *big.Int) {
 	}
 }
 
-func clearMem(w []byte){
+func clearMem(w []byte) {
 	for k := range w {
 		w[k] = 0x00
 	}
