@@ -32,13 +32,12 @@ var symKeyAlgos = map[string]packet.CipherFunction{
 
 // GetCipherFunc returns the cipher function corresponding to the algorithm used
 // with this SessionKey.
-func (sk *SessionKey) GetCipherFunc() packet.CipherFunction {
+func (sk *SessionKey) GetCipherFunc() (packet.CipherFunction, error) {
 	cf, ok := symKeyAlgos[sk.Algo]
-	if ok {
-		return cf
+	if !ok {
+		return cf, errors.New("gopenpgp: unsupported cipher function: " + sk.Algo)
 	}
-
-	panic("gopenpgp: unsupported cipher function: " + sk.Algo)
+	return cf, nil
 }
 
 // GetBase64Key returns the session key as base64 encoded string.
@@ -112,12 +111,18 @@ func newSessionKeyFromEncrypted(ek *packet.EncryptedKey) (*SessionKey, error) {
 func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
 	var encBuf bytes.Buffer
 	var encryptWriter io.WriteCloser
-	config := &packet.Config{
-		Time:          getTimeGenerator(),
-		DefaultCipher: sk.GetCipherFunc(),
+
+	dc, err := sk.GetCipherFunc()
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt with session key")
 	}
 
-	encryptWriter, err := packet.SerializeSymmetricallyEncrypted(&encBuf, config.Cipher(), sk.Key, config)
+	config := &packet.Config{
+		Time:          getTimeGenerator(),
+		DefaultCipher: dc,
+	}
+
+	encryptWriter, err = packet.SerializeSymmetricallyEncrypted(&encBuf, config.Cipher(), sk.Key, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt")
 	}
@@ -125,7 +130,7 @@ func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
 	if algo := config.Compression(); algo != packet.CompressionNone {
 		encryptWriter, err = packet.SerializeCompressed(encryptWriter, algo, config.CompressionConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: unable to encrypt")
+			return nil, errors.Wrap(err, "gopenpgp: error in compression")
 		}
 	}
 
@@ -165,7 +170,12 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 	// Decrypt data packet
 	switch p := p.(type) {
 		case *packet.SymmetricallyEncrypted:
-			decrypted, err = p.Decrypt(sk.GetCipherFunc(), sk.Key)
+			dc, err := sk.GetCipherFunc()
+			if err != nil {
+				return nil, errors.Wrap(err, "gopenpgp: unable to decrypt with session key")
+			}
+
+			decrypted, err = p.Decrypt(dc, sk.Key)
 			if err != nil {
 				return nil, errors.Wrap(err, "gopenpgp: unable to decrypt symmetric packet")
 			}
@@ -175,7 +185,7 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 	}
 	_, err = decBuf.ReadFrom(decrypted)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to decrypt symmetric packet")
+		return nil, errors.Wrap(err, "gopenpgp: unable to read from decrypted symmetric packet")
 	}
 
 	config := &packet.Config{

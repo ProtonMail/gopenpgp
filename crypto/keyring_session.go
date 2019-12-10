@@ -2,8 +2,8 @@ package crypto
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/openpgp/packet"
 )
 
@@ -47,7 +47,10 @@ func (keyRing *KeyRing) DecryptSessionKey(keyPacket []byte) (*SessionKey, error)
 func (keyRing *KeyRing) EncryptSessionKey(sk *SessionKey) ([]byte, error) {
 	outbuf := &bytes.Buffer{}
 
-	cf := sk.GetCipherFunc()
+	cf, err := sk.GetCipherFunc()
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt session key")
+	}
 
 	var pub *packet.PublicKey
 	for _, e := range keyRing.entities {

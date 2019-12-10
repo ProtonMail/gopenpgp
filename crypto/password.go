@@ -2,7 +2,7 @@ package crypto
 
 import (
 	"bytes"
-	"errors"
+	"github.com/pkg/errors"
 	"io"
 
 	"golang.org/x/crypto/openpgp"
@@ -81,7 +81,10 @@ func DecryptSessionKeyWithPassword(keyPacket, password []byte) (*SessionKey, err
 func EncryptSessionKeyWithPassword(sk *SessionKey, password []byte) ([]byte, error) {
 	outbuf := &bytes.Buffer{}
 
-	cf := sk.GetCipherFunc()
+	cf, err := sk.GetCipherFunc()
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt session key with password")
+	}
 
 	if len(password) <= 0 {
 		return nil, errors.New("gopenpgp: password can't be empty")
@@ -93,9 +96,9 @@ func EncryptSessionKeyWithPassword(sk *SessionKey, password []byte) ([]byte, err
 		DefaultCipher: cf,
 	}
 
-	err := packet.SerializeSymmetricKeyEncryptedReuseKey(outbuf, sk.Key, pwdRaw, config)
+	err = packet.SerializeSymmetricKeyEncryptedReuseKey(outbuf, sk.Key, pwdRaw, config)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt session key with password")
 	}
 	return outbuf.Bytes(), nil
 }

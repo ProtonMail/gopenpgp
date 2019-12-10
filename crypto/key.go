@@ -77,7 +77,7 @@ func GenerateKey(name, email string, keyType string, bits int) (*Key, error) {
 
 // --- Operate on key
 
-// Lock fully locks a copy of the keyring.
+// Copy creates a copy of the key.
 func (key *Key) Copy() (*Key, error) {
 	serialized, err := key.Serialize()
 	if err != nil {
@@ -87,7 +87,7 @@ func (key *Key) Copy() (*Key, error) {
 	return NewKey(serialized)
 }
 
-// Lock fully locks a copy of the key.
+// Lock locks a copy of the key.
 func (key *Key) Lock(passphrase []byte) (*Key, error) {
 	unlocked, err := key.IsUnlocked()
 	if err != nil {
@@ -127,14 +127,14 @@ func (key *Key) Lock(passphrase []byte) (*Key, error) {
 	return lockedKey, nil
 }
 
-// Unlock fully unlocks a copy of the key
+// Unlock unlocks a copy of the key
 func (key *Key) Unlock(passphrase []byte) (*Key, error) {
-	unlocked, err := key.IsLocked()
+	isLocked, err := key.IsLocked()
 	if err != nil {
 		return nil, err
 	}
 
-	if !unlocked {
+	if !isLocked {
 		return nil, errors.New("gopenpgp: key is not locked")
 	}
 
@@ -151,16 +151,16 @@ func (key *Key) Unlock(passphrase []byte) (*Key, error) {
 	for _, sub := range unlockedKey.entity.Subkeys {
 		if sub.PrivateKey != nil {
 			if err := sub.PrivateKey.Decrypt(passphrase); err != nil {
-				return nil, errors.Wrap(err, "gopenpgp: error in unlocking key")
+				return nil, errors.Wrap(err, "gopenpgp: error in unlocking sub key")
 			}
 		}
 	}
 
-	locked, err := unlockedKey.IsUnlocked()
+	isUnlocked, err := unlockedKey.IsUnlocked()
 	if err != nil {
 		return nil, err
 	}
-	if !locked {
+	if !isUnlocked {
 		return nil, errors.New("gopenpgp: unable to unlock key")
 	}
 
@@ -261,7 +261,7 @@ func (key *Key) IsUnlocked() (bool, error) {
 	return !key.entity.PrivateKey.Encrypted, nil
 }
 
-// Check verifies if the if the public keys match the private key parameters by signing and verifying
+// Check verifies if the public keys match the private key parameters by signing and verifying
 func (key *Key) Check() (bool, error) {
 	var err error
 	testSign := bytes.Repeat([]byte{ 0x01 }, 64)

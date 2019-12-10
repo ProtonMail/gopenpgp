@@ -233,6 +233,7 @@ func (msg *PGPSplitMessage) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.GetBinary(), constants.PGPMessageHeader)
 }
 
+// GetPGPMessage joins asymmetric session key packet with the symmetric data packet to obtain a PGP message
 func (msg *PGPSplitMessage) GetPGPMessage() *PGPMessage {
 	return NewPGPMessage(append(msg.KeyPacket , msg.DataPacket...))
 }

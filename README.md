@@ -81,7 +81,7 @@ import "github.com/ProtonMail/gopenpgp/crypto"
 
 ### Encrypt / Decrypt with password
 
-```gotemplate
+```go
 import "github.com/ProtonMail/gopenpgp/v2/helper"
 
 const password = []byte("hunter2")
@@ -94,7 +94,7 @@ message, err := helper.DecryptMessageWithPassword(password, armor)
 ```
 
 To encrypt binary data or use more advanced modes:
-```gotemplate
+```go
 import "github.com/ProtonMail/gopenpgp/v2/constants"
 
 const password = []byte("hunter2")
@@ -115,7 +115,7 @@ decrypted, err := DecryptMessageWithPassword(encrypted, password)
 
 ### Encrypt / Decrypt with PGP keys
 
-```gotemplate
+```go
 import "github.com/ProtonMail/gopenpgp/v2/helper"
 
 // put keys in backtick (``) to avoid errors caused by spaces or tabs
@@ -137,7 +137,7 @@ decrypted, err := helper.DecryptMessageArmored(privkey, passphrase, armor)
 ```
 
 With signatures:
-```gotemplate
+```go
 // Keys initialization as before (omitted)
 
 // encrypt message using public key, sign with the private key
@@ -149,7 +149,7 @@ decrypted, err := helper.DecryptVerifyMessageArmored(pubkey, privkey, passphrase
 ```
 
 With binary data or advanced modes:
-```gotemplate
+```go
 // Keys initialization as before (omitted)
 var binMessage = crypto.NewPlainMessage(data)
 
@@ -177,7 +177,7 @@ privateKeyRing.ClearPrivateParams()
 Keys are generated with the `GenerateKey` function, that returns the armored key as a string and a potential error.
 The library supports RSA with different key lengths or Curve25519 keys.
 
-```gotemplate
+```go
 const (
   name = "Max Mustermann"
   email = "max.mustermann@example.com"
@@ -203,7 +203,7 @@ ecKey, err := crypto.GenerateKey(name, email, "x25519", 0)
 To sign plain text data either an unlocked private keyring or a passphrase must be provided.
 The output is an armored signature.
 
-```gotemplate
+```go
 const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 ...
 -----END PGP PRIVATE KEY BLOCK-----` // Encrypted private key
@@ -223,7 +223,7 @@ pgpSignature, err := signingKeyRing.SignDetached(message, trimNewlines)
 
 To verify a signature either private or public keyring can be provided.
 
-```gotemplate
+```go
 const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 ...
 -----END PGP PUBLIC KEY BLOCK-----`
@@ -247,7 +247,7 @@ if err == nil {
 
 ### Detached signatures for binary data
 
-```gotemplate
+```go
 const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 ...
 -----END PGP PRIVATE KEY BLOCK-----` // encrypted private key
@@ -256,7 +256,7 @@ const passphrase = "LongSecret"
 var message = crypto.NewPlainMessage(data)
 
 privateKeyObj, err := crypto.NewKeyFromArmored(privkey)
-unlockedKeyObj = privateKeyObj.Unlock(passphrase)
+unlockedKeyObj := privateKeyObj.Unlock(passphrase)
 signingKeyRing, err := crypto.NewKeyRing(unlockedKeyObj)
 
 pgpSignature, err := signingKeyRing.SignDetached(message)
@@ -267,7 +267,7 @@ pgpSignature, err := signingKeyRing.SignDetached(message)
 
 To verify a signature either private or public keyring can be provided.
 
-```gotemplate
+```go
 const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 ...
 -----END PGP PUBLIC KEY BLOCK-----`
@@ -290,21 +290,21 @@ if err == nil {
 ```
 
 ### Cleartext signed messages
-```gotemplate
+```go
 // Keys initialization as before (omitted)
 armored, err := helper.SignCleartextMessageArmored(privateKey, passphrase, plaintext)
 ```
 
 To verify the message it has to be provided unseparated to the library.
 If verification fails an error will be returned.
-```gotemplate
+```go
 // Keys initialization as before (omitted)
 verifiedPlainText, err := helper.VerifyCleartextMessageArmored(publicKey, armored, crypto.GetUnixTime())
 ```
 
 ### Encrypting and decrypting session Keys
 A session key can be generated, encrypted to a Asymmetric/Symmetric key packet and obtained from it
-```gotemplate
+```go
 // Keys initialization as before (omitted)
 
 sessionKey, err := crypto.GenerateSessionKey()
@@ -314,14 +314,14 @@ keyPacketSymm, err := crypto.EncryptSessionKeyWithPassword(sessionKey, password)
 ```
 `KeyPacket` is a `[]byte` containing the session key encrypted with the private key or password.
 
-```gotemplate
+```go
 decodedKeyPacket, err := privateKey.DecryptSessionKey(keyPacket)
 decodedSymmKeyPacket, err := crypto.DecryptSessionKeyWithPassword(keyPacketSymm, password)
 ```
 `decodedKeyPacket` and `decodedSymmKeyPacket` are objects of type `*SymmetricKey` that can
 be used to decrypt the corresponding symmetrically encrypted data packets:
 
-```gotemplate
+```go
 var message = crypto.NewPlainMessage(data)
 
 // Encrypt data with password
@@ -336,7 +336,7 @@ decrypted, err := sessionKey.Decrypt(password, dataPacket)
 Note that it is not possible to process signatures when using data packets directly.
 Joining the data packet and a key packet gives us a valid PGP message:
 
-```gotemplate
+```go
 pgpSplitMessage := NewPGPSplitMessage(keyPacket, dataPacket)
 pgpMessage := pgpSplitMessage.GetPGPMessage()
 
