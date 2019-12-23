@@ -63,7 +63,7 @@ NewKey(binKeys []byte) (key *Key, err error)
 NewKeyFromArmored(armored string) (key *Key, err error)
 GenerateKey(name, email string, keyType string, bits int) (*Key, error)
 GenerateRSAKeyWithPrimes(name, email string, bits int, primeone, primetwo, primethree, primefour []byte) (*Key, error)
-(key *Key) Copy() (*Key, error)
+(key *Key) Clone() (*Key, error)
 (key *Key) Lock(passphrase []byte) (*Key, error)
 (key *Key) Unlock(passphrase []byte) (*Key, error)
 (key *Key) Serialize() ([]byte, error)
@@ -76,7 +76,8 @@ GenerateRSAKeyWithPrimes(name, email string, bits int, primeone, primetwo, prime
 (key *Key) IsUnlocked() (bool, error)
 (key *Key) Check() (bool, error)
 (key *Key) PrintFingerprints()
-(key *Key) GetID() string
+(key *Key) GetHexKeyID() string
+(key *Key) GetKeyID() uint64
 (key *Key) GetFingerprint() string
 (key *Key) ClearPrivateParams() (ok bool)
 ```
@@ -91,7 +92,7 @@ NewKeyRing(key *Key) (*KeyRing, error)
 (keyRing *KeyRing) CountDecryptionEntities() int
 (keyRing *KeyRing) GetIdentities() []*Identity
 (keyRing *KeyRing) FirstKey() (*KeyRing, error)
-(keyRing *KeyRing) Copy() (*KeyRing, error)
+(keyRing *KeyRing) Clone() (*KeyRing, error)
 (keyRing *KeyRing) ClearPrivateParams()
 ```
 
@@ -162,6 +163,7 @@ type SignatureVerificationError struct {
 - `IsKeyExpired` has been renamed to `IsArmoredKeyExpired`
 - `CheckKey` has been renamed to `PrintFingerprints`
 - `KeyRing#ArmoredPublicKeyString` has been renamed to `KeyRing#GetArmoredPublicKey`
+- `KeyRing#KeyIds` has been renamed to `KeyRing#GetKeyIDs`
 - `GetTimeUnix` was renamed to `GetUnixTime`
 
 - `EncryptedSplit` has been changed to `PGPSplitMessage`

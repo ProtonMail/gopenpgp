@@ -77,8 +77,8 @@ func GenerateKey(name, email string, keyType string, bits int) (*Key, error) {
 
 // --- Operate on key
 
-// Copy creates a copy of the key.
-func (key *Key) Copy() (*Key, error) {
+// Clone creates a deep copy of the key.
+func (key *Key) Clone() (*Key, error) {
 	serialized, err := key.Serialize()
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (key *Key) Lock(passphrase []byte) (*Key, error) {
 		return nil, errors.New("gopenpgp: key is not unlocked")
 	}
 
-	lockedKey, err := key.Copy()
+	lockedKey, err := key.Clone()
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (key *Key) Unlock(passphrase []byte) (*Key, error) {
 		return nil, errors.New("gopenpgp: key is not locked")
 	}
 
-	unlockedKey, err := key.Copy()
+	unlockedKey, err := key.Clone()
 	if err != nil {
 		return nil, err
 	}
@@ -297,9 +297,14 @@ func (key *Key) PrintFingerprints() {
 	fmt.Println("PrimaryKey:" + hex.EncodeToString(key.entity.PrimaryKey.Fingerprint[:]))
 }
 
-// GetID returns the key ID
-func (key *Key) GetID() string {
-	return "0x" + strconv.FormatUint(key.entity.PrimaryKey.KeyId, 16)
+// GetHexKeyID returns the key ID, hex encoded as a string
+func (key *Key) GetHexKeyID() string {
+	return strconv.FormatUint(key.GetKeyID(), 16)
+}
+
+// GetKeyID returns the key ID, encoded as 8-byte int
+func (key *Key) GetKeyID() uint64 {
+	return key.entity.PrimaryKey.KeyId
 }
 
 // GetFingerprint gets the fingerprint from the key

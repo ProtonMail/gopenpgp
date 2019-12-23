@@ -115,8 +115,8 @@ func (keyRing *KeyRing) GetIdentities() []*Identity {
 	return identities
 }
 
-// KeyIds returns array of IDs of keys in this KeyRing.
-func (keyRing *KeyRing) KeyIds() []uint64 {
+// GetKeyIDs returns array of IDs of keys in this KeyRing.
+func (keyRing *KeyRing) GetKeyIDs() []uint64 {
 	var res = make([]uint64, len(keyRing.entities))
 	for id, e := range keyRing.entities {
 		res[id] = e.PrimaryKey.KeyId
@@ -154,7 +154,7 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 			}
 		}
 		if keyRingHasUnexpiredEntity {
-			keyRingCopy, err := contactKeyRing.Copy()
+			keyRingCopy, err := contactKeyRing.Clone()
 			if err != nil {
 				return nil, err
 			}
@@ -180,11 +180,11 @@ func (keyRing *KeyRing) FirstKey() (*KeyRing, error) {
 	newKeyRing := &KeyRing{}
 	newKeyRing.entities = keyRing.entities[:1]
 
-	return newKeyRing.Copy()
+	return newKeyRing.Clone()
 }
 
-// Copy creates a deep copy of the keyring
-func (keyRing *KeyRing) Copy() (*KeyRing, error) {
+// Clone creates a deep copy of the keyring
+func (keyRing *KeyRing) Clone() (*KeyRing, error) {
 	newKeyRing := &KeyRing{}
 
 	entities := make([]*openpgp.Entity, len(keyRing.entities))

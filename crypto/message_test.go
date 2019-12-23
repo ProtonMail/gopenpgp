@@ -111,7 +111,7 @@ func TestIssue11(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while unarmoring public keyring, got:", err)
 	}
-	assert.Exactly(t, "0x643b3595e6ee4fdf", senderKey.GetID())
+	assert.Exactly(t, "643b3595e6ee4fdf", senderKey.GetHexKeyID())
 
 	senderKeyring, err := NewKeyRing(senderKey)
 	if err != nil {

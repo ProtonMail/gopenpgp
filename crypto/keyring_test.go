@@ -113,11 +113,11 @@ func TestFilterExpiredKeys(t *testing.T) {
 	}
 
 	assert.Len(t, unexpired, 1)
-	assert.Exactly(t, unexpired[0].KeyIds(), keyRingTestPrivate.KeyIds())
+	assert.Exactly(t, unexpired[0].GetKeyIDs(), keyRingTestPrivate.GetKeyIDs())
 }
 
 func TestKeyIds(t *testing.T) {
-	keyIDs := keyRingTestPrivate.KeyIds()
+	keyIDs := keyRingTestPrivate.GetKeyIDs()
 	var assertKeyIDs = []uint64{4518840640391470884}
 	assert.Exactly(t, assertKeyIDs, keyIDs)
 }
@@ -148,7 +148,7 @@ func TestMultipleKeyRing(t *testing.T) {
 }
 
 func TestClearPrivateKey(t *testing.T) {
-	keyRingCopy, err := keyRingTestMultiple.Copy()
+	keyRingCopy, err := keyRingTestMultiple.Clone()
 	if err != nil {
 		t.Fatal("Expected no error while copying keyring, got:", err)
 	}
@@ -164,7 +164,7 @@ func TestClearPrivateKey(t *testing.T) {
 }
 
 func TestClearPrivateWithSubkeys(t *testing.T) {
-	keyRingCopy, err := keyRingTestMultiple.Copy()
+	keyRingCopy, err := keyRingTestMultiple.Clone()
 	if err != nil {
 		t.Fatal("Expected no error while copying keyring, got:", err)
 	}
@@ -185,7 +185,7 @@ func TestClearPrivateWithSubkeys(t *testing.T) {
 }
 
 func TestClearPrivateParams(t *testing.T) {
-	keyRingCopy, err := keyRingTestMultiple.Copy()
+	keyRingCopy, err := keyRingTestMultiple.Clone()
 	if err != nil {
 		t.Fatal("Expected no error while copying keyring, got:", err)
 	}
