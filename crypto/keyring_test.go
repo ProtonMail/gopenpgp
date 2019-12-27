@@ -148,7 +148,7 @@ func TestMultipleKeyRing(t *testing.T) {
 }
 
 func TestClearPrivateKey(t *testing.T) {
-	keyRingCopy, err := keyRingTestMultiple.Clone()
+	keyRingCopy, err := keyRingTestMultiple.Copy()
 	if err != nil {
 		t.Fatal("Expected no error while copying keyring, got:", err)
 	}
@@ -164,7 +164,7 @@ func TestClearPrivateKey(t *testing.T) {
 }
 
 func TestClearPrivateWithSubkeys(t *testing.T) {
-	keyRingCopy, err := keyRingTestMultiple.Clone()
+	keyRingCopy, err := keyRingTestMultiple.Copy()
 	if err != nil {
 		t.Fatal("Expected no error while copying keyring, got:", err)
 	}
@@ -185,7 +185,7 @@ func TestClearPrivateWithSubkeys(t *testing.T) {
 }
 
 func TestClearPrivateParams(t *testing.T) {
-	keyRingCopy, err := keyRingTestMultiple.Clone()
+	keyRingCopy, err := keyRingTestMultiple.Copy()
 	if err != nil {
 		t.Fatal("Expected no error while copying keyring, got:", err)
 	}

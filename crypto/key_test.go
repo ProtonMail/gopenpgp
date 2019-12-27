@@ -244,7 +244,7 @@ func TestFailCheckIntegrity(t *testing.T) {
 
 	k1.entity.PrivateKey.PrivateKey = k2.entity.PrivateKey.PrivateKey // Swap private keys
 
-	k3, err := k1.Clone()
+	k3, err := k1.Copy()
 	if err != nil {
 		t.Fatal("Expected no error while locking keyring kr3, got:", err)
 	}

@@ -77,8 +77,8 @@ func GenerateKey(name, email string, keyType string, bits int) (*Key, error) {
 
 // --- Operate on key
 
-// Clone creates a deep copy of the key.
-func (key *Key) Clone() (*Key, error) {
+// Copy creates a deep copy of the key.
+func (key *Key) Copy() (*Key, error) {
 	serialized, err := key.Serialize()
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (key *Key) Lock(passphrase []byte) (*Key, error) {
 		return nil, errors.New("gopenpgp: key is not unlocked")
 	}
 
-	lockedKey, err := key.Clone()
+	lockedKey, err := key.Copy()
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (key *Key) Unlock(passphrase []byte) (*Key, error) {
 		return nil, errors.New("gopenpgp: key is not locked")
 	}
 
-	unlockedKey, err := key.Clone()
+	unlockedKey, err := key.Copy()
 	if err != nil {
 		return nil, err
 	}

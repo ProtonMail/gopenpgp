@@ -154,7 +154,7 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 			}
 		}
 		if keyRingHasUnexpiredEntity {
-			keyRingCopy, err := contactKeyRing.Clone()
+			keyRingCopy, err := contactKeyRing.Copy()
 			if err != nil {
 				return nil, err
 			}
@@ -180,11 +180,11 @@ func (keyRing *KeyRing) FirstKey() (*KeyRing, error) {
 	newKeyRing := &KeyRing{}
 	newKeyRing.entities = keyRing.entities[:1]
 
-	return newKeyRing.Clone()
+	return newKeyRing.Copy()
 }
 
-// Clone creates a deep copy of the keyring
-func (keyRing *KeyRing) Clone() (*KeyRing, error) {
+// Copy creates a deep copy of the keyring
+func (keyRing *KeyRing) Copy() (*KeyRing, error) {
 	newKeyRing := &KeyRing{}
 
 	entities := make([]*openpgp.Entity, len(keyRing.entities))
