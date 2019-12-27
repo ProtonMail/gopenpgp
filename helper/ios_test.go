@@ -3,20 +3,22 @@ package helper
 import (
 	"testing"
 
-	"github.com/ProtonMail/gopenpgp/constants"
-	"github.com/ProtonMail/gopenpgp/crypto"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestIOSSignedMessageDecryption(t *testing.T) {
-	testPrivateKeyRing, _ := crypto.BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
-	testPublicKeyRing, _ := crypto.BuildKeyRingArmored(readTestFile("mime_publicKey", false))
-
+	privateKey, _ := crypto.NewKeyFromArmored(readTestFile("keyring_privateKey", false))
 	// Password defined in base_test
-	err := testPrivateKeyRing.UnlockWithPassphrase(testMailboxPassword)
+	privateKey, err := privateKey.Unlock(testMailboxPassword)
 	if err != nil {
 		t.Fatal("Expected no error unlocking privateKey, got:", err)
 	}
+	testPrivateKeyRing, _ := crypto.NewKeyRing(privateKey)
+
+	publicKey, _ := crypto.NewKeyFromArmored(readTestFile("mime_publicKey", false))
+	testPublicKeyRing, _ := crypto.NewKeyRing(publicKey)
 
 	pgpMessage, err := crypto.NewPGPMessageFromArmored(readTestFile("message_signed", false))
 	if err != nil {
@@ -31,7 +33,8 @@ func TestIOSSignedMessageDecryption(t *testing.T) {
 	assert.Exactly(t, constants.SIGNATURE_NO_VERIFIER, decrypted.SignatureVerificationError.Status)
 	assert.Exactly(t, readTestFile("message_plaintext", true), decrypted.Message.GetString())
 
-	testPublicKeyRing, _ = crypto.BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
+	publicKey, _ = crypto.NewKeyFromArmored(readTestFile("keyring_publicKey", false))
+	testPublicKeyRing, _ = crypto.NewKeyRing(publicKey)
 
 	pgpMessage, err = testPublicKeyRing.Encrypt(decrypted.Message, testPrivateKeyRing)
 	if err != nil {

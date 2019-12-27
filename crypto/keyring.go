@@ -2,19 +2,11 @@ package crypto
 
 import (
 	"bytes"
-	"crypto/ecdsa"
-	"crypto/rsa"
-	"encoding/hex"
-	"errors"
-	"io"
 	"time"
 
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/packet"
-	xrsa "golang.org/x/crypto/rsa"
-
-	armorUtils "github.com/ProtonMail/gopenpgp/armor"
 )
 
 // KeyRing contains multiple private and public keys.
@@ -32,13 +24,52 @@ type Identity struct {
 	Email string
 }
 
-// GetEntities returns openpgp entities contained in this KeyRing.
-func (keyRing *KeyRing) GetEntities() openpgp.EntityList {
-	return keyRing.entities
+// --- New keyrings
+
+// NewKeyRing creates a new KeyRing, empty if key is nil
+func NewKeyRing(key *Key) (*KeyRing, error) {
+	keyRing := &KeyRing{}
+	var err error
+	if key != nil {
+		err = keyRing.AddKey(key)
+	}
+	return keyRing, err
 }
 
-// GetSigningEntity returns first private unlocked signing entity from keyring.
-func (keyRing *KeyRing) GetSigningEntity() (*openpgp.Entity, error) {
+// --- Add keys to keyring
+func (keyRing *KeyRing) AddKey(key *Key) error {
+	if key.IsPrivate() {
+		unlocked, err := key.IsUnlocked()
+		if err != nil || !unlocked {
+			return errors.New("gopenpgp: unable to add locked key to a keyring")
+		}
+	}
+
+	keyRing.appendKey(key)
+	return nil
+}
+
+// --- Extract keys from keyring
+
+// GetKeys returns openpgp keys contained in this KeyRing.
+func (keyRing *KeyRing) GetKeys() []*Key {
+	keys := make([]*Key, keyRing.CountEntities())
+	for i, entity := range keyRing.entities {
+		keys[i] = &Key{entity}
+	}
+	return keys
+}
+
+// GetKey returns the n-th openpgp key contained in this KeyRing.
+func (keyRing *KeyRing) GetKey(n int) (*Key, error) {
+	if n >= keyRing.CountEntities() {
+		return nil, errors.New("gopenpgp: out of bound when fetching key")
+	}
+	return &Key{keyRing.entities[n]}, nil
+}
+
+// getSigningEntity returns first private unlocked signing entity from keyring.
+func (keyRing *KeyRing) getSigningEntity() (*openpgp.Entity, error) {
 	var signEntity *openpgp.Entity
 
 	for _, e := range keyRing.entities {
@@ -58,218 +89,20 @@ func (keyRing *KeyRing) GetSigningEntity() (*openpgp.Entity, error) {
 	return signEntity, nil
 }
 
-// Unlock tries to unlock as many keys as possible with the following password. Note
-// that keyrings can contain keys locked with different passwords, and thus
-// err == nil does not mean that all keys have been successfully decrypted.
-// If err != nil, the password is wrong for every key, and err is the last error
-// encountered.
-func (keyRing *KeyRing) Unlock(passphrase []byte) error {
-	// Build a list of keys to decrypt
-	var keys []*packet.PrivateKey
-	for _, e := range keyRing.entities {
-		// Entity.PrivateKey must be a signing key
-		if e.PrivateKey != nil {
-			keys = append(keys, e.PrivateKey)
-		}
+// --- Extract info from key
 
-		// Entity.Subkeys can be used for encryption
-		for _, subKey := range e.Subkeys {
-			if subKey.PrivateKey != nil && (!subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage ||
-				subKey.Sig.FlagEncryptCommunications) {
-
-				keys = append(keys, subKey.PrivateKey)
-			}
-		}
-	}
-
-	if len(keys) == 0 {
-		return errors.New("gopenpgp: cannot unlock key ring, no private key available")
-	}
-
-	var err error
-	var n int
-	for _, key := range keys {
-		if !key.Encrypted {
-			continue // Key already decrypted
-		}
-
-		if err = key.Decrypt(passphrase); err == nil {
-			n++
-		}
-	}
-
-	if n == 0 {
-		return err
-	}
-	return nil
+// CountEntities returns the number of entities in the keyring
+func (keyRing *KeyRing) CountEntities() int {
+	return len(keyRing.entities)
 }
 
-// UnlockWithPassphrase is a wrapper for Unlock that uses strings
-func (keyRing *KeyRing) UnlockWithPassphrase(passphrase string) error {
-	return keyRing.Unlock([]byte(passphrase))
-}
-
-// WriteArmoredPublicKey outputs armored public keys from the keyring to w.
-func (keyRing *KeyRing) WriteArmoredPublicKey(w io.Writer) (err error) {
-	aw, err := armor.Encode(w, openpgp.PublicKeyType, nil)
-	if err != nil {
-		return
-	}
-
-	for _, e := range keyRing.entities {
-		if err = e.Serialize(aw); err != nil {
-			aw.Close()
-			return
-		}
-	}
-
-	err = aw.Close()
-	return
-}
-
-// GetArmoredPublicKey returns the armored public keys from this keyring.
-func (keyRing *KeyRing) GetArmoredPublicKey() (s string, err error) {
-	b := &bytes.Buffer{}
-	if err = keyRing.WriteArmoredPublicKey(b); err != nil {
-		return
-	}
-
-	s = b.String()
-	return
-}
-
-// WritePublicKey outputs unarmored public keys from the keyring to w.
-func (keyRing *KeyRing) WritePublicKey(w io.Writer) (err error) {
-	for _, e := range keyRing.entities {
-		if err = e.Serialize(w); err != nil {
-			return
-		}
-	}
-
-	return
-}
-
-// GetPublicKey returns the unarmored public keys from this keyring.
-func (keyRing *KeyRing) GetPublicKey() (b []byte, err error) {
-	var outBuf bytes.Buffer
-	if err = keyRing.WritePublicKey(&outBuf); err != nil {
-		return
-	}
-
-	b = outBuf.Bytes()
-	return
-}
-
-// GetFingerprint gets the fingerprint from the keyring.
-func (keyRing *KeyRing) GetFingerprint() (string, error) {
-	for _, entity := range keyRing.entities {
-		fp := entity.PrimaryKey.Fingerprint
-		return hex.EncodeToString(fp[:]), nil
-	}
-	return "", errors.New("can't find public key")
-}
-
-// CheckPassphrase checks if private key passphrase is correct for every sub key.
-func (keyRing *KeyRing) CheckPassphrase(passphrase string) bool {
-	var keys []*packet.PrivateKey
-
-	for _, entity := range keyRing.entities {
-		keys = append(keys, entity.PrivateKey)
-	}
-	var decryptError error
-	var n int
-	for _, key := range keys {
-		if !key.Encrypted {
-			continue // Key already decrypted
-		}
-		if decryptError = key.Decrypt([]byte(passphrase)); decryptError == nil {
-			n++
-		}
-	}
-
-	return n != 0
-}
-
-// ReadFrom reads unarmored and armored keys from r and adds them to the keyring.
-func (keyRing *KeyRing) ReadFrom(r io.Reader, armored bool) error {
-	var err error
-	var entities openpgp.EntityList
-	if armored {
-		entities, err = openpgp.ReadArmoredKeyRing(r)
-	} else {
-		entities, err = openpgp.ReadKeyRing(r)
-	}
-	for _, entity := range entities {
-		if entity.PrivateKey != nil {
-			switch entity.PrivateKey.PrivateKey.(type) {
-			// TODO: type mismatch after crypto lib update, fix this:
-			case *rsa.PrivateKey:
-				entity.PrimaryKey = packet.NewRSAPublicKey(
-					time.Now(),
-					entity.PrivateKey.PrivateKey.(*rsa.PrivateKey).Public().(*xrsa.PublicKey))
-
-			case *ecdsa.PrivateKey:
-				entity.PrimaryKey = packet.NewECDSAPublicKey(
-					time.Now(),
-					entity.PrivateKey.PrivateKey.(*ecdsa.PrivateKey).Public().(*ecdsa.PublicKey))
-			}
-		}
-		for _, subkey := range entity.Subkeys {
-			if subkey.PrivateKey != nil {
-				switch subkey.PrivateKey.PrivateKey.(type) {
-				case *rsa.PrivateKey:
-					subkey.PublicKey = packet.NewRSAPublicKey(
-						time.Now(),
-						subkey.PrivateKey.PrivateKey.(*rsa.PrivateKey).Public().(*xrsa.PublicKey))
-
-				case *ecdsa.PrivateKey:
-					subkey.PublicKey = packet.NewECDSAPublicKey(
-						time.Now(),
-						subkey.PrivateKey.PrivateKey.(*ecdsa.PrivateKey).Public().(*ecdsa.PublicKey))
-				}
-			}
-		}
-	}
-	if err != nil {
-		return err
-	}
-
-	if len(entities) == 0 {
-		return errors.New("gopenpgp: key ring doesn't contain any key")
-	}
-
-	keyRing.entities = append(keyRing.entities, entities...)
-	return nil
-}
-
-// BuildKeyRing reads keyring from binary data
-func BuildKeyRing(binKeys []byte) (keyRing *KeyRing, err error) {
-	keyRing = &KeyRing{}
-	entriesReader := bytes.NewReader(binKeys)
-	err = keyRing.ReadFrom(entriesReader, false)
-
-	return
-}
-
-// BuildKeyRingNoError does not return error on fail
-func BuildKeyRingNoError(binKeys []byte) (keyRing *KeyRing) {
-	keyRing, _ = BuildKeyRing(binKeys)
-	return
-}
-
-// BuildKeyRingArmored reads armored string and returns keyring
-func BuildKeyRingArmored(key string) (keyRing *KeyRing, err error) {
-	keyRaw, err := armorUtils.Unarmor(key)
-	if err != nil {
-		return nil, err
-	}
-	keyReader := bytes.NewReader(keyRaw)
-	keyEntries, err := openpgp.ReadKeyRing(keyReader)
-	return &KeyRing{entities: keyEntries}, err
+// CountDecryptionEntities returns the number of entities in the keyring
+func (keyRing *KeyRing) CountDecryptionEntities() int {
+	return len(keyRing.entities.DecryptionKeys())
 }
 
 // Identities returns the list of identities associated with this key ring.
-func (keyRing *KeyRing) Identities() []*Identity {
+func (keyRing *KeyRing) GetIdentities() []*Identity {
 	var identities []*Identity
 	for _, e := range keyRing.entities {
 		for _, id := range e.Identities {
@@ -282,28 +115,16 @@ func (keyRing *KeyRing) Identities() []*Identity {
 	return identities
 }
 
-// KeyIds returns array of IDs of keys in this KeyRing.
-func (keyRing *KeyRing) KeyIds() []uint64 {
-	var res []uint64
-	for _, e := range keyRing.entities {
-		res = append(res, e.PrimaryKey.KeyId)
+// GetKeyIDs returns array of IDs of keys in this KeyRing.
+func (keyRing *KeyRing) GetKeyIDs() []uint64 {
+	var res = make([]uint64, len(keyRing.entities))
+	for id, e := range keyRing.entities {
+		res[id] = e.PrimaryKey.KeyId
 	}
 	return res
 }
 
-// ReadArmoredKeyRing reads an armored data into keyring.
-func ReadArmoredKeyRing(r io.Reader) (keyRing *KeyRing, err error) {
-	keyRing = &KeyRing{}
-	err = keyRing.ReadFrom(r, true)
-	return
-}
-
-// ReadKeyRing reads an binary data into keyring.
-func ReadKeyRing(r io.Reader) (keyRing *KeyRing, err error) {
-	keyRing = &KeyRing{}
-	err = keyRing.ReadFrom(r, false)
-	return
-}
+// --- Filter keyrings
 
 // FilterExpiredKeys takes a given KeyRing list and it returns only those
 // KeyRings which contain at least, one unexpired Key. It returns only unexpired
@@ -316,7 +137,7 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 	for _, contactKeyRing := range contactKeys {
 		keyRingHasUnexpiredEntity := false
 		keyRingHasTotallyExpiredEntity := false
-		for _, entity := range contactKeyRing.GetEntities() {
+		for _, entity := range contactKeyRing.entities {
 			hasExpired := false
 			hasUnexpired := false
 			for _, subkey := range entity.Subkeys {
@@ -333,7 +154,12 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 			}
 		}
 		if keyRingHasUnexpiredEntity {
-			filteredKeys = append(filteredKeys, contactKeyRing)
+			keyRingCopy, err := contactKeyRing.Copy()
+			if err != nil {
+				return nil, err
+			}
+
+			filteredKeys = append(filteredKeys, keyRingCopy)
 		} else if keyRingHasTotallyExpiredEntity {
 			hasExpiredEntity = true
 		}
@@ -347,12 +173,57 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 }
 
 // FirstKey returns a KeyRing with only the first key of the original one
-func (keyRing *KeyRing) FirstKey() *KeyRing {
+func (keyRing *KeyRing) FirstKey() (*KeyRing, error) {
 	if len(keyRing.entities) == 0 {
-		return nil
+		return nil, errors.New("gopenpgp: No key available in this keyring")
 	}
 	newKeyRing := &KeyRing{}
 	newKeyRing.entities = keyRing.entities[:1]
 
-	return newKeyRing
+	return newKeyRing.Copy()
+}
+
+// Copy creates a deep copy of the keyring
+func (keyRing *KeyRing) Copy() (*KeyRing, error) {
+	newKeyRing := &KeyRing{}
+
+	entities := make([]*openpgp.Entity, len(keyRing.entities))
+	for id, entity := range keyRing.entities {
+		var buffer bytes.Buffer
+		var err error
+
+		if entity.PrivateKey == nil {
+			err = entity.Serialize(&buffer)
+		} else {
+			err = entity.SerializePrivateNoSign(&buffer, nil)
+		}
+
+		if err != nil {
+			return nil, errors.Wrap(err, "gopenpgp: unable to copy key: error in serializing entity")
+		}
+
+		bt := buffer.Bytes()
+		entities[id], err = openpgp.ReadEntity(packet.NewReader(bytes.NewReader(bt)))
+
+		if err != nil {
+			return nil, errors.Wrap(err, "gopenpgp: unable to copy key: error in reading entity")
+		}
+	}
+	newKeyRing.entities = entities
+	newKeyRing.FirstKeyID = keyRing.FirstKeyID
+
+	return newKeyRing, nil
+}
+
+func (keyRing *KeyRing) ClearPrivateParams() {
+	for _, key := range keyRing.GetKeys() {
+		key.ClearPrivateParams()
+	}
+}
+
+// INTERNAL FUNCTIONS
+
+// append appends a key to the keyring
+func (keyRing *KeyRing) appendKey(key *Key) {
+	keyRing.entities = append(keyRing.entities, key.entity)
 }

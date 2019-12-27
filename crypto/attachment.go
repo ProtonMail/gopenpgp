@@ -34,8 +34,14 @@ func (ap *AttachmentProcessor) Finish() (*PGPSplitMessage, error) {
 	if ap.err != nil {
 		return nil, ap.err
 	}
-	(*ap.w).Close()
-	(*ap.pipe).Close()
+	if err := (*ap.w).Close(); err != nil {
+		return nil, err
+	}
+
+	if err := (*ap.pipe).Close(); err != nil {
+		return nil, err
+	}
+
 	ap.done.Wait()
 	if ap.garbageCollector > 0 {
 		runtime.GC()

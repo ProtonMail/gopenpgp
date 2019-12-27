@@ -2,39 +2,23 @@ package crypto
 
 import (
 	"regexp"
-	"strings"
 	"testing"
 
-	"github.com/ProtonMail/gopenpgp/constants"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/stretchr/testify/assert"
 )
 
 const signedPlainText = "Signed message\n"
-const testTime = 1557754627 // 2019-05-13T13:37:07+00:00
 
-var signingKeyRing *KeyRing
 var textSignature, binSignature *PGPSignature
 var message *PlainMessage
 var signatureTest = regexp.MustCompile("(?s)^-----BEGIN PGP SIGNATURE-----.*-----END PGP SIGNATURE-----$")
-var signedMessageTest = regexp.MustCompile(
-	"(?s)^-----BEGIN PGP SIGNED MESSAGE-----.*-----BEGIN PGP SIGNATURE-----.*-----END PGP SIGNATURE-----$")
 
 func TestSignTextDetached(t *testing.T) {
 	var err error
 
-	signingKeyRing, err = ReadArmoredKeyRing(strings.NewReader(readTestFile("keyring_privateKey", false)))
-	if err != nil {
-		t.Fatal("Cannot read private key:", err)
-	}
-
-	// Password defined in keyring_test
-	err = signingKeyRing.UnlockWithPassphrase(testMailboxPassword)
-	if err != nil {
-		t.Fatal("Cannot decrypt private key:", err)
-	}
-
 	message = NewPlainMessageFromString(signedPlainText)
-	textSignature, err = signingKeyRing.SignDetached(message)
+	textSignature, err = keyRingTestPrivate.SignDetached(message)
 	if err != nil {
 		t.Fatal("Cannot generate signature:", err)
 	}
@@ -48,15 +32,15 @@ func TestSignTextDetached(t *testing.T) {
 }
 
 func TestVerifyTextDetachedSig(t *testing.T) {
-	verificationError := signingKeyRing.VerifyDetached(message, textSignature, testTime)
+	verificationError := keyRingTestPublic.VerifyDetached(message, textSignature, testTime)
 	if verificationError != nil {
-		t.Fatal("Cannot verify plaintext signature:", err)
+		t.Fatal("Cannot verify plaintext signature:", verificationError)
 	}
 }
 
 func TestVerifyTextDetachedSigWrong(t *testing.T) {
 	fakeMessage := NewPlainMessageFromString("wrong text")
-	verificationError := signingKeyRing.VerifyDetached(fakeMessage, textSignature, testTime)
+	verificationError := keyRingTestPublic.VerifyDetached(fakeMessage, textSignature, testTime)
 
 	assert.EqualError(t, verificationError, "Signature Verification Error: Invalid signature")
 
@@ -67,7 +51,7 @@ func TestVerifyTextDetachedSigWrong(t *testing.T) {
 func TestSignBinDetached(t *testing.T) {
 	var err error
 
-	binSignature, err = signingKeyRing.SignDetached(NewPlainMessage([]byte(signedPlainText)))
+	binSignature, err = keyRingTestPrivate.SignDetached(NewPlainMessage([]byte(signedPlainText)))
 	if err != nil {
 		t.Fatal("Cannot generate signature:", err)
 	}
@@ -81,8 +65,8 @@ func TestSignBinDetached(t *testing.T) {
 }
 
 func TestVerifyBinDetachedSig(t *testing.T) {
-	verificationError := signingKeyRing.VerifyDetached(message, binSignature, testTime)
+	verificationError := keyRingTestPublic.VerifyDetached(message, binSignature, testTime)
 	if verificationError != nil {
-		t.Fatal("Cannot verify binary signature:", err)
+		t.Fatal("Cannot verify binary signature:", verificationError)
 	}
 }

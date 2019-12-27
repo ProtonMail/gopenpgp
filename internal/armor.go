@@ -1,8 +1,9 @@
 package internal
 
 import (
-	"golang.org/x/crypto/openpgp/armor"
 	"strings"
+
+	"golang.org/x/crypto/openpgp/armor"
 )
 
 // Unarmor unarmors an armored string.

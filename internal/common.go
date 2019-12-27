@@ -4,7 +4,7 @@ package internal
 import (
 	"regexp"
 
-	"github.com/ProtonMail/gopenpgp/constants"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
 )
 
 // TrimNewlines removes whitespace from the end of each line of the input

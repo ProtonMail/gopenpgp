@@ -1,38 +1,27 @@
 package crypto
 
 import (
-	"encoding/base64"
-	"io/ioutil"
-	"strings"
 	"testing"
 
-	"golang.org/x/crypto/openpgp/armor"
-
-	"github.com/ProtonMail/gopenpgp/constants"
 	"github.com/stretchr/testify/assert"
+
+	"golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/openpgp/ecdh"
+	"golang.org/x/crypto/rsa"
 )
 
-var decodedSymmetricKey, _ = base64.StdEncoding.DecodeString("ExXmnSiQ2QCey20YLH6qlLhkY3xnIBC1AwlIXwK/HvY=")
-
-var testSymmetricKey = &SymmetricKey{
-	Key:  decodedSymmetricKey,
-	Algo: constants.AES256,
-}
-
-var testWrongSymmetricKey = &SymmetricKey{
-	Key:  []byte("WrongPass"),
-	Algo: constants.AES256,
-}
+var testSymmetricKey []byte
 
 // Corresponding key in testdata/keyring_privateKey
-const testMailboxPassword = "apple"
+var testMailboxPassword = []byte("apple")
 
 // Corresponding key in testdata/keyring_privateKeyLegacy
-// const testMailboxPasswordLegacy = "123"
+// const testMailboxPasswordLegacy = [][]byte{ []byte("123") }
 
 var (
-	testPrivateKeyRing *KeyRing
-	testPublicKeyRing  *KeyRing
+	keyRingTestPrivate  *KeyRing
+	keyRingTestPublic   *KeyRing
+	keyRingTestMultiple *KeyRing
 )
 
 var testIdentity = &Identity{
@@ -40,75 +29,83 @@ var testIdentity = &Identity{
 	Email: "",
 }
 
-func init() {
+func initKeyRings() {
 	var err error
 
-	testPrivateKeyRing, err = BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
+	testSymmetricKey, err = RandomToken(32)
 	if err != nil {
-		panic(err)
+		panic("Expected no error while generating random token, got:" + err.Error())
 	}
 
-	testPublicKeyRing, err = BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
+	privateKey, err := NewKeyFromArmored(readTestFile("keyring_privateKey", false))
 	if err != nil {
-		panic(err)
+		panic("Expected no error while unarmoring private key, got:" + err.Error())
 	}
 
-	err = testPrivateKeyRing.UnlockWithPassphrase(testMailboxPassword)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func TestKeyRing_ArmoredPublicKeyString(t *testing.T) {
-	s, err := testPrivateKeyRing.GetArmoredPublicKey()
-	if err != nil {
-		t.Fatal("Expected no error while getting armored public key, got:", err)
+	keyRingTestPrivate, err = NewKeyRing(privateKey)
+	if err == nil {
+		panic("Able to create a keyring with a locked key")
 	}
 
-	// Decode armored keys
-	block, err := armor.Decode(strings.NewReader(s))
+	unlockedKey, err := privateKey.Unlock(testMailboxPassword)
 	if err != nil {
-		t.Fatal("Expected no error while decoding armored public key, got:", err)
+		panic("Expected no error while unlocking private key, got:" + err.Error())
 	}
 
-	expected, err := armor.Decode(strings.NewReader(readTestFile("keyring_publicKey", false)))
+	keyRingTestPrivate, err = NewKeyRing(unlockedKey)
 	if err != nil {
-		t.Fatal("Expected no error while decoding expected armored public key, got:", err)
+		panic("Expected no error while building private keyring, got:" + err.Error())
 	}
 
-	assert.Exactly(t, expected.Type, block.Type)
-
-	b, err := ioutil.ReadAll(block.Body)
+	publicKey, err := NewKeyFromArmored(readTestFile("keyring_publicKey", false))
 	if err != nil {
-		t.Fatal("Expected no error while reading armored public key body, got:", err)
+		panic("Expected no error while unarmoring public key, got:" + err.Error())
 	}
 
-	eb, err := ioutil.ReadAll(expected.Body)
+	keyRingTestPublic, err = NewKeyRing(publicKey)
 	if err != nil {
-		t.Fatal("Expected no error while reading expected armored public key body, got:", err)
+		panic("Expected no error while building public keyring, got:" + err.Error())
 	}
 
-	assert.Exactly(t, eb, b)
-}
+	keyRingTestMultiple, err = NewKeyRing(nil)
+	if err != nil {
+		panic("Expected no error while building empty keyring, got:" + err.Error())
+	}
 
-func TestCheckPassphrase(t *testing.T) {
-	encryptedKeyRing, _ := BuildKeyRingArmored(readTestFile("keyring_privateKey", false))
-	isCorrect := encryptedKeyRing.CheckPassphrase("Wrong password")
-	assert.Exactly(t, false, isCorrect)
+	err = keyRingTestMultiple.AddKey(keyTestRSA)
+	if err != nil {
+		panic("Expected no error while adding RSA key to keyring, got:" + err.Error())
+	}
 
-	isCorrect = encryptedKeyRing.CheckPassphrase(testMailboxPassword)
-	assert.Exactly(t, true, isCorrect)
+	err = keyRingTestMultiple.AddKey(keyTestEC)
+	if err != nil {
+		panic("Expected no error while adding EC key to keyring, got:" + err.Error())
+	}
+
+	err = keyRingTestMultiple.AddKey(unlockedKey)
+	if err != nil {
+		panic("Expected no error while adding unlocked key to keyring, got:" + err.Error())
+	}
 }
 
 func TestIdentities(t *testing.T) {
-	identities := testPrivateKeyRing.Identities()
+	identities := keyRingTestPrivate.GetIdentities()
 	assert.Len(t, identities, 1)
 	assert.Exactly(t, identities[0], testIdentity)
 }
 
 func TestFilterExpiredKeys(t *testing.T) {
-	expiredKey, _ := BuildKeyRingArmored(readTestFile("key_expiredKey", false))
-	keys := []*KeyRing{testPrivateKeyRing, expiredKey}
+	expiredKey, err := NewKeyFromArmored(readTestFile("key_expiredKey", false))
+	if err != nil {
+		t.Fatal("Cannot unarmor expired key:", err)
+	}
+
+	expiredKeyRing, err := NewKeyRing(expiredKey)
+	if err != nil {
+		t.Fatal("Cannot create keyring with expired key:", err)
+	}
+
+	keys := []*KeyRing{keyRingTestPrivate, expiredKeyRing}
 	unexpired, err := FilterExpiredKeys(keys)
 
 	if err != nil {
@@ -116,60 +113,89 @@ func TestFilterExpiredKeys(t *testing.T) {
 	}
 
 	assert.Len(t, unexpired, 1)
-	assert.Exactly(t, unexpired[0], testPrivateKeyRing)
-}
-
-func TestGetPublicKey(t *testing.T) {
-	publicKey, err := testPrivateKeyRing.GetPublicKey()
-	if err != nil {
-		t.Fatal("Expected no error while obtaining public key, got:", err)
-	}
-
-	publicKeyRing, err := BuildKeyRing(publicKey)
-	if err != nil {
-		t.Fatal("Expected no error while creating public key ring, got:", err)
-	}
-
-	privateFingerprint, err := testPrivateKeyRing.GetFingerprint()
-	if err != nil {
-		t.Fatal("Expected no error while extracting private fingerprint, got:", err)
-	}
-
-	publicFingerprint, err := publicKeyRing.GetFingerprint()
-	if err != nil {
-		t.Fatal("Expected no error while extracting public fingerprint, got:", err)
-	}
-
-	assert.Exactly(t, privateFingerprint, publicFingerprint)
+	assert.Exactly(t, unexpired[0].GetKeyIDs(), keyRingTestPrivate.GetKeyIDs())
 }
 
 func TestKeyIds(t *testing.T) {
-	keyIDs := testPrivateKeyRing.KeyIds()
+	keyIDs := keyRingTestPrivate.GetKeyIDs()
 	var assertKeyIDs = []uint64{4518840640391470884}
 	assert.Exactly(t, assertKeyIDs, keyIDs)
 }
 
-func TestMutlipleKeyRing(t *testing.T) {
-	testPublicKeyRing, _ = BuildKeyRingArmored(readTestFile("keyring_publicKey", false))
-	assert.Exactly(t, 1, len(testPublicKeyRing.entities))
+func TestMultipleKeyRing(t *testing.T) {
+	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
+	assert.Exactly(t, 3, keyRingTestMultiple.CountEntities())
+	assert.Exactly(t, 3, keyRingTestMultiple.CountDecryptionEntities())
 
-	ids := testPublicKeyRing.KeyIds()
-	assert.Exactly(t, uint64(0x3eb6259edf21df24), ids[0])
+	assert.Exactly(t, 3, len(keyRingTestMultiple.GetKeys()))
 
-	err = testPublicKeyRing.ReadFrom(strings.NewReader(readTestFile("mime_publicKey", false)), true)
+	testKey, err := keyRingTestMultiple.GetKey(1)
 	if err != nil {
-		t.Fatal("Expected no error while adding a key to the keyring, got:", err)
+		t.Fatal("Expected no error while extracting key, got:", err)
+	}
+	assert.Exactly(t, keyTestEC, testKey)
+
+	_, err = keyRingTestMultiple.GetKey(3)
+	assert.NotNil(t, err)
+
+	singleKeyRing, err := keyRingTestMultiple.FirstKey()
+	if err != nil {
+		t.Fatal("Expected no error while filtering the first key, got:", err)
+	}
+	assert.Exactly(t, 1, len(singleKeyRing.entities))
+	assert.Exactly(t, 1, singleKeyRing.CountEntities())
+	assert.Exactly(t, 1, singleKeyRing.CountDecryptionEntities())
+}
+
+func TestClearPrivateKey(t *testing.T) {
+	keyRingCopy, err := keyRingTestMultiple.Copy()
+	if err != nil {
+		t.Fatal("Expected no error while copying keyring, got:", err)
 	}
 
-	assert.Exactly(t, 2, len(testPublicKeyRing.entities))
+	for _, key := range keyRingCopy.GetKeys() {
+		assert.Nil(t, clearPrivateKey(key.entity.PrivateKey.PrivateKey))
+	}
 
-	ids = testPublicKeyRing.KeyIds()
-	assert.Exactly(t, uint64(0x3eb6259edf21df24), ids[0])
-	assert.Exactly(t, uint64(0x374130b32ee1e5ea), ids[1])
+	keys := keyRingCopy.GetKeys()
+	assertRSACleared(t, keys[0].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
+	assertEdDSACleared(t, keys[1].entity.PrivateKey.PrivateKey.(ed25519.PrivateKey))
+	assertRSACleared(t, keys[2].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
+}
 
-	singleKey := testPublicKeyRing.FirstKey()
-	assert.Exactly(t, 1, len(singleKey.entities))
+func TestClearPrivateWithSubkeys(t *testing.T) {
+	keyRingCopy, err := keyRingTestMultiple.Copy()
+	if err != nil {
+		t.Fatal("Expected no error while copying keyring, got:", err)
+	}
 
-	ids = singleKey.KeyIds()
-	assert.Exactly(t, uint64(0x3eb6259edf21df24), ids[0])
+	for _, key := range keyRingCopy.GetKeys() {
+		assert.Exactly(t, 2, key.clearPrivateWithSubkeys())
+	}
+
+	keys := keyRingCopy.GetKeys()
+	assertRSACleared(t, keys[0].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
+	assertRSACleared(t, keys[0].entity.Subkeys[0].PrivateKey.PrivateKey.(*rsa.PrivateKey))
+
+	assertEdDSACleared(t, keys[1].entity.PrivateKey.PrivateKey.(ed25519.PrivateKey))
+	assertECDHCleared(t, keys[1].entity.Subkeys[0].PrivateKey.PrivateKey.(*ecdh.PrivateKey))
+
+	assertRSACleared(t, keys[2].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
+	assertRSACleared(t, keys[2].entity.Subkeys[0].PrivateKey.PrivateKey.(*rsa.PrivateKey))
+}
+
+func TestClearPrivateParams(t *testing.T) {
+	keyRingCopy, err := keyRingTestMultiple.Copy()
+	if err != nil {
+		t.Fatal("Expected no error while copying keyring, got:", err)
+	}
+
+	for _, key := range keyRingCopy.GetKeys() {
+		assert.True(t, key.IsPrivate())
+		assert.True(t, key.ClearPrivateParams())
+		assert.False(t, key.IsPrivate())
+		assert.Nil(t, key.entity.PrivateKey)
+		assert.Nil(t, key.entity.Subkeys[0].PrivateKey)
+		assert.False(t, key.ClearPrivateParams())
+	}
 }

@@ -39,7 +39,7 @@ func (keyRing *KeyRing) Decrypt(
 
 // SignDetached generates and returns a PGPSignature for a given PlainMessage
 func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, error) {
-	signEntity, err := keyRing.GetSigningEntity()
+	signEntity, err := keyRing.getSigningEntity()
 	if err != nil {
 		return nil, err
 	}
@@ -56,11 +56,9 @@ func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, erro
 
 // VerifyDetached verifies a PlainMessage with embedded a PGPSignature
 // and returns a SignatureVerificationError if fails
-func (keyRing *KeyRing) VerifyDetached(
-	message *PlainMessage, signature *PGPSignature, verifyTime int64,
-) (error) {
+func (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) error {
 	return verifySignature(
-		keyRing.GetEntities(),
+		keyRing.entities,
 		message.NewReader(),
 		signature.GetBinary(),
 		verifyTime,
@@ -78,7 +76,7 @@ func asymmetricEncrypt(data []byte, publicKey *KeyRing, privateKey *KeyRing, isB
 
 	if privateKey != nil && len(privateKey.entities) > 0 {
 		var err error
-		signEntity, err = privateKey.GetSigningEntity()
+		signEntity, err = privateKey.getSigningEntity()
 		if err != nil {
 			return nil, err
 		}
@@ -101,8 +99,11 @@ func asymmetricEncrypt(data []byte, publicKey *KeyRing, privateKey *KeyRing, isB
 	}
 
 	_, err = encryptWriter.Write(data)
-	encryptWriter.Close()
+	if err != nil {
+		return nil, err
+	}
 
+	err = encryptWriter.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -114,11 +115,11 @@ func asymmetricEncrypt(data []byte, publicKey *KeyRing, privateKey *KeyRing, isB
 func asymmetricDecrypt(
 	encryptedIO io.Reader, privateKey *KeyRing, verifyKey *KeyRing, verifyTime int64,
 ) (plaintext []byte, err error) {
-	privKeyEntries := privateKey.GetEntities()
+	privKeyEntries := privateKey.entities
 	var additionalEntries openpgp.EntityList
 
 	if verifyKey != nil {
-		additionalEntries = verifyKey.GetEntities()
+		additionalEntries = verifyKey.entities
 	}
 
 	if additionalEntries != nil {

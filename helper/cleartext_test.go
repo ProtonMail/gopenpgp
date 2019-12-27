@@ -4,12 +4,12 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/stretchr/testify/assert"
-	"github.com/ProtonMail/gopenpgp/crypto"
 )
 
 const signedPlainText = "Signed message\n"
-const testTime = 1557754627 // 2019-05-13T13:37:07+00:00
+
 var signedMessageTest = regexp.MustCompile(
 	"(?s)^-----BEGIN PGP SIGNED MESSAGE-----.*-----BEGIN PGP SIGNATURE-----.*-----END PGP SIGNATURE-----$")
 

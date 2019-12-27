@@ -7,8 +7,8 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/ProtonMail/gopenpgp/constants"
-	"github.com/ProtonMail/gopenpgp/internal"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
+	"github.com/ProtonMail/gopenpgp/v2/internal"
 
 	"golang.org/x/crypto/openpgp/armor"
 )
@@ -33,11 +33,12 @@ func ArmorWithType(input []byte, armorType string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	_, err = w.Write(input)
-	if err != nil {
+	if _, err = w.Write(input); err != nil {
 		return "", err
 	}
-	w.Close()
+	if err := w.Close(); err != nil {
+		return "", err
+	}
 	return b.String(), nil
 }
 
