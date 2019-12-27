@@ -10,7 +10,6 @@ crypto library](https://github.com/ProtonMail/crypto).
 - [Download/Install](#downloadinstall)
 - [Documentation](#documentation)
 - [Using with Go Mobile](#using-with-go-mobile)
-- [Other notes](#other-notes)
 - [Full documentation](#full-documentation)
 - [Examples](#examples)
     - [Set up](#set-up)
@@ -24,60 +23,58 @@ crypto library](https://github.com/ProtonMail/crypto).
 <!-- /TOC -->
 
 ## Download/Install
+### Vendored install
+To use this library using [Go Modules](https://github.com/golang/go/wiki/Modules) just edit your
+`go.mod` configuration to contain:
+```gomod
+require {
+    ...
+    github.com/ProtonMail/gopenpgp/v2 v2.0.0
+}
 
-This package uses [Go Modules](https://github.com/golang/go/wiki/Modules), and
-thus requires Go 1.11+. If you're also using Go Modules, simply import it and
-start using it (see [Set up](#set-up)). If not, run:
-
-```bash
-go get github.com/ProtonMail/gopenpgp # or git clone this repository into the following path
-cd $GOPATH/src/github.com/ProtonMail/gopenpgp
-GO111MODULE=on go mod vendor
+replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20191122234321-e77a1f03baa0
 ```
 
-(After that, the code will also work in Go 1.10, but you need Go 1.11 for the `go mod` command.)
+It can then be installed by running:
+```sh
+go mod vendor
+```
+Finally your software can include it in your software as follows:
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
+)
+
+func main() {
+	fmt.Println(crypto.GetUnixTime())
+}
+```
+
+### Git-Clone install
+To install for development mode, cloning the repository, it can be done in the following way:
+```bash
+cd $GOPATH
+mkdir -p src/github.com/ProtonMail/
+cd $GOPATH/src/github.com/ProtonMail/
+git clone git@github.com:ProtonMail/gopenpgp.git
+cd gopenpgp
+ln -s . v2
+go mod
+```
 
 ## Documentation
-
+A full overview of the API can be found here:
 https://godoc.org/gopkg.in/ProtonMail/gopenpgp.v2/crypto
 
+In this document examples are provided and the proper use of (almost) all functions is tested.
+
 ## Using with Go Mobile
-
-Setup Go Mobile and build/bind the source code:
-
-Go Mobile repo: https://github.com/golang/mobile
-Go Mobile wiki: https://github.com/golang/go/wiki/Mobile
-
-1. Install Go: `brew install go`
-2. Install Gomobile: `go get -u golang.org/x/mobile/cmd/gomobile`
-3. Install Gobind: `go install golang.org/x/mobile/cmd/gobind`
-4. Install Android SDK and NDK using Android Studio
-5. Set env: `export ANDROID_HOME="/AndroidSDK"` (path to your SDK)
-6. Init gomobile: `gomobile init -ndk /AndroidSDK/ndk-bundle/` (path to your NDK)
-7. Copy Go module dependencies to the vendor directory: `go mod vendor`
-8. Build examples:
-   `gomobile build -target=android  #or ios`
-
-   Bind examples:
-   `gomobile bind -target ios -o frameworks/name.framework`
-   `gomobile bind -target android`
-
-   The bind will create framework for iOS and jar&aar files for Android (x86_64 and ARM).
-
-## Other notes
-
-If you wish to use build.sh, you may need to modify the paths in it.
-
-Interfacing between Go and Swift:
-https://medium.com/@matryer/tutorial-calling-go-code-from-swift-on-ios-and-vice-versa-with-gomobile-7925620c17a4.
+The use with gomobile is still to be documented
 
 ## Examples
-
-### Set up
-
-```go
-import "github.com/ProtonMail/gopenpgp/crypto"
-```
 
 ### Encrypt / Decrypt with password
 
