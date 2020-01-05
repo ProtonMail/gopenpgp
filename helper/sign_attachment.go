@@ -1,4 +1,5 @@
-// +build !mobile
+// +build !ios
+// +build !android
 
 package helper
 
