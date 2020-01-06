@@ -72,7 +72,28 @@ https://godoc.org/gopkg.in/ProtonMail/gopenpgp.v2/crypto
 In this document examples are provided and the proper use of (almost) all functions is tested.
 
 ## Using with Go Mobile
-The use with gomobile is still to be documented
+This library can be compiled with [Gomobile](https://github.com/golang/go/wiki/Mobile) too.
+First ensure you have a working installation of gomobile:
+```bash
+gomobile version
+```
+In case this fails, install it with:
+```bash
+go get -u golang.org/x/mobile/cmd/gomobile
+```
+Then ensure your path env var has gomobile's binary, and it is properly init-ed:
+```bash
+export PATH="$PATH:$GOPATH/bin"
+gomobile init
+```
+Then you must ensure that the Android or iOS frameworks are installed and the respective env vars set.
+
+Finally, build the application
+```bash
+sh build.sh
+```
+This script will build for both android and iOS at the same time, 
+to filter one out you can comment out the line in the corresponding section.
 
 ## Examples
 

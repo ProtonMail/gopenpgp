@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2019-12-??
+## [2.0.0] - 2020-01-06
 Since the open-sourcing of the library in May the API has been updated, listening to internal and
 external feedback, in order to have a flexible library, that can be used in a simple settings,
 with batteries included, or by more advanced users that might want to interact directly with

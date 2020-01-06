@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIOSSignedMessageDecryption(t *testing.T) {
+func TestMobileSignedMessageDecryption(t *testing.T) {
 	privateKey, _ := crypto.NewKeyFromArmored(readTestFile("keyring_privateKey", false))
 	// Password defined in base_test
 	privateKey, err := privateKey.Unlock(testMailboxPassword)
