@@ -172,7 +172,7 @@ With binary data or advanced modes:
 var binMessage = crypto.NewPlainMessage(data)
 
 publicKeyObj, err := crypto.NewKeyFromArmored(publicKey)
-publicKeyRing, err := crypto.NewKeyFromArmored(publicKeyObj)
+publicKeyRing, err := crypto.NewKeyRing(publicKeyObj)
 
 pgpMessage, err := publicKeyRing.Encrypt(binMessage, privateKeyRing)
 
@@ -254,7 +254,7 @@ message := crypto.NewPlaintextMessage("Verified message")
 pgpSignature, err := crypto.NewPGPSignatureFromArmored(signature)
 
 publicKeyObj, err := crypto.NewKeyFromArmored(pubkey)
-signingKeyRing, err := crypto.NewKeyFromArmored(publicKeyObj)
+signingKeyRing, err := crypto.NewKeyRing(publicKeyObj)
 
 err := signingKeyRing.VerifyDetached(message, pgpSignature, crypto.GetUnixTime())
 
@@ -298,7 +298,7 @@ message := crypto.NewPlainMessage("Verified message")
 pgpSignature, err := crypto.NewPGPSignatureFromArmored(signature)
 
 publicKeyObj, err := crypto.NewKeyFromArmored(pubkey)
-signingKeyRing, err := crypto.NewKeyFromArmored(publicKeyObj)
+signingKeyRing, err := crypto.NewKeyRing(publicKeyObj)
 
 err := signingKeyRing.VerifyDetached(message, pgpSignature, crypto.GetUnixTime())
 
