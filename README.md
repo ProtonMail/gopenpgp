@@ -327,13 +327,13 @@ A session key can be generated, encrypted to a Asymmetric/Symmetric key packet a
 
 sessionKey, err := crypto.GenerateSessionKey()
 
-keyPacket, err := publicKey.EncryptSessionKey(sessionKey)
+keyPacket, err := publicKeyRing.EncryptSessionKey(sessionKey)
 keyPacketSymm, err := crypto.EncryptSessionKeyWithPassword(sessionKey, password)
 ```
 `KeyPacket` is a `[]byte` containing the session key encrypted with the private key or password.
 
 ```go
-decodedKeyPacket, err := privateKey.DecryptSessionKey(keyPacket)
+decodedKeyPacket, err := privateKeyRing.DecryptSessionKey(keyPacket)
 decodedSymmKeyPacket, err := crypto.DecryptSessionKeyWithPassword(keyPacketSymm, password)
 ```
 `decodedKeyPacket` and `decodedSymmKeyPacket` are objects of type `*SymmetricKey` that can
@@ -342,10 +342,10 @@ be used to decrypt the corresponding symmetrically encrypted data packets:
 ```go
 var message = crypto.NewPlainMessage(data)
 
-// Encrypt data with password
+// Encrypt data with session key
 dataPacket, err := sessionKey.Encrypt(message)
 
-// Decrypt data with password
+// Decrypt data with session key
 decrypted, err := sessionKey.Decrypt(password, dataPacket)
 
 //Original message in decrypted.GetBinary()
@@ -363,3 +363,25 @@ newPGPSplitMessage, err := pgpMessage.SeparateKeyAndData()
 // Key Packet is in newPGPSplitMessage.GetKeyPacket()
 // Data Packet is in newPGPSplitMessage.GetDataPacket()
 ```
+
+### Checking keys
+In order to check that the primary key is valid the `Key#Check` function can be used.
+This operation is as of 2.0.0 fairly expensive, as it requires a signature operation. 
+It will be improved in the future versions, and possibly expanded to the subkeys, that are
+for now assumed to be correct thanks to the binding signature.
+```go
+const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+...
+-----END PGP PRIVATE KEY BLOCK-----` // Encrypted private key
+const passphrase = []byte("LongSecret") // Private key passphrase 
+
+privateKeyObj, err := crypto.NewKeyFromArmored(privkey)
+unlockedKeyObj = privateKeyObj.Unlock(passphrase)
+
+isVerified, _ := unlockedKeyObj.Check(); 
+if !isVerified { 
+    // Handle broken keys
+}
+```
+This function runs on unlocked private keys, and it will return an error if called with public keys
+or locked keys.

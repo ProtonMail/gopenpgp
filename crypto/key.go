@@ -271,6 +271,15 @@ func (key *Key) Check() (bool, error) {
 		return false, errors.New("gopenpgp: can check only private key")
 	}
 
+	unlocked, err := key.IsUnlocked()
+	if err != nil {
+		return false, err
+	}
+
+	if !unlocked {
+		return false, errors.New("gopenpgp: key is not unlocked")
+	}
+
 	var signBuf bytes.Buffer
 
 	if err = openpgp.DetachSign(&signBuf, key.entity, testReader, nil); err != nil {
