@@ -80,7 +80,7 @@ func GenerateSessionKey() (*SessionKey, error) {
 
 func NewSessionKeyFromToken(token []byte, algo string) *SessionKey {
 	return &SessionKey{
-		Key:  token,
+		Key:  clone(token),
 		Algo: algo,
 	}
 }
