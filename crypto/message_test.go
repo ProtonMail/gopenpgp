@@ -152,23 +152,23 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	// Test that ciphertext data contains first three Encrypted Key Packets
-	// (tag 1) followed by a single symmetrically encrypted data packet (tag 18)
+	// Test that ciphertext data contains three Encrypted Key Packets (tag 1)
+	// followed by a single symmetrically encrypted data packet (tag 18)
 	var p packet.Packet
 	packets := packet.NewReader(bytes.NewReader(ciphertext.Data))
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 3; i++ {
 		if p, err = packets.Next(); err != nil {
 			t.Fatal(err.Error())
 		}
-		if i < 3 {
-			if _, ok := p.(*packet.EncryptedKey); !ok {
-				t.Fatalf("Expected Encrypted Key packet, got %T", p)
-			}
-		} else {
-			if _, ok := p.(*packet.SymmetricallyEncrypted); !ok {
-				t.Fatalf("Expected Symmetrically Encrypted Data packet, got %T", p)
-			}
+		if _, ok := p.(*packet.EncryptedKey); !ok {
+			t.Fatalf("Expected Encrypted Key packet, got %T", p)
 		}
+	}
+	if p, err = packets.Next(); err != nil {
+		t.Fatal(err.Error())
+	}
+	if _, ok := p.(*packet.SymmetricallyEncrypted); !ok {
+		t.Fatalf("Expected Symmetrically Encrypted Data packet, got %T", p)
 	}
 
 	// Decrypt message and verify correctness
