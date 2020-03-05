@@ -3,7 +3,6 @@ package crypto
 import (
 	"bytes"
 	"encoding/base64"
-	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -153,19 +152,26 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	numKeyPackets := 0
+	// Test that ciphertext data contains three Encrypted Key Packets (tag 1)
+	// followed by a single symmetrically encrypted data packet (tag 18)
+	var p packet.Packet
 	packets := packet.NewReader(bytes.NewReader(ciphertext.Data))
-	for {
-		var p packet.Packet
-		if p, err = packets.Next(); err == io.EOF {
-			break
+	for i := 0; i < 3; i++ {
+		if p, err = packets.Next(); err != nil {
+			t.Fatal(err.Error())
 		}
-		if _, ok := p.(*packet.EncryptedKey); ok {
-			numKeyPackets++
+		if _, ok := p.(*packet.EncryptedKey); !ok {
+			t.Fatalf("Expected Encrypted Key packet, got %T", p)
 		}
 	}
-	assert.Exactly(t, 3, numKeyPackets)
+	if p, err = packets.Next(); err != nil {
+		t.Fatal(err.Error())
+	}
+	if _, ok := p.(*packet.SymmetricallyEncrypted); !ok {
+		t.Fatalf("Expected Symmetrically Encrypted Data packet, got %T", p)
+	}
 
+	// Decrypt message and verify correctness
 	decrypted, err := keyRingTestPrivate.Decrypt(ciphertext, keyRingTestPublic, GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
