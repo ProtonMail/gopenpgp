@@ -27,10 +27,10 @@ crypto library](https://github.com/ProtonMail/crypto).
 To use this library using [Go Modules](https://github.com/golang/go/wiki/Modules) just edit your
 `go.mod` configuration to contain:
 ```gomod
-require {
+require (
     ...
     github.com/ProtonMail/gopenpgp/v2 v2.0.0
-}
+)
 
 replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20191122234321-e77a1f03baa0
 ```
