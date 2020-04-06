@@ -1,6 +1,8 @@
 package helper
 
 import (
+	"encoding/json"
+
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 )
 
@@ -64,4 +66,13 @@ func EncryptAttachment(plainData []byte, fileName string, keyRing *crypto.KeyRin
 		return nil, err
 	}
 	return decrypted, nil
+}
+
+func GetJsonSHA256Fingerprints(publicKey string) ([]byte, error) {
+	key, err := crypto.NewKeyFromArmored(publicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(key.GetSHA256Fingerprints())
 }

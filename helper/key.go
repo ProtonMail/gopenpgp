@@ -46,3 +46,12 @@ func GenerateKey(name, email string, passphrase []byte, keyType string, bits int
 	key.ClearPrivateParams()
 	return locked.Armor()
 }
+
+func GetSHA256Fingerprints(publicKey string) ([]string, error) {
+	key, err := crypto.NewKeyFromArmored(publicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return key.GetSHA256Fingerprints(), nil
+}

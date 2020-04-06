@@ -53,3 +53,12 @@ func TestMobileSignedMessageDecryption(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Nil(t, decrypted)
 }
+
+func TestGetJsonSHA256FingerprintsV4(t *testing.T) {
+	sha256Fingerprints, err := GetJsonSHA256Fingerprints(readTestFile("keyring_publicKey", false))
+	if err != nil {
+		t.Fatal("Cannot unarmor key:", err)
+	}
+
+	assert.Exactly(t, []byte("[\"d9ac0b857da6d2c8be985b251a9e3db31e7a1d2d832d1f07ebe838a9edce9c24\",\"203dfba1f8442c17e59214d9cd11985bfc5cc8721bb4a71740dd5507e58a1a0d\"]"), sha256Fingerprints)
+}
