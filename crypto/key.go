@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"crypto"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -14,9 +15,9 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
 
-	"golang.org/x/crypto/openpgp"
+	openpgp "golang.org/x/crypto/openpgp"
 	xarmor "golang.org/x/crypto/openpgp/armor"
-	"golang.org/x/crypto/openpgp/packet"
+	packet "golang.org/x/crypto/openpgp/packet"
 )
 
 // Key contains a single private or public key
@@ -321,7 +322,26 @@ func (key *Key) GetFingerprint() string {
 	return hex.EncodeToString(key.entity.PrimaryKey.Fingerprint[:])
 }
 
+// GetSHA256Fingerprints computes the SHA256 fingerprints of the key and subkeys
+func (key *Key) GetSHA256Fingerprints() (fingerprints []string) {
+	fingerprints = append(fingerprints, hex.EncodeToString(getSHA256FingerprintBytes(key.entity.PrimaryKey)))
+	for _, sub := range key.entity.Subkeys {
+		fingerprints = append(fingerprints, hex.EncodeToString(getSHA256FingerprintBytes(sub.PublicKey)))
+	}
+	return
+}
+
 // --- Internal methods
+
+// getSHA256FingerprintBytes computes the SHA256 fingerprint of a public key object
+func getSHA256FingerprintBytes(pk *packet.PublicKey) []byte {
+	fingerPrint := sha256.New()
+
+	// Hashing can't return an error, and has already been done when parsing the key,
+	// hence the error is nil
+	_ = pk.SerializeForHash(fingerPrint)
+	return fingerPrint.Sum(nil)
+}
 
 // readFrom reads unarmored and armored keys from r and adds them to the keyring.
 func (key *Key) readFrom(r io.Reader, armored bool) error {
