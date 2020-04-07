@@ -68,6 +68,8 @@ func EncryptAttachment(plainData []byte, fileName string, keyRing *crypto.KeyRin
 	return decrypted, nil
 }
 
+// GetJsonSHA256Fingerprints returns the SHA256 fingeprints of key and subkeys, encoded in JSON, since gomobile can not
+// handle arrays
 func GetJsonSHA256Fingerprints(publicKey string) ([]byte, error) {
 	key, err := crypto.NewKeyFromArmored(publicKey)
 	if err != nil {

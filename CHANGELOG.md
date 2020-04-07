@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed test `TestMultipleKeyMessageEncryption`
 
+### Added
+- SHA256 fingerprint support
+```go
+(key *Key) GetSHA256Fingerprints() (fingerprints []string)
+
+// Helper
+GetSHA256Fingerprints(publicKey string) ([]string, error)
+
+// Helper, mobile only, returns fingerprints encoded as JSON
+GetJsonSHA256Fingerprints(publicKey string) ([]byte, error)
+```
+
 ## [2.0.0] - 2020-01-06
 Since the open-sourcing of the library in May the API has been updated, listening to internal and
 external feedback, in order to have a flexible library, that can be used in a simple settings,
