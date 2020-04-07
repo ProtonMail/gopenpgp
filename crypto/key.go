@@ -322,7 +322,7 @@ func (key *Key) GetFingerprint() string {
 	return hex.EncodeToString(key.entity.PrimaryKey.Fingerprint[:])
 }
 
-// GetSHA256Fingerprints gets the sha256 fingerprint from the key and subkeys
+// GetSHA256Fingerprints computes the SHA256 fingerprints of the key and subkeys
 func (key *Key) GetSHA256Fingerprints() (fingerprints []string) {
 	fingerprints = append(fingerprints, hex.EncodeToString(getSHA256FingerprintBytes(key.entity.PrimaryKey)))
 	for _, sub := range key.entity.Subkeys {
@@ -333,11 +333,12 @@ func (key *Key) GetSHA256Fingerprints() (fingerprints []string) {
 
 // --- Internal methods
 
-// getSHA256FingerprintBytes compute a fingerprint from a public key object
+// getSHA256FingerprintBytes computes the SHA256 fingerprint of a public key object
 func getSHA256FingerprintBytes(pk *packet.PublicKey) []byte {
 	fingerPrint := sha256.New()
 
-	// Hashing has already been done when parsing the key, hence the error is nil
+	// Hashing can't return an error, and has already been done when parsing the key,
+	// hence the error is nil
 	_ = pk.SerializeForHash(fingerPrint)
 	return fingerPrint.Sum(nil)
 }
