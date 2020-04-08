@@ -61,7 +61,7 @@ type ClearTextMessage struct {
 // signature, or verification from the unencrypted binary data.
 func NewPlainMessage(data []byte) *PlainMessage {
 	return &PlainMessage{
-		Data:     data,
+		Data:     clone(data),
 		TextType: false,
 	}
 }
@@ -78,7 +78,7 @@ func NewPlainMessageFromString(text string) *PlainMessage {
 // NewPGPMessage generates a new PGPMessage from the unarmored binary data.
 func NewPGPMessage(data []byte) *PGPMessage {
 	return &PGPMessage{
-		Data: data,
+		Data: clone(data),
 	}
 }
 
@@ -103,8 +103,8 @@ func NewPGPMessageFromArmored(armored string) (*PGPMessage, error) {
 // datapacket, and encryption algorithm.
 func NewPGPSplitMessage(keyPacket []byte, dataPacket []byte) *PGPSplitMessage {
 	return &PGPSplitMessage{
-		KeyPacket:  keyPacket,
-		DataPacket: dataPacket,
+		KeyPacket:  clone(keyPacket),
+		DataPacket: clone(dataPacket),
 	}
 }
 
@@ -122,7 +122,7 @@ func NewPGPSplitMessageFromArmored(encrypted string) (*PGPSplitMessage, error) {
 // NewPGPSignature generates a new PGPSignature from the unarmored binary data.
 func NewPGPSignature(data []byte) *PGPSignature {
 	return &PGPSignature{
-		Data: data,
+		Data: clone(data),
 	}
 }
 
@@ -146,8 +146,8 @@ func NewPGPSignatureFromArmored(armored string) (*PGPSignature, error) {
 // NewClearTextMessage generates a new ClearTextMessage from data and signature
 func NewClearTextMessage(data []byte, signature []byte) *ClearTextMessage {
 	return &ClearTextMessage{
-		Data:      data,
-		Signature: signature,
+		Data:      clone(data),
+		Signature: clone(signature),
 	}
 }
 

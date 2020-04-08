@@ -52,7 +52,7 @@ func NewKeyFromReader(r io.Reader) (key *Key, err error) {
 
 // NewKey creates a new key from the first key in the unarmored binary data
 func NewKey(binKeys []byte) (key *Key, err error) {
-	return NewKeyFromReader(bytes.NewReader(binKeys))
+	return NewKeyFromReader(bytes.NewReader(clone(binKeys)))
 }
 
 // NewKeyFromArmored creates a new key from the first key in an armored

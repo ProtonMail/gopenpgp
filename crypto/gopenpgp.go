@@ -11,3 +11,11 @@ type GopenPGP struct {
 }
 
 var pgp = GopenPGP{}
+
+// clone returns a clone of the byte slice. Internal function used to make sure
+// we don't retain a reference to external data.
+func clone(input []byte) []byte {
+	data := make([]byte, len(input))
+	copy(data, input)
+	return data
+}
