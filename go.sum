@@ -1,10 +1,5 @@
-github.com/ProtonMail/crypto v0.0.0-20191122234321-e77a1f03baa0 h1:mCww5Yl0Pm4PZPSooupyWDgihrh96p6+O4PY1hs0FBw=
-github.com/ProtonMail/crypto v0.0.0-20191122234321-e77a1f03baa0/go.mod h1:MBriIAodHvZ+YvwvMJWCTmseW/LkeVRPWp/iZKvee4g=
-github.com/ProtonMail/crypto v0.0.0-20200406132833-0ff9e5f60587 h1:tRJioacMtJwCdlCHRaUl/2VfVNazf+ypT+SV5eiLnVY=
-github.com/ProtonMail/crypto v0.0.0-20200406132833-0ff9e5f60587/go.mod h1:MBriIAodHvZ+YvwvMJWCTmseW/LkeVRPWp/iZKvee4g=
-github.com/ProtonMail/crypto v0.0.0-20200406145536-081a35660375/go.mod h1:MBriIAodHvZ+YvwvMJWCTmseW/LkeVRPWp/iZKvee4g=
-github.com/ProtonMail/crypto v0.0.0-20200406171318-1e8bf1c40869 h1:GtxsVknmfEUppe8lCX/Xgs+BbCzXf9bdH8+eBbtGO70=
-github.com/ProtonMail/crypto v0.0.0-20200406171318-1e8bf1c40869/go.mod h1:MBriIAodHvZ+YvwvMJWCTmseW/LkeVRPWp/iZKvee4g=
+github.com/ProtonMail/crypto v0.0.0-20200416114516-1fa7f403fb9c h1:DAvlgde2Stu18slmjwikiMPs/CKPV35wSvmJS34z0FU=
+github.com/ProtonMail/crypto v0.0.0-20200416114516-1fa7f403fb9c/go.mod h1:Pxr7w4gA2ikI4sWyYwEffm+oew1WAJHzG1SiDpQMkrI=
 github.com/ProtonMail/go-mime v0.0.0-20190923161245-9b5a4261663a h1:W6RrgN/sTxg1msqzFFb+G80MFmpjMw61IU+slm+wln4=
 github.com/ProtonMail/go-mime v0.0.0-20190923161245-9b5a4261663a/go.mod h1:NYt+V3/4rEeDuaev/zw1zCq8uqVEuPHzDPo3OZrlGJ4=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

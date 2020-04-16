@@ -177,7 +177,7 @@ func (key *Key) Serialize() ([]byte, error) {
 	if key.entity.PrivateKey == nil {
 		err = key.entity.Serialize(&buffer)
 	} else {
-		err = key.entity.SerializePrivateNoSign(&buffer, nil)
+		err = key.entity.SerializePrivateWithoutSigning(&buffer, nil)
 	}
 
 	return buffer.Bytes(), err
@@ -412,10 +412,6 @@ func generateKey(
 
 	newEntity, err := openpgp.NewEntity(name, comments, email, cfg)
 	if err != nil {
-		return nil, err
-	}
-
-	if err := newEntity.SelfSign(nil); err != nil {
 		return nil, err
 	}
 
