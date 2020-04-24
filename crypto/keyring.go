@@ -36,7 +36,7 @@ func NewKeyRing(key *Key) (*KeyRing, error) {
 	return keyRing, err
 }
 
-// --- Add keys to keyring
+// AddKey adds the given key the keyring
 func (keyRing *KeyRing) AddKey(key *Key) error {
 	if key.IsPrivate() {
 		unlocked, err := key.IsUnlocked()
@@ -101,7 +101,7 @@ func (keyRing *KeyRing) CountDecryptionEntities() int {
 	return len(keyRing.entities.DecryptionKeys())
 }
 
-// Identities returns the list of identities associated with this key ring.
+// GetIdentities returns the list of identities associated with this key ring.
 func (keyRing *KeyRing) GetIdentities() []*Identity {
 	var identities []*Identity
 	for _, e := range keyRing.entities {

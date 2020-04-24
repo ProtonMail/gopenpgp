@@ -11,8 +11,8 @@ const (
 )
 
 const (
-	SIGNATURE_OK          int = 0
-	SIGNATURE_NOT_SIGNED  int = 1
-	SIGNATURE_NO_VERIFIER int = 2
-	SIGNATURE_FAILED      int = 3
+	SignatureOk         int = 0
+	SignatureNotSigned  int = 1
+	SignatureNoVerifier int = 2
+	SignatureFailed     int = 3
 )

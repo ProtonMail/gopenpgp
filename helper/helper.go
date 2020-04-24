@@ -1,4 +1,4 @@
-// helper contains several functions with a simple interface to extend usability and compatibility with gomobile
+// Package helper contains several functions with a simple interface to extend usability and compatibility with gomobile
 package helper
 
 import (

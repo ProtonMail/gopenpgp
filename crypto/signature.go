@@ -30,26 +30,26 @@ func (e SignatureVerificationError) Error() string {
 // Internal functions
 // ------------------
 
-// newSignatureFailed creates a new SignatureVerificationError, type SIGNATURE_FAILED
+// newSignatureFailed creates a new SignatureVerificationError, type SignatureFailed
 func newSignatureFailed() SignatureVerificationError {
 	return SignatureVerificationError{
-		constants.SIGNATURE_FAILED,
+		constants.SignatureFailed,
 		"Invalid signature",
 	}
 }
 
-// newSignatureNotSigned creates a new SignatureVerificationError, type SIGNATURE_NOT_SIGNED
+// newSignatureNotSigned creates a new SignatureVerificationError, type SignatureNotSigned
 func newSignatureNotSigned() SignatureVerificationError {
 	return SignatureVerificationError{
-		constants.SIGNATURE_NOT_SIGNED,
+		constants.SignatureNotSigned,
 		"Missing signature",
 	}
 }
 
-// newSignatureNoVerifier creates a new SignatureVerificationError, type SIGNATURE_NO_VERIFIER
+// newSignatureNoVerifier creates a new SignatureVerificationError, type SignatureNoVerifier
 func newSignatureNoVerifier() SignatureVerificationError {
 	return SignatureVerificationError{
-		constants.SIGNATURE_NO_VERIFIER,
+		constants.SignatureNoVerifier,
 		"No matching signature",
 	}
 }

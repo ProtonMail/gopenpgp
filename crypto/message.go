@@ -47,8 +47,7 @@ type PGPSplitMessage struct {
 	KeyPacket  []byte
 }
 
-// ClearTextMessage, split signed clear text message container.
-// A Cleartext message is a signed PGP message, that is not encrypted,
+// A ClearTextMessage is a signed PGP message, that is not encrypted,
 // i.e. the ones beginning with -----BEGIN PGP SIGNED MESSAGE-----
 type ClearTextMessage struct {
 	Data      []byte

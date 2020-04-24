@@ -11,6 +11,7 @@ issues:
   exclude-use-default: false
   exclude:
     - Using the variable on range scope `tt` in function literal
+    - GetJsonSHA256Fingerprints should be GetJSONSHA256Fingerprints
 
 linters:
   enable-all: true
@@ -20,7 +21,6 @@ linters:
     - gochecknoinits    # Checks that no init functions are present in Go code [fast: true, auto-fix: false]
     - golint            # Golint differs from gofmt. Gofmt reformats Go source code, whereas golint prints out style mistakes [fast: true, auto-fix: false]
     - gomnd             # An analyzer to detect magic numbers. [fast: true, auto-fix: false]
-    - stylecheck        # Stylecheck is a replacement for golint [fast: true, auto-fix: false]
     - wsl               # Whitespace Linter - Forces you to use empty lines! [fast: true, auto-fix: false]
     - lll               # Reports long lines [fast: true, auto-fix: false]\
 

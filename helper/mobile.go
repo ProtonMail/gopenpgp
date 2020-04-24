@@ -11,7 +11,7 @@ type ExplicitVerifyMessage struct {
 	SignatureVerificationError *crypto.SignatureVerificationError
 }
 
-// DecryptVerifyMessageArmored decrypts an armored PGP message given a private key and its passphrase
+// DecryptExplicitVerify decrypts an armored PGP message given a private key and its passphrase
 // and verifies the embedded signature.
 // Returns the plain data or an error on signature verification failure.
 func DecryptExplicitVerify(

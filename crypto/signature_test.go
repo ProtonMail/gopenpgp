@@ -45,7 +45,7 @@ func TestVerifyTextDetachedSigWrong(t *testing.T) {
 	assert.EqualError(t, verificationError, "Signature Verification Error: Invalid signature")
 
 	err, _ := verificationError.(SignatureVerificationError)
-	assert.Exactly(t, constants.SIGNATURE_FAILED, err.Status)
+	assert.Exactly(t, constants.SignatureFailed, err.Status)
 }
 
 func TestSignBinDetached(t *testing.T) {
