@@ -36,7 +36,7 @@ func NewKeyRing(key *Key) (*KeyRing, error) {
 	return keyRing, err
 }
 
-// AddKey adds the given key the keyring
+// AddKey adds the given key to the keyring
 func (keyRing *KeyRing) AddKey(key *Key) error {
 	if key.IsPrivate() {
 		unlocked, err := key.IsUnlocked()
