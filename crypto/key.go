@@ -39,7 +39,7 @@ func NewKeyFromArmoredReader(r io.Reader) (key *Key, err error) {
 	return key, nil
 }
 
-// NewKeyFromReader reads an binary data into Key
+// NewKeyFromReader reads binary data into a Key object.
 func NewKeyFromReader(r io.Reader) (key *Key, err error) {
 	key = &Key{}
 	err = key.readFrom(r, false)
