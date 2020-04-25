@@ -195,7 +195,7 @@ func (keyRing *KeyRing) Copy() (*KeyRing, error) {
 		if entity.PrivateKey == nil {
 			err = entity.Serialize(&buffer)
 		} else {
-			err = entity.SerializePrivateNoSign(&buffer, nil)
+			err = entity.SerializePrivateWithoutSigning(&buffer, nil)
 		}
 
 		if err != nil {
