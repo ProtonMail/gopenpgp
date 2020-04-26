@@ -22,10 +22,13 @@ func SignCleartextMessageArmored(privateKey string, passphrase []byte, text stri
 
 	keyRing, err := crypto.NewKeyRing(unlockedKey)
 	if err != nil {
+		unlockedKey.ClearPrivateParams()
 		return "", err
 	}
 
-	return SignCleartextMessage(keyRing, text)
+	signed, err := SignCleartextMessage(keyRing, text)
+	unlockedKey.ClearPrivateParams()
+	return signed, err
 }
 
 // VerifyCleartextMessageArmored verifies PGP-compliant armored signed plain text given the public key

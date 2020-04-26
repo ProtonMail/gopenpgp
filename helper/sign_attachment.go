@@ -30,21 +30,24 @@ func EncryptSignAttachment(
 		return nil, nil, nil, err
 	}
 
+	if packets, err = publicKeyRing.EncryptAttachment(binMessage, fileName); err != nil {
+		return nil, nil, nil, err
+	}
+
 	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
 		return nil, nil, nil, err
 	}
 
 	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
-		return nil, nil, nil, err
-	}
-
-	if packets, err = publicKeyRing.EncryptAttachment(binMessage, fileName); err != nil {
+		unlockedKeyObj.ClearPrivateParams()
 		return nil, nil, nil, err
 	}
 
 	if signatureObj, err = privateKeyRing.SignDetached(binMessage); err != nil {
+		unlockedKeyObj.ClearPrivateParams()
 		return nil, nil, nil, err
 	}
+	unlockedKeyObj.ClearPrivateParams()
 
 	return packets.GetBinaryKeyPacket(), packets.GetBinaryDataPacket(), signatureObj.GetBinary(), nil
 }
