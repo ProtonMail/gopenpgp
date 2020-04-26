@@ -12,6 +12,7 @@ issues:
   exclude:
     - Using the variable on range scope `tt` in function literal
     - GetJsonSHA256Fingerprints should be GetJSONSHA256Fingerprints
+    - ST1003  # CamelCase variables; see constants/cipher.go
 
 linters:
   enable-all: true
@@ -23,4 +24,3 @@ linters:
     - gomnd             # An analyzer to detect magic numbers. [fast: true, auto-fix: false]
     - wsl               # Whitespace Linter - Forces you to use empty lines! [fast: true, auto-fix: false]
     - lll               # Reports long lines [fast: true, auto-fix: false]\
-

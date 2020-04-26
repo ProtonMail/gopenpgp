@@ -30,7 +30,7 @@ func TestMobileSignedMessageDecryption(t *testing.T) {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 
-	assert.Exactly(t, constants.SignatureNoVerifier, decrypted.SignatureVerificationError.Status)
+	assert.Exactly(t, constants.SIGNATURE_NO_VERIFIER, decrypted.SignatureVerificationError.Status)
 	assert.Exactly(t, readTestFile("message_plaintext", true), decrypted.Message.GetString())
 
 	publicKey, _ = crypto.NewKeyFromArmored(readTestFile("keyring_publicKey", false))
