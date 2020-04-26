@@ -15,7 +15,7 @@ import (
 // * password: A password that will be derived into an encryption key
 // * output  : The encrypted data as PGPMessage
 func EncryptMessageWithPassword(message *PlainMessage, password []byte) (*PGPMessage, error) {
-	encrypted, err := passwordEncrypt(message.GetBinary(), password)
+	encrypted, err := passwordEncrypt(message.GetBinary(), password, message.IsBinary())
 	if err != nil {
 		return nil, err
 	}
@@ -99,14 +99,16 @@ func EncryptSessionKeyWithPassword(sk *SessionKey, password []byte) ([]byte, err
 
 // ----- INTERNAL FUNCTIONS ------
 
-func passwordEncrypt(message []byte, password []byte) ([]byte, error) {
+func passwordEncrypt(message []byte, password []byte, isBinary bool) ([]byte, error) {
 	var outBuf bytes.Buffer
 
 	config := &packet.Config{
 		Time: getTimeGenerator(),
 	}
 
-	encryptWriter, err := openpgp.SymmetricallyEncrypt(&outBuf, password, nil, config)
+	hints := &openpgp.FileHints{IsBinary: isBinary}
+
+	encryptWriter, err := openpgp.SymmetricallyEncrypt(&outBuf, password, hints, config)
 	if err != nil {
 		return nil, err
 	}
