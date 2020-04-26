@@ -366,7 +366,7 @@ func (msg *ClearTextMessage) GetArmored() (string, error) {
 		return "", err
 	}
 
-	str := "-----BEGIN PGP SIGNED MESSAGE-----\r\nHash:SHA512\r\n\r\n"
+	str := "-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: SHA512\r\n\r\n"
 	str += msg.GetString()
 	str += "\r\n"
 	str += armSignature
