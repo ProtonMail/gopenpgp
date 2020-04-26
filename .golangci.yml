@@ -22,5 +22,6 @@ linters:
     - gochecknoinits    # Checks that no init functions are present in Go code [fast: true, auto-fix: false]
     - golint            # Golint differs from gofmt. Gofmt reformats Go source code, whereas golint prints out style mistakes [fast: true, auto-fix: false]
     - gomnd             # An analyzer to detect magic numbers. [fast: true, auto-fix: false]
+    - lll               # Reports long lines [fast: true, auto-fix: false]
+    - testpackage       # Makes you use a separate _test package [fast: true, auto-fix: false]
     - wsl               # Whitespace Linter - Forces you to use empty lines! [fast: true, auto-fix: false]
-    - lll               # Reports long lines [fast: true, auto-fix: false]\
