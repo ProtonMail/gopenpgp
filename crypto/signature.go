@@ -33,7 +33,7 @@ func (e SignatureVerificationError) Error() string {
 // newSignatureFailed creates a new SignatureVerificationError, type SignatureFailed
 func newSignatureFailed() SignatureVerificationError {
 	return SignatureVerificationError{
-		constants.SignatureFailed,
+		constants.SIGNATURE_FAILED,
 		"Invalid signature",
 	}
 }
@@ -41,7 +41,7 @@ func newSignatureFailed() SignatureVerificationError {
 // newSignatureNotSigned creates a new SignatureVerificationError, type SignatureNotSigned
 func newSignatureNotSigned() SignatureVerificationError {
 	return SignatureVerificationError{
-		constants.SignatureNotSigned,
+		constants.SIGNATURE_NOT_SIGNED,
 		"Missing signature",
 	}
 }
@@ -49,7 +49,7 @@ func newSignatureNotSigned() SignatureVerificationError {
 // newSignatureNoVerifier creates a new SignatureVerificationError, type SignatureNoVerifier
 func newSignatureNoVerifier() SignatureVerificationError {
 	return SignatureVerificationError{
-		constants.SignatureNoVerifier,
+		constants.SIGNATURE_NO_VERIFIER,
 		"No matching signature",
 	}
 }
