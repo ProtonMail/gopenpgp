@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-// SignatureCollector structure
+// SignatureCollector structure.
 type SignatureCollector struct {
 	config    *packet.Config
 	keyring   openpgp.KeyRing
@@ -32,7 +32,7 @@ func newSignatureCollector(
 	}
 }
 
-// Accept collects the signature
+// Accept collects the signature.
 func (sc *SignatureCollector) Accept(
 	part io.Reader, header textproto.MIMEHeader,
 	hasPlainSibling, isFirst, isLast bool,
@@ -110,7 +110,7 @@ func (sc *SignatureCollector) Accept(
 	return err
 }
 
-// GetSignature collected by Accept
+// GetSignature collected by Accept.
 func (sc SignatureCollector) GetSignature() string {
 	return sc.signature
 }

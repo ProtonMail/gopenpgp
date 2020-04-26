@@ -26,7 +26,7 @@ type Identity struct {
 
 // --- New keyrings
 
-// NewKeyRing creates a new KeyRing, empty if key is nil
+// NewKeyRing creates a new KeyRing, empty if key is nil.
 func NewKeyRing(key *Key) (*KeyRing, error) {
 	keyRing := &KeyRing{}
 	var err error
@@ -36,7 +36,7 @@ func NewKeyRing(key *Key) (*KeyRing, error) {
 	return keyRing, err
 }
 
-// AddKey adds the given key to the keyring
+// AddKey adds the given key to the keyring.
 func (keyRing *KeyRing) AddKey(key *Key) error {
 	if key.IsPrivate() {
 		unlocked, err := key.IsUnlocked()
@@ -91,12 +91,12 @@ func (keyRing *KeyRing) getSigningEntity() (*openpgp.Entity, error) {
 
 // --- Extract info from key
 
-// CountEntities returns the number of entities in the keyring
+// CountEntities returns the number of entities in the keyring.
 func (keyRing *KeyRing) CountEntities() int {
 	return len(keyRing.entities)
 }
 
-// CountDecryptionEntities returns the number of entities in the keyring
+// CountDecryptionEntities returns the number of entities in the keyring.
 func (keyRing *KeyRing) CountDecryptionEntities() int {
 	return len(keyRing.entities.DecryptionKeys())
 }
@@ -172,7 +172,7 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 	return filteredKeys, nil
 }
 
-// FirstKey returns a KeyRing with only the first key of the original one
+// FirstKey returns a KeyRing with only the first key of the original one.
 func (keyRing *KeyRing) FirstKey() (*KeyRing, error) {
 	if len(keyRing.entities) == 0 {
 		return nil, errors.New("gopenpgp: No key available in this keyring")
@@ -183,7 +183,7 @@ func (keyRing *KeyRing) FirstKey() (*KeyRing, error) {
 	return newKeyRing.Copy()
 }
 
-// Copy creates a deep copy of the keyring
+// Copy creates a deep copy of the keyring.
 func (keyRing *KeyRing) Copy() (*KeyRing, error) {
 	newKeyRing := &KeyRing{}
 
@@ -223,7 +223,7 @@ func (keyRing *KeyRing) ClearPrivateParams() {
 
 // INTERNAL FUNCTIONS
 
-// append appends a key to the keyring
+// appendKey appends a key to the keyring.
 func (keyRing *KeyRing) appendKey(key *Key) {
 	keyRing.entities = append(keyRing.entities, key.entity)
 }

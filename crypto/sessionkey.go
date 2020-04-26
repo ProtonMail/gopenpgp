@@ -45,7 +45,7 @@ func (sk *SessionKey) GetBase64Key() string {
 	return base64.StdEncoding.EncodeToString(sk.Key)
 }
 
-// RandomToken generates a random token with the specified key size
+// RandomToken generates a random token with the specified key size.
 func RandomToken(size int) ([]byte, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256}
 	symKey := make([]byte, size)
@@ -55,7 +55,8 @@ func RandomToken(size int) ([]byte, error) {
 	return symKey, nil
 }
 
-// GenerateSessionKeyAlgo generates a random key of the correct length for the specified algorithm
+// GenerateSessionKeyAlgo generates a random key of the correct length for the
+// specified algorithm.
 func GenerateSessionKeyAlgo(algo string) (sk *SessionKey, err error) {
 	cf, ok := symKeyAlgos[algo]
 	if !ok {
@@ -73,7 +74,7 @@ func GenerateSessionKeyAlgo(algo string) (sk *SessionKey, err error) {
 	return sk, nil
 }
 
-// GenerateSessionKey generates a random key for the default cipher
+// GenerateSessionKey generates a random key for the default cipher.
 func GenerateSessionKey() (*SessionKey, error) {
 	return GenerateSessionKeyAlgo(constants.AES256)
 }
@@ -105,9 +106,9 @@ func newSessionKeyFromEncrypted(ek *packet.EncryptedKey) (*SessionKey, error) {
 	return symmetricKey, nil
 }
 
-// Encrypt encrypts a PlainMessage to PGPMessage with a SessionKey
-// * message : The plain data as a PlainMessage
-// * output  : The encrypted data as PGPMessage
+// Encrypt encrypts a PlainMessage to PGPMessage with a SessionKey.
+// * message : The plain data as a PlainMessage.
+// * output  : The encrypted data as PGPMessage.
 func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
 	var encBuf bytes.Buffer
 	var encryptWriter io.WriteCloser
@@ -152,9 +153,9 @@ func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
 	return encBuf.Bytes(), nil
 }
 
-// Decrypt decrypts password protected pgp binary messages
-// * encrypted: PGPMessage
-// * output: PlainMessage
+// Decrypt decrypts password protected pgp binary messages.
+// * encrypted: PGPMessage.
+// * output: PlainMessage.
 func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 	var messageReader = bytes.NewReader(dataPacket)
 	var decrypted io.ReadCloser

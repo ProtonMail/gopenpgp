@@ -15,13 +15,14 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/internal"
 )
 
-// SignatureVerificationError is returned from Decrypt and VerifyDetached functions when signature verification fails
+// SignatureVerificationError is returned from Decrypt and VerifyDetached
+// functions when signature verification fails.
 type SignatureVerificationError struct {
 	Status  int
 	Message string
 }
 
-// Error is the base method for all errors
+// Error is the base method for all errors.
 func (e SignatureVerificationError) Error() string {
 	return fmt.Sprintf("Signature Verification Error: %v", e.Message)
 }
@@ -30,7 +31,8 @@ func (e SignatureVerificationError) Error() string {
 // Internal functions
 // ------------------
 
-// newSignatureFailed creates a new SignatureVerificationError, type SignatureFailed
+// newSignatureFailed creates a new SignatureVerificationError, type
+// SignatureFailed.
 func newSignatureFailed() SignatureVerificationError {
 	return SignatureVerificationError{
 		constants.SIGNATURE_FAILED,
@@ -38,7 +40,8 @@ func newSignatureFailed() SignatureVerificationError {
 	}
 }
 
-// newSignatureNotSigned creates a new SignatureVerificationError, type SignatureNotSigned
+// newSignatureNotSigned creates a new SignatureVerificationError, type
+// SignatureNotSigned.
 func newSignatureNotSigned() SignatureVerificationError {
 	return SignatureVerificationError{
 		constants.SIGNATURE_NOT_SIGNED,
@@ -46,7 +49,8 @@ func newSignatureNotSigned() SignatureVerificationError {
 	}
 }
 
-// newSignatureNoVerifier creates a new SignatureVerificationError, type SignatureNoVerifier
+// newSignatureNoVerifier creates a new SignatureVerificationError, type
+// SignatureNoVerifier.
 func newSignatureNoVerifier() SignatureVerificationError {
 	return SignatureVerificationError{
 		constants.SIGNATURE_NO_VERIFIER,
@@ -54,8 +58,8 @@ func newSignatureNoVerifier() SignatureVerificationError {
 	}
 }
 
-// processSignatureExpiration handles signature time verification manually, so we can add a margin to the
-// creationTime check.
+// processSignatureExpiration handles signature time verification manually, so
+// we can add a margin to the creationTime check.
 func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 	if md.SignatureError == pgpErrors.ErrSignatureExpired {
 		if verifyTime > 0 {
@@ -74,7 +78,7 @@ func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 	}
 }
 
-// verifyDetailsSignature verifies signature from message details
+// verifyDetailsSignature verifies signature from message details.
 func verifyDetailsSignature(md *openpgp.MessageDetails, verifierKey *KeyRing) error {
 	if md.IsSigned {
 		if md.SignedBy != nil {
@@ -97,7 +101,7 @@ func verifyDetailsSignature(md *openpgp.MessageDetails, verifierKey *KeyRing) er
 	return newSignatureNoVerifier()
 }
 
-// verifySignature verifies if a signature is valid with the entity list
+// verifySignature verifies if a signature is valid with the entity list.
 func verifySignature(pubKeyEntries openpgp.EntityList, origText io.Reader, signature []byte, verifyTime int64) error {
 	config := &packet.Config{}
 	if verifyTime == 0 {

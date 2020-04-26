@@ -10,10 +10,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// EncryptMessageWithPassword encrypts a PlainMessage to PGPMessage with a SymmetricKey
-// * message : The plain data as a PlainMessage
-// * password: A password that will be derived into an encryption key
-// * output  : The encrypted data as PGPMessage
+// EncryptMessageWithPassword encrypts a PlainMessage to PGPMessage with a
+// SymmetricKey.
+// * message : The plain data as a PlainMessage.
+// * password: A password that will be derived into an encryption key.
+// * output  : The encrypted data as PGPMessage.
 func EncryptMessageWithPassword(message *PlainMessage, password []byte) (*PGPMessage, error) {
 	encrypted, err := passwordEncrypt(message.GetBinary(), password, message.IsBinary())
 	if err != nil {
@@ -23,10 +24,10 @@ func EncryptMessageWithPassword(message *PlainMessage, password []byte) (*PGPMes
 	return NewPGPMessage(encrypted), nil
 }
 
-// DecryptMessageWithPassword decrypts password protected pgp binary messages
-// * encrypted: The encrypted data as PGPMessage
-// * password: A password that will be derived into an encryption key
-// * output: The decrypted data as PlainMessage
+// DecryptMessageWithPassword decrypts password protected pgp binary messages.
+// * encrypted: The encrypted data as PGPMessage.
+// * password: A password that will be derived into an encryption key.
+// * output: The decrypted data as PlainMessage.
 func DecryptMessageWithPassword(message *PGPMessage, password []byte) (*PlainMessage, error) {
 	decrypted, err := passwordDecrypt(message.NewReader(), password)
 	if err != nil {
