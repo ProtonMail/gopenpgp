@@ -104,6 +104,10 @@ func (key *Key) Lock(passphrase []byte) (*Key, error) {
 		return nil, err
 	}
 
+	if passphrase == nil {
+		return lockedKey, nil
+	}
+
 	err = lockedKey.entity.PrivateKey.Encrypt(passphrase)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in locking key")
@@ -136,6 +140,9 @@ func (key *Key) Unlock(passphrase []byte) (*Key, error) {
 	}
 
 	if !isLocked {
+		if passphrase == nil {
+			return key.Copy()
+		}
 		return nil, errors.New("gopenpgp: key is not locked")
 	}
 

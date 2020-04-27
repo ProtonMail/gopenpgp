@@ -94,6 +94,7 @@ func EncryptSignMessageArmored(
 	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
 		return "", err
 	}
+	defer unlockedKeyObj.ClearPrivateParams()
 
 	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
 		return "", err
@@ -126,6 +127,7 @@ func DecryptMessageArmored(
 	if privateKeyUnlocked, err = privateKeyObj.Unlock(passphrase); err != nil {
 		return "", err
 	}
+	defer privateKeyUnlocked.ClearPrivateParams()
 
 	if privateKeyRing, err = crypto.NewKeyRing(privateKeyUnlocked); err != nil {
 		return "", err
@@ -168,6 +170,7 @@ func DecryptVerifyMessageArmored(
 	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
 		return "", err
 	}
+	defer unlockedKeyObj.ClearPrivateParams()
 
 	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
 		return "", err
@@ -214,6 +217,7 @@ func DecryptVerifyAttachment(
 	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
 		return nil, err
 	}
+	defer unlockedKeyObj.ClearPrivateParams()
 
 	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
 		return nil, err

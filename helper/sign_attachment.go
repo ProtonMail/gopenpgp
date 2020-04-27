@@ -33,6 +33,7 @@ func EncryptSignAttachment(
 	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
 		return nil, nil, nil, err
 	}
+	defer unlockedKeyObj.ClearPrivateParams()
 
 	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
 		return nil, nil, nil, err

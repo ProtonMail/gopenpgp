@@ -19,13 +19,13 @@ func UpdatePrivateKeyPassphrase(
 	if err != nil {
 		return "", err
 	}
+	defer unlocked.ClearPrivateParams()
 
 	locked, err := unlocked.Lock(newPassphrase)
 	if err != nil {
 		return "", err
 	}
 
-	unlocked.ClearPrivateParams()
 	return locked.Armor()
 }
 
@@ -37,13 +37,13 @@ func GenerateKey(name, email string, passphrase []byte, keyType string, bits int
 	if err != nil {
 		return "", err
 	}
+	defer key.ClearPrivateParams()
 
 	locked, err := key.Lock(passphrase)
 	if err != nil {
 		return "", err
 	}
 
-	key.ClearPrivateParams()
 	return locked.Armor()
 }
 

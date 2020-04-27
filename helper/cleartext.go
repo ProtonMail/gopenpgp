@@ -19,6 +19,7 @@ func SignCleartextMessageArmored(privateKey string, passphrase []byte, text stri
 	if err != nil {
 		return "", err
 	}
+	defer unlockedKey.ClearPrivateParams()
 
 	keyRing, err := crypto.NewKeyRing(unlockedKey)
 	if err != nil {
