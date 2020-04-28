@@ -5,25 +5,25 @@ import (
 	"time"
 )
 
-// UpdateTime updates cached time
+// UpdateTime updates cached time.
 func UpdateTime(newTime int64) {
 	pgp.latestServerTime = newTime
 	pgp.latestClientTime = time.Now()
 }
 
-// GetUnixTime gets latest cached time
+// GetUnixTime gets latest cached time.
 func GetUnixTime() int64 {
 	return getNow().Unix()
 }
 
-// GetTime gets latest cached time
+// GetTime gets latest cached time.
 func GetTime() time.Time {
 	return getNow()
 }
 
 // ----- INTERNAL FUNCTIONS -----
 
-// getNow returns current time
+// getNow returns current time.
 func getNow() time.Time {
 	extrapolate, err := getDiff()
 
@@ -43,7 +43,7 @@ func getDiff() (int64, error) {
 	return 0, errors.New("gopenpgp: latest server time not available")
 }
 
-// getTimeGenerator Returns a time generator function
+// getTimeGenerator Returns a time generator function.
 func getTimeGenerator() func() time.Time {
 	return getNow
 }

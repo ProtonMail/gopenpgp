@@ -20,7 +20,7 @@ import (
 	packet "golang.org/x/crypto/openpgp/packet"
 )
 
-// Key contains a single private or public key
+// Key contains a single private or public key.
 type Key struct {
 	// PGP entities in this keyring.
 	entity *openpgp.Entity
@@ -50,12 +50,12 @@ func NewKeyFromReader(r io.Reader) (key *Key, err error) {
 	return key, nil
 }
 
-// NewKey creates a new key from the first key in the unarmored binary data
+// NewKey creates a new key from the first key in the unarmored binary data.
 func NewKey(binKeys []byte) (key *Key, err error) {
 	return NewKeyFromReader(bytes.NewReader(clone(binKeys)))
 }
 
-// NewKeyFromArmored creates a new key from the first key in an armored
+// NewKeyFromArmored creates a new key from the first key in an armored string.
 func NewKeyFromArmored(armored string) (key *Key, err error) {
 	return NewKeyFromArmoredReader(strings.NewReader(armored))
 }
@@ -132,7 +132,7 @@ func (key *Key) Lock(passphrase []byte) (*Key, error) {
 	return lockedKey, nil
 }
 
-// Unlock unlocks a copy of the key
+// Unlock unlocks a copy of the key.
 func (key *Key) Unlock(passphrase []byte) (*Key, error) {
 	isLocked, err := key.IsLocked()
 	if err != nil {
@@ -234,12 +234,12 @@ func (key *Key) IsExpired() bool {
 	return !ok
 }
 
-// IsPrivate returns true if the key is private
+// IsPrivate returns true if the key is private.
 func (key *Key) IsPrivate() bool {
 	return key.entity.PrivateKey != nil
 }
 
-// IsLocked checks if a private key is locked
+// IsLocked checks if a private key is locked.
 func (key *Key) IsLocked() (bool, error) {
 	if key.entity.PrivateKey == nil {
 		return true, errors.New("gopenpgp: a public key cannot be locked")
@@ -254,7 +254,7 @@ func (key *Key) IsLocked() (bool, error) {
 	return key.entity.PrivateKey.Encrypted, nil
 }
 
-// IsUnlocked checks if a private key is unlocked
+// IsUnlocked checks if a private key is unlocked.
 func (key *Key) IsUnlocked() (bool, error) {
 	if key.entity.PrivateKey == nil {
 		return true, errors.New("gopenpgp: a public key cannot be unlocked")
@@ -269,7 +269,8 @@ func (key *Key) IsUnlocked() (bool, error) {
 	return !key.entity.PrivateKey.Encrypted, nil
 }
 
-// Check verifies if the public keys match the private key parameters by signing and verifying
+// Check verifies if the public keys match the private key parameters by
+// signing and verifying.
 func (key *Key) Check() (bool, error) {
 	var err error
 	testSign := bytes.Repeat([]byte{0x01}, 64)
@@ -314,22 +315,22 @@ func (key *Key) PrintFingerprints() {
 	fmt.Println("PrimaryKey:" + hex.EncodeToString(key.entity.PrimaryKey.Fingerprint[:]))
 }
 
-// GetHexKeyID returns the key ID, hex encoded as a string
+// GetHexKeyID returns the key ID, hex encoded as a string.
 func (key *Key) GetHexKeyID() string {
 	return strconv.FormatUint(key.GetKeyID(), 16)
 }
 
-// GetKeyID returns the key ID, encoded as 8-byte int
+// GetKeyID returns the key ID, encoded as 8-byte int.
 func (key *Key) GetKeyID() uint64 {
 	return key.entity.PrimaryKey.KeyId
 }
 
-// GetFingerprint gets the fingerprint from the key
+// GetFingerprint gets the fingerprint from the key.
 func (key *Key) GetFingerprint() string {
 	return hex.EncodeToString(key.entity.PrimaryKey.Fingerprint[:])
 }
 
-// GetSHA256Fingerprints computes the SHA256 fingerprints of the key and subkeys
+// GetSHA256Fingerprints computes the SHA256 fingerprints of the key and subkeys.
 func (key *Key) GetSHA256Fingerprints() (fingerprints []string) {
 	fingerprints = append(fingerprints, hex.EncodeToString(getSHA256FingerprintBytes(key.entity.PrimaryKey)))
 	for _, sub := range key.entity.Subkeys {
@@ -340,7 +341,8 @@ func (key *Key) GetSHA256Fingerprints() (fingerprints []string) {
 
 // --- Internal methods
 
-// getSHA256FingerprintBytes computes the SHA256 fingerprint of a public key object
+// getSHA256FingerprintBytes computes the SHA256 fingerprint of a public key
+// object.
 func getSHA256FingerprintBytes(pk *packet.PublicKey) []byte {
 	fingerPrint := sha256.New()
 

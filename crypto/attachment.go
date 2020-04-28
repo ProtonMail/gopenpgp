@@ -22,14 +22,14 @@ type AttachmentProcessor struct {
 	err              error
 }
 
-// Process writes attachment data to be encrypted
+// Process writes attachment data to be encrypted.
 func (ap *AttachmentProcessor) Process(plainData []byte) {
 	if _, err := (*ap.w).Write(plainData); err != nil {
 		panic(err)
 	}
 }
 
-// Finish closes the attachment and returns the encrypted data
+// Finish closes the attachment and returns the encrypted data.
 func (ap *AttachmentProcessor) Finish() (*PGPSplitMessage, error) {
 	if ap.err != nil {
 		return nil, ap.err

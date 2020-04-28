@@ -47,8 +47,7 @@ type PGPSplitMessage struct {
 	KeyPacket  []byte
 }
 
-// ClearTextMessage, split signed clear text message container.
-// A Cleartext message is a signed PGP message, that is not encrypted,
+// A ClearTextMessage is a signed but not encrypted PGP message,
 // i.e. the ones beginning with -----BEGIN PGP SIGNED MESSAGE-----
 type ClearTextMessage struct {
 	Data      []byte
@@ -126,7 +125,8 @@ func NewPGPSignature(data []byte) *PGPSignature {
 	}
 }
 
-// NewPGPSignatureFromArmored generates a new PGPSignature from the armored string ready for verification.
+// NewPGPSignatureFromArmored generates a new PGPSignature from the armored
+// string ready for verification.
 func NewPGPSignatureFromArmored(armored string) (*PGPSignature, error) {
 	encryptedIO, err := internal.Unarmor(armored)
 	if err != nil {
@@ -143,7 +143,8 @@ func NewPGPSignatureFromArmored(armored string) (*PGPSignature, error) {
 	}, nil
 }
 
-// NewClearTextMessage generates a new ClearTextMessage from data and signature
+// NewClearTextMessage generates a new ClearTextMessage from data and
+// signature.
 func NewClearTextMessage(data []byte, signature []byte) *ClearTextMessage {
 	return &ClearTextMessage{
 		Data:      clone(data),
@@ -151,7 +152,8 @@ func NewClearTextMessage(data []byte, signature []byte) *ClearTextMessage {
 	}
 }
 
-// NewClearTextMessageFromArmored returns the message body and unarmored signature from a clearsigned message.
+// NewClearTextMessageFromArmored returns the message body and unarmored
+// signature from a clearsigned message.
 func NewClearTextMessageFromArmored(signedMessage string) (*ClearTextMessage, error) {
 	modulusBlock, rest := clearsign.Decode([]byte(signedMessage))
 	if len(rest) != 0 {
@@ -168,79 +170,84 @@ func NewClearTextMessageFromArmored(signedMessage string) (*ClearTextMessage, er
 
 // ---- MODEL METHODS -----
 
-// GetBinary returns the binary content of the message as a []byte
+// GetBinary returns the binary content of the message as a []byte.
 func (msg *PlainMessage) GetBinary() []byte {
 	return msg.Data
 }
 
-// GetString returns the content of the message as a string
+// GetString returns the content of the message as a string.
 func (msg *PlainMessage) GetString() string {
 	return string(msg.Data)
 }
 
-// GetBase64 returns the base-64 encoded binary content of the message as a string
+// GetBase64 returns the base-64 encoded binary content of the message as a
+// string.
 func (msg *PlainMessage) GetBase64() string {
 	return base64.StdEncoding.EncodeToString(msg.Data)
 }
 
-// NewReader returns a New io.Reader for the binary data of the message
+// NewReader returns a New io.Reader for the binary data of the message.
 func (msg *PlainMessage) NewReader() io.Reader {
 	return bytes.NewReader(msg.GetBinary())
 }
 
-// IsText returns whether the message is a text message
+// IsText returns whether the message is a text message.
 func (msg *PlainMessage) IsText() bool {
 	return msg.TextType
 }
 
-// IsBinary returns whether the message is a binary message
+// IsBinary returns whether the message is a binary message.
 func (msg *PlainMessage) IsBinary() bool {
 	return !msg.TextType
 }
 
-// GetBinary returns the unarmored binary content of the message as a []byte
+// GetBinary returns the unarmored binary content of the message as a []byte.
 func (msg *PGPMessage) GetBinary() []byte {
 	return msg.Data
 }
 
-// NewReader returns a New io.Reader for the unarmored binary data of the message
+// NewReader returns a New io.Reader for the unarmored binary data of the
+// message.
 func (msg *PGPMessage) NewReader() io.Reader {
 	return bytes.NewReader(msg.GetBinary())
 }
 
-// GetArmored returns the armored message as a string
+// GetArmored returns the armored message as a string.
 func (msg *PGPMessage) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.Data, constants.PGPMessageHeader)
 }
 
-// GetBinaryDataPacket returns the unarmored binary datapacket as a []byte
+// GetBinaryDataPacket returns the unarmored binary datapacket as a []byte.
 func (msg *PGPSplitMessage) GetBinaryDataPacket() []byte {
 	return msg.DataPacket
 }
 
-// GetBinaryKeyPacket returns the unarmored binary keypacket as a []byte
+// GetBinaryKeyPacket returns the unarmored binary keypacket as a []byte.
 func (msg *PGPSplitMessage) GetBinaryKeyPacket() []byte {
 	return msg.KeyPacket
 }
 
-// GetBinary returns the unarmored binary joined packets as a []byte
+// GetBinary returns the unarmored binary joined packets as a []byte.
 func (msg *PGPSplitMessage) GetBinary() []byte {
 	return append(msg.KeyPacket, msg.DataPacket...)
 }
 
-// GetArmored returns the armored message as a string, with joined data and key packets
+// GetArmored returns the armored message as a string, with joined data and key
+// packets.
 func (msg *PGPSplitMessage) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.GetBinary(), constants.PGPMessageHeader)
 }
 
-// GetPGPMessage joins asymmetric session key packet with the symmetric data packet to obtain a PGP message
+// GetPGPMessage joins asymmetric session key packet with the symmetric data
+// packet to obtain a PGP message.
 func (msg *PGPSplitMessage) GetPGPMessage() *PGPMessage {
 	return NewPGPMessage(append(msg.KeyPacket, msg.DataPacket...))
 }
 
-// SeparateKeyAndData returns the first keypacket and the (hopefully unique) dataPacket (not verified)
-// * estimatedLength is the estimate length of the message
-// * garbageCollector > 0 activates the garbage collector
+// SeparateKeyAndData returns the first keypacket and the (hopefully unique)
+// dataPacket (not verified).
+// * estimatedLength is the estimate length of the message.
+// * garbageCollector > 0 activates the garbage collector.
 func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int) (outSplit *PGPSplitMessage, err error) {
 	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
 	packets := packet.NewReader(bytes.NewReader(msg.Data))
@@ -334,32 +341,33 @@ func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)
 	return outSplit, nil
 }
 
-// GetBinary returns the unarmored binary content of the signature as a []byte
+// GetBinary returns the unarmored binary content of the signature as a []byte.
 func (msg *PGPSignature) GetBinary() []byte {
 	return msg.Data
 }
 
-// GetArmored returns the armored signature as a string
+// GetArmored returns the armored signature as a string.
 func (msg *PGPSignature) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.Data, constants.PGPSignatureHeader)
 }
 
-// GetBinary returns the unarmored signed data as a []byte
+// GetBinary returns the unarmored signed data as a []byte.
 func (msg *ClearTextMessage) GetBinary() []byte {
 	return msg.Data
 }
 
-// GetString returns the unarmored signed data as a string
+// GetString returns the unarmored signed data as a string.
 func (msg *ClearTextMessage) GetString() string {
 	return string(msg.Data)
 }
 
-// GetBinarySignature returns the unarmored binary signature as a []byte
+// GetBinarySignature returns the unarmored binary signature as a []byte.
 func (msg *ClearTextMessage) GetBinarySignature() []byte {
 	return msg.Signature
 }
 
-// GetArmored armors plaintext and signature with the PGP SIGNED MESSAGE armoring
+// GetArmored armors plaintext and signature with the PGP SIGNED MESSAGE
+// armoring.
 func (msg *ClearTextMessage) GetArmored() (string, error) {
 	armSignature, err := armor.ArmorWithType(msg.GetBinarySignature(), constants.PGPSignatureHeader)
 	if err != nil {

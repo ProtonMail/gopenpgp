@@ -7,8 +7,9 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/internal"
 )
 
-// SignCleartextMessageArmored signs text given a private key and its passphrase, canonicalizes and trims the newlines,
-// and returns the PGP-compliant special armoring
+// SignCleartextMessageArmored signs text given a private key and its
+// passphrase, canonicalizes and trims the newlines, and returns the
+// PGP-compliant special armoring.
 func SignCleartextMessageArmored(privateKey string, passphrase []byte, text string) (string, error) {
 	signingKey, err := crypto.NewKeyFromArmored(privateKey)
 	if err != nil {
@@ -29,8 +30,9 @@ func SignCleartextMessageArmored(privateKey string, passphrase []byte, text stri
 	return SignCleartextMessage(keyRing, text)
 }
 
-// VerifyCleartextMessageArmored verifies PGP-compliant armored signed plain text given the public key
-// and returns the text or err if the verification fails
+// VerifyCleartextMessageArmored verifies PGP-compliant armored signed plain
+// text given the public key and returns the text or err if the verification
+// fails.
 func VerifyCleartextMessageArmored(publicKey, armored string, verifyTime int64) (string, error) {
 	signingKey, err := crypto.NewKeyFromArmored(publicKey)
 	if err != nil {
@@ -45,8 +47,8 @@ func VerifyCleartextMessageArmored(publicKey, armored string, verifyTime int64) 
 	return VerifyCleartextMessage(verifyKeyRing, armored, verifyTime)
 }
 
-// SignCleartextMessage signs text given a private keyring, canonicalizes and trims the newlines,
-// and returns the PGP-compliant special armoring
+// SignCleartextMessage signs text given a private keyring, canonicalizes and
+// trims the newlines, and returns the PGP-compliant special armoring.
 func SignCleartextMessage(keyRing *crypto.KeyRing, text string) (string, error) {
 	text = canonicalizeAndTrim(text)
 	message := crypto.NewPlainMessageFromString(text)
@@ -59,8 +61,9 @@ func SignCleartextMessage(keyRing *crypto.KeyRing, text string) (string, error) 
 	return crypto.NewClearTextMessage(message.GetBinary(), signature.GetBinary()).GetArmored()
 }
 
-// VerifyCleartextMessage verifies PGP-compliant armored signed plain text given the public keyring
-// and returns the text or err if the verification fails
+// VerifyCleartextMessage verifies PGP-compliant armored signed plain text
+// given the public keyring and returns the text or err if the verification
+// fails.
 func VerifyCleartextMessage(keyRing *crypto.KeyRing, armored string, verifyTime int64) (string, error) {
 	clearTextMessage, err := crypto.NewClearTextMessageFromArmored(armored)
 	if err != nil {
@@ -79,7 +82,7 @@ func VerifyCleartextMessage(keyRing *crypto.KeyRing, armored string, verifyTime 
 
 // ----- INTERNAL FUNCTIONS -----
 
-// canonicalizeAndTrim alters a string canonicalizing and trimming the newlines
+// canonicalizeAndTrim alters a string canonicalizing and trimming the newlines.
 func canonicalizeAndTrim(text string) string {
 	text = internal.TrimNewlines(text)
 	text = strings.Replace(strings.Replace(text, "\r\n", "\n", -1), "\n", "\r\n", -1)

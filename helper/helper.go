@@ -1,4 +1,4 @@
-// helper contains several functions with a simple interface to extend usability and compatibility with gomobile
+// Package helper contains several functions with a simple interface to extend usability and compatibility with gomobile
 package helper
 
 import (
@@ -7,7 +7,7 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 )
 
-// EncryptMessageWithPassword encrypts a string with a passphrase using AES256
+// EncryptMessageWithPassword encrypts a string with a passphrase using AES256.
 func EncryptMessageWithPassword(password []byte, plaintext string) (ciphertext string, err error) {
 	var pgpMessage *crypto.PGPMessage
 
@@ -41,7 +41,8 @@ func DecryptMessageWithPassword(password []byte, ciphertext string) (plaintext s
 	return message.GetString(), nil
 }
 
-// EncryptMessageArmored generates an armored PGP message given a plaintext and an armored public key
+// EncryptMessageArmored generates an armored PGP message given a plaintext and
+// an armored public key.
 func EncryptMessageArmored(key, plaintext string) (ciphertext string, err error) {
 	var publicKey *crypto.Key
 	var publicKeyRing *crypto.KeyRing
@@ -68,8 +69,8 @@ func EncryptMessageArmored(key, plaintext string) (ciphertext string, err error)
 	return ciphertext, nil
 }
 
-// EncryptSignMessageArmored generates an armored signed PGP message given a plaintext and an armored public key
-// a private key and its passphrase
+// EncryptSignMessageArmored generates an armored signed PGP message given a
+// plaintext and an armored public key a private key and its passphrase.
 func EncryptSignMessageArmored(
 	publicKey, privateKey string, passphrase []byte, plaintext string,
 ) (ciphertext string, err error) {
@@ -111,7 +112,8 @@ func EncryptSignMessageArmored(
 	return ciphertext, nil
 }
 
-// DecryptMessageArmored decrypts an armored PGP message given a private key and its passphrase
+// DecryptMessageArmored decrypts an armored PGP message given a private key
+// and its passphrase.
 func DecryptMessageArmored(
 	privateKey string, passphrase []byte, ciphertext string,
 ) (plaintext string, err error) {
@@ -144,9 +146,9 @@ func DecryptMessageArmored(
 	return message.GetString(), nil
 }
 
-// DecryptVerifyMessageArmored decrypts an armored PGP message given a private key and its passphrase
-// and verifies the embedded signature.
-// Returns the plain data or an error on signature verification failure.
+// DecryptVerifyMessageArmored decrypts an armored PGP message given a private
+// key and its passphrase and verifies the embedded signature. Returns the
+// plain data or an error on signature verification failure.
 func DecryptVerifyMessageArmored(
 	publicKey, privateKey string, passphrase []byte, ciphertext string,
 ) (plaintext string, err error) {
@@ -187,9 +189,10 @@ func DecryptVerifyMessageArmored(
 	return message.GetString(), nil
 }
 
-// DecryptVerifyAttachment decrypts and verifies an attachment split into the keyPacket, dataPacket
-// and an armored (!) signature, given a publicKey, and a privateKey with its passphrase.
-// Returns the plain data or an error on signature verification failure.
+// DecryptVerifyAttachment decrypts and verifies an attachment split into the
+// keyPacket, dataPacket and an armored (!) signature, given a publicKey, and a
+// privateKey with its passphrase. Returns the plain data or an error on
+// signature verification failure.
 func DecryptVerifyAttachment(
 	publicKey, privateKey string,
 	passphrase, keyPacket, dataPacket []byte,

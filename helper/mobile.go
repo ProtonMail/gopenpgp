@@ -11,9 +11,9 @@ type ExplicitVerifyMessage struct {
 	SignatureVerificationError *crypto.SignatureVerificationError
 }
 
-// DecryptVerifyMessageArmored decrypts an armored PGP message given a private key and its passphrase
-// and verifies the embedded signature.
-// Returns the plain data or an error on signature verification failure.
+// DecryptExplicitVerify decrypts an armored PGP message given a private key
+// and its passphrase and verifies the embedded signature. Returns the plain
+// data or an error on signature verification failure.
 func DecryptExplicitVerify(
 	pgpMessage *crypto.PGPMessage,
 	privateKeyRing, publicKeyRing *crypto.KeyRing,
@@ -57,8 +57,9 @@ func DecryptAttachment(keyPacket []byte, dataPacket []byte, keyRing *crypto.KeyR
 }
 
 // EncryptAttachment encrypts a file given a plainData and a fileName.
-// Returns a PGPSplitMessage containing a session key packet and symmetrically encrypted data.
-// Specifically designed for attachments rather than text messages.
+// Returns a PGPSplitMessage containing a session key packet and symmetrically
+// encrypted data. Specifically designed for attachments rather than text
+// messages.
 func EncryptAttachment(plainData []byte, fileName string, keyRing *crypto.KeyRing) (*crypto.PGPSplitMessage, error) {
 	plainMessage := crypto.NewPlainMessage(plainData)
 	decrypted, err := keyRing.EncryptAttachment(plainMessage, fileName)
@@ -68,8 +69,8 @@ func EncryptAttachment(plainData []byte, fileName string, keyRing *crypto.KeyRin
 	return decrypted, nil
 }
 
-// GetJsonSHA256Fingerprints returns the SHA256 fingeprints of key and subkeys, encoded in JSON, since gomobile can not
-// handle arrays
+// GetJsonSHA256Fingerprints returns the SHA256 fingeprints of key and subkeys,
+// encoded in JSON, since gomobile can not handle arrays.
 func GetJsonSHA256Fingerprints(publicKey string) ([]byte, error) {
 	key, err := crypto.NewKeyFromArmored(publicKey)
 	if err != nil {
