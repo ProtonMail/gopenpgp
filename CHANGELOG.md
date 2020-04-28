@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changed
 - Providing empty passphrase does no longer throw an error when unlocking an unencrypted private key
+- Improved code linter
 
 ### Added
 - SHA256 fingerprint support

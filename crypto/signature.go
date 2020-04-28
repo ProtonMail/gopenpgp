@@ -64,7 +64,7 @@ func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 	if md.SignatureError != pgpErrors.ErrSignatureExpired {
 		return
 	}
-	if verifyTime <= 0 {
+	if verifyTime == 0 {
 		// verifyTime = 0: time check disabled, everything is okay
 		md.SignatureError = nil
 		return
