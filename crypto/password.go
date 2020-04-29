@@ -70,7 +70,7 @@ func DecryptSessionKeyWithPassword(keyPacket, password []byte) (*SessionKey, err
 		}
 	}
 
-	return nil, errors.New("gopenpgp: password incorrect")
+	return nil, errors.New("gopenpgp: unable to decrypt any packet")
 }
 
 // EncryptSessionKeyWithPassword encrypts the session key with the password and
