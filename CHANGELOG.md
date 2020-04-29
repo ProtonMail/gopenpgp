@@ -4,16 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.1] - 2020-05-01
 ### Security
 - Updated underlying crypto library
 - Improved memory zeroing in helpers
 
 ### Fixed
-- Fixed test `TestMultipleKeyMessageEncryption`
 - Fixed garbage collection issues when compiled on gomobile, by copying byte slices
 - Password encrypted binary files now have the correct flags
 - Fixed missing space in `Hash` header of cleartext messages
+- Fixed tests `TestMultipleKeyMessageEncryption` and `TestSymmetricKeyPacket`
 
 ## Changed
 - Providing empty passphrase does no longer throw an error when unlocking an unencrypted private key
