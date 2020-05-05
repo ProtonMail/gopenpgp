@@ -217,6 +217,13 @@ func (msg *PGPMessage) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.Data, constants.PGPMessageHeader)
 }
 
+// GetArmoredWithCustomHeaders returns the armored message as a string, with
+// the given headers. If comment or version are empty, then no header is
+// displayed.
+func (msg *PGPMessage) GetArmoredWithCustomHeaders(comment, version string) (string, error) {
+	return armor.ArmorWithTypeAndCustomHeaders(msg.Data, constants.PGPMessageHeader, version, comment)
+}
+
 // GetBinaryDataPacket returns the unarmored binary datapacket as a []byte.
 func (msg *PGPSplitMessage) GetBinaryDataPacket() []byte {
 	return msg.DataPacket

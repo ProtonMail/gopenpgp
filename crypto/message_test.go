@@ -178,3 +178,38 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 	}
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
 }
+
+func TestMessageGetArmoredWithCustomHeaders(t *testing.T) {
+	var message = NewPlainMessageFromString("plain text")
+
+	ciphertext, err := keyRingTestPublic.Encrypt(message, keyRingTestPrivate)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+	comment := "User-defined comment"
+	version := "User-defined version"
+	armored, err := ciphertext.GetArmoredWithCustomHeaders(comment, version)
+	if err != nil {
+		t.Fatal("Could not armor the ciphertext:", err)
+	}
+
+	assert.Contains(t, armored, comment)
+}
+
+func TestMessageGetArmoredWithEmptyHeaders(t *testing.T) {
+	var message = NewPlainMessageFromString("plain text")
+
+	ciphertext, err := keyRingTestPublic.Encrypt(message, keyRingTestPrivate)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+	comment := ""
+	version := ""
+	armored, err := ciphertext.GetArmoredWithCustomHeaders(comment, version)
+	if err != nil {
+		t.Fatal("Could not armor the ciphertext:", err)
+	}
+
+	assert.NotContains(t, armored, "Version")
+	assert.NotContains(t, armored, "Comment")
+}

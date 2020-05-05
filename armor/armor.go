@@ -26,9 +26,35 @@ func ArmorWithTypeBuffered(w io.Writer, armorType string) (io.WriteCloser, error
 
 // ArmorWithType armors input with the given armorType.
 func ArmorWithType(input []byte, armorType string) (string, error) {
+	return armorWithTypeAndHeaders(input, armorType, internal.ArmorHeaders)
+}
+
+// ArmorWithTypeAndCustomHeaders armors input with the given armorType and
+// headers.
+func ArmorWithTypeAndCustomHeaders(input []byte, armorType, version, comment string) (string, error) {
+	headers := make(map[string]string)
+	if version != "" {
+		headers["Version"] = version
+	}
+	if comment != "" {
+		headers["Comment"] = comment
+	}
+	return armorWithTypeAndHeaders(input, armorType, headers)
+}
+
+// Unarmor unarmors an armored key.
+func Unarmor(input string) ([]byte, error) {
+	b, err := internal.Unarmor(input)
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadAll(b.Body)
+}
+
+func armorWithTypeAndHeaders(input []byte, armorType string, headers map[string]string) (string, error) {
 	var b bytes.Buffer
 
-	w, err := armor.Encode(&b, armorType, internal.ArmorHeaders)
+	w, err := armor.Encode(&b, armorType, headers)
 
 	if err != nil {
 		return "", err
@@ -40,13 +66,4 @@ func ArmorWithType(input []byte, armorType string) (string, error) {
 		return "", err
 	}
 	return b.String(), nil
-}
-
-// Unarmor unarmors an armored key.
-func Unarmor(input string) ([]byte, error) {
-	b, err := internal.Unarmor(input)
-	if err != nil {
-		return nil, err
-	}
-	return ioutil.ReadAll(b.Body)
 }
