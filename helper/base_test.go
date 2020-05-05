@@ -20,7 +20,7 @@ func readTestFile(name string, trimNewlines bool) string {
 	return string(data)
 }
 
-// Corresponding key in ../crypto/testdata/keyring_privateKey
+// Corresponding key in ../crypto/testdata/keyring_privateKey.
 var testMailboxPassword = []byte("apple")
 
 func init() {

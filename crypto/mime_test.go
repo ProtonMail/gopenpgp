@@ -6,10 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Corresponding key in testdata/mime_privateKey
+// Corresponding key in testdata/mime_privateKey.
 var MIMEKeyPassword = []byte("test")
 
-// define call back interface
 type Callbacks struct {
 	Testing *testing.T
 }
