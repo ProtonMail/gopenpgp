@@ -42,7 +42,7 @@ func ArmorWithTypeAndCustomHeaders(input []byte, armorType, version, comment str
 	return armorWithTypeAndHeaders(input, armorType, headers)
 }
 
-// Unarmor unarmors an armored key.
+// Unarmor unarmors an armored input into a byte array.
 func Unarmor(input string) ([]byte, error) {
 	b, err := internal.Unarmor(input)
 	if err != nil {
