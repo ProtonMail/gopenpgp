@@ -193,7 +193,8 @@ func TestMessageGetArmoredWithCustomHeaders(t *testing.T) {
 		t.Fatal("Could not armor the ciphertext:", err)
 	}
 
-	assert.Contains(t, armored, comment)
+	assert.Contains(t, armored, "Comment: "+comment)
+	assert.Contains(t, armored, "Version: "+version)
 }
 
 func TestMessageGetArmoredWithEmptyHeaders(t *testing.T) {

@@ -12,6 +12,7 @@ import (
 
 var testSymmetricKey []byte
 
+// Password for key in testdata/keyring_privateKeyLegacy: "123"
 // Corresponding key in testdata/keyring_privateKey.
 var testMailboxPassword = []byte("apple")
 

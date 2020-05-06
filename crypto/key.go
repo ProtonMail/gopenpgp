@@ -16,7 +16,6 @@ import (
 	"github.com/pkg/errors"
 
 	openpgp "golang.org/x/crypto/openpgp"
-	xarmor "golang.org/x/crypto/openpgp/armor"
 	packet "golang.org/x/crypto/openpgp/packet"
 )
 
@@ -190,6 +189,7 @@ func (key *Key) Serialize() ([]byte, error) {
 	return buffer.Bytes(), err
 }
 
+// Armor returns the armored key as a string with default gopenpgp headers.
 func (key *Key) Armor() (string, error) {
 	serialized, err := key.Serialize()
 	if err != nil {
@@ -199,21 +199,36 @@ func (key *Key) Armor() (string, error) {
 	return armor.ArmorWithType(serialized, constants.PrivateKeyHeader)
 }
 
-// GetArmoredPublicKey returns the armored public keys from this keyring.
-func (key *Key) GetArmoredPublicKey() (s string, err error) {
-	var outBuf bytes.Buffer
-	aw, err := xarmor.Encode(&outBuf, openpgp.PublicKeyType, nil)
+// ArmorWithCustomHeaders returns the armored key as a string, with
+// the given headers. Empty parameters are omitted from the headers.
+func (key *Key) ArmorWithCustomHeaders(comment, version string) (string, error) {
+	serialized, err := key.Serialize()
 	if err != nil {
 		return "", err
 	}
 
-	if err = key.entity.Serialize(aw); err != nil {
-		_ = aw.Close()
+	return armor.ArmorWithTypeAndCustomHeaders(serialized, constants.PrivateKeyHeader, version, comment)
+}
+
+// GetArmoredPublicKey returns the armored public keys from this keyring.
+func (key *Key) GetArmoredPublicKey() (s string, err error) {
+	serialized, err := key.GetPublicKey()
+	if err != nil {
 		return "", err
 	}
 
-	err = aw.Close()
-	return outBuf.String(), err
+	return armor.ArmorWithType(serialized, constants.PublicKeyHeader)
+}
+
+// GetArmoredPublicKeyWithCustomHeaders returns the armored public key as a string, with
+// the given headers. Empty parameters are omitted from the headers.
+func (key *Key) GetArmoredPublicKeyWithCustomHeaders(comment, version string) (string, error) {
+	serialized, err := key.GetPublicKey()
+	if err != nil {
+		return "", err
+	}
+
+	return armor.ArmorWithTypeAndCustomHeaders(serialized, constants.PublicKeyHeader, version, comment)
 }
 
 // GetPublicKey returns the unarmored public keys from this keyring.

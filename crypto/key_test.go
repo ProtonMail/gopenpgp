@@ -73,11 +73,23 @@ func TestArmorKeys(t *testing.T) {
 		t.Fatal("Cannot armor unprotected EC key:" + err.Error())
 	}
 
-	rTest := regexp.MustCompile("(?s)^-----BEGIN PGP PRIVATE KEY BLOCK-----.*-----END PGP PRIVATE KEY BLOCK-----$")
+	rTest := regexp.MustCompile(`(?s)^-----BEGIN PGP PRIVATE KEY BLOCK-----.*Version: GopenPGP [0-9]+\.[0-9]+\.[0-9]+.*-----END PGP PRIVATE KEY BLOCK-----$`)
 	assert.Regexp(t, rTest, noPasswordRSA)
 	assert.Regexp(t, rTest, noPasswordEC)
 	assert.Regexp(t, rTest, keyTestArmoredRSA)
 	assert.Regexp(t, rTest, keyTestArmoredEC)
+}
+
+func TestArmorKeysWithCustomHeader(t *testing.T) {
+	comment := "User-defined private key comment"
+	version := "User-defined private key version"
+	armored, err := keyTestRSA.ArmorWithCustomHeaders(comment, version)
+	if err != nil {
+		t.Fatal("Could not armor the private key:", err)
+	}
+
+	assert.Contains(t, armored, "Comment: "+comment)
+	assert.Contains(t, armored, "Version: "+version)
 }
 
 func TestLockUnlockKeys(t *testing.T) {
@@ -257,7 +269,7 @@ func TestFailCheckIntegrity(t *testing.T) {
 	assert.Exactly(t, false, isVerified)
 }
 
-func TestArmorPublicKey(t *testing.T) {
+func TestGetPublicKey(t *testing.T) {
 	publicKey, err := keyTestRSA.GetPublicKey()
 	if err != nil {
 		t.Fatal("Expected no error while obtaining public key, got:", err)
@@ -265,19 +277,21 @@ func TestArmorPublicKey(t *testing.T) {
 
 	decodedKey, err := NewKey(publicKey)
 	if err != nil {
-		t.Fatal("Expected no error while creating public key ring, got:", err)
+		t.Fatal("Expected no error while creating public key, got:", err)
 	}
 
 	privateFingerprint := keyTestRSA.GetFingerprint()
 	publicFingerprint := decodedKey.GetFingerprint()
 
+	assert.False(t, decodedKey.IsPrivate())
+	assert.True(t, keyTestRSA.IsPrivate())
 	assert.Exactly(t, privateFingerprint, publicFingerprint)
 }
 
 func TestGetArmoredPublicKey(t *testing.T) {
 	privateKey, err := NewKeyFromArmored(readTestFile("keyring_privateKey", false))
 	if err != nil {
-		t.Fatal("Expected no error while unarmouring private key, got:", err)
+		t.Fatal("Expected no error while unarmoring private key, got:", err)
 	}
 
 	s, err := privateKey.GetArmoredPublicKey()
@@ -309,6 +323,47 @@ func TestGetArmoredPublicKey(t *testing.T) {
 	}
 
 	assert.Exactly(t, eb, b)
+
+	publicKey, err := keyTestRSA.GetArmoredPublicKey()
+	if err != nil {
+		t.Fatal("Expected no error while obtaining armored public key, got:", err)
+	}
+
+	decodedKey, err := NewKeyFromArmored(publicKey)
+	if err != nil {
+		t.Fatal("Expected no error while creating public key from armored, got:", err)
+	}
+
+	assert.False(t, decodedKey.IsPrivate())
+	assert.True(t, keyTestRSA.IsPrivate())
+	assert.Contains(t, publicKey, "Version: GopenPGP")
+
+	privateFingerprint := keyTestRSA.GetFingerprint()
+	publicFingerprint := decodedKey.GetFingerprint()
+
+	assert.Exactly(t, privateFingerprint, publicFingerprint)
+}
+
+func TestGetArmoredPublicKeyWithCustomHeaders(t *testing.T) {
+	comment := "User-defined public key comment"
+	version := "User-defined public key version"
+	armored, err := keyTestRSA.GetArmoredPublicKeyWithCustomHeaders(comment, version)
+	if err != nil {
+		t.Fatal("Could not armor the public key:", err)
+	}
+
+	assert.Contains(t, armored, "Comment: "+comment)
+	assert.Contains(t, armored, "Version: "+version)
+}
+
+func TestGetArmoredPublicKeyWithEmptyCustomHeaders(t *testing.T) {
+	armored, err := keyTestRSA.GetArmoredPublicKeyWithCustomHeaders("", "")
+	if err != nil {
+		t.Fatal("Could not armor the public key:", err)
+	}
+
+	assert.NotContains(t, armored, "Version")
+	assert.NotContains(t, armored, "Comment")
 }
 
 func TestGetSHA256FingerprintsV4(t *testing.T) {

@@ -218,8 +218,7 @@ func (msg *PGPMessage) GetArmored() (string, error) {
 }
 
 // GetArmoredWithCustomHeaders returns the armored message as a string, with
-// the given headers. If comment or version are empty, then no header is
-// displayed.
+// the given headers. Empty parameters are omitted from the headers.
 func (msg *PGPMessage) GetArmoredWithCustomHeaders(comment, version string) (string, error) {
 	return armor.ArmorWithTypeAndCustomHeaders(msg.Data, constants.PGPMessageHeader, version, comment)
 }
