@@ -48,7 +48,7 @@ type PGPSplitMessage struct {
 }
 
 // A ClearTextMessage is a signed but not encrypted PGP message,
-// i.e. the ones beginning with -----BEGIN PGP SIGNED MESSAGE-----
+// i.e. the ones beginning with -----BEGIN PGP SIGNED MESSAGE-----.
 type ClearTextMessage struct {
 	Data      []byte
 	Signature []byte
@@ -215,6 +215,12 @@ func (msg *PGPMessage) NewReader() io.Reader {
 // GetArmored returns the armored message as a string.
 func (msg *PGPMessage) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.Data, constants.PGPMessageHeader)
+}
+
+// GetArmoredWithCustomHeaders returns the armored message as a string, with
+// the given headers. Empty parameters are omitted from the headers.
+func (msg *PGPMessage) GetArmoredWithCustomHeaders(comment, version string) (string, error) {
+	return armor.ArmorWithTypeAndCustomHeaders(msg.Data, constants.PGPMessageHeader, version, comment)
 }
 
 // GetBinaryDataPacket returns the unarmored binary datapacket as a []byte.

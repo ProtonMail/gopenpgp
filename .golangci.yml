@@ -21,6 +21,7 @@ linters:
     - gochecknoglobals  # Checks that no globals are present in Go code [fast: true, auto-fix: false]
     - gochecknoinits    # Checks that no init functions are present in Go code [fast: true, auto-fix: false]
     - golint            # Golint differs from gofmt. Gofmt reformats Go source code, whereas golint prints out style mistakes [fast: true, auto-fix: false]
+    - goerr113          # Golang linter to check the errors handling expressions [fast: true, auto-fix: false]
     - gomnd             # An analyzer to detect magic numbers. [fast: true, auto-fix: false]
     - lll               # Reports long lines [fast: true, auto-fix: false]
     - testpackage       # Makes you use a separate _test package [fast: true, auto-fix: false]

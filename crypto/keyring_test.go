@@ -12,11 +12,9 @@ import (
 
 var testSymmetricKey []byte
 
-// Corresponding key in testdata/keyring_privateKey
+// Password for key in testdata/keyring_privateKeyLegacy: "123".
+// Corresponding key in testdata/keyring_privateKey.
 var testMailboxPassword = []byte("apple")
-
-// Corresponding key in testdata/keyring_privateKeyLegacy
-// const testMailboxPasswordLegacy = [][]byte{ []byte("123") }
 
 var (
 	keyRingTestPrivate  *KeyRing
