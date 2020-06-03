@@ -192,6 +192,17 @@ privateKeyRing.ClearPrivateParams()
 // `err` can be a SignatureVerificationError
 ```
 
+Decrypt binary data:
+```
+var pgpMessage = crypto.NewPGPMessage([]byte)
+
+privateKeyObj, err := crypto.NewKeyFromArmored(privateKey)
+
+privateKeyRing, err := crypto.NewKeyRing(privateKeyObj)
+
+message, err := privateKeyRing.Decrypt(pgpMessage, privateKeyRing, crypto.GetUnixTime())
+```
+
 ### Generate key
 Keys are generated with the `GenerateKey` function, that returns the armored key as a string and a potential error.
 The library supports RSA with different key lengths or Curve25519 keys.
