@@ -143,6 +143,35 @@ func TestSignedMessageDecryption(t *testing.T) {
 	assert.Exactly(t, readTestFile("message_plaintext", true), decrypted.GetString())
 }
 
+func TestSHA256SignedMessageDecryption(t *testing.T) {
+	pgpMessage, err := NewPGPMessageFromArmored(readTestFile("message_sha256_signed", false))
+	if err != nil {
+		t.Fatal("Expected no error when unarmoring, got:", err)
+	}
+
+	decrypted, err := keyRingTestPrivate.Decrypt(pgpMessage, keyRingTestPrivate, 0)
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+	assert.Exactly(t, readTestFile("message_plaintext", true), decrypted.GetString())
+}
+
+func TestSHA1SignedMessageDecryption(t *testing.T) {
+	pgpMessage, err := NewPGPMessageFromArmored(readTestFile("message_sha1_signed", false))
+	if err != nil {
+		t.Fatal("Expected no error when unarmoring, got:", err)
+	}
+
+	decrypted, err := keyRingTestPrivate.Decrypt(pgpMessage, keyRingTestPrivate, 0)
+	if err == nil {
+		t.Fatal("Expected verification error when decrypting")
+	}
+	if err.Error() != "Signature Verification Error: Invalid signature" {
+		t.Fatal("Expected verification error when decrypting, got:", err)
+	}
+	assert.Exactly(t, readTestFile("message_plaintext", true), decrypted.GetString())
+}
+
 func TestMultipleKeyMessageEncryption(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
 	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
