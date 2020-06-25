@@ -48,6 +48,15 @@ func newSignatureFailed() SignatureVerificationError {
 	}
 }
 
+// newSignatureInsecure creates a new SignatureVerificationError, type
+// SignatureFailed, with a message describing the signature as insecure.
+func newSignatureInsecure() SignatureVerificationError {
+	return SignatureVerificationError{
+		constants.SIGNATURE_FAILED,
+		"Insecure signature",
+	}
+}
+
 // newSignatureNotSigned creates a new SignatureVerificationError, type
 // SignatureNotSigned.
 func newSignatureNotSigned() SignatureVerificationError {
@@ -95,11 +104,13 @@ func verifyDetailsSignature(md *openpgp.MessageDetails, verifierKey *KeyRing) er
 		len(verifierKey.entities.KeysById(md.SignedByKeyId)) == 0 {
 		return newSignatureNoVerifier()
 	}
-	if md.SignatureError != nil ||
-		md.Signature == nil ||
+	if md.SignatureError != nil {
+		return newSignatureFailed()
+	}
+	if md.Signature == nil ||
 		md.Signature.Hash < allowedHashes[0] ||
 		md.Signature.Hash > allowedHashes[len(allowedHashes)-1] {
-		return newSignatureFailed()
+		return newSignatureInsecure()
 	}
 	return nil
 }

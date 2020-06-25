@@ -166,7 +166,7 @@ func TestSHA1SignedMessageDecryption(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected verification error when decrypting")
 	}
-	if err.Error() != "Signature Verification Error: Invalid signature" {
+	if err.Error() != "Signature Verification Error: Insecure signature" {
 		t.Fatal("Expected verification error when decrypting, got:", err)
 	}
 	assert.Exactly(t, readTestFile("message_plaintext", true), decrypted.GetString())
