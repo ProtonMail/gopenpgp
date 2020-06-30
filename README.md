@@ -180,6 +180,9 @@ pgpMessage, err := publicKeyRing.Encrypt(binMessage, privateKeyRing)
 // Armored message in pgpMessage.GetArmored()
 // pgpMessage can be obtained from NewPGPMessageFromArmored(ciphertext)
 
+//pgpMessage can be obtained from a byte array
+var pgpMessage = crypto.NewPGPMessage([]byte)
+
 privateKeyObj, err := crypto.NewKeyFromArmored(privateKey)
 unlockedKeyObj = privateKeyObj.Unlock(passphrase)
 privateKeyRing, err := crypto.NewKeyRing(unlockedKeyObj)
@@ -190,17 +193,6 @@ privateKeyRing.ClearPrivateParams()
 
 // Original data in message.GetString()
 // `err` can be a SignatureVerificationError
-```
-
-Decrypt binary data:
-```
-var pgpMessage = crypto.NewPGPMessage([]byte)
-
-privateKeyObj, err := crypto.NewKeyFromArmored(privateKey)
-
-privateKeyRing, err := crypto.NewKeyRing(privateKeyObj)
-
-message, err := privateKeyRing.Decrypt(pgpMessage, privateKeyRing, crypto.GetUnixTime())
 ```
 
 ### Generate key
