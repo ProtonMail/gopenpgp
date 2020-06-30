@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"crypto"
 	"fmt"
 	"io"
 	"math"
@@ -14,6 +15,13 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/ProtonMail/gopenpgp/v2/internal"
 )
+
+var allowedHashes = []crypto.Hash{
+	crypto.SHA224,
+	crypto.SHA256,
+	crypto.SHA384,
+	crypto.SHA512,
+}
 
 // SignatureVerificationError is returned from Decrypt and VerifyDetached
 // functions when signature verification fails.
@@ -37,6 +45,15 @@ func newSignatureFailed() SignatureVerificationError {
 	return SignatureVerificationError{
 		constants.SIGNATURE_FAILED,
 		"Invalid signature",
+	}
+}
+
+// newSignatureInsecure creates a new SignatureVerificationError, type
+// SignatureFailed, with a message describing the signature as insecure.
+func newSignatureInsecure() SignatureVerificationError {
+	return SignatureVerificationError{
+		constants.SIGNATURE_FAILED,
+		"Insecure signature",
 	}
 }
 
@@ -81,20 +98,21 @@ func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 
 // verifyDetailsSignature verifies signature from message details.
 func verifyDetailsSignature(md *openpgp.MessageDetails, verifierKey *KeyRing) error {
-	if md.IsSigned {
-		if md.SignedBy == nil || len(verifierKey.entities) == 0 {
-			return newSignatureNoVerifier()
-		}
-		matches := verifierKey.entities.KeysById(md.SignedByKeyId)
-		if len(matches) > 0 {
-			if md.SignatureError == nil {
-				return nil
-			}
-			return newSignatureFailed()
-		}
+	if !md.IsSigned ||
+		md.SignedBy == nil ||
+		len(verifierKey.entities) == 0 ||
+		len(verifierKey.entities.KeysById(md.SignedByKeyId)) == 0 {
+		return newSignatureNoVerifier()
 	}
-
-	return newSignatureNoVerifier()
+	if md.SignatureError != nil {
+		return newSignatureFailed()
+	}
+	if md.Signature == nil ||
+		md.Signature.Hash < allowedHashes[0] ||
+		md.Signature.Hash > allowedHashes[len(allowedHashes)-1] {
+		return newSignatureInsecure()
+	}
+	return nil
 }
 
 // verifySignature verifies if a signature is valid with the entity list.
@@ -111,7 +129,7 @@ func verifySignature(pubKeyEntries openpgp.EntityList, origText io.Reader, signa
 	}
 	signatureReader := bytes.NewReader(signature)
 
-	signer, err := openpgp.CheckDetachedSignature(pubKeyEntries, origText, signatureReader, config)
+	signer, err := openpgp.CheckDetachedSignatureAndHash(pubKeyEntries, origText, signatureReader, allowedHashes, config)
 
 	if err == pgpErrors.ErrSignatureExpired && signer != nil && verifyTime > 0 {
 		// if verifyTime = 0: time check disabled, everything is okay
@@ -126,7 +144,7 @@ func verifySignature(pubKeyEntries openpgp.EntityList, origText io.Reader, signa
 			return newSignatureFailed()
 		}
 
-		signer, err = openpgp.CheckDetachedSignature(pubKeyEntries, origText, signatureReader, config)
+		signer, err = openpgp.CheckDetachedSignatureAndHash(pubKeyEntries, origText, signatureReader, allowedHashes, config)
 		if err != nil {
 			return newSignatureFailed()
 		}
