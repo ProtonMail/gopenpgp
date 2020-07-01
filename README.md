@@ -180,6 +180,9 @@ pgpMessage, err := publicKeyRing.Encrypt(binMessage, privateKeyRing)
 // Armored message in pgpMessage.GetArmored()
 // pgpMessage can be obtained from NewPGPMessageFromArmored(ciphertext)
 
+//pgpMessage can be obtained from a byte array
+var pgpMessage = crypto.NewPGPMessage([]byte)
+
 privateKeyObj, err := crypto.NewKeyFromArmored(privateKey)
 unlockedKeyObj = privateKeyObj.Unlock(passphrase)
 privateKeyRing, err := crypto.NewKeyRing(unlockedKeyObj)
