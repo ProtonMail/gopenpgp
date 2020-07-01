@@ -223,7 +223,7 @@ func (msg *PGPMessage) GetArmoredWithCustomHeaders(comment, version string) (str
 	return armor.ArmorWithTypeAndCustomHeaders(msg.Data, constants.PGPMessageHeader, version, comment)
 }
 
-//  getEncryptionKeyIds Returns the key IDs of the keys to which the session key is encrypted
+// getEncryptionKeyIds Returns the key IDs of the keys to which the session key is encrypted.
 func (msg *PGPMessage) getEncryptionKeyIDs() []uint64 {
 	packets := packet.NewReader(bytes.NewReader(msg.Data))
 	var err error
