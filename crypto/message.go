@@ -224,7 +224,7 @@ func (msg *PGPMessage) GetArmoredWithCustomHeaders(comment, version string) (str
 }
 
 // getEncryptionKeyIds Returns the key IDs of the keys to which the session key is encrypted.
-func (msg *PGPMessage) getEncryptionKeyIDs() []uint64 {
+func (msg *PGPMessage) getEncryptionKeyIDs() ([]uint64, bool) {
 	packets := packet.NewReader(bytes.NewReader(msg.Data))
 	var err error
 	var ids []uint64
@@ -238,7 +238,10 @@ func (msg *PGPMessage) getEncryptionKeyIDs() []uint64 {
 			ids = append(ids, enc.KeyId)
 		}
 	}
-	return ids
+	if len(ids) > 0 {
+		return ids, true
+	}
+	return ids, false
 }
 
 // GetBinaryDataPacket returns the unarmored binary datapacket as a []byte.

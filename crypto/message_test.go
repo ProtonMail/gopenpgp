@@ -217,8 +217,9 @@ func TestMessagegetEncryptionKeyIDs(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
-	ids := ciphertext.getEncryptionKeyIDs()
+	ids, ok := ciphertext.getEncryptionKeyIDs()
 	assert.Exactly(t, 3, len(ids))
+	assert.True(t, ok)
 	encKey, ok := keyRingTestMultiple.entities[0].EncryptionKey(time.Now())
 	assert.True(t, ok)
 	assert.Exactly(t, encKey.PublicKey.KeyId, ids[0])
