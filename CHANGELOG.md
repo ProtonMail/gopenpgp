@@ -16,12 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 (msg *PGPMessage) GetArmoredWithCustomHeaders(comment, version string) (string, error)
 ```
 
-- Now one could get key IDs of keys to which the session key is encrypted
+- Extraction of encryption key IDs from a PGP message, i.e. the IDs of the keys used in the encryption of the session key
 ```go
-func (msg *PGPMessage) getEncryptionKeyIDs() ([]uint64, bool)
+(msg *PGPMessage) getEncryptionKeyIDs() ([]uint64, bool)
 ```
 
-get x/crypto Entity (components of an OpenPGP key) from Key struct
+- Getter for the x/crypto Entity (internal components of an OpenPGP key) from Key struct
 ```go
 (key *Key) GetEntity() *openpgp.Entity
 ```
