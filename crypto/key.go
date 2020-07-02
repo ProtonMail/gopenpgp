@@ -354,6 +354,11 @@ func (key *Key) GetSHA256Fingerprints() (fingerprints []string) {
 	return
 }
 
+// GetEntity gets x/crypto Entity object.
+func (key *Key) GetEntity() *openpgp.Entity {
+	return key.entity
+}
+
 // --- Internal methods
 
 // getSHA256FingerprintBytes computes the SHA256 fingerprint of a public key

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/openpgp/packet"
@@ -206,6 +207,22 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
+}
+
+func TestMessagegetGetEncryptionKeyIDs(t *testing.T) {
+	var message = NewPlainMessageFromString("plain text")
+	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
+
+	ciphertext, err := keyRingTestMultiple.Encrypt(message, keyRingTestPrivate)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+	ids, ok := ciphertext.getEncryptionKeyIDs()
+	assert.Exactly(t, 3, len(ids))
+	assert.True(t, ok)
+	encKey, ok := keyRingTestMultiple.entities[0].EncryptionKey(time.Now())
+	assert.True(t, ok)
+	assert.Exactly(t, encKey.PublicKey.KeyId, ids[0])
 }
 
 func TestMessageGetArmoredWithCustomHeaders(t *testing.T) {
