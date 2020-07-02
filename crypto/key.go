@@ -354,7 +354,7 @@ func (key *Key) GetSHA256Fingerprints() (fingerprints []string) {
 	return
 }
 
-// GetEntity get xcrypto Entity object.
+// GetEntity gets x/crypto Entity object.
 func (key *Key) GetEntity() *openpgp.Entity {
 	return key.entity
 }

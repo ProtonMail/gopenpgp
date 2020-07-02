@@ -209,7 +209,7 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
 }
 
-func TestMessagegetEncryptionKeyIDs(t *testing.T) {
+func TestMessagegetGetEncryptionKeyIDs(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
 	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
 
