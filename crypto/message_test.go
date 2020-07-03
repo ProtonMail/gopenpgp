@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/openpgp/packet"
@@ -143,6 +144,35 @@ func TestSignedMessageDecryption(t *testing.T) {
 	assert.Exactly(t, readTestFile("message_plaintext", true), decrypted.GetString())
 }
 
+func TestSHA256SignedMessageDecryption(t *testing.T) {
+	pgpMessage, err := NewPGPMessageFromArmored(readTestFile("message_sha256_signed", false))
+	if err != nil {
+		t.Fatal("Expected no error when unarmoring, got:", err)
+	}
+
+	decrypted, err := keyRingTestPrivate.Decrypt(pgpMessage, keyRingTestPrivate, 0)
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+	assert.Exactly(t, readTestFile("message_plaintext", true), decrypted.GetString())
+}
+
+func TestSHA1SignedMessageDecryption(t *testing.T) {
+	pgpMessage, err := NewPGPMessageFromArmored(readTestFile("message_sha1_signed", false))
+	if err != nil {
+		t.Fatal("Expected no error when unarmoring, got:", err)
+	}
+
+	decrypted, err := keyRingTestPrivate.Decrypt(pgpMessage, keyRingTestPrivate, 0)
+	if err == nil {
+		t.Fatal("Expected verification error when decrypting")
+	}
+	if err.Error() != "Signature Verification Error: Insecure signature" {
+		t.Fatal("Expected verification error when decrypting, got:", err)
+	}
+	assert.Exactly(t, readTestFile("message_plaintext", true), decrypted.GetString())
+}
+
 func TestMultipleKeyMessageEncryption(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
 	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
@@ -177,6 +207,22 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
+}
+
+func TestMessagegetGetEncryptionKeyIDs(t *testing.T) {
+	var message = NewPlainMessageFromString("plain text")
+	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
+
+	ciphertext, err := keyRingTestMultiple.Encrypt(message, keyRingTestPrivate)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+	ids, ok := ciphertext.getEncryptionKeyIDs()
+	assert.Exactly(t, 3, len(ids))
+	assert.True(t, ok)
+	encKey, ok := keyRingTestMultiple.entities[0].EncryptionKey(time.Now())
+	assert.True(t, ok)
+	assert.Exactly(t, encKey.PublicKey.KeyId, ids[0])
 }
 
 func TestMessageGetArmoredWithCustomHeaders(t *testing.T) {
