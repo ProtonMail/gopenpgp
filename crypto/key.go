@@ -16,6 +16,7 @@ import (
 	"github.com/pkg/errors"
 
 	openpgp "golang.org/x/crypto/openpgp"
+	xarmor "golang.org/x/crypto/openpgp/armor"
 	packet "golang.org/x/crypto/openpgp/packet"
 )
 
@@ -63,16 +64,25 @@ func NewKeyFromArmored(armored string) (key *Key, err error) {
 func GenerateRSAKeyWithPrimes(
 	name, email string,
 	bits int,
+	expiration *uint32,
 	primeone, primetwo, primethree, primefour []byte,
 ) (*Key, error) {
-	return generateKey(name, email, "rsa", bits, primeone, primetwo, primethree, primefour)
+	return generateKey(name, email, "rsa", bits, expiration, primeone, primetwo, primethree, primefour)
 }
 
 // GenerateKey generates a key of the given keyType ("rsa" or "x25519").
 // If keyType is "rsa", bits is the RSA bitsize of the key.
 // If keyType is "x25519" bits is unused.
-func GenerateKey(name, email string, keyType string, bits int) (*Key, error) {
-	return generateKey(name, email, keyType, bits, nil, nil, nil, nil)
+func GenerateKey(name, email string, keyType string, bits int, expiration *uint32) (*Key, error) {
+	return generateKey(name, email, keyType, bits, nil, nil, nil, nil, nil)
+}
+
+// GenerateKeyWithExpiration generates a key of the given keyType ("rsa" or "x25519").
+// Expiration is some time in the future
+// If keyType is "rsa", bits is the RSA bitsize of the key.
+// If keyType is "x25519" bits is unused.
+func GenerateKeyWithExpiration(name, email string, keyType string, bits int, expiration *uint32) (*Key, error) {
+	return generateKey(name, email, keyType, bits, expiration, nil, nil, nil, nil)
 }
 
 // --- Operate on key
@@ -189,7 +199,6 @@ func (key *Key) Serialize() ([]byte, error) {
 	return buffer.Bytes(), err
 }
 
-// Armor returns the armored key as a string with default gopenpgp headers.
 func (key *Key) Armor() (string, error) {
 	serialized, err := key.Serialize()
 	if err != nil {
@@ -199,36 +208,21 @@ func (key *Key) Armor() (string, error) {
 	return armor.ArmorWithType(serialized, constants.PrivateKeyHeader)
 }
 
-// ArmorWithCustomHeaders returns the armored key as a string, with
-// the given headers. Empty parameters are omitted from the headers.
-func (key *Key) ArmorWithCustomHeaders(comment, version string) (string, error) {
-	serialized, err := key.Serialize()
-	if err != nil {
-		return "", err
-	}
-
-	return armor.ArmorWithTypeAndCustomHeaders(serialized, constants.PrivateKeyHeader, version, comment)
-}
-
 // GetArmoredPublicKey returns the armored public keys from this keyring.
 func (key *Key) GetArmoredPublicKey() (s string, err error) {
-	serialized, err := key.GetPublicKey()
+	var outBuf bytes.Buffer
+	aw, err := xarmor.Encode(&outBuf, openpgp.PublicKeyType, nil)
 	if err != nil {
 		return "", err
 	}
 
-	return armor.ArmorWithType(serialized, constants.PublicKeyHeader)
-}
-
-// GetArmoredPublicKeyWithCustomHeaders returns the armored public key as a string, with
-// the given headers. Empty parameters are omitted from the headers.
-func (key *Key) GetArmoredPublicKeyWithCustomHeaders(comment, version string) (string, error) {
-	serialized, err := key.GetPublicKey()
-	if err != nil {
+	if err = key.entity.Serialize(aw); err != nil {
+		_ = aw.Close()
 		return "", err
 	}
 
-	return armor.ArmorWithTypeAndCustomHeaders(serialized, constants.PublicKeyHeader, version, comment)
+	err = aw.Close()
+	return outBuf.String(), err
 }
 
 // GetPublicKey returns the unarmored public keys from this keyring.
@@ -321,13 +315,18 @@ func (key *Key) Check() (bool, error) {
 }
 
 // PrintFingerprints is a debug helper function that prints the key and subkey fingerprints.
-func (key *Key) PrintFingerprints() {
+func (key *Key) PrintFingerprints() ([]string, string) {
+	subkeyFingerprints := []string{}
 	for _, subKey := range key.entity.Subkeys {
 		if !subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage || subKey.Sig.FlagEncryptCommunications {
-			fmt.Println("SubKey:" + hex.EncodeToString(subKey.PublicKey.Fingerprint[:]))
+			subkeyFingerprint := hex.EncodeToString(subKey.PublicKey.Fingerprint[:])
+			fmt.Println("SubKey:" + subkeyFingerprint)
+			subkeyFingerprints = append(subkeyFingerprints, subkeyFingerprint)
 		}
 	}
-	fmt.Println("PrimaryKey:" + hex.EncodeToString(key.entity.PrimaryKey.Fingerprint[:]))
+	primaryKeyFingerprint := hex.EncodeToString(key.entity.PrimaryKey.Fingerprint[:])
+	fmt.Println("PrimaryKey:", primaryKeyFingerprint)
+	return subkeyFingerprints, primaryKeyFingerprint
 }
 
 // GetHexKeyID returns the key ID, hex encoded as a string.
@@ -396,6 +395,7 @@ func generateKey(
 	name, email string,
 	keyType string,
 	bits int,
+	expiration *uint32,
 	prime1, prime2, prime3, prime4 []byte,
 ) (*Key, error) {
 	if len(email) == 0 {
@@ -434,7 +434,7 @@ func generateKey(
 		cfg.RSAPrimes = bigPrimes[:]
 	}
 
-	newEntity, err := openpgp.NewEntity(name, comments, email, cfg)
+	newEntity, err := openpgp.NewEntity(name, comments, email, expiration, cfg)
 	if err != nil {
 		return nil, err
 	}
