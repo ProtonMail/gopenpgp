@@ -73,7 +73,7 @@ func GenerateRSAKeyWithPrimes(
 // GenerateKey generates a key of the given keyType ("rsa" or "x25519").
 // If keyType is "rsa", bits is the RSA bitsize of the key.
 // If keyType is "x25519" bits is unused.
-func GenerateKey(name, email string, keyType string, bits int, expiration *uint32) (*Key, error) {
+func GenerateKey(name, email string, keyType string, bits int) (*Key, error) {
 	return generateKey(name, email, keyType, bits, nil, nil, nil, nil, nil)
 }
 
