@@ -72,7 +72,15 @@ func GenerateRSAKeyWithPrimes(
 // If keyType is "rsa", bits is the RSA bitsize of the key.
 // If keyType is "x25519" bits is unused.
 func GenerateKey(name, email string, keyType string, bits int) (*Key, error) {
-	return generateKey(name, email, keyType, bits, nil, nil, nil, nil)
+	return generateKey(name, email, keyType, bits, nil, nil, nil, nil, nil)
+}
+
+// GenerateKeyWithExpiration generates a key of the given keyType ("rsa" or "x25519").
+// Expiration is some time in the future
+// If keyType is "rsa", bits is the RSA bitsize of the key.
+// If keyType is "x25519" bits is unused.
+func GenerateKeyWithExpiration(name, email string, keyType string, bits int, expiration *uint32) (*Key, error) {
+	return generateKey(name, email, keyType, bits, expiration, nil, nil, nil, nil)
 }
 
 // --- Operate on key
@@ -396,6 +404,7 @@ func generateKey(
 	name, email string,
 	keyType string,
 	bits int,
+	expiration *uint32,
 	prime1, prime2, prime3, prime4 []byte,
 ) (*Key, error) {
 	if len(email) == 0 {
@@ -434,7 +443,7 @@ func generateKey(
 		cfg.RSAPrimes = bigPrimes[:]
 	}
 
-	newEntity, err := openpgp.NewEntity(name, comments, email, cfg)
+	newEntity, err := openpgp.NewEntity(name, comments, email, expiration, cfg)
 	if err != nil {
 		return nil, err
 	}
