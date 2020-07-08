@@ -90,7 +90,8 @@ func TestDataPacketEncryption(t *testing.T) {
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
 
 	// Encrypt session key
-	keyPacket, err := keyRingTestPublic.EncryptSessionKey(testSessionKey)
+	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
+	keyPacket, err := keyRingTestMultiple.EncryptSessionKey(testSessionKey)
 	if err != nil {
 		t.Fatal("Unable to encrypt key packet, got:", err)
 	}
@@ -108,6 +109,9 @@ func TestDataPacketEncryption(t *testing.T) {
 	if err != nil {
 		t.Fatal("Unable to unarmor pgp message, got:", err)
 	}
+	ids, ok := pgpMessage.getEncryptionKeyIDs()
+	assert.True(t, ok)
+	assert.Exactly(t, 3, len(ids))
 
 	// Test if final decryption succeeds
 	finalMessage, err := keyRingTestPrivate.Decrypt(pgpMessage, nil, 0)
