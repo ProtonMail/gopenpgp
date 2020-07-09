@@ -44,6 +44,21 @@ func TestAsymmetricKeyPacket(t *testing.T) {
 	assert.Exactly(t, testSessionKey, outputSymmetricKey)
 }
 
+func TestMultipleAsymmetricKeyPacket(t *testing.T) {
+	keyPacket, err := keyRingTestMultiple.EncryptSessionKey(testSessionKey)
+	if err != nil {
+		t.Fatal("Expected no error while generating key packet, got:", err)
+	}
+
+	// Password defined in keyring_test
+	outputSymmetricKey, err := keyRingTestMultiple.DecryptSessionKey(keyPacket)
+	if err != nil {
+		t.Fatal("Expected no error while decrypting key packet, got:", err)
+	}
+
+	assert.Exactly(t, testSessionKey, outputSymmetricKey)
+}
+
 func TestSymmetricKeyPacket(t *testing.T) {
 	password := []byte("I like encryption")
 
