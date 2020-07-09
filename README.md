@@ -331,13 +331,13 @@ A session key can be generated, encrypted to a Asymmetric/Symmetric key packet a
 
 sessionKey, err := crypto.GenerateSessionKey()
 
-keyPacket, err := publicKeyRing.EncryptSessionKey(sessionKey)
+keyPacket, err := publicKeyRing.EncryptSessionKey(sessionKey) // Will encrypt to all the keys in the keyring
 keyPacketSymm, err := crypto.EncryptSessionKeyWithPassword(sessionKey, password)
 ```
 `KeyPacket` is a `[]byte` containing the session key encrypted with the private key or password.
 
 ```go
-decodedKeyPacket, err := privateKeyRing.DecryptSessionKey(keyPacket)
+decodedKeyPacket, err := privateKeyRing.DecryptSessionKey(keyPacket) // Will decode with the first valid key found
 decodedSymmKeyPacket, err := crypto.DecryptSessionKeyWithPassword(keyPacketSymm, password)
 ```
 `decodedKeyPacket` and `decodedSymmKeyPacket` are objects of type `*SymmetricKey` that can

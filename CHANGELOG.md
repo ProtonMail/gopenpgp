@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Improved key and message armoring testing
+- `EncryptSessionKey` now creates encrypted key packets for each valid encryption key in the provided keyring. 
+    Returns a byte slice with all the concatenated key packets.
 
 ### Fixed
 - Public key armoring headers
