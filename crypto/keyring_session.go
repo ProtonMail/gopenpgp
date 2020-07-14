@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 
 	"github.com/pkg/errors"
 
@@ -53,11 +54,11 @@ func (keyRing *KeyRing) EncryptSessionKey(sk *SessionKey) ([]byte, error) {
 		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt session key")
 	}
 
-	var pubKeys []*packet.PublicKey
+	pubKeys := make([]*packet.PublicKey, 0, len(keyRing.entities))
 	for _, e := range keyRing.entities {
 		encryptionKey, ok := e.EncryptionKey(getNow())
 		if !ok {
-			return nil, errors.New("gopenpgp: encryption key is unavailable")
+			return nil, errors.New("gopenpgp: encryption key is unavailable for key id " + strconv.FormatUint(e.PrimaryKey.KeyId, 16))
 		}
 		pubKeys = append(pubKeys, encryptionKey.PublicKey)
 	}
