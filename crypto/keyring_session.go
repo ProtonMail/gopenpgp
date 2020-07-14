@@ -55,9 +55,11 @@ func (keyRing *KeyRing) EncryptSessionKey(sk *SessionKey) ([]byte, error) {
 
 	var pubKeys []*packet.PublicKey
 	for _, e := range keyRing.entities {
-		if encryptionKey, ok := e.EncryptionKey(getNow()); ok {
-			pubKeys = append(pubKeys, encryptionKey.PublicKey)
+		encryptionKey, ok := e.EncryptionKey(getNow())
+		if !ok {
+			return nil, errors.New("gopenpgp: encryption key is unavailable")
 		}
+		pubKeys = append(pubKeys, encryptionKey.PublicKey)
 	}
 	if len(pubKeys) == 0 {
 		return nil, errors.New("cannot set key: no public key available")
