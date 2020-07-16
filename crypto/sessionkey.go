@@ -216,7 +216,7 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 func (sk *SessionKey) checkSize() error {
 	cf, ok := symKeyAlgos[sk.Algo]
 	if !ok {
-		return errors.New("gopenpgp: unknown symmetric key generation algorithm")
+		return errors.New("unknown symmetric key algorithm")
 	}
 
 	if cf.KeySize() != len(sk.Key) {
