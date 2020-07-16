@@ -81,6 +81,25 @@ func TestSymmetricKeyPacket(t *testing.T) {
 	assert.Exactly(t, testSessionKey, outputSymmetricKey)
 }
 
+func TestSymmetricKeyPacketWrongSize(t *testing.T) {
+	r, err := RandomToken(symKeyAlgos[constants.AES256].KeySize())
+	if err != nil {
+		t.Fatal("Expected no error while generating session key, got:", err)
+	}
+
+	sk := &SessionKey{
+		Key:  r,
+		Algo: constants.AES128,
+	}
+
+	password := []byte("I like encryption")
+
+	_, err = EncryptSessionKeyWithPassword(sk, password)
+	if err == nil {
+		t.Fatal("Expected error while generating key packet with wrong sized key")
+	}
+}
+
 func TestDataPacketEncryption(t *testing.T) {
 	var message = NewPlainMessageFromString("The secret code is... 1, 2, 3, 4, 5")
 

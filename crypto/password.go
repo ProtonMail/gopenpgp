@@ -62,10 +62,16 @@ func DecryptSessionKeyWithPassword(keyPacket, password []byte) (*SessionKey, err
 		for _, s := range symKeys {
 			key, cipherFunc, err := s.Decrypt(password)
 			if err == nil {
-				return &SessionKey{
+				sk := &SessionKey{
 					Key:  key,
 					Algo: getAlgo(cipherFunc),
-				}, nil
+				}
+
+				if err = sk.checkSize(); err != nil {
+					return nil, errors.Wrap(err, "gopenpgp: unable to decrypt session key with password")
+				}
+
+				return sk, nil
 			}
 		}
 	}
@@ -85,6 +91,10 @@ func EncryptSessionKeyWithPassword(sk *SessionKey, password []byte) ([]byte, err
 
 	if len(password) == 0 {
 		return nil, errors.New("gopenpgp: password can't be empty")
+	}
+
+	if err = sk.checkSize(); err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt session key with password")
 	}
 
 	config := &packet.Config{
