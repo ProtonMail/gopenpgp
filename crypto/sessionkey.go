@@ -220,7 +220,7 @@ func (sk *SessionKey) checkSize() error {
 	}
 
 	if cf.KeySize() != len(sk.Key) {
-		return errors.New("gopenpgp: wrong session key size")
+		return errors.New("wrong session key size")
 	}
 
 	return nil
