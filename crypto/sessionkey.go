@@ -104,7 +104,7 @@ func newSessionKeyFromEncrypted(ek *packet.EncryptedKey) (*SessionKey, error) {
 	}
 
 	if err := sk.checkSize(); err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to decode session key")
+		return nil, errors.Wrap(err, "gopenpgp: unable to decrypt session key")
 	}
 
 	return sk, nil
