@@ -69,6 +69,36 @@ func EncryptMessageArmored(key, plaintext string) (ciphertext string, err error)
 	return ciphertext, nil
 }
 
+// EncryptRawMessageArmored generates an armored PGP message given a rawdata and
+// an armored public key.
+func EncryptRawMessageArmored(key string, data []byte) (string, error) {
+	publicKey, err := crypto.NewKeyFromArmored(key)
+
+	if err != nil {
+		return "", err
+	}
+
+	publicKeyRing, err := crypto.NewKeyRing(publicKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	pgpMessage, err := publicKeyRing.Encrypt(crypto.NewPlainMessage(data), nil)
+
+	if err != nil {
+		return "", err
+	}
+
+	ciphertext, err := pgpMessage.GetArmored()
+
+	if err != nil {
+		return "", err
+	}
+
+	return ciphertext, nil
+}
+
 // EncryptSignMessageArmored generates an armored signed PGP message given a
 // plaintext and an armored public key a private key and its passphrase.
 func EncryptSignMessageArmored(
