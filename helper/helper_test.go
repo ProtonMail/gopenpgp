@@ -49,30 +49,6 @@ func TestArmoredTextMessageEncryption(t *testing.T) {
 	assert.Exactly(t, plaintext, decrypted)
 }
 
-func TestRawMessageArmoredEncryption(t *testing.T) {
-	plaintext := "Secret message"
-
-	armored, err := EncryptRawMessageArmored(readTestFile("keyring_publicKey", false), []byte(plaintext))
-
-	if err != nil {
-		t.Fatal("Expected no error when encrypting, got:", err)
-	}
-
-	assert.Exactly(t, true, crypto.IsPGPMessage(armored))
-
-	decrypted, err := DecryptMessageArmored(
-		readTestFile("keyring_privateKey", false),
-		testMailboxPassword, // Password defined in base_test
-		armored,
-	)
-
-	if err != nil {
-		t.Fatal("Expected no error when decrypting, got:", err)
-	}
-
-	assert.Exactly(t, plaintext, decrypted)
-}
-
 func TestArmoredTextMessageEncryptionVerification(t *testing.T) {
 	var plaintext = "Secret message"
 
@@ -153,4 +129,28 @@ func TestAttachmentEncryptionVerification(t *testing.T) {
 	}
 
 	assert.Exactly(t, attachment, decrypted)
+}
+
+func TestArmoredBinaryMessageEncryption(t *testing.T) {
+	plainData := []byte("Secret message")
+
+	armored, err := EncryptBinaryMessageArmored(readTestFile("keyring_publicKey", false), plainData)
+
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+
+	assert.Exactly(t, true, crypto.IsPGPMessage(armored))
+
+	decrypted, err := DecryptBinaryMessageArmored(
+		readTestFile("keyring_privateKey", false),
+		testMailboxPassword, // Password defined in base_test
+		armored,
+	)
+
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+
+	assert.Exactly(t, plainData, decrypted)
 }

@@ -148,11 +148,17 @@ const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 
 const passphrase = []byte(`the passphrase of the private key`) // Passphrase of the privKey
 
-// encrypt message using public key
+// encrypt plain text message using public key
 armor, err := helper.EncryptMessageArmored(pubkey, "plain text")
 
-// decrypt armored encrypted message using the private key
+// encrypt binary message using public key
+armor, err := helper.EncryptBinaryMessageArmored(pubkey, []byte("plain text"))
+
+// decrypt armored encrypted message using the private key and got plain text
 decrypted, err := helper.DecryptMessageArmored(privkey, passphrase, armor)
+
+// decrypt armored encrypted message using the private key and got binary
+decrypted, err := helper.DecryptBinaryMessageArmored(privkey, passphrase, armor)
 ```
 
 With signatures:
