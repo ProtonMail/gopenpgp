@@ -207,9 +207,7 @@ func EncryptBinaryMessageArmored(key string, data []byte) (string, error) {
 
 // DecryptBinaryMessageArmored decrypts an armored PGP message given a private key
 // and its passphrase.
-func DecryptBinaryMessageArmored(
-	privateKey string, passphrase []byte, ciphertext string,
-) ([]byte, error) {
+func DecryptBinaryMessageArmored(privateKey string, passphrase []byte, ciphertext string) ([]byte, error) {
 	message, err := decryptMessageArmored(privateKey, passphrase, ciphertext)
 
 	if err != nil {
@@ -247,10 +245,7 @@ func encryptMessageArmored(key string, message *crypto.PlainMessage) (string, er
 	return ciphertext, nil
 }
 
-func decryptMessageArmored(
-	privateKey string, passphrase []byte, ciphertext string,
-) (*crypto.PlainMessage, error) {
-
+func decryptMessageArmored(privateKey string, passphrase []byte, ciphertext string) (*crypto.PlainMessage, error) {
 	privateKeyObj, err := crypto.NewKeyFromArmored(privateKey)
 
 	if err != nil {
