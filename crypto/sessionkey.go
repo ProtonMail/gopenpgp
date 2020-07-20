@@ -98,12 +98,16 @@ func newSessionKeyFromEncrypted(ek *packet.EncryptedKey) (*SessionKey, error) {
 		return nil, fmt.Errorf("gopenpgp: unsupported cipher function: %v", ek.CipherFunc)
 	}
 
-	symmetricKey := &SessionKey{
+	sk := &SessionKey{
 		Key:  ek.Key,
 		Algo: algo,
 	}
 
-	return symmetricKey, nil
+	if err := sk.checkSize(); err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: unable to decrypt session key")
+	}
+
+	return sk, nil
 }
 
 // Encrypt encrypts a PlainMessage to PGPMessage with a SessionKey.
@@ -207,6 +211,19 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 	}
 
 	return NewPlainMessage(messageBuf.Bytes()), nil
+}
+
+func (sk *SessionKey) checkSize() error {
+	cf, ok := symKeyAlgos[sk.Algo]
+	if !ok {
+		return errors.New("unknown symmetric key algorithm")
+	}
+
+	if cf.KeySize() != len(sk.Key) {
+		return errors.New("wrong session key size")
+	}
+
+	return nil
 }
 
 func getAlgo(cipher packet.CipherFunction) string {
