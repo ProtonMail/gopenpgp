@@ -26,6 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 (key *Key) GetEntity() *openpgp.Entity
 ```
 
+- Helpers for binary message encryption and decryption
+```go
+EncryptBinaryMessageArmored(key string, data []byte) (string, error)
+DecryptBinaryMessageArmored(privateKey string, passphrase []byte, ciphertext string) ([]byte, error)
+```
+
 ### Changed
 - Improved key and message armoring testing
 - `EncryptSessionKey` now creates encrypted key packets for each valid encryption key in the provided keyring. 
@@ -33,7 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Public key armoring headers
-
+- `EncryptSessionKey` throws an error when invalid encryption keys are provided
+- Session keys' size is now checked against the expected value to prevent panics
+ 
 ## [2.0.1] - 2020-05-01
 ### Security
 - Updated underlying crypto library

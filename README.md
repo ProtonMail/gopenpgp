@@ -151,13 +151,13 @@ const passphrase = []byte(`the passphrase of the private key`) // Passphrase of 
 // encrypt plain text message using public key
 armor, err := helper.EncryptMessageArmored(pubkey, "plain text")
 
+// decrypt armored encrypted message using the private key and obtain plain text
+decrypted, err := helper.DecryptMessageArmored(privkey, passphrase, armor)
+
 // encrypt binary message using public key
 armor, err := helper.EncryptBinaryMessageArmored(pubkey, []byte("plain text"))
 
-// decrypt armored encrypted message using the private key and got plain text
-decrypted, err := helper.DecryptMessageArmored(privkey, passphrase, armor)
-
-// decrypt armored encrypted message using the private key and got binary
+// decrypt armored encrypted message using the private key expecting binary data
 decrypted, err := helper.DecryptBinaryMessageArmored(privkey, passphrase, armor)
 ```
 
@@ -173,7 +173,7 @@ armor, err := helper.EncryptSignMessageArmored(pubkey, privkey, passphrase, "pla
 decrypted, err := helper.DecryptVerifyMessageArmored(pubkey, privkey, passphrase, armor)
 ```
 
-With binary data or advanced modes:
+For more advanced modes the full API (i.e. without helpers) can be used:
 ```go
 // Keys initialization as before (omitted)
 var binMessage = crypto.NewPlainMessage(data)
