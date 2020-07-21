@@ -7,7 +7,9 @@ import (
 
 // UpdateTime updates cached time.
 func UpdateTime(newTime int64) {
-	pgp.latestServerTime = newTime
+	if(newTime > pgp.latestServerTime) {
+		pgp.latestServerTime = newTime
+	}
 	pgp.latestClientTime = time.Now()
 }
 
