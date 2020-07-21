@@ -7,10 +7,10 @@ import (
 
 // UpdateTime updates cached time.
 func UpdateTime(newTime int64) {
-	if(newTime > pgp.latestServerTime) {
+	if newTime > pgp.latestServerTime {
 		pgp.latestServerTime = newTime
+		pgp.latestClientTime = time.Now()
 	}
-	pgp.latestClientTime = time.Now()
 }
 
 // GetUnixTime gets latest cached time.
