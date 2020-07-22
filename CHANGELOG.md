@@ -32,6 +32,11 @@ EncryptBinaryMessageArmored(key string, data []byte) (string, error)
 DecryptBinaryMessageArmored(privateKey string, passphrase []byte, ciphertext string) ([]byte, error)
 ```
 
+- Method to derive a public key object from a private key
+```go
+(key *Key) ToPublic() (publicKey *Key, err error) 
+```
+
 ### Changed
 - Improved key and message armoring testing
 - `EncryptSessionKey` now creates encrypted key packets for each valid encryption key in the provided keyring. 

@@ -389,3 +389,19 @@ func TestGetEntity(t *testing.T) {
 	assert.True(t, entity.PrimaryIdentity().SelfSignature.FlagsValid)
 	assert.IsType(t, &openpgp.Entity{}, entity)
 }
+
+func TestToPublic(t *testing.T) {
+	privateKey, err := NewKeyFromArmored(readTestFile("keyring_privateKey", false))
+	if err != nil {
+		t.Fatal("Cannot unarmor key:", err)
+	}
+	assert.True(t, privateKey.IsPrivate())
+
+	publicKey, err := privateKey.ToPublic()
+	if err != nil {
+		t.Fatal("Cannot make key public:", err)
+	}
+
+	assert.False(t, publicKey.IsPrivate())
+	assert.True(t, privateKey.IsPrivate())
+}
