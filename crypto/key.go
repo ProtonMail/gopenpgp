@@ -359,6 +359,21 @@ func (key *Key) GetEntity() *openpgp.Entity {
 	return key.entity
 }
 
+// ToPublic returns the corresponding public key of the given private key.
+func (key *Key) ToPublic() (publicKey *Key, err error) {
+	if !key.IsPrivate() {
+		return nil, errors.New("gopenpgp: key is already public")
+	}
+
+	publicKey, err = key.Copy()
+	if err != nil {
+		return nil, err
+	}
+
+	publicKey.ClearPrivateParams()
+	return
+}
+
 // --- Internal methods
 
 // getSHA256FingerprintBytes computes the SHA256 fingerprint of a public key
