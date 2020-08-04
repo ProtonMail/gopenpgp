@@ -21,6 +21,12 @@ func EncryptSignAttachment(
 	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
 		return nil, nil, nil, err
 	}
+	if publicKeyObj.IsPrivate() {
+		publicKeyObj, err = publicKeyObj.ToPublic()
+		if err != nil {
+			return nil, nil, nil, err
+		}
+	}
 
 	if publicKeyRing, err = crypto.NewKeyRing(publicKeyObj); err != nil {
 		return nil, nil, nil, err

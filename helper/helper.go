@@ -61,6 +61,12 @@ func EncryptSignMessageArmored(
 	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
 		return "", err
 	}
+	if publicKeyObj.IsPrivate() {
+		publicKeyObj, err = publicKeyObj.ToPublic()
+		if err != nil {
+			return "", err
+		}
+	}
 
 	if publicKeyRing, err = crypto.NewKeyRing(publicKeyObj); err != nil {
 		return "", err
@@ -118,6 +124,12 @@ func DecryptVerifyMessageArmored(
 	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
 		return "", err
 	}
+	if publicKeyObj.IsPrivate() {
+		publicKeyObj, err = publicKeyObj.ToPublic()
+		if err != nil {
+			return "", err
+		}
+	}
 
 	if publicKeyRing, err = crypto.NewKeyRing(publicKeyObj); err != nil {
 		return "", err
@@ -165,6 +177,12 @@ func DecryptVerifyAttachment(
 
 	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
 		return nil, err
+	}
+	if publicKeyObj.IsPrivate() {
+		publicKeyObj, err = publicKeyObj.ToPublic()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if publicKeyRing, err = crypto.NewKeyRing(publicKeyObj); err != nil {
@@ -219,6 +237,12 @@ func DecryptBinaryMessageArmored(privateKey string, passphrase []byte, ciphertex
 
 func encryptMessageArmored(key string, message *crypto.PlainMessage) (string, error) {
 	publicKey, err := crypto.NewKeyFromArmored(key)
+	if publicKey.IsPrivate() {
+		publicKey, err = publicKey.ToPublic()
+		if err != nil {
+			return "", err
+		}
+	}
 
 	if err != nil {
 		return "", err
