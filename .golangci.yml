@@ -27,3 +27,5 @@ linters:
     - testpackage       # Makes you use a separate _test package [fast: true, auto-fix: false]
     - wsl               # Whitespace Linter - Forces you to use empty lines! [fast: true, auto-fix: false]
     - gofumpt           # Enforce a stricter format than gofmt
+    - gci               # Enforce blank lines check
+    - nlreturn          # Enforce blank lines for return statements
