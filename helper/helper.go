@@ -304,3 +304,96 @@ func decryptMessageArmored(privateKey string, passphrase []byte, ciphertext stri
 
 	return message, nil
 }
+
+// DecryptVerifyArmoredDetached decrypts an armored pgp message
+// and verify a detached armored signature
+// given a publicKey, and a privateKey with its passphrase.
+// Returns the plain data or an error on
+// signature verification failure.
+func DecryptVerifyArmoredDetached(
+	publicKey, privateKey string,
+	passphrase []byte,
+	ciphertext string,
+	armoredSignature string,
+) (plainData []byte, err error) {
+	var publicKeyObj, privateKeyObj, unlockedKeyObj *crypto.Key
+	var publicKeyRing, privateKeyRing *crypto.KeyRing
+	var detachedSignature *crypto.PGPSignature
+	var message *crypto.PlainMessage
+
+	pgpMessage, err := crypto.NewPGPMessageFromArmored(ciphertext)
+
+	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
+		return nil, err
+	}
+	if publicKeyObj.IsPrivate() {
+		publicKeyObj, err = publicKeyObj.ToPublic()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if publicKeyRing, err = crypto.NewKeyRing(publicKeyObj); err != nil {
+		return nil, err
+	}
+
+	if privateKeyObj, err = crypto.NewKeyFromArmored(privateKey); err != nil {
+		return nil, err
+	}
+
+	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
+		return nil, err
+	}
+	defer unlockedKeyObj.ClearPrivateParams()
+
+	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
+		return nil, err
+	}
+
+	if detachedSignature, err = crypto.NewPGPSignatureFromArmored(armoredSignature); err != nil {
+		return nil, err
+	}
+
+	if message, err = privateKeyRing.Decrypt(pgpMessage, nil, 0); err != nil {
+		return nil, err
+	}
+
+	if publicKeyRing.VerifyDetached(message, detachedSignature, crypto.GetUnixTime()) != nil {
+		return nil, errors.New("gopenpgp: unable to verify message")
+	}
+
+	return message.GetBinary(), nil
+}
+
+// DecryptSplitMessage decrypts  an attachment split into the
+// keyPacket, dataPacket, given a
+// privateKey with its passphrase. Returns the plain data
+func DecryptSplitMessage(
+	privateKey string,
+	passphrase, keyPacket, dataPacket []byte,
+) (plainData []byte, err error) {
+	var privateKeyObj, unlockedKeyObj *crypto.Key
+	var privateKeyRing *crypto.KeyRing
+	var message *crypto.PlainMessage
+
+	var packets = crypto.NewPGPSplitMessage(keyPacket, dataPacket)
+
+	if privateKeyObj, err = crypto.NewKeyFromArmored(privateKey); err != nil {
+		return nil, err
+	}
+
+	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
+		return nil, err
+	}
+	defer unlockedKeyObj.ClearPrivateParams()
+
+	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
+		return nil, err
+	}
+
+	if message, err = privateKeyRing.DecryptAttachment(packets); err != nil {
+		return nil, err
+	}
+
+	return message.GetBinary(), nil
+}
