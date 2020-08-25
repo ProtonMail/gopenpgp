@@ -367,7 +367,7 @@ func DecryptVerifyArmoredDetached(
 
 // DecryptSplitMessage decrypts  an attachment split into the
 // keyPacket, dataPacket, given a
-// privateKey with its passphrase. Returns the plain data
+// privateKey with its passphrase. Returns the plain data.
 func DecryptSplitMessage(
 	privateKey string,
 	passphrase, keyPacket, dataPacket []byte,
