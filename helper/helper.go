@@ -329,7 +329,7 @@ func decryptMessageArmored(privateKey string, passphrase []byte, ciphertext stri
 	return message, nil
 }
 
-func signDetachedArmored(privateKey string, passphrase []byte, message *crypto.PlainMessage) (signature signature, err error) {
+func signDetachedArmored(privateKey string, passphrase []byte, message *crypto.PlainMessage) (signature string, err error) {
 	privateKeyObj, err := crypto.NewKeyFromArmored(privateKey)
 
 	if err != nil {
