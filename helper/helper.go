@@ -159,30 +159,6 @@ func DecryptVerifyMessageArmored(
 	return message.GetString(), nil
 }
 
-// EncryptSignAttachment takes a public encryption key and a private
-// signature key with its passphrase, an attachment data and filename.
-// It returns the encrypted data as a pgp split message and a detached
-// armored signature.
-func EncryptSignAttachment(
-	publicKey, privateKey string,
-	passphrase, plainData []byte,
-	filename string,
-) (pgpSplitMessage *crypto.PGPSplitMessage, armoredSignature string, err error) {
-
-	message := crypto.NewPlainMessage(plainData)
-	// We encrypt the attachment
-	pgpSplitMessage, err = encryptAttachment(publicKey, message, filename)
-	if err != nil {
-		return nil, "", err
-	}
-	// We sign the attachment
-	armoredSignature, err = signDetachedArmored(privateKey, passphrase, message)
-	if err != nil {
-		return nil, "", err
-	}
-	return pgpSplitMessage, armoredSignature, nil
-}
-
 // DecryptVerifyAttachment decrypts and verifies an attachment split into the
 // keyPacket, dataPacket and an armored (!) signature, given a publicKey, and a
 // privateKey with its passphrase. Returns the plain data or an error on
@@ -278,39 +254,6 @@ func DecryptVerifyArmoredDetached(
 	}
 	if !check {
 		return nil, errors.New("gopenpgp: unable to verify message")
-	}
-
-	return message.GetBinary(), nil
-}
-
-// EncryptAttachment encrypts binary data
-// and return a message split into a key packet and
-// a data packet. given a publicKey.
-func EncryptAttachment(
-	publicKey string,
-	plainData []byte,
-	filename string,
-) (splitMessage *crypto.PGPSplitMessage, err error) {
-
-	message := crypto.NewPlainMessage(plainData)
-	pgpSplitMessage, err := encryptAttachment(publicKey, message, filename)
-	if err != nil {
-		return nil, err
-	}
-	return pgpSplitMessage, nil
-}
-
-// DecryptAttachment decrypts binary data split into the
-// keyPacket and dataPacket, given a
-// privateKey with its passphrase. Returns the plain data.
-func DecryptAttachment(
-	privateKey string,
-	passphrase, keyPacket, dataPacket []byte,
-) (plainData []byte, err error) {
-
-	var message *crypto.PlainMessage
-	if message, err = decryptAttachment(privateKey, passphrase, dataPacket, keyPacket); err != nil {
-		return nil, err
 	}
 
 	return message.GetBinary(), nil
