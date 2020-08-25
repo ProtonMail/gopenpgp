@@ -168,7 +168,6 @@ func DecryptVerifyAttachment(
 	passphrase, keyPacket, dataPacket []byte,
 	armoredSignature string,
 ) (plainData []byte, err error) {
-
 	// We decrypt the attachment
 	message, err := decryptAttachment(privateKey, passphrase, keyPacket, dataPacket)
 	if err != nil {
@@ -207,12 +206,11 @@ func DecryptBinaryMessageArmored(privateKey string, passphrase []byte, ciphertex
 
 // EncryptSignArmoredDetached takes a public key for encryption,
 // a private key and its passphrase for signature, and the plaintext data
-// Returns an armored ciphertext and a detached armored signature
+// Returns an armored ciphertext and a detached armored signature.
 func EncryptSignArmoredDetached(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
 ) (ciphertext, signature string, err error) {
-
 	var message *crypto.PlainMessage = crypto.NewPlainMessage(plainData)
 
 	// We encrypt the message
@@ -239,7 +237,6 @@ func DecryptVerifyArmoredDetached(
 	ciphertext string,
 	armoredSignature string,
 ) (plainData []byte, err error) {
-
 	var message *crypto.PlainMessage
 
 	// We decrypt the message
@@ -420,36 +417,4 @@ func decryptAttachment(
 	}
 
 	return message, nil
-}
-
-func encryptAttachment(
-	publicKey string,
-	message *crypto.PlainMessage,
-	filename string,
-) (pgpSplitMessage *crypto.PGPSplitMessage, err error) {
-	var publicKeyObj *crypto.Key
-	var publicKeyRing *crypto.KeyRing
-
-	publicKeyObj, err = crypto.NewKeyFromArmored(publicKey)
-	if err != nil {
-		return nil, err
-	}
-
-	if publicKeyObj.IsPrivate() {
-		publicKeyObj, err = publicKeyObj.ToPublic()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	publicKeyRing, err = crypto.NewKeyRing(publicKeyObj)
-	if err != nil {
-		return nil, err
-	}
-
-	if pgpSplitMessage, err = publicKeyRing.EncryptAttachment(message, filename); err != nil {
-		return nil, err
-	}
-
-	return pgpSplitMessage, nil
 }
