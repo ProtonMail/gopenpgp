@@ -239,15 +239,11 @@ Loop:
 		case *packet.EncryptedKey:
 			encryptedKey = p
 			ids = append(ids, encryptedKey.KeyId)
-		case *packet.SymmetricallyEncrypted:
+		case *packet.SymmetricallyEncrypted,
+			*packet.AEADEncrypted,
+			*packet.Compressed,
+			*packet.LiteralData:
 			break Loop
-		case *packet.AEADEncrypted:
-			break Loop
-		case *packet.Compressed:
-			break Loop
-		case *packet.LiteralData:
-			break Loop
-		default:
 		}
 	}
 	if len(ids) > 0 {
