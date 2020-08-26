@@ -228,14 +228,22 @@ func (msg *PGPMessage) getEncryptionKeyIDs() ([]uint64, bool) {
 	packets := packet.NewReader(bytes.NewReader(msg.Data))
 	var err error
 	var ids []uint64
+	var encryptedKey *packet.EncryptedKey
+Loop:
 	for {
 		var p packet.Packet
 		if p, err = packets.Next(); err == io.EOF {
 			break
 		}
-		enc, ok := p.(*packet.EncryptedKey)
-		if ok {
-			ids = append(ids, enc.KeyId)
+		switch p := p.(type) {
+		case *packet.EncryptedKey:
+			encryptedKey = p
+			ids = append(ids, encryptedKey.KeyId)
+		case *packet.SymmetricallyEncrypted,
+			*packet.AEADEncrypted,
+			*packet.Compressed,
+			*packet.LiteralData:
+			break Loop
 		}
 	}
 	if len(ids) > 0 {
