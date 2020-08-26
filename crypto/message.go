@@ -228,6 +228,7 @@ func (msg *PGPMessage) getEncryptionKeyIDs() ([]uint64, bool) {
 	packets := packet.NewReader(bytes.NewReader(msg.Data))
 	var err error
 	var ids []uint64
+	var foundSessionKey bool
 	for {
 		var p packet.Packet
 		if p, err = packets.Next(); err == io.EOF {
@@ -236,6 +237,10 @@ func (msg *PGPMessage) getEncryptionKeyIDs() ([]uint64, bool) {
 		enc, ok := p.(*packet.EncryptedKey)
 		if ok {
 			ids = append(ids, enc.KeyId)
+			foundSessionKey = ok
+		}
+		if foundSessionKey && !ok {
+			break
 		}
 	}
 	if len(ids) > 0 {
