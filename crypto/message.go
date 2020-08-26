@@ -229,6 +229,7 @@ func (msg *PGPMessage) getEncryptionKeyIDs() ([]uint64, bool) {
 	var err error
 	var ids []uint64
 	var encryptedKey *packet.EncryptedKey
+Loop:
 	for {
 		var p packet.Packet
 		if p, err = packets.Next(); err == io.EOF {
@@ -239,13 +240,13 @@ func (msg *PGPMessage) getEncryptionKeyIDs() ([]uint64, bool) {
 			encryptedKey = p
 			ids = append(ids, encryptedKey.KeyId)
 		case *packet.SymmetricallyEncrypted:
-			break
+			break Loop
 		case *packet.AEADEncrypted:
-			break
+			break Loop
 		case *packet.Compressed:
-			break
+			break Loop
 		case *packet.LiteralData:
-			break
+			break Loop
 		default:
 		}
 	}
