@@ -1,8 +1,8 @@
 package helper
 
 import (
-	"testing"
 	"bytes"
+	"testing"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/stretchr/testify/assert"
@@ -163,7 +163,7 @@ func TestEncryptSignArmoredDetached(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error reading the test private key: ", err)
 	}
-	publicKeyString, err  := privateKey.GetArmoredPublicKey()
+	publicKeyString, err := privateKey.GetArmoredPublicKey()
 	if err != nil {
 		t.Fatal("Error reading the test public key: ", err)
 	}
@@ -199,6 +199,10 @@ func TestEncryptSignArmoredDetached(t *testing.T) {
 		testMailboxPassword, // Password defined in base_test
 		[]byte("Different message"),
 	)
+
+	if err != nil {
+		t.Fatal("Expected no error while encrypting and signing, got:", err)
+	}
 
 	_, err = DecryptVerifyArmoredDetached(
 		publicKeyString,
