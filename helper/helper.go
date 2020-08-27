@@ -168,49 +168,18 @@ func DecryptVerifyAttachment(
 	passphrase, keyPacket, dataPacket []byte,
 	armoredSignature string,
 ) (plainData []byte, err error) {
-	var publicKeyObj, privateKeyObj, unlockedKeyObj *crypto.Key
-	var publicKeyRing, privateKeyRing *crypto.KeyRing
-	var detachedSignature *crypto.PGPSignature
-	var message *crypto.PlainMessage
-
-	var packets = crypto.NewPGPSplitMessage(keyPacket, dataPacket)
-
-	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
-		return nil, err
-	}
-	if publicKeyObj.IsPrivate() {
-		publicKeyObj, err = publicKeyObj.ToPublic()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if publicKeyRing, err = crypto.NewKeyRing(publicKeyObj); err != nil {
+	// We decrypt the attachment
+	message, err := decryptAttachment(privateKey, passphrase, keyPacket, dataPacket)
+	if err != nil {
 		return nil, err
 	}
 
-	if privateKeyObj, err = crypto.NewKeyFromArmored(privateKey); err != nil {
+	// We verify the signature
+	var check bool
+	if check, err = verifyDetachedArmored(publicKey, message, armoredSignature); err != nil {
 		return nil, err
 	}
-
-	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
-		return nil, err
-	}
-	defer unlockedKeyObj.ClearPrivateParams()
-
-	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
-		return nil, err
-	}
-
-	if detachedSignature, err = crypto.NewPGPSignatureFromArmored(armoredSignature); err != nil {
-		return nil, err
-	}
-
-	if message, err = privateKeyRing.DecryptAttachment(packets); err != nil {
-		return nil, err
-	}
-
-	if publicKeyRing.VerifyDetached(message, detachedSignature, crypto.GetUnixTime()) != nil {
+	if !check {
 		return nil, errors.New("gopenpgp: unable to verify attachment")
 	}
 
@@ -230,6 +199,58 @@ func DecryptBinaryMessageArmored(privateKey string, passphrase []byte, ciphertex
 
 	if err != nil {
 		return nil, err
+	}
+
+	return message.GetBinary(), nil
+}
+
+// EncryptSignArmoredDetached takes a public key for encryption,
+// a private key and its passphrase for signature, and the plaintext data
+// Returns an armored ciphertext and a detached armored signature.
+func EncryptSignArmoredDetached(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (ciphertext, signature string, err error) {
+	var message *crypto.PlainMessage = crypto.NewPlainMessage(plainData)
+
+	// We encrypt the message
+	if ciphertext, err = encryptMessageArmored(publicKey, message); err != nil {
+		return "", "", err
+	}
+
+	// We sign the message
+	if signature, err = signDetachedArmored(privateKey, passphrase, message); err != nil {
+		return "", "", err
+	}
+
+	return ciphertext, signature, nil
+}
+
+// DecryptVerifyArmoredDetached decrypts an armored pgp message
+// and verify a detached armored signature
+// given a publicKey, and a privateKey with its passphrase.
+// Returns the plain data or an error on
+// signature verification failure.
+func DecryptVerifyArmoredDetached(
+	publicKey, privateKey string,
+	passphrase []byte,
+	ciphertext string,
+	armoredSignature string,
+) (plainData []byte, err error) {
+	var message *crypto.PlainMessage
+
+	// We decrypt the message
+	if message, err = decryptMessageArmored(privateKey, passphrase, ciphertext); err != nil {
+		return nil, err
+	}
+
+	// We verify the signature
+	var check bool
+	if check, err = verifyDetachedArmored(publicKey, message, armoredSignature); err != nil {
+		return nil, err
+	}
+	if !check {
+		return nil, errors.New("gopenpgp: unable to verify message")
 	}
 
 	return message.GetBinary(), nil
@@ -299,6 +320,99 @@ func decryptMessageArmored(privateKey string, passphrase []byte, ciphertext stri
 	message, err := privateKeyRing.Decrypt(pgpMessage, nil, 0)
 
 	if err != nil {
+		return nil, err
+	}
+
+	return message, nil
+}
+
+func signDetachedArmored(privateKey string, passphrase []byte, message *crypto.PlainMessage) (signature string, err error) {
+	privateKeyObj, err := crypto.NewKeyFromArmored(privateKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	privateKeyUnlocked, err := privateKeyObj.Unlock(passphrase)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer privateKeyUnlocked.ClearPrivateParams()
+
+	privateKeyRing, err := crypto.NewKeyRing(privateKeyUnlocked)
+
+	if err != nil {
+		return "", err
+	}
+
+	detachedSignature, err := privateKeyRing.SignDetached(message)
+
+	if err != nil {
+		return "", err
+	}
+
+	armoredSignature, err := detachedSignature.GetArmored()
+
+	if err != nil {
+		return "", err
+	}
+
+	return armoredSignature, nil
+}
+
+func verifyDetachedArmored(publicKey string, message *crypto.PlainMessage, armoredSignature string) (check bool, err error) {
+	var publicKeyObj *crypto.Key
+	var publicKeyRing *crypto.KeyRing
+	var detachedSignature *crypto.PGPSignature
+	// We prepare the public key for signature verification
+	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
+		return false, err
+	}
+	if publicKeyObj.IsPrivate() {
+		publicKeyObj, err = publicKeyObj.ToPublic()
+		if err != nil {
+			return false, err
+		}
+	}
+	if publicKeyRing, err = crypto.NewKeyRing(publicKeyObj); err != nil {
+		return false, err
+	}
+
+	// We verify the signature
+	if detachedSignature, err = crypto.NewPGPSignatureFromArmored(armoredSignature); err != nil {
+		return false, err
+	}
+	if publicKeyRing.VerifyDetached(message, detachedSignature, crypto.GetUnixTime()) != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
+func decryptAttachment(
+	privateKey string,
+	passphrase, keyPacket, dataPacket []byte,
+) (message *crypto.PlainMessage, err error) {
+	var privateKeyObj, unlockedKeyObj *crypto.Key
+	var privateKeyRing *crypto.KeyRing
+
+	packets := crypto.NewPGPSplitMessage(keyPacket, dataPacket)
+
+	// prepare the private key for decryption
+	if privateKeyObj, err = crypto.NewKeyFromArmored(privateKey); err != nil {
+		return nil, err
+	}
+	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
+		return nil, err
+	}
+	defer unlockedKeyObj.ClearPrivateParams()
+
+	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
+		return nil, err
+	}
+
+	if message, err = privateKeyRing.DecryptAttachment(packets); err != nil {
 		return nil, err
 	}
 
