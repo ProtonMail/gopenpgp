@@ -80,20 +80,20 @@ func GetJsonSHA256Fingerprints(publicKey string) ([]byte, error) {
 	return json.Marshal(key.GetSHA256Fingerprints())
 }
 
-type EncryptSignArmoredDetachedResult struct{
+type EncryptSignArmoredDetachedMobileResult struct{
 	Ciphertext, Signature string
 }
 
 //EncryptSignArmoredDetachedWrapper wraps the EncryptSignArmoredDetached method
 //to have only one return argument for mobile.
-func EncryptSignArmoredDetachedWrapper(
+func EncryptSignArmoredDetachedMobile(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
-) (wrappedTuple *EncryptSignArmoredDetachedResult, err error) {
+) (wrappedTuple *EncryptSignArmoredDetachedMobileResult, err error) {
 
 	ciphertext, signature, err := EncryptSignArmoredDetached(publicKey, privateKey, passphrase, plainData)
 	if err != nil {
 		return nil, err
 	}
-	return &EncryptSignArmoredDetachedResult{ciphertext, signature}, nil
+	return &EncryptSignArmoredDetachedMobileResult{ciphertext, signature}, nil
 }
