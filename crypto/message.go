@@ -5,14 +5,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/ProtonMail/gopenpgp/v2/armor"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
+	"github.com/ProtonMail/gopenpgp/v2/internal"
 	"io"
 	"io/ioutil"
 	"regexp"
 	"runtime"
-
-	"github.com/ProtonMail/gopenpgp/v2/armor"
-	"github.com/ProtonMail/gopenpgp/v2/constants"
-	"github.com/ProtonMail/gopenpgp/v2/internal"
 
 	"golang.org/x/crypto/openpgp/clearsign"
 	"golang.org/x/crypto/openpgp/packet"
@@ -223,8 +222,8 @@ func (msg *PGPMessage) GetArmoredWithCustomHeaders(comment, version string) (str
 	return armor.ArmorWithTypeAndCustomHeaders(msg.Data, constants.PGPMessageHeader, version, comment)
 }
 
-// getEncryptionKeyIds Returns the key IDs of the keys to which the session key is encrypted.
-func (msg *PGPMessage) getEncryptionKeyIDs() ([]uint64, bool) {
+// GetEncryptionKeyIds Returns the key IDs of the keys to which the session key is encrypted.
+func (msg *PGPMessage) GetEncryptionKeyIDs() ([]uint64, bool) {
 	packets := packet.NewReader(bytes.NewReader(msg.Data))
 	var err error
 	var ids []uint64
@@ -250,6 +249,18 @@ Loop:
 		return ids, true
 	}
 	return ids, false
+}
+
+// GetHexEncryptionKeyIds Returns the key IDs of the keys to which the session key is encrypted.
+func (msg *PGPMessage) GetHexEncryptionKeyIDs() ([]string, bool) {
+	var hexIDs []string
+
+	keyIDs, ok := msg.GetEncryptionKeyIDs()
+	for _, id := range keyIDs {
+		hexIDs = append(hexIDs, keyIDToHex(id))
+	}
+
+	return hexIDs, ok
 }
 
 // GetBinaryDataPacket returns the unarmored binary datapacket as a []byte.

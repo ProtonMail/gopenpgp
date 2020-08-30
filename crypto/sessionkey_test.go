@@ -143,7 +143,7 @@ func TestDataPacketEncryption(t *testing.T) {
 	if err != nil {
 		t.Fatal("Unable to unarmor pgp message, got:", err)
 	}
-	ids, ok := pgpMessage.getEncryptionKeyIDs()
+	ids, ok := pgpMessage.GetEncryptionKeyIDs()
 	assert.True(t, ok)
 	assert.Exactly(t, 3, len(ids))
 

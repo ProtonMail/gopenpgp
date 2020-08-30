@@ -332,7 +332,7 @@ func (key *Key) PrintFingerprints() {
 
 // GetHexKeyID returns the key ID, hex encoded as a string.
 func (key *Key) GetHexKeyID() string {
-	return strconv.FormatUint(key.GetKeyID(), 16)
+	return keyIDToHex(key.GetKeyID())
 }
 
 // GetKeyID returns the key ID, encoded as 8-byte int.
@@ -464,4 +464,9 @@ func generateKey(
 	}
 
 	return &Key{newEntity}, nil
+}
+
+// keyIDToHex casts a keyID to hex with the correct padding
+func keyIDToHex(keyID uint64) string {
+	return fmt.Sprintf("%016v", strconv.FormatUint(keyID, 16))
 }

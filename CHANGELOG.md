@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 (key *Key) ArmorWithCustomHeaders(comment, version string) (string, error)
 (key *Key) GetArmoredPublicKeyWithCustomHeaders(comment, version string) (string, error)
 ```
+
 - Message armoring with custom headers
 ```go
 (msg *PGPMessage) GetArmoredWithCustomHeaders(comment, version string) (string, error)
@@ -18,7 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Extraction of encryption key IDs from a PGP message, i.e. the IDs of the keys used in the encryption of the session key
 ```go
-(msg *PGPMessage) getEncryptionKeyIDs() ([]uint64, bool)
+(msg *PGPMessage) GetEncryptionKeyIDs() ([]uint64, bool)
+(msg *PGPMessage) GetHexEncryptionKeyIDs() ([]uint64, bool)
 ```
 
 - Getter for the x/crypto Entity (internal components of an OpenPGP key) from Key struct
@@ -47,7 +49,8 @@ DecryptBinaryMessageArmored(privateKey string, passphrase []byte, ciphertext str
 - Public key armoring headers
 - `EncryptSessionKey` throws an error when invalid encryption keys are provided
 - Session keys' size is now checked against the expected value to prevent panics
- 
+- Hex Key IDs returned from `(key *Key) GetHexKeyID() string` are now correctly padded
+
 ## [2.0.1] - 2020-05-01
 ### Security
 - Updated underlying crypto library

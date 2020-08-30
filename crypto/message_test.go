@@ -228,7 +228,7 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
 }
 
-func TestMessagegetGetEncryptionKeyIDs(t *testing.T) {
+func TestMessageGetGetEncryptionKeyIDs(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
 	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
 
@@ -236,12 +236,26 @@ func TestMessagegetGetEncryptionKeyIDs(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
-	ids, ok := ciphertext.getEncryptionKeyIDs()
+	ids, ok := ciphertext.GetEncryptionKeyIDs()
 	assert.Exactly(t, 3, len(ids))
 	assert.True(t, ok)
 	encKey, ok := keyRingTestMultiple.entities[0].EncryptionKey(time.Now())
 	assert.True(t, ok)
 	assert.Exactly(t, encKey.PublicKey.KeyId, ids[0])
+}
+
+func TestMessageGetHexGetEncryptionKeyIDs(t *testing.T) {
+	ciphertext, err := NewPGPMessageFromArmored(readTestFile("message_multipleKeyID", false))
+	if err != nil {
+		t.Fatal("Expected no error when reading message, got:", err)
+	}
+
+	ids, ok := ciphertext.GetHexEncryptionKeyIDs()
+	assert.Exactly(t, 2, len(ids))
+	assert.True(t, ok)
+
+	assert.Exactly(t, "76ad736fa7e0e83c", ids[0])
+	assert.Exactly(t, "0f65b7ae456a9ceb", ids[1])
 }
 
 func TestMessageGetArmoredWithCustomHeaders(t *testing.T) {
