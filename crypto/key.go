@@ -466,7 +466,7 @@ func generateKey(
 	return &Key{newEntity}, nil
 }
 
-// keyIDToHex casts a keyID to hex with the correct padding
+// keyIDToHex casts a keyID to hex with the correct padding.
 func keyIDToHex(keyID uint64) string {
 	return fmt.Sprintf("%016v", strconv.FormatUint(keyID, 16))
 }

@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 (msg *PGPMessage) GetHexEncryptionKeyIDs() ([]uint64, bool)
 ```
 
+- Extraction of signing key IDs from a PGP message, i.e. the IDs of the keys used in the signature of the message 
+    (of all the readable, unencrypted signature packets)
+```go
+(msg *PGPMessage) GetSignatureKeyIDs() ([]uint64, bool)
+(msg *PGPMessage) GetHexSignatureKeyIDs() ([]string, bool)
+```
+
 - Getter for the x/crypto Entity (internal components of an OpenPGP key) from Key struct
 ```go
 (key *Key) GetEntity() *openpgp.Entity
@@ -39,17 +46,48 @@ DecryptBinaryMessageArmored(privateKey string, passphrase []byte, ciphertext str
 (key *Key) ToPublic() (publicKey *Key, err error) 
 ```
 
+- Helpers to handle detached signatures
+```go
+EncryptSignArmoredDetached(
+    publicKey, privateKey string,
+    passphrase, plainData []byte,
+) (ciphertext, signature string, err error)
+
+DecryptVerifyArmoredDetached(
+	publicKey, privateKey string,
+	passphrase []byte,
+	ciphertext string,
+	armoredSignature string,
+) (plainData []byte, err error)
+```
+
+- `EncryptSignArmoredDetachedMobileResult` Struct (with its helper) to allow detached signature + encryption in one pass
+```go
+type EncryptSignArmoredDetachedMobileResult struct {
+	Ciphertext, Signature string
+}
+
+EncryptSignArmoredDetachedMobile(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (wrappedTuple *EncryptSignArmoredDetachedMobileResult, err error)
+```
+
 ### Changed
 - Improved key and message armoring testing
 - `EncryptSessionKey` now creates encrypted key packets for each valid encryption key in the provided keyring. 
     Returns a byte slice with all the concatenated key packets.
-- Use aes256 chiper for message encryption with password.
+- Use aes256 cipher for password-encrypted messages.
+- The helpers `EncryptSignMessageArmored`, `DecryptVerifyMessageArmored`, `DecryptVerifyAttachment`, and`DecryptBinaryMessageArmored`
+    now accept private keys as public keys and perform automatic casting if the keys are locked.
 
 ### Fixed
 - Public key armoring headers
 - `EncryptSessionKey` throws an error when invalid encryption keys are provided
 - Session keys' size is now checked against the expected value to prevent panics
 - Hex Key IDs returned from `(key *Key) GetHexKeyID() string` are now correctly padded
+- Avoid panics in `(msg *PGPMessage) GetEncryptionKeyIDs() ([]uint64, bool)` by breaking the packet.next cycle on specific packet types
+- Prevent the server time from going backwards in `UpdateTime`
 
 ## [2.0.1] - 2020-05-01
 ### Security

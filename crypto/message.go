@@ -263,6 +263,23 @@ func (msg *PGPMessage) GetHexEncryptionKeyIDs() ([]string, bool) {
 	return hexIDs, ok
 }
 
+// GetSignatureKeyIds Returns the key IDs of the keys to which the (readable) signature packets are encrypted to.
+func (msg *PGPMessage) GetSignatureKeyIDs() ([]uint64, bool) {
+	return getSignatureKeyIDs(msg.Data)
+}
+
+// GetHexEncryptionKeyIds Returns the key IDs of the keys to which the session key is encrypted.
+func (msg *PGPMessage) GetHexSignatureKeyIDs() ([]string, bool) {
+	var hexIDs []string
+
+	keyIDs, ok := msg.GetSignatureKeyIDs()
+	for _, id := range keyIDs {
+		hexIDs = append(hexIDs, keyIDToHex(id))
+	}
+
+	return hexIDs, ok
+}
+
 // GetBinaryDataPacket returns the unarmored binary datapacket as a []byte.
 func (msg *PGPSplitMessage) GetBinaryDataPacket() []byte {
 	return msg.DataPacket
@@ -397,6 +414,23 @@ func (msg *PGPSignature) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.Data, constants.PGPSignatureHeader)
 }
 
+// GetSignatureKeyIds Returns the key IDs of the keys to which the (readable) signature packets are encrypted to.
+func (msg *PGPSignature) GetSignatureKeyIDs() ([]uint64, bool) {
+	return getSignatureKeyIDs(msg.Data)
+}
+
+// GetHexEncryptionKeyIds Returns the key IDs of the keys to which the session key is encrypted.
+func (msg *PGPSignature) GetHexSignatureKeyIDs() ([]string, bool) {
+	var hexIDs []string
+
+	keyIDs, ok := msg.GetSignatureKeyIDs()
+	for _, id := range keyIDs {
+		hexIDs = append(hexIDs, keyIDToHex(id))
+	}
+
+	return hexIDs, ok
+}
+
 // GetBinary returns the unarmored signed data as a []byte.
 func (msg *ClearTextMessage) GetBinary() []byte {
 	return msg.Data
@@ -435,4 +469,47 @@ func IsPGPMessage(data string) bool {
 	re := regexp.MustCompile("^-----BEGIN " + constants.PGPMessageHeader + "-----(?s:.+)-----END " +
 		constants.PGPMessageHeader + "-----")
 	return re.MatchString(data)
+}
+
+func getSignatureKeyIDs(data []byte) ([]uint64, bool) {
+	packets := packet.NewReader(bytes.NewReader(data))
+	var err error
+	var ids []uint64
+	var onePassSignaturePacket *packet.OnePassSignature
+	var signaturePacket *packet.Signature
+
+	for {
+		var p packet.Packet
+		if p, err = packets.Next(); err == io.EOF {
+			break
+		}
+		switch p := p.(type) {
+		case *packet.OnePassSignature:
+			onePassSignaturePacket = p
+			ids = append(ids, onePassSignaturePacket.KeyId)
+		case *packet.Signature:
+			signaturePacket = p
+			if signaturePacket.IssuerKeyId != nil {
+				ids = append(ids, *signaturePacket.IssuerKeyId)
+			}
+		case *packet.SymmetricallyEncrypted:
+			discardPacket(p.Contents)
+		case *packet.AEADEncrypted:
+			discardPacket(p.Contents)
+		}
+	}
+	if len(ids) > 0 {
+		return ids, true
+	}
+	return ids, false
+}
+
+func discardPacket(data io.Reader) {
+	block := make([]byte, 128)
+	for {
+		_, err := data.Read(block)
+		if err == io.EOF {
+			break
+		}
+	}
 }

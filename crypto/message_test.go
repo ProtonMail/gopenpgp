@@ -228,7 +228,7 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
 }
 
-func TestMessageGetGetEncryptionKeyIDs(t *testing.T) {
+func TestMessageGetEncryptionKeyIDs(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
 	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
 
@@ -257,6 +257,47 @@ func TestMessageGetHexGetEncryptionKeyIDs(t *testing.T) {
 	assert.Exactly(t, "76ad736fa7e0e83c", ids[0])
 	assert.Exactly(t, "0f65b7ae456a9ceb", ids[1])
 }
+
+func TestMessageGetSignatureKeyIDs(t *testing.T) {
+	var message = NewPlainMessageFromString("plain text")
+
+	signature, err := keyRingTestPrivate.SignDetached(message)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+
+	//ciphertext, err := NewPGPMessageFromArmored(readTestFile("message_multipleKeyID", false))
+	//split, err := ciphertext.SeparateKeyAndData(100, 0)
+	//data1 := append(split.KeyPacket, signature.Data...)
+	//data2 := append(data1, split.DataPacket...)
+	//
+	//signature, err = keyRingTestMultiple.SignDetached(message)
+	//msg := NewPGPMessage(append(data2, signature.Data...))
+	//armored, err := msg.GetArmored()
+	//fmt.Println(armored)
+
+	ids, ok := signature.GetSignatureKeyIDs()
+	assert.Exactly(t, 1, len(ids))
+	assert.True(t, ok)
+	signingKey, ok := keyRingTestPrivate.entities[0].SigningKey(time.Now())
+	assert.True(t, ok)
+	assert.Exactly(t, signingKey.PublicKey.KeyId, ids[0])
+}
+
+func TestMessageGetHexSignatureKeyIDs(t *testing.T) {
+	ciphertext, err := NewPGPMessageFromArmored(readTestFile("message_plainSignature", false))
+	if err != nil {
+		t.Fatal("Expected no error when reading message, got:", err)
+	}
+
+	ids, ok := ciphertext.GetHexSignatureKeyIDs()
+	assert.Exactly(t, 2, len(ids))
+	assert.True(t, ok)
+
+	assert.Exactly(t, "3eb6259edf21df24", ids[0])
+	assert.Exactly(t, "6a56ac76dab974e7", ids[1])
+}
+
 
 func TestMessageGetArmoredWithCustomHeaders(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
