@@ -298,7 +298,6 @@ func TestMessageGetHexSignatureKeyIDs(t *testing.T) {
 	assert.Exactly(t, "6a56ac76dab974e7", ids[1])
 }
 
-
 func TestMessageGetArmoredWithCustomHeaders(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
 

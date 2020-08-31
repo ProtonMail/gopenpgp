@@ -5,13 +5,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/ProtonMail/gopenpgp/v2/armor"
-	"github.com/ProtonMail/gopenpgp/v2/constants"
-	"github.com/ProtonMail/gopenpgp/v2/internal"
 	"io"
 	"io/ioutil"
 	"regexp"
 	"runtime"
+
+	"github.com/ProtonMail/gopenpgp/v2/armor"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
+	"github.com/ProtonMail/gopenpgp/v2/internal"
 
 	"golang.org/x/crypto/openpgp/clearsign"
 	"golang.org/x/crypto/openpgp/packet"
@@ -222,7 +223,7 @@ func (msg *PGPMessage) GetArmoredWithCustomHeaders(comment, version string) (str
 	return armor.ArmorWithTypeAndCustomHeaders(msg.Data, constants.PGPMessageHeader, version, comment)
 }
 
-// GetEncryptionKeyIds Returns the key IDs of the keys to which the session key is encrypted.
+// GetEncryptionKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
 func (msg *PGPMessage) GetEncryptionKeyIDs() ([]uint64, bool) {
 	packets := packet.NewReader(bytes.NewReader(msg.Data))
 	var err error
@@ -251,33 +252,19 @@ Loop:
 	return ids, false
 }
 
-// GetHexEncryptionKeyIds Returns the key IDs of the keys to which the session key is encrypted.
+// GetHexEncryptionKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
 func (msg *PGPMessage) GetHexEncryptionKeyIDs() ([]string, bool) {
-	var hexIDs []string
-
-	keyIDs, ok := msg.GetEncryptionKeyIDs()
-	for _, id := range keyIDs {
-		hexIDs = append(hexIDs, keyIDToHex(id))
-	}
-
-	return hexIDs, ok
+	return getHexKeyIDs(msg.GetEncryptionKeyIDs())
 }
 
-// GetSignatureKeyIds Returns the key IDs of the keys to which the (readable) signature packets are encrypted to.
+// GetSignatureKeyIDs Returns the key IDs of the keys to which the (readable) signature packets are encrypted to.
 func (msg *PGPMessage) GetSignatureKeyIDs() ([]uint64, bool) {
 	return getSignatureKeyIDs(msg.Data)
 }
 
-// GetHexEncryptionKeyIds Returns the key IDs of the keys to which the session key is encrypted.
+// GetHexSignatureKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
 func (msg *PGPMessage) GetHexSignatureKeyIDs() ([]string, bool) {
-	var hexIDs []string
-
-	keyIDs, ok := msg.GetSignatureKeyIDs()
-	for _, id := range keyIDs {
-		hexIDs = append(hexIDs, keyIDToHex(id))
-	}
-
-	return hexIDs, ok
+	return getHexKeyIDs(msg.GetSignatureKeyIDs())
 }
 
 // GetBinaryDataPacket returns the unarmored binary datapacket as a []byte.
@@ -414,21 +401,14 @@ func (msg *PGPSignature) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.Data, constants.PGPSignatureHeader)
 }
 
-// GetSignatureKeyIds Returns the key IDs of the keys to which the (readable) signature packets are encrypted to.
+// GetSignatureKeyIDs Returns the key IDs of the keys to which the (readable) signature packets are encrypted to.
 func (msg *PGPSignature) GetSignatureKeyIDs() ([]uint64, bool) {
 	return getSignatureKeyIDs(msg.Data)
 }
 
-// GetHexEncryptionKeyIds Returns the key IDs of the keys to which the session key is encrypted.
+// GetHexSignatureKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
 func (msg *PGPSignature) GetHexSignatureKeyIDs() ([]string, bool) {
-	var hexIDs []string
-
-	keyIDs, ok := msg.GetSignatureKeyIDs()
-	for _, id := range keyIDs {
-		hexIDs = append(hexIDs, keyIDToHex(id))
-	}
-
-	return hexIDs, ok
+	return getHexKeyIDs(msg.GetSignatureKeyIDs())
 }
 
 // GetBinary returns the unarmored signed data as a []byte.
@@ -512,4 +492,14 @@ func discardPacket(data io.Reader) {
 			break
 		}
 	}
+}
+
+func getHexKeyIDs(keyIDs []uint64, ok bool) ([]string, bool) {
+	hexIDs := make([]string, len(keyIDs))
+
+	for i, id := range keyIDs {
+		hexIDs[i] = keyIDToHex(id)
+	}
+
+	return hexIDs, ok
 }
