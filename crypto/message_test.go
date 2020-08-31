@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"encoding/base64"
+	"io"
 	"testing"
 	"time"
 
@@ -17,6 +18,25 @@ func TestTextMessageEncryptionWithPassword(t *testing.T) {
 	encrypted, err := EncryptMessageWithPassword(message, testSymmetricKey)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+	packets := packet.NewReader(bytes.NewReader(encrypted.GetBinary()))
+	var foundSk bool
+	for {
+		var p packet.Packet
+		var errEOF error
+		if p, errEOF = packets.Next(); errEOF == io.EOF {
+			errEOF = nil
+			break
+		}
+		sessionKey, ok := p.(*packet.SymmetricKeyEncrypted)
+		if ok {
+			assert.Equal(t, sessionKey.CipherFunc, packet.CipherAES256)
+			foundSk = true
+			break
+		}
+	}
+	if !foundSk {
+		t.Fatal("Expect to found encrypted session key")
 	}
 	// Decrypt data with wrong password
 	_, err = DecryptMessageWithPassword(encrypted, []byte("Wrong password"))

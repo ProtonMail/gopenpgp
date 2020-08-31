@@ -41,6 +41,7 @@ DecryptBinaryMessageArmored(privateKey string, passphrase []byte, ciphertext str
 - Improved key and message armoring testing
 - `EncryptSessionKey` now creates encrypted key packets for each valid encryption key in the provided keyring. 
     Returns a byte slice with all the concatenated key packets.
+- Use aes256 chiper for message encryption with password.
 
 ### Fixed
 - Public key armoring headers

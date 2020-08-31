@@ -114,7 +114,8 @@ func passwordEncrypt(message []byte, password []byte, isBinary bool) ([]byte, er
 	var outBuf bytes.Buffer
 
 	config := &packet.Config{
-		Time: getTimeGenerator(),
+		DefaultCipher: packet.CipherAES256,
+		Time:          getTimeGenerator(),
 	}
 
 	hints := &openpgp.FileHints{IsBinary: isBinary}
