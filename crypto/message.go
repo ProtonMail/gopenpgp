@@ -458,6 +458,7 @@ func getSignatureKeyIDs(data []byte) ([]uint64, bool) {
 	var onePassSignaturePacket *packet.OnePassSignature
 	var signaturePacket *packet.Signature
 
+Loop:
 	for {
 		var p packet.Packet
 		if p, err = packets.Next(); err == io.EOF {
@@ -472,26 +473,17 @@ func getSignatureKeyIDs(data []byte) ([]uint64, bool) {
 			if signaturePacket.IssuerKeyId != nil {
 				ids = append(ids, *signaturePacket.IssuerKeyId)
 			}
-		case *packet.SymmetricallyEncrypted:
-			discardPacket(p.Contents)
-		case *packet.AEADEncrypted:
-			discardPacket(p.Contents)
+		case *packet.SymmetricallyEncrypted,
+			*packet.AEADEncrypted,
+			*packet.Compressed,
+			*packet.LiteralData:
+			break Loop
 		}
 	}
 	if len(ids) > 0 {
 		return ids, true
 	}
 	return ids, false
-}
-
-func discardPacket(data io.Reader) {
-	block := make([]byte, 128)
-	for {
-		_, err := data.Read(block)
-		if err == io.EOF {
-			break
-		}
-	}
 }
 
 func getHexKeyIDs(keyIDs []uint64, ok bool) ([]string, bool) {

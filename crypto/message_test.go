@@ -266,16 +266,6 @@ func TestMessageGetSignatureKeyIDs(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	//ciphertext, err := NewPGPMessageFromArmored(readTestFile("message_multipleKeyID", false))
-	//split, err := ciphertext.SeparateKeyAndData(100, 0)
-	//data1 := append(split.KeyPacket, signature.Data...)
-	//data2 := append(data1, split.DataPacket...)
-	//
-	//signature, err = keyRingTestMultiple.SignDetached(message)
-	//msg := NewPGPMessage(append(data2, signature.Data...))
-	//armored, err := msg.GetArmored()
-	//fmt.Println(armored)
-
 	ids, ok := signature.GetSignatureKeyIDs()
 	assert.Exactly(t, 1, len(ids))
 	assert.True(t, ok)
@@ -295,7 +285,7 @@ func TestMessageGetHexSignatureKeyIDs(t *testing.T) {
 	assert.True(t, ok)
 
 	assert.Exactly(t, "3eb6259edf21df24", ids[0])
-	assert.Exactly(t, "6a56ac76dab974e7", ids[1])
+	assert.Exactly(t, "d05b722681936ad0", ids[1])
 }
 
 func TestMessageGetArmoredWithCustomHeaders(t *testing.T) {
