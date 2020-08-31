@@ -25,7 +25,6 @@ func TestTextMessageEncryptionWithPassword(t *testing.T) {
 		var p packet.Packet
 		var errEOF error
 		if p, errEOF = packets.Next(); errEOF == io.EOF {
-			errEOF = nil
 			break
 		}
 		sessionKey, ok := p.(*packet.SymmetricKeyEncrypted)
