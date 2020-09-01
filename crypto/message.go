@@ -223,8 +223,8 @@ func (msg *PGPMessage) GetArmoredWithCustomHeaders(comment, version string) (str
 	return armor.ArmorWithTypeAndCustomHeaders(msg.Data, constants.PGPMessageHeader, version, comment)
 }
 
-// getEncryptionKeyIds Returns the key IDs of the keys to which the session key is encrypted.
-func (msg *PGPMessage) getEncryptionKeyIDs() ([]uint64, bool) {
+// GetEncryptionKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
+func (msg *PGPMessage) GetEncryptionKeyIDs() ([]uint64, bool) {
 	packets := packet.NewReader(bytes.NewReader(msg.Data))
 	var err error
 	var ids []uint64
@@ -250,6 +250,21 @@ Loop:
 		return ids, true
 	}
 	return ids, false
+}
+
+// GetHexEncryptionKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
+func (msg *PGPMessage) GetHexEncryptionKeyIDs() ([]string, bool) {
+	return getHexKeyIDs(msg.GetEncryptionKeyIDs())
+}
+
+// GetSignatureKeyIDs Returns the key IDs of the keys to which the (readable) signature packets are encrypted to.
+func (msg *PGPMessage) GetSignatureKeyIDs() ([]uint64, bool) {
+	return getSignatureKeyIDs(msg.Data)
+}
+
+// GetHexSignatureKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
+func (msg *PGPMessage) GetHexSignatureKeyIDs() ([]string, bool) {
+	return getHexKeyIDs(msg.GetSignatureKeyIDs())
 }
 
 // GetBinaryDataPacket returns the unarmored binary datapacket as a []byte.
@@ -386,6 +401,16 @@ func (msg *PGPSignature) GetArmored() (string, error) {
 	return armor.ArmorWithType(msg.Data, constants.PGPSignatureHeader)
 }
 
+// GetSignatureKeyIDs Returns the key IDs of the keys to which the (readable) signature packets are encrypted to.
+func (msg *PGPSignature) GetSignatureKeyIDs() ([]uint64, bool) {
+	return getSignatureKeyIDs(msg.Data)
+}
+
+// GetHexSignatureKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
+func (msg *PGPSignature) GetHexSignatureKeyIDs() ([]string, bool) {
+	return getHexKeyIDs(msg.GetSignatureKeyIDs())
+}
+
 // GetBinary returns the unarmored signed data as a []byte.
 func (msg *ClearTextMessage) GetBinary() []byte {
 	return msg.Data
@@ -424,4 +449,49 @@ func IsPGPMessage(data string) bool {
 	re := regexp.MustCompile("^-----BEGIN " + constants.PGPMessageHeader + "-----(?s:.+)-----END " +
 		constants.PGPMessageHeader + "-----")
 	return re.MatchString(data)
+}
+
+func getSignatureKeyIDs(data []byte) ([]uint64, bool) {
+	packets := packet.NewReader(bytes.NewReader(data))
+	var err error
+	var ids []uint64
+	var onePassSignaturePacket *packet.OnePassSignature
+	var signaturePacket *packet.Signature
+
+Loop:
+	for {
+		var p packet.Packet
+		if p, err = packets.Next(); err == io.EOF {
+			break
+		}
+		switch p := p.(type) {
+		case *packet.OnePassSignature:
+			onePassSignaturePacket = p
+			ids = append(ids, onePassSignaturePacket.KeyId)
+		case *packet.Signature:
+			signaturePacket = p
+			if signaturePacket.IssuerKeyId != nil {
+				ids = append(ids, *signaturePacket.IssuerKeyId)
+			}
+		case *packet.SymmetricallyEncrypted,
+			*packet.AEADEncrypted,
+			*packet.Compressed,
+			*packet.LiteralData:
+			break Loop
+		}
+	}
+	if len(ids) > 0 {
+		return ids, true
+	}
+	return ids, false
+}
+
+func getHexKeyIDs(keyIDs []uint64, ok bool) ([]string, bool) {
+	hexIDs := make([]string, len(keyIDs))
+
+	for i, id := range keyIDs {
+		hexIDs[i] = keyIDToHex(id)
+	}
+
+	return hexIDs, ok
 }

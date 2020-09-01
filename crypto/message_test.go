@@ -228,7 +228,7 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
 }
 
-func TestMessagegetGetEncryptionKeyIDs(t *testing.T) {
+func TestMessageGetEncryptionKeyIDs(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
 	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
 
@@ -236,12 +236,56 @@ func TestMessagegetGetEncryptionKeyIDs(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
-	ids, ok := ciphertext.getEncryptionKeyIDs()
+	ids, ok := ciphertext.GetEncryptionKeyIDs()
 	assert.Exactly(t, 3, len(ids))
 	assert.True(t, ok)
 	encKey, ok := keyRingTestMultiple.entities[0].EncryptionKey(time.Now())
 	assert.True(t, ok)
 	assert.Exactly(t, encKey.PublicKey.KeyId, ids[0])
+}
+
+func TestMessageGetHexGetEncryptionKeyIDs(t *testing.T) {
+	ciphertext, err := NewPGPMessageFromArmored(readTestFile("message_multipleKeyID", false))
+	if err != nil {
+		t.Fatal("Expected no error when reading message, got:", err)
+	}
+
+	ids, ok := ciphertext.GetHexEncryptionKeyIDs()
+	assert.Exactly(t, 2, len(ids))
+	assert.True(t, ok)
+
+	assert.Exactly(t, "76ad736fa7e0e83c", ids[0])
+	assert.Exactly(t, "0f65b7ae456a9ceb", ids[1])
+}
+
+func TestMessageGetSignatureKeyIDs(t *testing.T) {
+	var message = NewPlainMessageFromString("plain text")
+
+	signature, err := keyRingTestPrivate.SignDetached(message)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+
+	ids, ok := signature.GetSignatureKeyIDs()
+	assert.Exactly(t, 1, len(ids))
+	assert.True(t, ok)
+	signingKey, ok := keyRingTestPrivate.entities[0].SigningKey(time.Now())
+	assert.True(t, ok)
+	assert.Exactly(t, signingKey.PublicKey.KeyId, ids[0])
+}
+
+func TestMessageGetHexSignatureKeyIDs(t *testing.T) {
+	ciphertext, err := NewPGPMessageFromArmored(readTestFile("message_plainSignature", false))
+	if err != nil {
+		t.Fatal("Expected no error when reading message, got:", err)
+	}
+
+	ids, ok := ciphertext.GetHexSignatureKeyIDs()
+	assert.Exactly(t, 2, len(ids))
+	assert.True(t, ok)
+
+	assert.Exactly(t, "3eb6259edf21df24", ids[0])
+	assert.Exactly(t, "d05b722681936ad0", ids[1])
 }
 
 func TestMessageGetArmoredWithCustomHeaders(t *testing.T) {
