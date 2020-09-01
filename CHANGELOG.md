@@ -88,6 +88,7 @@ EncryptSignArmoredDetachedMobile(
 - Hex Key IDs returned from `(key *Key) GetHexKeyID() string` are now correctly padded
 - Avoid panics in `(msg *PGPMessage) GetEncryptionKeyIDs() ([]uint64, bool)` by breaking the packet.next cycle on specific packet types
 - Prevent the server time from going backwards in `UpdateTime`
+- Avoid panicking when messages with mixed symmetric/asymmetric key packets are decrypted with a password
 
 ## [2.0.1] - 2020-05-01
 ### Security

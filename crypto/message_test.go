@@ -70,6 +70,21 @@ func TestBinaryMessageEncryptionWithPassword(t *testing.T) {
 	assert.Exactly(t, message, decrypted)
 }
 
+func TestTextMixedMessageDecryptionWithPassword(t *testing.T) {
+	encrypted, err := NewPGPMessageFromArmored(readTestFile("message_mixedPasswordPublic", false))
+	if err != nil {
+		t.Fatal("Expected no error when unarmoring, got:", err)
+	}
+
+	// Decrypt data with the good password
+	decrypted, err := DecryptMessageWithPassword(encrypted, []byte("pinata"))
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+
+	assert.Exactly(t, readTestFile("message_mixedPasswordPublicExpected", true), decrypted.GetString())
+}
+
 func TestTextMessageEncryption(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
 

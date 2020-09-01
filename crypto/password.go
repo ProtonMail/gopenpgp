@@ -150,7 +150,9 @@ func passwordDecrypt(encryptedIO io.Reader, password []byte) ([]byte, error) {
 	config := &packet.Config{
 		Time: getTimeGenerator(),
 	}
-	md, err := openpgp.ReadMessage(encryptedIO, nil, prompt, config)
+
+	var emptyKeyRing openpgp.EntityList
+	md, err := openpgp.ReadMessage(encryptedIO, emptyKeyRing, prompt, config)
 	if err != nil {
 		return nil, err
 	}
