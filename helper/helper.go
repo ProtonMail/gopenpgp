@@ -466,10 +466,6 @@ func createPublicKeyRing(
 		}
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	publicKeyRing, err = crypto.NewKeyRing(publicKeyObj)
 	return
 }
