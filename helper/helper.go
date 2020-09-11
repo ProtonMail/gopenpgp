@@ -455,6 +455,10 @@ func createPublicKeyRing(
 ) (publicKeyRing *crypto.KeyRing, err error) {
 	publicKeyObj, err := crypto.NewKeyFromArmored(publicKey)
 
+	if err != nil {
+		return nil, err
+	}
+
 	if publicKeyObj.IsPrivate() {
 		publicKeyObj, err = publicKeyObj.ToPublic()
 		if err != nil {
