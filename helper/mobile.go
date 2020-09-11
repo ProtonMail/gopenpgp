@@ -84,8 +84,8 @@ type EncryptSignArmoredDetachedMobileResult struct {
 	Ciphertext, Signature string
 }
 
-//EncryptSignArmoredDetachedMobile wraps the EncryptSignArmoredDetached method
-//to have only one return argument for mobile.
+// EncryptSignArmoredDetachedMobile wraps the EncryptSignArmoredDetached method
+// to have only one return argument for mobile.
 func EncryptSignArmoredDetachedMobile(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
