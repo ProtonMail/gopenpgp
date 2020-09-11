@@ -256,6 +256,43 @@ func DecryptVerifyArmoredDetached(
 	return message.GetBinary(), nil
 }
 
+func EncryptAttachmentWithKey(
+	publicKey string,
+	filename string,
+	plainData []byte,
+) (message *crypto.PGPSplitMessage, err error) {
+	publicKeyObj, err := crypto.NewKeyFromArmored(publicKey)
+
+	if publicKeyObj.IsPrivate() {
+		publicKeyObj, err = publicKeyObj.ToPublic()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	publicKeyRing, err := crypto.NewKeyRing(publicKeyObj)
+
+	if err != nil {
+		return nil, err
+	}
+	return EncryptAttachment(plainData, filename, publicKeyRing)
+}
+
+func DecryptAttachmentWithKey(
+	privateKey string,
+	passphrase, keyPacket, dataPacket []byte,
+) (attachment []byte, err error) {
+	message, err := decryptAttachment(privateKey, passphrase, keyPacket, dataPacket)
+	if err != nil {
+		return nil, err
+	}
+	return message.GetBinary(), nil
+}
+
 func encryptMessageArmored(key string, message *crypto.PlainMessage) (string, error) {
 	publicKey, err := crypto.NewKeyFromArmored(key)
 	if publicKey.IsPrivate() {
