@@ -264,7 +264,7 @@ func DecryptAttachmentWithKey(
 }
 
 // EncryptSessionKey encrypts a session key
-// using a given armored public key
+// using a given armored public key.
 func EncryptSessionKey(
 	publicKey string,
 	sessionKey *crypto.SessionKey,
