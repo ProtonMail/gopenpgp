@@ -216,3 +216,78 @@ func TestEncryptSignArmoredDetached(t *testing.T) {
 		t.Fatal("Expected an error while decrypting and verifying with a wrong signature")
 	}
 }
+
+func TestEncryptDecryptAttachmenWithKey(t *testing.T) {
+	plainData := []byte("Secret message")
+	privateKeyString := readTestFile("keyring_privateKey", false)
+	privateKey, err := crypto.NewKeyFromArmored(privateKeyString)
+	if err != nil {
+		t.Fatal("Error reading the test private key: ", err)
+	}
+	publicKeyString, err := privateKey.GetArmoredPublicKey()
+	if err != nil {
+		t.Fatal("Error reading the test public key: ", err)
+	}
+	pgpSplitMessage, err := EncryptAttachmentWithKey(
+		publicKeyString,
+		"test_filename",
+		plainData,
+	)
+
+	if err != nil {
+		t.Fatal("Expected no error while encrypting, got:", err)
+	}
+
+	decrypted, err := DecryptAttachmentWithKey(
+		privateKeyString,
+		testMailboxPassword,
+		pgpSplitMessage.KeyPacket,
+		pgpSplitMessage.DataPacket,
+	)
+
+	if err != nil {
+		t.Fatal("Expected no error while decrypting, got:", err)
+	}
+
+	if !bytes.Equal(decrypted, plainData) {
+		t.Error("Decrypted attachment is not equal to the original attachment")
+	}
+}
+
+func TestEncryptDecryptSessionKey(t *testing.T) {
+	privateKeyString := readTestFile("keyring_privateKey", false)
+	privateKey, err := crypto.NewKeyFromArmored(privateKeyString)
+	if err != nil {
+		t.Fatal("Error reading the test private key: ", err)
+	}
+	publicKeyString, err := privateKey.GetArmoredPublicKey()
+	if err != nil {
+		t.Fatal("Error reading the test public key: ", err)
+	}
+
+	sessionKey, err := crypto.GenerateSessionKeyAlgo("aes256")
+
+	if err != nil {
+		t.Fatal("Expected no error while generating the session key, got:", err)
+	}
+
+	encrypted, err := EncryptSessionKey(publicKeyString, sessionKey)
+
+	if err != nil {
+		t.Fatal("Expected no error while encrypting session key, got:", err)
+	}
+
+	decryptedSessionKey, err := DecryptSessionKey(
+		privateKeyString,
+		testMailboxPassword,
+		encrypted,
+	)
+
+	if err != nil {
+		t.Fatal("Expected no error while decrypting session key, got:", err)
+	}
+
+	if decryptedSessionKey.GetBase64Key() != sessionKey.GetBase64Key() {
+		t.Error("Decrypted session key is not equal to the original session key")
+	}
+}

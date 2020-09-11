@@ -85,6 +85,6 @@ func VerifyCleartextMessage(keyRing *crypto.KeyRing, armored string, verifyTime 
 // canonicalizeAndTrim alters a string canonicalizing and trimming the newlines.
 func canonicalizeAndTrim(text string) string {
 	text = internal.TrimNewlines(text)
-	text = strings.Replace(strings.Replace(text, "\r\n", "\n", -1), "\n", "\r\n", -1)
+	text = strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\n", "\r\n")
 	return text
 }

@@ -47,7 +47,7 @@ func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, erro
 
 	config := &packet.Config{DefaultHash: crypto.SHA512, Time: getTimeGenerator()}
 	var outBuf bytes.Buffer
-	//sign bin
+	// sign bin
 	if err := openpgp.DetachSign(&outBuf, signEntity, message.NewReader(), config); err != nil {
 		return nil, err
 	}
