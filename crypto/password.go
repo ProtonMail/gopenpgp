@@ -114,7 +114,8 @@ func passwordEncrypt(message []byte, password []byte, isBinary bool) ([]byte, er
 	var outBuf bytes.Buffer
 
 	config := &packet.Config{
-		Time: getTimeGenerator(),
+		DefaultCipher: packet.CipherAES256,
+		Time:          getTimeGenerator(),
 	}
 
 	hints := &openpgp.FileHints{IsBinary: isBinary}
@@ -149,7 +150,9 @@ func passwordDecrypt(encryptedIO io.Reader, password []byte) ([]byte, error) {
 	config := &packet.Config{
 		Time: getTimeGenerator(),
 	}
-	md, err := openpgp.ReadMessage(encryptedIO, nil, prompt, config)
+
+	var emptyKeyRing openpgp.EntityList
+	md, err := openpgp.ReadMessage(encryptedIO, emptyKeyRing, prompt, config)
 	if err != nil {
 		return nil, err
 	}
