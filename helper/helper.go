@@ -52,23 +52,13 @@ func EncryptMessageArmored(key, plaintext string) (string, error) {
 func EncryptSignMessageArmored(
 	publicKey, privateKey string, passphrase []byte, plaintext string,
 ) (ciphertext string, err error) {
-	var publicKeyObj, privateKeyObj, unlockedKeyObj *crypto.Key
+	var privateKeyObj, unlockedKeyObj *crypto.Key
 	var publicKeyRing, privateKeyRing *crypto.KeyRing
 	var pgpMessage *crypto.PGPMessage
 
 	var message = crypto.NewPlainMessageFromString(plaintext)
 
-	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
-		return "", err
-	}
-	if publicKeyObj.IsPrivate() {
-		publicKeyObj, err = publicKeyObj.ToPublic()
-		if err != nil {
-			return "", err
-		}
-	}
-
-	if publicKeyRing, err = crypto.NewKeyRing(publicKeyObj); err != nil {
+	if publicKeyRing, err = createPublicKeyRing(publicKey); err != nil {
 		return "", err
 	}
 
@@ -116,22 +106,12 @@ func DecryptMessageArmored(
 func DecryptVerifyMessageArmored(
 	publicKey, privateKey string, passphrase []byte, ciphertext string,
 ) (plaintext string, err error) {
-	var publicKeyObj, privateKeyObj, unlockedKeyObj *crypto.Key
+	var privateKeyObj, unlockedKeyObj *crypto.Key
 	var publicKeyRing, privateKeyRing *crypto.KeyRing
 	var pgpMessage *crypto.PGPMessage
 	var message *crypto.PlainMessage
 
-	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
-		return "", err
-	}
-	if publicKeyObj.IsPrivate() {
-		publicKeyObj, err = publicKeyObj.ToPublic()
-		if err != nil {
-			return "", err
-		}
-	}
-
-	if publicKeyRing, err = crypto.NewKeyRing(publicKeyObj); err != nil {
+	if publicKeyRing, err = createPublicKeyRing(publicKey); err != nil {
 		return "", err
 	}
 
@@ -256,32 +236,22 @@ func DecryptVerifyArmoredDetached(
 	return message.GetBinary(), nil
 }
 
+// EncryptAttachmentWithKey encrypts a binary file
+// Using a given armored public key.
 func EncryptAttachmentWithKey(
 	publicKey string,
 	filename string,
 	plainData []byte,
 ) (message *crypto.PGPSplitMessage, err error) {
-	publicKeyObj, err := crypto.NewKeyFromArmored(publicKey)
-
-	if publicKeyObj.IsPrivate() {
-		publicKeyObj, err = publicKeyObj.ToPublic()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	publicKeyRing, err := crypto.NewKeyRing(publicKeyObj)
-
+	publicKeyRing, err := createPublicKeyRing(publicKey)
 	if err != nil {
 		return nil, err
 	}
 	return EncryptAttachment(plainData, filename, publicKeyRing)
 }
 
+// DecryptAttachmentWithKey decrypts a binary file
+// Using a given armored private key and its passphrase.
 func DecryptAttachmentWithKey(
 	privateKey string,
 	passphrase, keyPacket, dataPacket []byte,
@@ -293,20 +263,52 @@ func DecryptAttachmentWithKey(
 	return message.GetBinary(), nil
 }
 
-func encryptMessageArmored(key string, message *crypto.PlainMessage) (string, error) {
-	publicKey, err := crypto.NewKeyFromArmored(key)
-	if publicKey.IsPrivate() {
-		publicKey, err = publicKey.ToPublic()
-		if err != nil {
-			return "", err
-		}
+// EncryptSessionKey encrypts a session key
+// using a given armored public key
+func EncryptSessionKey(
+	publicKey string,
+	sessionKey *crypto.SessionKey,
+) (encrypted []byte, err error) {
+	publicKeyRing, err := createPublicKeyRing(publicKey)
+	if err != nil {
+		return nil, err
 	}
+	encrypted, err = publicKeyRing.EncryptSessionKey(sessionKey)
+	return
+}
+
+// DecryptSessionKey decrypts a session key
+// using a given armored private key
+// and its passphrase.
+func DecryptSessionKey(
+	privateKey string,
+	passphrase, encrypted []byte,
+) (sessionKey *crypto.SessionKey, err error) {
+	privateKeyObj, err := crypto.NewKeyFromArmored(privateKey)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	publicKeyRing, err := crypto.NewKeyRing(publicKey)
+	privateKeyUnlocked, err := privateKeyObj.Unlock(passphrase)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer privateKeyUnlocked.ClearPrivateParams()
+
+	privateKeyRing, err := crypto.NewKeyRing(privateKeyUnlocked)
+
+	if err != nil {
+		return nil, err
+	}
+	sessionKey, err = privateKeyRing.DecryptSessionKey(encrypted)
+	return
+}
+
+func encryptMessageArmored(key string, message *crypto.PlainMessage) (string, error) {
+	publicKeyRing, err := createPublicKeyRing(key)
 
 	if err != nil {
 		return "", err
@@ -400,20 +402,12 @@ func signDetachedArmored(privateKey string, passphrase []byte, message *crypto.P
 }
 
 func verifyDetachedArmored(publicKey string, message *crypto.PlainMessage, armoredSignature string) (check bool, err error) {
-	var publicKeyObj *crypto.Key
 	var publicKeyRing *crypto.KeyRing
 	var detachedSignature *crypto.PGPSignature
+
 	// We prepare the public key for signature verification
-	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
-		return false, err
-	}
-	if publicKeyObj.IsPrivate() {
-		publicKeyObj, err = publicKeyObj.ToPublic()
-		if err != nil {
-			return false, err
-		}
-	}
-	if publicKeyRing, err = crypto.NewKeyRing(publicKeyObj); err != nil {
+	publicKeyRing, err = createPublicKeyRing(publicKey)
+	if err != nil {
 		return false, err
 	}
 
@@ -454,4 +448,24 @@ func decryptAttachment(
 	}
 
 	return message, nil
+}
+
+func createPublicKeyRing(
+	publicKey string,
+) (publicKeyRing *crypto.KeyRing, err error) {
+	publicKeyObj, err := crypto.NewKeyFromArmored(publicKey)
+
+	if publicKeyObj.IsPrivate() {
+		publicKeyObj, err = publicKeyObj.ToPublic()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	publicKeyRing, err = crypto.NewKeyRing(publicKeyObj)
+	return
 }
