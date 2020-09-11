@@ -268,12 +268,12 @@ func DecryptAttachmentWithKey(
 func EncryptSessionKey(
 	publicKey string,
 	sessionKey *crypto.SessionKey,
-) (encrypted []byte, err error) {
+) (encryptedSessionKey []byte, err error) {
 	publicKeyRing, err := createPublicKeyRing(publicKey)
 	if err != nil {
 		return nil, err
 	}
-	encrypted, err = publicKeyRing.EncryptSessionKey(sessionKey)
+	encryptedSessionKey, err = publicKeyRing.EncryptSessionKey(sessionKey)
 	return
 }
 
@@ -282,7 +282,7 @@ func EncryptSessionKey(
 // and its passphrase.
 func DecryptSessionKey(
 	privateKey string,
-	passphrase, encrypted []byte,
+	passphrase, encryptedSessionKey []byte,
 ) (sessionKey *crypto.SessionKey, err error) {
 	privateKeyObj, err := crypto.NewKeyFromArmored(privateKey)
 
@@ -303,7 +303,7 @@ func DecryptSessionKey(
 	if err != nil {
 		return nil, err
 	}
-	sessionKey, err = privateKeyRing.DecryptSessionKey(encrypted)
+	sessionKey, err = privateKeyRing.DecryptSessionKey(encryptedSessionKey)
 	return
 }
 
