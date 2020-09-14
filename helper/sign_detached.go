@@ -55,3 +55,25 @@ func EncryptSignAttachment(
 
 	return packets.GetBinaryKeyPacket(), packets.GetBinaryDataPacket(), signatureObj.GetBinary(), nil
 }
+
+// EncryptSignArmoredDetached takes a public key for encryption,
+// a private key and its passphrase for signature, and the plaintext data
+// Returns an armored ciphertext and a detached armored signature.
+func EncryptSignArmoredDetached(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (ciphertext, signature string, err error) {
+	var message *crypto.PlainMessage = crypto.NewPlainMessage(plainData)
+
+	// We encrypt the message
+	if ciphertext, err = encryptMessageArmored(publicKey, message); err != nil {
+		return "", "", err
+	}
+
+	// We sign the message
+	if signature, err = signDetachedArmored(privateKey, passphrase, message); err != nil {
+		return "", "", err
+	}
+
+	return ciphertext, signature, nil
+}
