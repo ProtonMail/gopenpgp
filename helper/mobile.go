@@ -90,7 +90,7 @@ func EncryptSignArmoredDetachedMobile(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
 ) (wrappedTuple *EncryptSignArmoredDetachedMobileResult, err error) {
-	ciphertext, signature, err := EncryptSignArmoredDetached(publicKey, privateKey, passphrase, plainData)
+	ciphertext, signature, err := encryptSignArmoredDetached(publicKey, privateKey, passphrase, plainData)
 	if err != nil {
 		return nil, err
 	}
