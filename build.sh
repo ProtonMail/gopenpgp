@@ -7,8 +7,9 @@ if ! [ -L "v2" ]; then
 fi
 
 printf "\e[0;32mStart installing vendor \033[0m\n\n"
-export GO111MODULE=on
+GO111MODULE=on
 go mod vendor
+GO111MODULE=off
 printf "\e[0;32mDone \033[0m\n\n"
 
 OUTPUT_PATH="dist"
@@ -82,18 +83,21 @@ import helper
 
 ## add external package
 if [ "$1" != '' ]; then
-  external $1
+  for ((i = 1; i <= $#; i++ )); do
+    external ${!i}
+  done
 fi
 
 printf "PACKAGES: ${PACKAGES}\n"
 ## start building
 
 printf "\e[0;32mStart Building iOS framework .. Location: ${IOS_OUT} \033[0m\n\n"
-gomobile bind -target ios -o ${IOS_OUT_FILE} -ldflags="${DFLAGS}" ${PACKAGES}
+## tags - mobile tag will filter unsupported functions  //ios macos macos-ui
+gomobile bind -tags mobile -target ios -x -o ${IOS_OUT_FILE} -ldflags="${DFLAGS}" ${PACKAGES}
 # install iOS  ${IOS_OUT_FILE} ${IOS_PROJECT_PATH}
 
 printf "\e[0;32mStart Building Android lib .. Location: ${ANDROID_OUT} \033[0m\n\n"
-gomobile bind -target android -javapkg ${ANDROID_JAVA_PAG} -o ${ANDROID_OUT_FILE} -ldflags="${DFLAGS}" ${PACKAGES}
+# gomobile bind -tags mobile -target android -javapkg ${ANDROID_JAVA_PAG} -o ${ANDROID_OUT_FILE} -ldflags="${DFLAGS}" ${PACKAGES}
 # install Android ${ANDROID_OUT} ${ANDROID_PROJECT_PATH}
 
 printf "\e[0;32mInstalling frameworks. \033[0m\n\n"
