@@ -190,51 +190,23 @@ func DecryptBinaryMessageArmored(privateKey string, passphrase []byte, ciphertex
 func encryptSignArmoredDetached(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
-) (ciphertext, encryptedSignature string, err error) {
+) (ciphertextArmored, encryptedSignatureArmored string, err error) {
+	// Some type casting
 	var message *crypto.PlainMessage = crypto.NewPlainMessage(plainData)
 
-	// We generate the session key
-	sessionKey, err := crypto.GenerateSessionKey()
+	// We encrypt and signcrypt
+	ciphertext, encryptedSignatureArmored, err := encryptSignObjDetached(publicKey, privateKey, passphrase, message)
 	if err != nil {
 		return "", "", err
 	}
 
-	// We encrypt the message with the session key
-	messageDataPacket, err := sessionKey.Encrypt(message)
+	// We armor the ciphertext and signature
+	ciphertextArmored, err = ciphertext.GetArmored()
 	if err != nil {
 		return "", "", err
 	}
 
-	// We sign the message
-	detachedSignature, err := signDetached(privateKey, passphrase, message)
-	if err != nil {
-		return "", "", err
-	}
-
-	// We encrypt the signature with the session key
-	signaturePlaintext := crypto.NewPlainMessage(detachedSignature.GetBinary())
-	signatureDataPacket, err := sessionKey.Encrypt(signaturePlaintext)
-	if err != nil {
-		return "", "", err
-	}
-
-	// We encrypt the session key
-	keyPacket, err := EncryptSessionKey(publicKey, sessionKey)
-	if err != nil {
-		return "", "", err
-	}
-
-	// We join the key packets and datapackets and armor the message
-	ciphertext, err = crypto.NewPGPSplitMessage(keyPacket, messageDataPacket).GetArmored()
-	if err != nil {
-		return "", "", err
-	}
-	encryptedSignature, err = crypto.NewPGPSplitMessage(keyPacket, signatureDataPacket).GetArmored()
-	if err != nil {
-		return "", "", err
-	}
-
-	return ciphertext, encryptedSignature, nil
+	return ciphertextArmored, encryptedSignatureArmored, nil
 }
 
 // DecryptVerifyArmoredDetached decrypts an armored pgp message
@@ -245,32 +217,66 @@ func encryptSignArmoredDetached(
 func DecryptVerifyArmoredDetached(
 	publicKey, privateKey string,
 	passphrase []byte,
-	ciphertext string,
-	encryptedSignature string,
+	ciphertextArmored string,
+	encryptedSignatureArmored string,
 ) (plainData []byte, err error) {
-	var message *crypto.PlainMessage
-
-	// We decrypt the message
-	if message, err = decryptMessageArmored(privateKey, passphrase, ciphertext); err != nil {
-		return nil, err
-	}
-
-	// We decrypt the signature
-	signatureMessage, err := decryptMessageArmored(privateKey, passphrase, encryptedSignature)
+	// Some type casting
+	ciphertext, err := crypto.NewPGPMessageFromArmored(ciphertextArmored)
 	if err != nil {
 		return nil, err
 	}
-	detachedSignature := crypto.NewPGPSignature(signatureMessage.GetBinary())
 
-	// We verify the signature
-	var check bool
-	if check, err = verifyDetached(publicKey, message, detachedSignature); err != nil {
+	// We decrypt and verify the encrypted signature
+	message, err := decryptVerifyObjDetached(publicKey, privateKey, passphrase, ciphertext, encryptedSignatureArmored)
+	if err != nil {
 		return nil, err
 	}
-	if !check {
-		return nil, errors.New("gopenpgp: unable to verify message")
+	return message.GetBinary(), nil
+}
+
+// encryptSignBinaryDetached takes a public key for encryption,
+// a private key and its passphrase for signature, and the plaintext data
+// Returns encrypted binary data and a detached armored encrypted signature.
+func encryptSignBinaryDetached(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (encryptedData []byte, encryptedSignatureArmored string, err error) {
+	// Some type casting
+	message := crypto.NewPlainMessage(plainData)
+
+	// We encrypt and signcrypt
+	ciphertext, encryptedSignatureArmored, err := encryptSignObjDetached(publicKey, privateKey, passphrase, message)
+	if err != nil {
+		return nil, "", err
 	}
 
+	// We get the encrypted data
+	encryptedData = ciphertext.GetBinary()
+	return encryptedData, encryptedSignatureArmored, nil
+}
+
+// DecryptVerifyBinaryDetached decrypts binary encrypted data
+// and verify a detached armored encrypted signature
+// given a publicKey, and a privateKey with its passphrase.
+// Returns the plain data or an error on
+// signature verification failure.
+func DecryptVerifyBinaryDetached(
+	publicKey, privateKey string,
+	passphrase []byte,
+	encryptedData []byte,
+	encryptedSignatureArmored string,
+) (plainData []byte, err error) {
+	// Some type casting
+	ciphertext := crypto.NewPGPMessage(encryptedData)
+	if err != nil {
+		return nil, err
+	}
+
+	// We decrypt and verify the encrypted signature
+	message, err := decryptVerifyObjDetached(publicKey, privateKey, passphrase, ciphertext, encryptedSignatureArmored)
+	if err != nil {
+		return nil, err
+	}
 	return message.GetBinary(), nil
 }
 
@@ -346,28 +352,47 @@ func DecryptSessionKey(
 }
 
 func encryptMessageArmored(key string, message *crypto.PlainMessage) (string, error) {
+	ciphertext, err := encryptMessage(key, message)
+
+	if err != nil {
+		return "", err
+	}
+
+	ciphertextArmored, err := ciphertext.GetArmored()
+
+	if err != nil {
+		return "", err
+	}
+
+	return ciphertextArmored, nil
+}
+
+func decryptMessageArmored(privateKey string, passphrase []byte, ciphertextArmored string) (*crypto.PlainMessage, error) {
+	ciphertext, err := crypto.NewPGPMessageFromArmored(ciphertextArmored)
+	if err != nil {
+		return nil, err
+	}
+
+	return decryptMessage(privateKey, passphrase, ciphertext)
+}
+
+func encryptMessage(key string, message *crypto.PlainMessage) (*crypto.PGPMessage, error) {
 	publicKeyRing, err := createPublicKeyRing(key)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	pgpMessage, err := publicKeyRing.Encrypt(message, nil)
+	ciphertext, err := publicKeyRing.Encrypt(message, nil)
 
 	if err != nil {
-		return "", err
-	}
-
-	ciphertext, err := pgpMessage.GetArmored()
-
-	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	return ciphertext, nil
 }
 
-func decryptMessageArmored(privateKey string, passphrase []byte, ciphertext string) (*crypto.PlainMessage, error) {
+func decryptMessage(privateKey string, passphrase []byte, ciphertext *crypto.PGPMessage) (*crypto.PlainMessage, error) {
 	privateKeyObj, err := crypto.NewKeyFromArmored(privateKey)
 
 	if err != nil {
@@ -388,13 +413,7 @@ func decryptMessageArmored(privateKey string, passphrase []byte, ciphertext stri
 		return nil, err
 	}
 
-	pgpMessage, err := crypto.NewPGPMessageFromArmored(ciphertext)
-
-	if err != nil {
-		return nil, err
-	}
-
-	message, err := privateKeyRing.Decrypt(pgpMessage, nil, 0)
+	message, err := privateKeyRing.Decrypt(ciphertext, nil, 0)
 
 	if err != nil {
 		return nil, err
@@ -507,4 +526,85 @@ func createPublicKeyRing(
 
 	publicKeyRing, err = crypto.NewKeyRing(publicKeyObj)
 	return
+}
+
+func encryptSignObjDetached(
+	publicKey, privateKey string,
+	passphrase []byte,
+	message *crypto.PlainMessage,
+) (ciphertext *crypto.PGPSplitMessage, encryptedSignatureArmored string, err error) {
+	// We generate the session key
+	sessionKey, err := crypto.GenerateSessionKey()
+	if err != nil {
+		return nil, "", err
+	}
+
+	// We encrypt the message with the session key
+	messageDataPacket, err := sessionKey.Encrypt(message)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// We sign the message
+	detachedSignature, err := signDetached(privateKey, passphrase, message)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// We encrypt the signature with the session key
+	signaturePlaintext := crypto.NewPlainMessage(detachedSignature.GetBinary())
+	signatureDataPacket, err := sessionKey.Encrypt(signaturePlaintext)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// We encrypt the session key
+	keyPacket, err := EncryptSessionKey(publicKey, sessionKey)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// We join the key packets and datapackets
+	ciphertext = crypto.NewPGPSplitMessage(keyPacket, messageDataPacket)
+	encryptedSignature := crypto.NewPGPSplitMessage(keyPacket, signatureDataPacket)
+	encryptedSignatureArmored, err = encryptedSignature.GetArmored()
+	if err != nil {
+		return nil, "", err
+	}
+	return ciphertext, encryptedSignatureArmored, nil
+}
+
+func decryptVerifyObjDetached(
+	publicKey, privateKey string,
+	passphrase []byte,
+	ciphertext *crypto.PGPMessage,
+	encryptedSignatureArmored string,
+) (message *crypto.PlainMessage, err error) {
+	// We decrypt the message
+	if message, err = decryptMessage(privateKey, passphrase, ciphertext); err != nil {
+		return nil, err
+	}
+
+	encryptedSignature, err := crypto.NewPGPMessageFromArmored(encryptedSignatureArmored)
+	if err != nil {
+		return nil, err
+	}
+
+	// We decrypt the signature
+	signatureMessage, err := decryptMessage(privateKey, passphrase, encryptedSignature)
+	if err != nil {
+		return nil, err
+	}
+	detachedSignature := crypto.NewPGPSignature(signatureMessage.GetBinary())
+
+	// We verify the signature
+	var check bool
+	if check, err = verifyDetached(publicKey, message, detachedSignature); err != nil {
+		return nil, err
+	}
+	if !check {
+		return nil, errors.New("gopenpgp: unable to verify message")
+	}
+
+	return message, nil
 }
