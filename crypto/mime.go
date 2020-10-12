@@ -33,7 +33,7 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 		return
 	}
 
-	body, attachments, attachmentHeaders, err := parseMIME(decryptedMessage.GetString(), verifyKey)
+	body, attachments, attachmentHeaders, err := parseMIME(string(decryptedMessage.GetBinary()), verifyKey)
 	if err != nil {
 		callbacks.OnError(err)
 		return

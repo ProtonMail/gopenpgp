@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"regexp"
 	"runtime"
+	"strings"
 
 	"github.com/ProtonMail/gopenpgp/v2/armor"
 	"github.com/ProtonMail/gopenpgp/v2/constants"
@@ -86,7 +87,7 @@ func NewPlainMessageFromFile(data []byte, filename string, time uint32) *PlainMe
 // ready for encryption, signature, or verification from an unencrypted string.
 func NewPlainMessageFromString(text string) *PlainMessage {
 	return &PlainMessage{
-		Data:     []byte(text),
+		Data:     []byte(strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\n", "\r\n")),
 		TextType: true,
 		time:     uint32(GetUnixTime()),
 	}
@@ -195,7 +196,7 @@ func (msg *PlainMessage) GetBinary() []byte {
 
 // GetString returns the content of the message as a string.
 func (msg *PlainMessage) GetString() string {
-	return string(msg.Data)
+	return strings.ReplaceAll(string(msg.Data), "\r\n", "\n")
 }
 
 // GetBase64 returns the base-64 encoded binary content of the message as a

@@ -36,7 +36,7 @@ func TestSignClearText(t *testing.T) {
 		t.Fatal("Cannot verify message:", err)
 	}
 
-	assert.Exactly(t, canonicalizeAndTrim(signedPlainText), verified)
+	assert.Exactly(t, signedPlainText, verified)
 }
 
 func TestMessageCanonicalizeAndTrim(t *testing.T) {
