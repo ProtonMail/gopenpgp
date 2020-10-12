@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"io"
 	"io/ioutil"
+	"time"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
@@ -15,7 +16,7 @@ import (
 // * message    : The plaintext input as a PlainMessage.
 // * privateKey : (optional) an unlocked private keyring to include signature in the message.
 func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error) {
-	encrypted, err := asymmetricEncrypt(message.GetBinary(), keyRing, privateKey, message.IsBinary())
+	encrypted, err := asymmetricEncrypt(message, keyRing, privateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -33,9 +34,7 @@ func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PG
 func (keyRing *KeyRing) Decrypt(
 	message *PGPMessage, verifyKey *KeyRing, verifyTime int64,
 ) (*PlainMessage, error) {
-	decrypted, err := asymmetricDecrypt(message.NewReader(), keyRing, verifyKey, verifyTime)
-
-	return NewPlainMessage(decrypted), err
+	return asymmetricDecrypt(message.NewReader(), keyRing, verifyKey, verifyTime)
 }
 
 // SignDetached generates and returns a PGPSignature for a given PlainMessage.
@@ -69,7 +68,7 @@ func (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSign
 // ------ INTERNAL FUNCTIONS -------
 
 // Core for encryption+signature functions.
-func asymmetricEncrypt(data []byte, publicKey *KeyRing, privateKey *KeyRing, isBinary bool) ([]byte, error) {
+func asymmetricEncrypt(plainMessage *PlainMessage, publicKey, privateKey *KeyRing) ([]byte, error) {
 	var outBuf bytes.Buffer
 	var encryptWriter io.WriteCloser
 	var signEntity *openpgp.Entity
@@ -86,11 +85,12 @@ func asymmetricEncrypt(data []byte, publicKey *KeyRing, privateKey *KeyRing, isB
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 
 	hints := &openpgp.FileHints{
-		IsBinary: isBinary,
-		FileName: "",
+		IsBinary: plainMessage.IsBinary(),
+		FileName: plainMessage.GetFilename(),
+		ModTime:  time.Unix(int64(plainMessage.GetTime()), 0),
 	}
 
-	if isBinary {
+	if plainMessage.IsBinary() {
 		encryptWriter, err = openpgp.Encrypt(&outBuf, publicKey.entities, signEntity, hints, config)
 	} else {
 		encryptWriter, err = openpgp.EncryptText(&outBuf, publicKey.entities, signEntity, hints, config)
@@ -99,7 +99,7 @@ func asymmetricEncrypt(data []byte, publicKey *KeyRing, privateKey *KeyRing, isB
 		return nil, err
 	}
 
-	_, err = encryptWriter.Write(data)
+	_, err = encryptWriter.Write(plainMessage.GetBinary())
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func asymmetricEncrypt(data []byte, publicKey *KeyRing, privateKey *KeyRing, isB
 // Core for decryption+verification functions.
 func asymmetricDecrypt(
 	encryptedIO io.Reader, privateKey *KeyRing, verifyKey *KeyRing, verifyTime int64,
-) (plaintext []byte, err error) {
+) (message *PlainMessage, err error) {
 	privKeyEntries := privateKey.entities
 	var additionalEntries openpgp.EntityList
 
@@ -141,11 +141,13 @@ func asymmetricDecrypt(
 
 	if verifyKey != nil {
 		processSignatureExpiration(messageDetails, verifyTime)
+		err = verifyDetailsSignature(messageDetails, verifyKey)
 	}
 
-	if verifyKey != nil {
-		return body, verifyDetailsSignature(messageDetails, verifyKey)
-	}
-
-	return body, nil
+	return &PlainMessage{
+		Data:     body,
+		TextType: !messageDetails.LiteralData.IsBinary,
+		filename: messageDetails.LiteralData.FileName,
+		time:     messageDetails.LiteralData.Time,
+	}, err
 }

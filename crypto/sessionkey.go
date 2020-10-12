@@ -139,7 +139,13 @@ func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
 		}
 	}
 
-	encryptWriter, err = packet.SerializeLiteral(encryptWriter, message.IsBinary(), "", 0)
+	encryptWriter, err = packet.SerializeLiteral(
+		encryptWriter,
+		message.IsBinary(),
+		message.GetFilename(),
+		message.GetTime(),
+	)
+
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: unable to serialize")
 	}
@@ -210,7 +216,12 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 		return nil, err
 	}
 
-	return NewPlainMessage(messageBuf.Bytes()), nil
+	return &PlainMessage{
+		Data:     messageBuf.Bytes(),
+		TextType: !md.LiteralData.IsBinary,
+		filename: md.LiteralData.FileName,
+		time:     md.LiteralData.Time,
+	}, err
 }
 
 func (sk *SessionKey) checkSize() error {
