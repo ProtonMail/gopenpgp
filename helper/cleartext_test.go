@@ -2,13 +2,16 @@ package helper
 
 import (
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
+	"github.com/ProtonMail/gopenpgp/v2/internal"
 	"github.com/stretchr/testify/assert"
 )
 
-const signedPlainText = "Signed message\n"
+const inputPlainText = "  Signed message\n  \n  "
+const signedPlainText = "  Signed message\n\n"
 
 var signedMessageTest = regexp.MustCompile(
 	"(?s)^-----BEGIN PGP SIGNED MESSAGE-----.*-----BEGIN PGP SIGNATURE-----.*-----END PGP SIGNATURE-----$")
@@ -18,7 +21,7 @@ func TestSignClearText(t *testing.T) {
 	armored, err := SignCleartextMessageArmored(
 		readTestFile("keyring_privateKey", false),
 		testMailboxPassword,
-		signedPlainText,
+		inputPlainText,
 	)
 
 	if err != nil {
@@ -36,11 +39,17 @@ func TestSignClearText(t *testing.T) {
 		t.Fatal("Cannot verify message:", err)
 	}
 
-	assert.Exactly(t, canonicalizeAndTrim(signedPlainText), verified)
+	assert.Exactly(t, signedPlainText, verified)
+
+	clearTextMessage, err := crypto.NewClearTextMessageFromArmored(armored)
+	if err != nil {
+		t.Fatal("Cannot parse message:", err)
+	}
+	assert.Exactly(t, canonicalizeAndTrim(inputPlainText), string(clearTextMessage.GetBinary()))
 }
 
-func TestMessageCanonicalizeAndTrim(t *testing.T) {
-	text := "Hi  \ntest!\r\n\n"
-	canon := canonicalizeAndTrim(text)
-	assert.Exactly(t, "Hi\r\ntest!\r\n\r\n", canon)
+func canonicalizeAndTrim(text string) string {
+	text = internal.TrimWhitespace(text)
+	text = strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\n", "\r\n")
+	return text
 }

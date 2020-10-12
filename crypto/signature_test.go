@@ -51,7 +51,8 @@ func TestVerifyTextDetachedSigWrong(t *testing.T) {
 func TestSignBinDetached(t *testing.T) {
 	var err error
 
-	binSignature, err = keyRingTestPrivate.SignDetached(NewPlainMessage([]byte(signedPlainText)))
+	message = NewPlainMessage([]byte(signedPlainText))
+	binSignature, err = keyRingTestPrivate.SignDetached(message)
 	if err != nil {
 		t.Fatal("Cannot generate signature:", err)
 	}
