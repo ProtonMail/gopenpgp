@@ -139,7 +139,7 @@ func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
 		}
 	}
 
-	encryptWriter, err = packet.SerializeLiteral(encryptWriter, false, "", 0)
+	encryptWriter, err = packet.SerializeLiteral(encryptWriter, message.IsBinary(), "", 0)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: unable to serialize")
 	}
