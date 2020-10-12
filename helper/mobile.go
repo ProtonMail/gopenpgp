@@ -60,9 +60,9 @@ func DecryptAttachment(keyPacket []byte, dataPacket []byte, keyRing *crypto.KeyR
 // Returns a PGPSplitMessage containing a session key packet and symmetrically
 // encrypted data. Specifically designed for attachments rather than text
 // messages.
-func EncryptAttachment(plainData []byte, fileName string, keyRing *crypto.KeyRing) (*crypto.PGPSplitMessage, error) {
-	plainMessage := crypto.NewPlainMessage(plainData)
-	decrypted, err := keyRing.EncryptAttachment(plainMessage, fileName)
+func EncryptAttachment(plainData []byte, filename string, keyRing *crypto.KeyRing) (*crypto.PGPSplitMessage, error) {
+	plainMessage := crypto.NewPlainMessageFromFile(plainData, filename, 0)
+	decrypted, err := keyRing.EncryptAttachment(plainMessage, "")
 	if err != nil {
 		return nil, err
 	}

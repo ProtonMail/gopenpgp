@@ -9,14 +9,14 @@ import "github.com/ProtonMail/gopenpgp/v2/crypto"
 // and its passphrase, the filename, and the unencrypted file data.
 // Returns keypacket, dataPacket and unarmored (!) signature separate.
 func EncryptSignAttachment(
-	publicKey, privateKey string, passphrase []byte, fileName string, plainData []byte,
+	publicKey, privateKey string, passphrase []byte, filename string, plainData []byte,
 ) (keyPacket, dataPacket, signature []byte, err error) {
 	var publicKeyObj, privateKeyObj, unlockedKeyObj *crypto.Key
 	var publicKeyRing, privateKeyRing *crypto.KeyRing
 	var packets *crypto.PGPSplitMessage
 	var signatureObj *crypto.PGPSignature
 
-	var binMessage = crypto.NewPlainMessage(plainData)
+	var binMessage = crypto.NewPlainMessageFromFile(plainData, filename, 0)
 
 	if publicKeyObj, err = crypto.NewKeyFromArmored(publicKey); err != nil {
 		return nil, nil, nil, err
@@ -45,7 +45,7 @@ func EncryptSignAttachment(
 		return nil, nil, nil, err
 	}
 
-	if packets, err = publicKeyRing.EncryptAttachment(binMessage, fileName); err != nil {
+	if packets, err = publicKeyRing.EncryptAttachment(binMessage, ""); err != nil {
 		return nil, nil, nil, err
 	}
 

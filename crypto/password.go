@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"io"
+	"time"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
@@ -16,7 +17,7 @@ import (
 // * password: A password that will be derived into an encryption key.
 // * output  : The encrypted data as PGPMessage.
 func EncryptMessageWithPassword(message *PlainMessage, password []byte) (*PGPMessage, error) {
-	encrypted, err := passwordEncrypt(message.GetBinary(), password, message.IsBinary())
+	encrypted, err := passwordEncrypt(message, password)
 	if err != nil {
 		return nil, err
 	}
@@ -29,13 +30,7 @@ func EncryptMessageWithPassword(message *PlainMessage, password []byte) (*PGPMes
 // * password: A password that will be derived into an encryption key.
 // * output: The decrypted data as PlainMessage.
 func DecryptMessageWithPassword(message *PGPMessage, password []byte) (*PlainMessage, error) {
-	decrypted, err := passwordDecrypt(message.NewReader(), password)
-	if err != nil {
-		return nil, err
-	}
-
-	binMessage := NewPlainMessage(decrypted)
-	return binMessage, nil
+	return passwordDecrypt(message.NewReader(), password)
 }
 
 // DecryptSessionKeyWithPassword decrypts the binary symmetrically encrypted
@@ -110,7 +105,7 @@ func EncryptSessionKeyWithPassword(sk *SessionKey, password []byte) ([]byte, err
 
 // ----- INTERNAL FUNCTIONS ------
 
-func passwordEncrypt(message []byte, password []byte, isBinary bool) ([]byte, error) {
+func passwordEncrypt(message *PlainMessage, password []byte) ([]byte, error) {
 	var outBuf bytes.Buffer
 
 	config := &packet.Config{
@@ -118,13 +113,17 @@ func passwordEncrypt(message []byte, password []byte, isBinary bool) ([]byte, er
 		Time:          getTimeGenerator(),
 	}
 
-	hints := &openpgp.FileHints{IsBinary: isBinary}
+	hints := &openpgp.FileHints{
+		IsBinary: message.IsBinary(),
+		FileName: message.GetFilename(),
+		ModTime:  time.Unix(int64(message.GetTime()), 0),
+	}
 
 	encryptWriter, err := openpgp.SymmetricallyEncrypt(&outBuf, password, hints, config)
 	if err != nil {
 		return nil, err
 	}
-	_, err = encryptWriter.Write(message)
+	_, err = encryptWriter.Write(message.GetBinary())
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +136,7 @@ func passwordEncrypt(message []byte, password []byte, isBinary bool) ([]byte, er
 	return outBuf.Bytes(), nil
 }
 
-func passwordDecrypt(encryptedIO io.Reader, password []byte) ([]byte, error) {
+func passwordDecrypt(encryptedIO io.Reader, password []byte) (*PlainMessage, error) {
 	firstTimeCalled := true
 	var prompt = func(keys []openpgp.Key, symmetric bool) ([]byte, error) {
 		if firstTimeCalled {
@@ -163,5 +162,10 @@ func passwordDecrypt(encryptedIO io.Reader, password []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	return messageBuf.Bytes(), nil
+	return &PlainMessage{
+		Data:     messageBuf.Bytes(),
+		TextType: !md.LiteralData.IsBinary,
+		filename: md.LiteralData.FileName,
+		time:     md.LiteralData.Time,
+	}, nil
 }

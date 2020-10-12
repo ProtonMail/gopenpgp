@@ -73,6 +73,21 @@ EncryptSignArmoredDetachedMobile(
 ) (wrappedTuple *EncryptSignArmoredDetachedMobileResult, err error)
 ```
 
+- `NewPlainMessageFromFile` Function to create new `PlainMessage`s with a filename:
+```go
+NewPlainMessageFromFile(data []byte, filename string, modTime int) *PlainMessage
+```
+
+- `GetFilename` to get the filename from a message:
+```go 
+(msg *PlainMessage) GetFilename() string
+```
+
+- `GetModTime` to get the modification time of a file
+```go 
+(msg *PlainMessage) GetModTime() uint32
+```
+
 ### Changed
 - Improved key and message armoring testing
 - `EncryptSessionKey` now creates encrypted key packets for each valid encryption key in the provided keyring. 
@@ -80,6 +95,8 @@ EncryptSignArmoredDetachedMobile(
 - Use aes256 cipher for password-encrypted messages.
 - The helpers `EncryptSignMessageArmored`, `DecryptVerifyMessageArmored`, `DecryptVerifyAttachment`, and`DecryptBinaryMessageArmored`
     now accept private keys as public keys and perform automatic casting if the keys are locked.
+- The `PlainMessage` struct now contains the fields `filename` (string) and `time` (uint32)
+- All the Decrypt* functions return the filename, type, and time specified in the encrypted message
 
 ### Fixed
 - Public key armoring headers

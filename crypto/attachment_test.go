@@ -42,9 +42,9 @@ func TestAttachmentSetKey(t *testing.T) {
 
 func TestAttachmentEncryptDecrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
-	var message = NewPlainMessage([]byte(testAttachmentCleartext))
+	var message = NewPlainMessageFromFile([]byte(testAttachmentCleartext), "test.txt", 0)
 
-	encSplit, err := keyRingTestPrivate.EncryptAttachment(message, "s.txt")
+	encSplit, err := keyRingTestPrivate.EncryptAttachment(message, "")
 	if err != nil {
 		t.Fatal("Expected no error while encrypting attachment, got:", err)
 	}
@@ -59,9 +59,9 @@ func TestAttachmentEncryptDecrypt(t *testing.T) {
 
 func TestAttachmentEncrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
-	var message = NewPlainMessage([]byte(testAttachmentCleartext))
+	var message = NewPlainMessageFromFile([]byte(testAttachmentCleartext), "test.txt", 0)
 
-	encSplit, err := keyRingTestPrivate.EncryptAttachment(message, "s.txt")
+	encSplit, err := keyRingTestPrivate.EncryptAttachment(message, "")
 	if err != nil {
 		t.Fatal("Expected no error while encrypting attachment, got:", err)
 	}
@@ -78,7 +78,7 @@ func TestAttachmentEncrypt(t *testing.T) {
 
 func TestAttachmentDecrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
-	var message = NewPlainMessage([]byte(testAttachmentCleartext))
+	var message = NewPlainMessageFromFile([]byte(testAttachmentCleartext), "test.txt", 0)
 
 	encrypted, err := keyRingTestPrivate.Encrypt(message, nil)
 	if err != nil {
