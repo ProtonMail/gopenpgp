@@ -66,6 +66,7 @@ func NewPlainMessage(data []byte) *PlainMessage {
 	return &PlainMessage{
 		Data:     clone(data),
 		TextType: false,
+		time:     uint32(GetUnixTime()),
 	}
 }
 
@@ -87,6 +88,7 @@ func NewPlainMessageFromString(text string) *PlainMessage {
 	return &PlainMessage{
 		Data:     []byte(text),
 		TextType: true,
+		time:     uint32(GetUnixTime()),
 	}
 }
 

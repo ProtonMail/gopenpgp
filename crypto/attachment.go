@@ -130,7 +130,7 @@ func (keyRing *KeyRing) EncryptAttachment(message *PlainMessage, filename string
 func (keyRing *KeyRing) NewLowMemoryAttachmentProcessor(
 	estimatedSize int, filename string,
 ) (*AttachmentProcessor, error) {
-	return keyRing.newAttachmentProcessor(estimatedSize, filename, true, 0, 1<<20)
+	return keyRing.newAttachmentProcessor(estimatedSize, filename, true, uint32(GetUnixTime()), 1<<20)
 }
 
 // DecryptAttachment takes a PGPSplitMessage, containing a session key packet and symmetrically encrypted data

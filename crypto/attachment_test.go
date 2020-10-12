@@ -42,7 +42,7 @@ func TestAttachmentSetKey(t *testing.T) {
 
 func TestAttachmentEncryptDecrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
-	var message = NewPlainMessageFromFile([]byte(testAttachmentCleartext), "test.txt", 0)
+	var message = NewPlainMessageFromFile([]byte(testAttachmentCleartext), "test.txt", 1602518992)
 
 	encSplit, err := keyRingTestPrivate.EncryptAttachment(message, "")
 	if err != nil {
@@ -59,7 +59,7 @@ func TestAttachmentEncryptDecrypt(t *testing.T) {
 
 func TestAttachmentEncrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
-	var message = NewPlainMessageFromFile([]byte(testAttachmentCleartext), "test.txt", 0)
+	var message = NewPlainMessageFromFile([]byte(testAttachmentCleartext), "test.txt", 1602518992)
 
 	encSplit, err := keyRingTestPrivate.EncryptAttachment(message, "")
 	if err != nil {
@@ -78,7 +78,7 @@ func TestAttachmentEncrypt(t *testing.T) {
 
 func TestAttachmentDecrypt(t *testing.T) {
 	var testAttachmentCleartext = "cc,\ndille."
-	var message = NewPlainMessageFromFile([]byte(testAttachmentCleartext), "test.txt", 0)
+	var message = NewPlainMessageFromFile([]byte(testAttachmentCleartext), "test.txt", 1602518992)
 
 	encrypted, err := keyRingTestPrivate.Encrypt(message, nil)
 	if err != nil {
