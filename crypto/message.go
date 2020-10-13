@@ -28,9 +28,9 @@ type PlainMessage struct {
 	// If the content is text or binary
 	TextType bool
 	// The file's latest modification time
-	time uint32
+	Time uint32
 	// The encrypted message's filename
-	filename string
+	Filename string
 }
 
 // PGPMessage stores a PGP-encrypted message.
@@ -67,7 +67,7 @@ func NewPlainMessage(data []byte) *PlainMessage {
 	return &PlainMessage{
 		Data:     clone(data),
 		TextType: false,
-		time:     uint32(GetUnixTime()),
+		Time:     uint32(GetUnixTime()),
 	}
 }
 
@@ -78,8 +78,8 @@ func NewPlainMessageFromFile(data []byte, filename string, time uint32) *PlainMe
 	return &PlainMessage{
 		Data:     clone(data),
 		TextType: false,
-		filename: filename,
-		time:     time,
+		Filename: filename,
+		Time:     time,
 	}
 }
 
@@ -89,7 +89,7 @@ func NewPlainMessageFromString(text string) *PlainMessage {
 	return &PlainMessage{
 		Data:     []byte(strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\n", "\r\n")),
 		TextType: true,
-		time:     uint32(GetUnixTime()),
+		Time:     uint32(GetUnixTime()),
 	}
 }
 
@@ -222,12 +222,12 @@ func (msg *PlainMessage) IsBinary() bool {
 
 // GetFilename returns the file name of the message as a string.
 func (msg *PlainMessage) GetFilename() string {
-	return msg.filename
+	return msg.Filename
 }
 
 // GetTime returns the modification time of a file (if provided in the ciphertext).
 func (msg *PlainMessage) GetTime() uint32 {
-	return msg.time
+	return msg.Time
 }
 
 // GetBinary returns the unarmored binary content of the message as a []byte.

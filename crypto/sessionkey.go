@@ -219,8 +219,8 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 	return &PlainMessage{
 		Data:     messageBuf.Bytes(),
 		TextType: !md.LiteralData.IsBinary,
-		filename: md.LiteralData.FileName,
-		time:     md.LiteralData.Time,
+		Filename: md.LiteralData.FileName,
+		Time:     md.LiteralData.Time,
 	}, err
 }
 

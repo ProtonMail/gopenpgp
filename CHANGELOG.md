@@ -95,7 +95,7 @@ NewPlainMessageFromFile(data []byte, filename string, modTime int) *PlainMessage
 - Use aes256 cipher for password-encrypted messages.
 - The helpers `EncryptSignMessageArmored`, `DecryptVerifyMessageArmored`, `DecryptVerifyAttachment`, and`DecryptBinaryMessageArmored`
     now accept private keys as public keys and perform automatic casting if the keys are locked.
-- The `PlainMessage` struct now contains the fields `filename` (string) and `time` (uint32)
+- The `PlainMessage` struct now contains the fields `Filename` (string) and `Time` (uint32)
 - All the Decrypt* functions return the filename, type, and time specified in the encrypted message
 
 ### Fixed
