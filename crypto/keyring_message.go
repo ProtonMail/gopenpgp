@@ -147,7 +147,7 @@ func asymmetricDecrypt(
 	return &PlainMessage{
 		Data:     body,
 		TextType: !messageDetails.LiteralData.IsBinary,
-		filename: messageDetails.LiteralData.FileName,
-		time:     messageDetails.LiteralData.Time,
+		Filename: messageDetails.LiteralData.FileName,
+		Time:     messageDetails.LiteralData.Time,
 	}, err
 }
