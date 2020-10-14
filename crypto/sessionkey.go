@@ -142,8 +142,8 @@ func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
 	encryptWriter, err = packet.SerializeLiteral(
 		encryptWriter,
 		message.IsBinary(),
-		message.GetFilename(),
-		message.GetTime(),
+		message.Filename,
+		message.Time,
 	)
 
 	if err != nil {

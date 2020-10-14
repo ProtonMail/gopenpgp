@@ -109,7 +109,7 @@ func (keyRing *KeyRing) EncryptAttachment(message *PlainMessage, filename string
 		len(message.GetBinary()),
 		filename,
 		message.IsBinary(),
-		message.GetTime(),
+		message.Time,
 		-1,
 	)
 	if err != nil {
