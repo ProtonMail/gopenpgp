@@ -5,7 +5,6 @@ import (
 	"crypto"
 	"io"
 	"io/ioutil"
-	"time"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
@@ -86,8 +85,8 @@ func asymmetricEncrypt(plainMessage *PlainMessage, publicKey, privateKey *KeyRin
 
 	hints := &openpgp.FileHints{
 		IsBinary: plainMessage.IsBinary(),
-		FileName: plainMessage.GetFilename(),
-		ModTime:  time.Unix(int64(plainMessage.GetTime()), 0),
+		FileName: plainMessage.Filename,
+		ModTime:  plainMessage.getFormattedTime(),
 	}
 
 	if plainMessage.IsBinary() {

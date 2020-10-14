@@ -3,12 +3,10 @@ package crypto
 import (
 	"bytes"
 	"io"
-	"time"
-
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/packet"
 
 	"github.com/pkg/errors"
+	"golang.org/x/crypto/openpgp"
+	"golang.org/x/crypto/openpgp/packet"
 )
 
 // EncryptMessageWithPassword encrypts a PlainMessage to PGPMessage with a
@@ -115,8 +113,8 @@ func passwordEncrypt(message *PlainMessage, password []byte) ([]byte, error) {
 
 	hints := &openpgp.FileHints{
 		IsBinary: message.IsBinary(),
-		FileName: message.GetFilename(),
-		ModTime:  time.Unix(int64(message.GetTime()), 0),
+		FileName: message.Filename,
+		ModTime:  message.getFormattedTime(),
 	}
 
 	encryptWriter, err := openpgp.SymmetricallyEncrypt(&outBuf, password, hints, config)

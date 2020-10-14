@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/ProtonMail/gopenpgp/v2/armor"
 	"github.com/ProtonMail/gopenpgp/v2/constants"
@@ -220,14 +221,9 @@ func (msg *PlainMessage) IsBinary() bool {
 	return !msg.TextType
 }
 
-// GetFilename returns the file name of the message as a string.
-func (msg *PlainMessage) GetFilename() string {
-	return msg.Filename
-}
-
-// GetTime returns the modification time of a file (if provided in the ciphertext).
-func (msg *PlainMessage) GetTime() uint32 {
-	return msg.Time
+// getFormattedTime returns the message (latest modification) Time as time.Time.
+func (msg *PlainMessage) getFormattedTime() time.Time {
+	return time.Unix(int64(msg.Time), 0)
 }
 
 // GetBinary returns the unarmored binary content of the message as a []byte.
