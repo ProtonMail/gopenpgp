@@ -1,4 +1,4 @@
-name: iOS starter workflow
+name: Gomobile for iOS
 
 on:
   push:
