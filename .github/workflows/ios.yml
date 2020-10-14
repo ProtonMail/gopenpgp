@@ -28,7 +28,6 @@ jobs:
               curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
               dep ensure
           fi
-          go install github.com/zhj4478/mobile
 
       - name: Build
         env:
