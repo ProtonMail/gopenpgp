@@ -32,7 +32,7 @@ jobs:
         go install github.com/golangci/golangci-lint/cmd/golangci-lint
 
     - name: Test
-      run: go test -v .
-      
+      run: test -v -race ./...
+
     - name: Lint
-      run: golangci-lint run
+      run: golangci-lint run ./...
