@@ -120,10 +120,10 @@ build macos-ui
 
 printf "\e[0;32mStart Done building \033[0m\n\n"
 
-lipo -info $BUILD_DIR/ios/$BUILD_NAME.framework
-lipo -info $BUILD_DIR/macos/$BUILD_NAME.framework
-lipo -info $BUILD_DIR/macos-ui/$BUILD_NAME.framework
-lipo -info $BUILD_DIR/ios-simulator/$BUILD_NAME.framework
+lipo -info $BUILD_DIR/ios/$BUILD_NAME.framework/Crypto
+lipo -info $BUILD_DIR/macos/$BUILD_NAME.framework/Crypto
+lipo -info $BUILD_DIR/macos-ui/$BUILD_NAME.framework/Crypto
+lipo -info $BUILD_DIR/ios-simulator/$BUILD_NAME.framework/Crypto
 
 find
 
