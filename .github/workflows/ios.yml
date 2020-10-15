@@ -33,4 +33,5 @@ jobs:
         env:
           platform: ${{ 'iOS Simulator' }}
         run: |
+          cd build-ios
           ./build.sh apple
