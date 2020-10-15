@@ -120,6 +120,8 @@ lipo -info $BUILD_DIR/macos/$BUILD_NAME.framework
 lipo -info $BUILD_DIR/macos-ui/$BUILD_NAME.framework
 lipo -info $BUILD_DIR/ios-simulator/$BUILD_NAME.framework
 
+find
+
 # we join all platform's framework in a xcframework
 XCFRAMEWORK_OUT_FILE=$BUILD_DIR/$BUILD_NAME.xcframework
 remove_dir $XCFRAMEWORK_OUT_FILE;

@@ -18,15 +18,12 @@ jobs:
           go-version: ^1.15
         id: go
 
-      - name: Get dependencies
-        run: |
-          go get -v -t -d ./...
-          if [ -f Gopkg.toml ]; then
-              curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-              dep ensure
-          fi
+      - name: Checkout
+        uses: actions/checkout@v2
 
       - name: Build
+        env:
+          platform: ${{ 'iOS Simulator' }}
         run: |
           cd .github/build-ios
           ./build.sh apple
