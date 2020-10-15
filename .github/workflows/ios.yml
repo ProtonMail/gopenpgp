@@ -30,5 +30,24 @@ jobs:
         env:
           platform: ${{ 'iOS Simulator' }}
         run: |
-          cd .github/build-ios
           ./build.sh apple
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: iOS build
+          path: build/ios
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: mac OS build
+          path: build/macos
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: mac OS ui build
+          path: build/macos-ui
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: iOS simulator build
+          path: build/ios-simulator

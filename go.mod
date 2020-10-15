@@ -1,6 +1,6 @@
 module github.com/ProtonMail/gopenpgp/v2
 
-go 1.12
+go 1.15
 
 require (
 	github.com/ProtonMail/go-mime v0.0.0-20190923161245-9b5a4261663a
