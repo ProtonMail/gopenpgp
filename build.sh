@@ -50,7 +50,7 @@ BUILD_DIR="./build"
 LDFLAGS="'all=-s -w'"
 
 # name of the build output
-BUILD_NAME="gopenpgp"
+BUILD_NAME="Crypto"
 
 # ==== Packages to include =====
 PACKAGES=""
