@@ -25,3 +25,9 @@ jobs:
       run: |
         ./build.sh android
         tree
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Android build
+        path: build/android
+        if-no-files-found: error

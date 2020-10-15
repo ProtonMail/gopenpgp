@@ -55,7 +55,7 @@ build()
 # ==== Generic parameters ======
 
 # output directory
-BUILD_DIR="./out"
+BUILD_DIR="./build"
 
 # linkage flags
 LDFLAGS="'all=-s -w'"
