@@ -23,15 +23,6 @@ import()
     PACKAGES="${PACKAGES} $1"
 }
 
-remove_dir()
-{
-	DIR=$1
-	if [ -d "$DIR" ]; then
-		printf "removing old $DIR\n"
-		rm -rf $DIR
-	fi
-}
-
 build()
 {
 	TARGET=$1
@@ -119,7 +110,6 @@ build macos-ui
 
 # we join all platform's framework in a xcframework
 XCFRAMEWORK_OUT_FILE=$BUILD_DIR/$BUILD_NAME.xcframework
-remove_dir $XCFRAMEWORK_OUT_FILE;
 
 xcodebuild -create-xcframework  -framework $BUILD_DIR/ios/$BUILD_NAME.framework -framework $BUILD_DIR/macos/$BUILD_NAME.framework -framework $BUILD_DIR/macos-ui/$BUILD_NAME.framework -framework $BUILD_DIR/ios-simulator/$BUILD_NAME.framework -output $XCFRAMEWORK_OUT_FILE
 

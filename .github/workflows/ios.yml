@@ -31,6 +31,7 @@ jobs:
           platform: ${{ 'iOS Simulator' }}
         run: |
           ./build.sh apple
+          find .
 
       - name: Upload iOS artifacts
         uses: actions/upload-artifact@v2
@@ -60,9 +61,9 @@ jobs:
           path: build/ios-simulator
           if-no-files-found: error
 
-      - name: Upload framework
+      - name: Upload xcframework
         uses: actions/upload-artifact@v2
         with:
-          name: Gopenpgp framework
-          path: build/Gopenpgp.framework
+          name: Gopenpgp xcframework
+          path: build/Gopenpgp.xcframework
           if-no-files-found: error
