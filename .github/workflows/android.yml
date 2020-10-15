@@ -24,9 +24,9 @@ jobs:
     - name: Build
       run: |
         ./build.sh android
-        tree
 
-    - uses: actions/upload-artifact@v2
+    - name: Upload Android artifacts
+      uses: actions/upload-artifact@v2
       with:
         name: Android build
         path: build/android

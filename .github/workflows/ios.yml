@@ -32,25 +32,29 @@ jobs:
         run: |
           ./build.sh apple
 
-      - uses: actions/upload-artifact@v2
+      - name: Upload iOS artifacts
+        uses: actions/upload-artifact@v2
         with:
           name: iOS build
           path: build/ios
           if-no-files-found: error
 
-      - uses: actions/upload-artifact@v2
+      - name: Upload mac OS artifacts
+        uses: actions/upload-artifact@v2
         with:
           name: mac OS build
           path: build/macos
           if-no-files-found: error
 
-      - uses: actions/upload-artifact@v2
+      - name: Upload mac OS ui artifacts
+        uses: actions/upload-artifact@v2
         with:
           name: mac OS ui build
           path: build/macos-ui
           if-no-files-found: error
 
-      - uses: actions/upload-artifact@v2
+      - name: Upload iOS simulator artifacts
+        uses: actions/upload-artifact@v2
         with:
           name: iOS simulator build
           path: build/ios-simulator
