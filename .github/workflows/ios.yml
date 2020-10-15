@@ -60,9 +60,9 @@ jobs:
           path: build/ios-simulator
           if-no-files-found: error
 
-      - name: Upload xcframework
+      - name: Upload framework
         uses: actions/upload-artifact@v2
         with:
-          name: Gopenpgp xcframework
-          path: build/Gopenpgp.xcframework
+          name: Gopenpgp framework
+          path: build/Gopenpgp.framework
           if-no-files-found: error
