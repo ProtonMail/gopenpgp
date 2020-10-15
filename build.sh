@@ -61,7 +61,7 @@ BUILD_DIR="./build"
 LDFLAGS="'all=-s -w'"
 
 # name of the build output
-BUILD_NAME="Crypto"
+BUILD_NAME="Gopenpgp"
 
 # ==== Packages to include =====
 PACKAGES=""
