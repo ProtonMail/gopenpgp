@@ -23,7 +23,7 @@ jobs:
     - name: Build
       run: |
         ./build.sh android
-        find .
+        find build
 
     - name: Upload Android artifacts
       uses: actions/upload-artifact@v2

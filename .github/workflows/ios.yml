@@ -17,6 +17,7 @@ jobs:
         with:
           xcode-version: 12.2
         id: xcode
+
       - name: Set up Go 1.15
         uses: actions/setup-go@v2
         with:
@@ -31,7 +32,7 @@ jobs:
           platform: ${{ 'iOS Simulator' }}
         run: |
           ./build.sh apple
-          find .
+          find build
 
       - name: Upload iOS artifacts
         uses: actions/upload-artifact@v2
@@ -65,5 +66,5 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: Gopenpgp xcframework
-          path: build/Gopenpgp.xcframework
+          path: build/gopenpgp.xcframework
           if-no-files-found: error

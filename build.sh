@@ -35,9 +35,7 @@ build()
 	TARGET_OUT_FILE=${TARGET_DIR}/${BUILD_NAME}.${OUT_EXTENSION}
 	mkdir -p $TARGET_DIR
 	printf "\e[0;32mStart Building ${TARGET} .. Location: ${TARGET_DIR} \033[0m\n\n"
-	remove_dir $TARGET_OUT_FILE
 	gomobile bind -tags mobile -target $TARGET -x -o ${TARGET_OUT_FILE} -ldflags="${LDFLAGS}" ${PACKAGES}
-
 }
 
 
@@ -52,7 +50,7 @@ BUILD_DIR="./build"
 LDFLAGS="'all=-s -w'"
 
 # name of the build output
-BUILD_NAME="Gopenpgp"
+BUILD_NAME="gopenpgp"
 
 # ==== Packages to include =====
 PACKAGES=""
@@ -87,7 +85,6 @@ IOSSIM_OUT=${BUILD_DIR}/"ios-simulator"
 mkdir -p $IOSSIM_OUT
 IOS_OUT_FILE=${BUILD_DIR}/ios/${BUILD_NAME}.framework
 IOSSIM_OUT_FILE=${IOSSIM_OUT}/${BUILD_NAME}.framework
-remove_dir $IOSSIM_OUT_FILE;
 
 cp -R $IOS_OUT_FILE $IOSSIM_OUT_FILE;
 
@@ -111,7 +108,7 @@ build macos-ui
 # we join all platform's framework in a xcframework
 XCFRAMEWORK_OUT_FILE=$BUILD_DIR/$BUILD_NAME.xcframework
 
-xcodebuild -create-xcframework  -framework $BUILD_DIR/ios/$BUILD_NAME.framework -framework $BUILD_DIR/macos/$BUILD_NAME.framework -framework $BUILD_DIR/macos-ui/$BUILD_NAME.framework -framework $BUILD_DIR/ios-simulator/$BUILD_NAME.framework -output $XCFRAMEWORK_OUT_FILE
+xcodebuild -create-xcframework -framework $BUILD_DIR/ios/$BUILD_NAME.framework -framework $BUILD_DIR/macos/$BUILD_NAME.framework -framework $BUILD_DIR/macos-ui/$BUILD_NAME.framework -framework $BUILD_DIR/ios-simulator/$BUILD_NAME.framework -output $XCFRAMEWORK_OUT_FILE
 
 fi
 # ================  Android Build =====================
