@@ -18,9 +18,6 @@ jobs:
           go-version: ^1.15
         id: go
 
-      - name: Checkout
-        uses: actions/checkout@v2
-
       - name: Get dependencies
         run: |
           go get -v -t -d ./...
@@ -30,8 +27,6 @@ jobs:
           fi
 
       - name: Build
-        env:
-          platform: ${{ 'iOS Simulator' }}
         run: |
-          cd build-ios
+          cd .github/build-ios
           ./build.sh apple

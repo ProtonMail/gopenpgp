@@ -35,12 +35,7 @@ remove_dir()
 
 build()
 {
-	TARGET=$1
-	if [ $TARGET = "android" ]; then
-		OUT_EXTENSION="aar"
-	else
-		OUT_EXTENSION="framework"
-	fi
+	OUT_EXTENSION="framework"
 	TARGET_DIR=${BUILD_DIR}/${TARGET}
 	TARGET_OUT_FILE=${TARGET_DIR}/${BUILD_NAME}.${OUT_EXTENSION}
 	mkdir -p $TARGET_DIR
@@ -118,17 +113,17 @@ build macos
 
 build macos-ui
 
+printf "\e[0;32mStart Done building \033[0m\n\n"
+
+lipo -info $BUILD_DIR/ios/$BUILD_NAME.framework
+lipo -info $BUILD_DIR/macos/$BUILD_NAME.framework
+lipo -info $BUILD_DIR/macos-ui/$BUILD_NAME.framework
+lipo -info $BUILD_DIR/ios-simulator/$BUILD_NAME.framework
+
 # we join all platform's framework in a xcframework
 XCFRAMEWORK_OUT_FILE=$BUILD_DIR/$BUILD_NAME.xcframework
 remove_dir $XCFRAMEWORK_OUT_FILE;
 
 xcodebuild -create-xcframework  -framework $BUILD_DIR/ios/$BUILD_NAME.framework -framework $BUILD_DIR/macos/$BUILD_NAME.framework -framework $BUILD_DIR/macos-ui/$BUILD_NAME.framework -framework $BUILD_DIR/ios-simulator/$BUILD_NAME.framework -output $XCFRAMEWORK_OUT_FILE
 
-fi
-# ================  Android Build =====================
-if [ "$#" -ne 1 ] || [ $1 = android ]; then
-ANDROID_JAVA_PAG="com.proton.${ANDROID_OUT_FILE_NAME}"
-build android
-
-printf "\e[0;32mAll Done. \033[0m\n\n"
 fi
