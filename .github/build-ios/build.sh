@@ -35,7 +35,12 @@ remove_dir()
 
 build()
 {
-	OUT_EXTENSION="framework"
+	TARGET=$1
+	if [ $TARGET = "android" ]; then
+		OUT_EXTENSION="aar"
+	else
+		OUT_EXTENSION="framework"
+	fi
 	TARGET_DIR=${BUILD_DIR}/${TARGET}
 	TARGET_OUT_FILE=${TARGET_DIR}/${BUILD_NAME}.${OUT_EXTENSION}
 	mkdir -p $TARGET_DIR
