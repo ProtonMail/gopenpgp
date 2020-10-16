@@ -66,5 +66,5 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: Gopenpgp xcframework
-          path: build/Crypto.xcframework
+          path: build/Gopenpgp.xcframework
           if-no-files-found: error

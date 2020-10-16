@@ -32,7 +32,7 @@ build()
 		OUT_EXTENSION="framework"
 	fi
 	TARGET_DIR=${BUILD_DIR}/${TARGET}
-	TARGET_OUT_FILE=${TARGET_DIR}/${BUILD_NAME}.${OUT_EXTENSION}
+	TARGET_OUT_FILE=${TARGET_DIR}/Crypto.${OUT_EXTENSION}
 	mkdir -p $TARGET_DIR
 	printf "\e[0;32mStart Building ${TARGET} .. Location: ${TARGET_DIR} \033[0m\n\n"
 	gomobile bind -tags mobile -target $TARGET -x -o ${TARGET_OUT_FILE} -ldflags="${LDFLAGS}" ${PACKAGES}
@@ -50,7 +50,7 @@ BUILD_DIR="./build"
 LDFLAGS="'all=-s -w'"
 
 # name of the build output
-BUILD_NAME="Crypto"
+BUILD_NAME="Gopenpgp"
 
 # ==== Packages to include =====
 PACKAGES=""
