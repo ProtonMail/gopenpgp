@@ -32,7 +32,7 @@ build()
 		OUT_EXTENSION="framework"
 	fi
 	TARGET_DIR=${BUILD_DIR}/${TARGET}
-	TARGET_OUT_FILE=${TARGET_DIR}/Crypto.${OUT_EXTENSION}
+	TARGET_OUT_FILE=${TARGET_DIR}/${BUILD_NAME}.${OUT_EXTENSION}
 	mkdir -p $TARGET_DIR
 	printf "\e[0;32mStart Building ${TARGET} .. Location: ${TARGET_DIR} \033[0m\n\n"
 	gomobile bind -tags mobile -target $TARGET -x -o ${TARGET_OUT_FILE} -ldflags="${LDFLAGS}" ${PACKAGES}
@@ -89,8 +89,8 @@ IOSSIM_OUT_FILE=${IOSSIM_OUT}/${BUILD_NAME}.framework
 cp -R $IOS_OUT_FILE $IOSSIM_OUT_FILE;
 
 # we remove the unwanted archs for ios and simulator
-lipo $IOSSIM_OUT_FILE/Versions/A/Crypto -remove arm64 -output $IOSSIM_OUT_FILE/Versions/A/Crypto;
-lipo $IOS_OUT_FILE/Versions/A/Crypto -remove x86_64 -output $IOS_OUT_FILE/Versions/A/Crypto;
+lipo $IOSSIM_OUT_FILE/Versions/A/${BUILD_NAME} -remove arm64 -output $IOSSIM_OUT_FILE/Versions/A/${BUILD_NAME};
+lipo $IOS_OUT_FILE/Versions/A/${BUILD_NAME} -remove x86_64 -output $IOS_OUT_FILE/Versions/A/${BUILD_NAME};
 
 
 # ========== macOs ====================
