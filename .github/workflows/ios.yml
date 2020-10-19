@@ -1,0 +1,70 @@
+name: Gomobile for iOS
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build library for iOS with gomobile
+    runs-on: macos-latest
+
+    steps:
+      - name: Set up xcode 12.2
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 12.2
+        id: xcode
+
+      - name: Set up Go 1.15
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.15
+        id: go
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build
+        env:
+          platform: ${{ 'iOS Simulator' }}
+        run: |
+          ./build.sh apple
+          find build
+
+      - name: Upload iOS artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: iOS build
+          path: build/ios
+          if-no-files-found: error
+
+      - name: Upload mac OS artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: mac OS build
+          path: build/macos
+          if-no-files-found: error
+
+      - name: Upload mac OS ui artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: mac OS ui build
+          path: build/macos-ui
+          if-no-files-found: error
+
+      - name: Upload iOS simulator artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: iOS simulator build
+          path: build/ios-simulator
+          if-no-files-found: error
+
+      - name: Upload xcframework
+        uses: actions/upload-artifact@v2
+        with:
+          name: Gopenpgp xcframework
+          path: build/Gopenpgp.xcframework
+          if-no-files-found: error
