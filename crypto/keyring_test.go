@@ -157,7 +157,7 @@ func TestClearPrivateKey(t *testing.T) {
 
 	keys := keyRingCopy.GetKeys()
 	assertRSACleared(t, keys[0].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
-	assertEdDSACleared(t, keys[1].entity.PrivateKey.PrivateKey.(ed25519.PrivateKey))
+	assertEdDSACleared(t, keys[1].entity.PrivateKey.PrivateKey.(*ed25519.PrivateKey))
 	assertRSACleared(t, keys[2].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
 }
 
@@ -175,7 +175,7 @@ func TestClearPrivateWithSubkeys(t *testing.T) {
 	assertRSACleared(t, keys[0].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
 	assertRSACleared(t, keys[0].entity.Subkeys[0].PrivateKey.PrivateKey.(*rsa.PrivateKey))
 
-	assertEdDSACleared(t, keys[1].entity.PrivateKey.PrivateKey.(ed25519.PrivateKey))
+	assertEdDSACleared(t, keys[1].entity.PrivateKey.PrivateKey.(*ed25519.PrivateKey))
 	assertECDHCleared(t, keys[1].entity.Subkeys[0].PrivateKey.PrivateKey.(*ecdh.PrivateKey))
 
 	assertRSACleared(t, keys[2].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))

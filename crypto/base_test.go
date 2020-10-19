@@ -63,8 +63,8 @@ func assertRSACleared(t *testing.T, rsaPriv *rsa.PrivateKey) {
 	}
 }
 
-func assertEdDSACleared(t *testing.T, priv ed25519.PrivateKey) {
-	assertMemCleared(t, priv)
+func assertEdDSACleared(t *testing.T, priv *ed25519.PrivateKey) {
+	assertMemCleared(t, *priv)
 }
 
 func assertECDHCleared(t *testing.T, priv *ecdh.PrivateKey) {
