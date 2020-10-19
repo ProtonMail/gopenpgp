@@ -87,6 +87,54 @@ func TestTextMixedMessageDecryptionWithPassword(t *testing.T) {
 }
 
 func TestTextMessageEncryption(t *testing.T) {
+	var message = NewPlainMessageFromString(
+		"The secret code is... 1, 2, 3, 4, 5. I repeat: the secret code is... 1, 2, 3, 4, 5",
+	)
+
+	ciphertext, err := keyRingTestPublic.Encrypt(message, nil)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+
+	split, err := ciphertext.SeparateKeyAndData(1024, 0)
+	if err != nil {
+		t.Fatal("Expected no error when splitting, got:", err)
+	}
+
+	assert.Len(t, split.GetBinaryDataPacket(), 133) // Assert uncompressed encrypted body length
+
+	decrypted, err := keyRingTestPrivate.Decrypt(ciphertext, nil, 0)
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+	assert.Exactly(t, message.GetString(), decrypted.GetString())
+}
+
+func TestTextMessageEncryptionWithCompression(t *testing.T) {
+	var message = NewPlainMessageFromString(
+		"The secret code is... 1, 2, 3, 4, 5. I repeat: the secret code is... 1, 2, 3, 4, 5",
+	)
+
+	ciphertext, err := keyRingTestPublic.EncryptWithCompression(message, nil, 2, 6)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+
+	split, err := ciphertext.SeparateKeyAndData(1024, 0)
+	if err != nil {
+		t.Fatal("Expected no error when splitting, got:", err)
+	}
+
+	assert.Len(t, split.GetBinaryDataPacket(), 117) // Assert uncompressed encrypted body length
+
+	decrypted, err := keyRingTestPrivate.Decrypt(ciphertext, nil, 0)
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+	assert.Exactly(t, message.GetString(), decrypted.GetString())
+}
+
+func TestTextMessageEncryptionWithSignature(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
 
 	ciphertext, err := keyRingTestPublic.Encrypt(message, keyRingTestPrivate)
