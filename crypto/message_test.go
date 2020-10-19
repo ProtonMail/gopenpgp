@@ -338,3 +338,22 @@ func TestMessageGetArmoredWithEmptyHeaders(t *testing.T) {
 	assert.NotContains(t, armored, "Version")
 	assert.NotContains(t, armored, "Comment")
 }
+
+func TestIssue80(t *testing.T) {
+	issue80Key, err := NewKeyFromArmored(readTestFile("issue80_publicKey", false))
+	if err != nil {
+		t.Fatal("Expected no error while unarmoring public keyring, got:", err)
+	}
+
+	issue80Keyring, err := NewKeyRing(issue80Key)
+	if err != nil {
+		t.Fatal("Expected no error while building keyring, got:", err)
+	}
+
+	var message = NewPlainMessageFromString("plain text")
+
+	_, err = issue80Keyring.Encrypt(message, nil)
+	if err.Error() != "openpgp: invalid argument: cannot encrypt a message to key id fbfcc82a015e7330 because it has no encryption keys" {
+		t.Fatal("Expected encryption error, got: ", err)
+	}
+}
