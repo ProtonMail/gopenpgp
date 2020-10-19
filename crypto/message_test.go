@@ -115,7 +115,7 @@ func TestTextMessageEncryptionWithCompression(t *testing.T) {
 		"The secret code is... 1, 2, 3, 4, 5. I repeat: the secret code is... 1, 2, 3, 4, 5",
 	)
 
-	ciphertext, err := keyRingTestPublic.EncryptWithCompression(message, nil, 2, 6)
+	ciphertext, err := keyRingTestPublic.EncryptWithCompression(message, nil)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}

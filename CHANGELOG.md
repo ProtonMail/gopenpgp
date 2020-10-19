@@ -143,18 +143,9 @@ NewPlainMessageFromFile(data []byte, filename string, modTime int) *PlainMessage
 
 - `EncryptWithCompression` to encrypt specifying a compression for asymmetric and session keys
 ```go
-(keyRing *KeyRing) EncryptWithCompression(
-	message *PlainMessage,
-	privateKey *KeyRing,
-	compressionAlgorithm packet.CompressionAlgo,
-	level int,
-) (*PGPMessage, error)
+(keyRing *KeyRing) EncryptWithCompression(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error)
 
-(sk *SessionKey) EncryptWithCompression(
-	message *PlainMessage,
-	compressionAlgorithm packet.CompressionAlgo,
-	level int,
-) ([]byte, error)
+(sk *SessionKey) EncryptWithCompression(message *PlainMessage) ([]byte, error)
 ```
 
 ### Changed

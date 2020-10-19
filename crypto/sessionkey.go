@@ -129,17 +129,8 @@ func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
 
 // EncryptWithCompression encrypts and compresses a PlainMessage to PGPMessage with a SessionKey.
 // * message : The plain data as a PlainMessage.
-// * compressionAlgorithm:
-//    CompressionNone CompressionAlgo = 0
-//	  CompressionZIP  CompressionAlgo = 1
-//	  CompressionZLIB CompressionAlgo = 2
-// * level: integer between -1 and 9. -1 for automatic, 0 to 9 for manual selection.
 // * output  : The encrypted data as PGPMessage.
-func (sk *SessionKey) EncryptWithCompression(
-	message *PlainMessage,
-	compressionAlgorithm packet.CompressionAlgo,
-	level int,
-) ([]byte, error) {
+func (sk *SessionKey) EncryptWithCompression(message *PlainMessage) ([]byte, error) {
 	dc, err := sk.GetCipherFunc()
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt with session key")
@@ -148,8 +139,8 @@ func (sk *SessionKey) EncryptWithCompression(
 	config := &packet.Config{
 		Time:                   getTimeGenerator(),
 		DefaultCipher:          dc,
-		DefaultCompressionAlgo: compressionAlgorithm,
-		CompressionConfig:      &packet.CompressionConfig{Level: level},
+		DefaultCompressionAlgo: constants.DefaultCompression,
+		CompressionConfig:      &packet.CompressionConfig{Level: constants.DefaultCompressionLevel},
 	}
 
 	return encryptWithSessionKey(message, sk, config)

@@ -196,7 +196,7 @@ func TestDataPacketEncryptionWithCompression(t *testing.T) {
 	)
 
 	// Encrypt data with session key
-	dataPacket, err := testSessionKey.EncryptWithCompression(message, 2, 6)
+	dataPacket, err := testSessionKey.EncryptWithCompression(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
