@@ -6,6 +6,8 @@ import (
 	"io"
 	"io/ioutil"
 
+	"github.com/ProtonMail/gopenpgp/v2/constants"
+
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -27,23 +29,13 @@ func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PG
 // EncryptWithCompression encrypts and compresses a PlainMessage to PGPMessage using public/private keys.
 // * message : The plain data as a PlainMessage.
 // * privateKey : (optional) an unlocked private keyring to include signature in the message.
-// * compressionAlgorithm:
-//    CompressionNone CompressionAlgo = 0
-//	  CompressionZIP  CompressionAlgo = 1
-//	  CompressionZLIB CompressionAlgo = 2
-// * level: integer between -1 and 9. -1 for automatic, 0 to 9 for manual selection.
 // * output  : The encrypted data as PGPMessage.
-func (keyRing *KeyRing) EncryptWithCompression(
-	message *PlainMessage,
-	privateKey *KeyRing,
-	compressionAlgorithm packet.CompressionAlgo,
-	level int,
-) (*PGPMessage, error) {
+func (keyRing *KeyRing) EncryptWithCompression(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error) {
 	config := &packet.Config{
 		DefaultCipher:          packet.CipherAES256,
 		Time:                   getTimeGenerator(),
-		DefaultCompressionAlgo: compressionAlgorithm,
-		CompressionConfig:      &packet.CompressionConfig{Level: level},
+		DefaultCompressionAlgo: constants.DefaultCompression,
+		CompressionConfig:      &packet.CompressionConfig{Level: constants.DefaultCompressionLevel},
 	}
 
 	encrypted, err := asymmetricEncrypt(message, keyRing, privateKey, config)
