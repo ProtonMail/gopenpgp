@@ -18,4 +18,4 @@ const (
 )
 
 const DefaultCompression = 2 // ZLIB
-const DefaultCompressionLevel = 6
+const DefaultCompressionLevel = 6 // Corresponds to default -1 for ZLIB
