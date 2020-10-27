@@ -127,7 +127,7 @@ func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
 	return encryptWithSessionKey(message, sk, config)
 }
 
-// EncryptWithCompression encrypts and compresses a PlainMessage to PGPMessage with a SessionKey.
+// EncryptWithCompression encrypts with compression support a PlainMessage to PGPMessage with a SessionKey.
 // * message : The plain data as a PlainMessage.
 // * output  : The encrypted data as PGPMessage.
 func (sk *SessionKey) EncryptWithCompression(message *PlainMessage) ([]byte, error) {
