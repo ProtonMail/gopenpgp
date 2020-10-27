@@ -26,7 +26,7 @@ func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PG
 	return NewPGPMessage(encrypted), nil
 }
 
-// EncryptWithCompression encrypts and compresses a PlainMessage to PGPMessage using public/private keys.
+// EncryptWithCompression encrypts with compression support a PlainMessage to PGPMessage using public/private keys.
 // * message : The plain data as a PlainMessage.
 // * privateKey : (optional) an unlocked private keyring to include signature in the message.
 // * output  : The encrypted data as PGPMessage.
