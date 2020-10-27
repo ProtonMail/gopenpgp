@@ -56,7 +56,7 @@ func NewKey(binKeys []byte) (key *Key, err error) {
 
 // NewKeyFromArmored creates a new key from the first key in an armored string.
 func NewKeyFromArmored(armored string) (key *Key, err error) {
-	return NewKeyFromArmoredReader(strings.NewReader(armored))
+	return NewKeyFromArmoredReader(strings.NewReader(cloneString(armored)))
 }
 
 // GenerateRSAKeyWithPrimes generates a RSA key using the given primes.

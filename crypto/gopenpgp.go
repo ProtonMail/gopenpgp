@@ -19,3 +19,7 @@ func clone(input []byte) []byte {
 	copy(data, input)
 	return data
 }
+
+func cloneString(input string) string {
+	return string([]byte(input))
+}
