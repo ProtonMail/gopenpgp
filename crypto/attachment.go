@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"runtime"
 	"sync"
+	"time"
 
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
@@ -52,7 +53,7 @@ func (ap *AttachmentProcessor) Finish() (*PGPSplitMessage, error) {
 // newAttachmentProcessor creates an AttachmentProcessor which can be used to encrypt
 // a file. It takes an estimatedSize and fileName as hints about the file.
 func (keyRing *KeyRing) newAttachmentProcessor(
-	estimatedSize int, fileName string, garbageCollector int,
+	estimatedSize int, filename string, isBinary bool, modTime uint32, garbageCollector int,
 ) (*AttachmentProcessor, error) {
 	attachmentProc := &AttachmentProcessor{}
 	// You could also add these one at a time if needed.
@@ -60,7 +61,9 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 	attachmentProc.garbageCollector = garbageCollector
 
 	hints := &openpgp.FileHints{
-		FileName: fileName,
+		FileName: filename,
+		IsBinary: isBinary,
+		ModTime:  time.Unix(int64(modTime), 0),
 	}
 
 	config := &packet.Config{
@@ -93,11 +96,22 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 	return attachmentProc, nil
 }
 
-// EncryptAttachment encrypts a file given a PlainMessage and a fileName.
+// EncryptAttachment encrypts a file given a PlainMessage and a filename.
+// If given a filename it will override the information in the PlainMessage object.
 // Returns a PGPSplitMessage containing a session key packet and symmetrically encrypted data.
 // Specifically designed for attachments rather than text messages.
-func (keyRing *KeyRing) EncryptAttachment(message *PlainMessage, fileName string) (*PGPSplitMessage, error) {
-	ap, err := keyRing.newAttachmentProcessor(len(message.GetBinary()), fileName, -1)
+func (keyRing *KeyRing) EncryptAttachment(message *PlainMessage, filename string) (*PGPSplitMessage, error) {
+	if filename == "" {
+		filename = message.Filename
+	}
+
+	ap, err := keyRing.newAttachmentProcessor(
+		len(message.GetBinary()),
+		filename,
+		message.IsBinary(),
+		message.Time,
+		-1,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -110,13 +124,13 @@ func (keyRing *KeyRing) EncryptAttachment(message *PlainMessage, fileName string
 }
 
 // NewLowMemoryAttachmentProcessor creates an AttachmentProcessor which can be used
-// to encrypt a file. It takes an estimatedSize and fileName as hints about the
+// to encrypt a file. It takes an estimatedSize and filename as hints about the
 // file. It is optimized for low-memory environments and collects garbage every
 // megabyte.
 func (keyRing *KeyRing) NewLowMemoryAttachmentProcessor(
-	estimatedSize int, fileName string,
+	estimatedSize int, filename string,
 ) (*AttachmentProcessor, error) {
-	return keyRing.newAttachmentProcessor(estimatedSize, fileName, 1<<20)
+	return keyRing.newAttachmentProcessor(estimatedSize, filename, true, uint32(GetUnixTime()), 1<<20)
 }
 
 // DecryptAttachment takes a PGPSplitMessage, containing a session key packet and symmetrically encrypted data
@@ -143,5 +157,10 @@ func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*PlainMessa
 		return nil, err
 	}
 
-	return NewPlainMessage(b), nil
+	return &PlainMessage{
+		Data:     b,
+		TextType: !md.LiteralData.IsBinary,
+		Filename: md.LiteralData.FileName,
+		Time:     md.LiteralData.Time,
+	}, nil
 }

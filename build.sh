@@ -1,101 +1,120 @@
 #!/bin/bash
 
-PACKAGE_PATH="github.com/ProtonMail/gopenpgp"
-cd "${GOPATH}"/src/${PACKAGE_PATH} || exit
-if ! [ -L "v2" ]; then
-  ln -s . v2
-fi
-
-printf "\e[0;32mStart installing vendor \033[0m\n\n"
-export GO111MODULE=on
-go mod vendor
-printf "\e[0;32mDone \033[0m\n\n"
-
-OUTPUT_PATH="dist"
-
-ANDROID_OUT=${OUTPUT_PATH}/"Android"
-ANDROID_OUT_FILE_NAME="gopenpgp"
-ANDROID_OUT_FILE=${ANDROID_OUT}/${ANDROID_OUT_FILE_NAME}.aar
-ANDROID_JAVA_PAG="com.proton.${ANDROID_OUT_FILE_NAME}"
-
-IOS_OUT=${OUTPUT_PATH}/"iOS"
-IOS_OUT_FILE_NAME="Crypto"
-IOS_OUT_FILE=${IOS_OUT}/${IOS_OUT_FILE_NAME}.framework
-
-
-
-mkdir -p $ANDROID_OUT
-mkdir -p $IOS_OUT
-
-install() 
+install_modules()
 {
-    INSTALL_NAME=$1
-    FROM_PATH=$2
-    INSTALL_PATH=$3
-    if [[ -z "${INSTALL_PATH}" ]]; then
-        printf "\e[0;32m ${INSTALL_NAME} project path is undefined! ignore this !\033[0m\n";
-    else 
-        printf "\n\e[0;32mDo you wise to install the library into ${INSTALL_NAME} project \033[0m\n"
-        printf "\e[0;37m${INSTALL_NAME} Project Path: \033[0m" 
-        printf "\e[0;37m${INSTALL_PATH} \033[0m" 
-        printf "\n"
-        while true; do
-            read -p "[Yy] or [Nn]:" yn
-            case $yn in
-                [Yy]* )
-                    printf "\e[0;32m  Installing .... \033[0m\n";
-                    cp -rf ${FROM_PATH} ${INSTALL_PATH}/
-                    printf "\n\e[0;32mInstalled \033[0m\n\n"
-                    break;;
-                [Nn]* ) exit;;
-                * ) echo "Please answer yes or no.";;
-            esac
-        done
-    fi
+	printf "\e[0;32mStart installing go modules and their dependencies \033[0m\n\n"
+	GO111MODULE=on
+	go mod download
+	printf "\e[0;32mDone \033[0m\n\n"
+}
+
+install_gomobile()
+{
+	printf "\e[0;32mInstalling gomobile fork\033[0m\n\n"
+	go build golang.org/x/mobile/cmd/gomobile
+	go build golang.org/x/mobile/cmd/gobind
+	printf "\e[0;32mDone \033[0m\n\n"
+	PATH=$(pwd):$PATH
 }
 
 # import function, add internal package in the build
 import()
 {
-    PACKAGES=" ${PACKAGES} ${PACKAGE_PATH}/v2/$1"
-}
-
-external() 
-{
     PACKAGES="${PACKAGES} $1"
 }
 
-######## MARK -- Main
+build()
+{
+	TARGET=$1
+	if [ $TARGET = "android" ]; then
+		OUT_EXTENSION="aar"
+	else
+		OUT_EXTENSION="framework"
+	fi
+	TARGET_DIR=${BUILD_DIR}/${TARGET}
+	TARGET_OUT_FILE=${TARGET_DIR}/${BUILD_NAME}.${OUT_EXTENSION}
+	mkdir -p $TARGET_DIR
+	printf "\e[0;32mStart Building ${TARGET} .. Location: ${TARGET_DIR} \033[0m\n\n"
+	gomobile bind -tags mobile -target $TARGET -x -o ${TARGET_OUT_FILE} -ldflags="${LDFLAGS}" ${PACKAGES}
+}
 
-#flags
-DFLAGS="-s -w"
 
+## ======== Config ===============
+
+# ==== Generic parameters ======
+
+# output directory
+BUILD_DIR="./build"
+
+# linkage flags
+LDFLAGS="'all=-s -w'"
+
+# name of the build output
+BUILD_NAME="Gopenpgp"
+
+# ==== Packages to include =====
 PACKAGES=""
-#add internal package 
+
 ## crypto must be the first one, and the framework name better same with the first package name
-import crypto 
-import armor 
-import constants 
-import models 
-import subtle 
-import helper
+import github.com/ProtonMail/gopenpgp/v2/crypto
+import github.com/ProtonMail/gopenpgp/v2/armor
+import github.com/ProtonMail/gopenpgp/v2/constants
+import github.com/ProtonMail/gopenpgp/v2/models
+import github.com/ProtonMail/gopenpgp/v2/subtle
+import github.com/ProtonMail/gopenpgp/v2/helper
 
-## add external package
-if [ "$1" != '' ]; then
-  external $1
-fi
+######## ======== Main ===========
 
-printf "PACKAGES: ${PACKAGES}\n"
+# We get the needed go modules stated in the go.mod file
+install_modules
+install_gomobile
+go env
+echo "gomobile: $(which gomobile)"
+echo "gobind: $(which gobind)"
+printf "Packages included : ${PACKAGES}\n"
 ## start building
+# ================= Apple Builds ======================
+if [ "$#" -ne 1 ] || [ $1 = apple ]; then
+# ========== iOS and Simulator =========
 
-printf "\e[0;32mStart Building iOS framework .. Location: ${IOS_OUT} \033[0m\n\n"
-gomobile bind -target ios -o ${IOS_OUT_FILE} -ldflags="${DFLAGS}" ${PACKAGES}
-# install iOS  ${IOS_OUT_FILE} ${IOS_PROJECT_PATH}
+# we build the framework for the ios devices
+build ios
 
-printf "\e[0;32mStart Building Android lib .. Location: ${ANDROID_OUT} \033[0m\n\n"
-gomobile bind -target android -javapkg ${ANDROID_JAVA_PAG} -o ${ANDROID_OUT_FILE} -ldflags="${DFLAGS}" ${PACKAGES}
-# install Android ${ANDROID_OUT} ${ANDROID_PROJECT_PATH}
+# we make a copy of the framework for the simulator
+IOSSIM_OUT=${BUILD_DIR}/"ios-simulator"
+mkdir -p $IOSSIM_OUT
+IOS_OUT_FILE=${BUILD_DIR}/ios/${BUILD_NAME}.framework
+IOSSIM_OUT_FILE=${IOSSIM_OUT}/${BUILD_NAME}.framework
 
-printf "\e[0;32mInstalling frameworks. \033[0m\n\n"
+cp -R $IOS_OUT_FILE $IOSSIM_OUT_FILE;
+
+# we remove the unwanted archs for ios and simulator
+lipo $IOSSIM_OUT_FILE/Versions/A/${BUILD_NAME} -remove arm64 -output $IOSSIM_OUT_FILE/Versions/A/${BUILD_NAME};
+lipo $IOS_OUT_FILE/Versions/A/${BUILD_NAME} -remove x86_64 -output $IOS_OUT_FILE/Versions/A/${BUILD_NAME};
+
+
+# ========== macOs ====================
+
+# we build the framework for the macos devices
+
+build macos
+
+# ======== macOSUI ===============
+
+# we build the framework for the macos-ui target
+
+build macos-ui
+
+# we join all platform's framework in a xcframework
+XCFRAMEWORK_OUT_FILE=$BUILD_DIR/$BUILD_NAME.xcframework
+
+xcodebuild -create-xcframework -framework $BUILD_DIR/ios/$BUILD_NAME.framework -framework $BUILD_DIR/macos/$BUILD_NAME.framework -framework $BUILD_DIR/macos-ui/$BUILD_NAME.framework -framework $BUILD_DIR/ios-simulator/$BUILD_NAME.framework -output $XCFRAMEWORK_OUT_FILE
+
+fi
+# ================  Android Build =====================
+if [ "$#" -ne 1 ] || [ $1 = android ]; then
+ANDROID_JAVA_PAG="com.proton.${ANDROID_OUT_FILE_NAME}"
+build android
 
 printf "\e[0;32mAll Done. \033[0m\n\n"
+fi

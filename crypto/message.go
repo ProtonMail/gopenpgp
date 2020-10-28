@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"regexp"
 	"runtime"
+	"strings"
+	"time"
 
 	"github.com/ProtonMail/gopenpgp/v2/armor"
 	"github.com/ProtonMail/gopenpgp/v2/constants"
@@ -24,8 +26,12 @@ import (
 type PlainMessage struct {
 	// The content of the message
 	Data []byte
-	// if the content is text or binary
+	// If the content is text or binary
 	TextType bool
+	// The file's latest modification time
+	Time uint32
+	// The encrypted message's filename
+	Filename string
 }
 
 // PGPMessage stores a PGP-encrypted message.
@@ -62,6 +68,19 @@ func NewPlainMessage(data []byte) *PlainMessage {
 	return &PlainMessage{
 		Data:     clone(data),
 		TextType: false,
+		Time:     uint32(GetUnixTime()),
+	}
+}
+
+// NewPlainMessageFromFile generates a new binary PlainMessage ready for encryption,
+// signature, or verification from the unencrypted binary data.
+// It assigns a filename and a modification time.
+func NewPlainMessageFromFile(data []byte, filename string, time uint32) *PlainMessage {
+	return &PlainMessage{
+		Data:     clone(data),
+		TextType: false,
+		Filename: filename,
+		Time:     time,
 	}
 }
 
@@ -69,8 +88,9 @@ func NewPlainMessage(data []byte) *PlainMessage {
 // ready for encryption, signature, or verification from an unencrypted string.
 func NewPlainMessageFromString(text string) *PlainMessage {
 	return &PlainMessage{
-		Data:     []byte(text),
+		Data:     []byte(strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\n", "\r\n")),
 		TextType: true,
+		Time:     uint32(GetUnixTime()),
 	}
 }
 
@@ -177,7 +197,7 @@ func (msg *PlainMessage) GetBinary() []byte {
 
 // GetString returns the content of the message as a string.
 func (msg *PlainMessage) GetString() string {
-	return string(msg.Data)
+	return strings.ReplaceAll(string(msg.Data), "\r\n", "\n")
 }
 
 // GetBase64 returns the base-64 encoded binary content of the message as a
@@ -199,6 +219,11 @@ func (msg *PlainMessage) IsText() bool {
 // IsBinary returns whether the message is a binary message.
 func (msg *PlainMessage) IsBinary() bool {
 	return !msg.TextType
+}
+
+// getFormattedTime returns the message (latest modification) Time as time.Time.
+func (msg *PlainMessage) getFormattedTime() time.Time {
+	return time.Unix(int64(msg.Time), 0)
 }
 
 // GetBinary returns the unarmored binary content of the message as a []byte.

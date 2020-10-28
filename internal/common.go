@@ -7,9 +7,9 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 )
 
-// TrimNewlines removes whitespace from the end of each line of the input
+// TrimWhitespace removes whitespace from the end of each line of the input
 // string.
-func TrimNewlines(input string) string {
+func TrimWhitespace(input string) string {
 	var re = regexp.MustCompile(`(?m)[ \t]*$`)
 	return re.ReplaceAllString(input, "")
 }
