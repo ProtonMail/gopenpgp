@@ -83,7 +83,7 @@ func GetJsonSHA256Fingerprints(publicKey string) ([]byte, error) {
 	return json.Marshal(key.GetSHA256Fingerprints())
 }
 
-// EncryptSignArmoredDetachedMobileResult is a wrapper for gomobile
+// EncryptSignArmoredDetachedMobileResult is a wrapper for gomobile.
 type EncryptSignArmoredDetachedMobileResult struct {
 	CiphertextArmored, SignatureArmored string
 }
@@ -105,7 +105,7 @@ func EncryptSignArmoredDetachedMobile(
 	}, nil
 }
 
-// EncryptSignBinaryDetachedMobileResult is a wrapper for gomobile
+// EncryptSignBinaryDetachedMobileResult is a wrapper for gomobile.
 type EncryptSignBinaryDetachedMobileResult struct {
 	EncryptedData    []byte
 	SignatureArmored string
@@ -127,7 +127,7 @@ func EncryptSignBinaryDetachedMobile(
 	}, nil
 }
 
-// EncryptSignArmoredDetachedEncryptedMobileResult is a wrapper for gomobile
+// EncryptSignArmoredDetachedEncryptedMobileResult is a wrapper for gomobile.
 type EncryptSignArmoredDetachedEncryptedMobileResult struct {
 	CiphertextArmored, EncryptedSignatureArmored string
 }
@@ -150,7 +150,7 @@ func EncryptSignArmoredDetachedEncryptedMobile(
 	}, nil
 }
 
-// EncryptSignBinaryDetachedEncryptedMobileResult is a wrapper for gomobile
+// EncryptSignBinaryDetachedEncryptedMobileResult is a wrapper for gomobile.
 type EncryptSignBinaryDetachedEncryptedMobileResult struct {
 	EncryptedData             []byte
 	EncryptedSignatureArmored string
