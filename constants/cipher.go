@@ -17,5 +17,5 @@ const (
 	SIGNATURE_FAILED      int = 3
 )
 
-const DefaultCompression = 2 // ZLIB
+const DefaultCompression = 2      // ZLIB
 const DefaultCompressionLevel = 6 // Corresponds to default -1 for ZLIB
