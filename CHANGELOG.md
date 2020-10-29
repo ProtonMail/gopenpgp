@@ -46,31 +46,81 @@ DecryptBinaryMessageArmored(privateKey string, passphrase []byte, ciphertext str
 (key *Key) ToPublic() (publicKey *Key, err error) 
 ```
 
-- Helpers to handle detached signatures
+- Helpers to handle encryption (both with armored and unarmored cipher) + encrypted detached signatures in one call.
 ```go
 EncryptSignArmoredDetached(
-    publicKey, privateKey string,
-    passphrase, plainData []byte,
-) (ciphertext, signature string, err error)
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (ciphertextArmored, encryptedSignatureArmored string, err error)
 
 DecryptVerifyArmoredDetached(
 	publicKey, privateKey string,
 	passphrase []byte,
-	ciphertext string,
-	armoredSignature string,
+	ciphertextArmored string,
+	encryptedSignatureArmored string,
 ) (plainData []byte, err error)
 ```
+```go
+EncryptSignBinaryDetached(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (encryptedData []byte, encryptedSignatureArmored string, err error)
 
-- `EncryptSignArmoredDetachedMobileResult` Struct (with its helper) to allow detached signature + encryption in one pass
+DecryptVerifyBinaryDetached(
+	publicKey, privateKey string,
+	passphrase []byte,
+	encryptedData []byte,
+	encryptedSignatureArmored string,
+) (plainData []byte, err error)
+```
+- Wrappers for `EncryptSignArmoredDetached` and `EncryptSignBinaryDetached` helpers, to be usable with gomobile (that doesn't support multiple retun values). These wrappers return custom structs instead.
 ```go
 type EncryptSignArmoredDetachedMobileResult struct {
-	Ciphertext, Signature string
+	CiphertextArmored, EncryptedSignatureArmored string
 }
 
 EncryptSignArmoredDetachedMobile(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
 ) (wrappedTuple *EncryptSignArmoredDetachedMobileResult, err error)
+```
+```go
+type EncryptSignBinaryDetachedMobileResult struct {
+	EncryptedData             []byte
+	EncryptedSignatureArmored string
+}
+
+EncryptSignBinaryDetachedMobile(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (wrappedTuple *EncryptSignBinaryDetachedMobileResult, err error) 
+```
+
+- helpers to encrypt/decrypt session keys with armored keys:
+```go
+EncryptSessionKey(
+	publicKey string,
+	sessionKey *crypto.SessionKey,
+) (encryptedSessionKey []byte, err error)
+
+DecryptSessionKey(
+	privateKey string,
+	passphrase, encryptedSessionKey []byte,
+) (sessionKey *crypto.SessionKey, err error)
+```
+
+- helpers to encrypt/decrypt binary files with armored keys:
+```go
+EncryptAttachmentWithKey(
+	publicKey string,
+	filename string,
+	plainData []byte,
+) (message *crypto.PGPSplitMessage, err error)
+
+DecryptAttachmentWithKey(
+	privateKey string,
+	passphrase, keyPacket, dataPacket []byte,
+) (attachment []byte, err error)
 ```
 
 - `NewPlainMessageFromFile` Function to create new `PlainMessage`s with a filename:
