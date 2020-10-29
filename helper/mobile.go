@@ -99,8 +99,8 @@ func EncryptSignArmoredDetachedMobile(
 	}
 
 	return &EncryptSignArmoredDetachedMobileResult{
-		Ciphertext:         ciphertext,
-		EncryptedSignature: encryptedSignature,
+		CiphertextArmored:         ciphertext,
+		EncryptedSignatureArmored: encryptedSignature,
 	}, nil
 }
 

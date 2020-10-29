@@ -189,7 +189,7 @@ func DecryptBinaryMessageArmored(privateKey string, passphrase []byte, ciphertex
 func encryptSignArmoredDetached(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
-) (ciphertext, encryptedSignature string, err error) {
+) (ciphertextArmored, encryptedSignatureArmored string, err error) {
 	var message = crypto.NewPlainMessage(plainData)
 
 	// We encrypt and signcrypt
