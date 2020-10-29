@@ -186,7 +186,11 @@ func (key *Key) Serialize() ([]byte, error) {
 		err = key.entity.SerializePrivateWithoutSigning(&buffer, nil)
 	}
 
-	return buffer.Bytes(), errors.Wrap(err, "gopenpgp: error in serializing key")
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: error in serializing key")
+	}
+
+	return buffer.Bytes(), nil
 }
 
 // Armor returns the armored key as a string with default gopenpgp headers.

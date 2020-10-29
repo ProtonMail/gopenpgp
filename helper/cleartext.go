@@ -54,7 +54,7 @@ func SignCleartextMessage(keyRing *crypto.KeyRing, text string) (string, error) 
 
 	signature, err := keyRing.SignDetached(message)
 	if err != nil {
-		return "", errors.Wrap(err, "gopenpgp: error in signing message")
+		return "", errors.Wrap(err, "gopenpgp: error in signing cleartext message")
 	}
 
 	return crypto.NewClearTextMessage(message.GetBinary(), signature.GetBinary()).GetArmored()
@@ -66,14 +66,14 @@ func SignCleartextMessage(keyRing *crypto.KeyRing, text string) (string, error) 
 func VerifyCleartextMessage(keyRing *crypto.KeyRing, armored string, verifyTime int64) (string, error) {
 	clearTextMessage, err := crypto.NewClearTextMessageFromArmored(armored)
 	if err != nil {
-		return "", errors.Wrap(err, "gopengpp: unable to unarmor message")
+		return "", errors.Wrap(err, "gopengpp: unable to unarmor cleartext message")
 	}
 
 	message := crypto.NewPlainMessageFromString(clearTextMessage.GetString())
 	signature := crypto.NewPGPSignature(clearTextMessage.GetBinarySignature())
 	err = keyRing.VerifyDetached(message, signature, verifyTime)
 	if err != nil {
-		return "", errors.Wrap(err, "gopengpp: unable to verify message")
+		return "", errors.Wrap(err, "gopengpp: unable to verify cleartext message")
 	}
 
 	return message.GetString(), nil

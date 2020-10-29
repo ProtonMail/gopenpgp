@@ -18,7 +18,7 @@ func TestAESEncryption(t *testing.T) {
 	}
 
 	_, err = DecryptMessageWithPassword([]byte("Wrong passphrase"), ciphertext)
-	assert.EqualError(t, err, "gopenpgp: unable to decrypt message with password: " +
+	assert.EqualError(t, err, "gopenpgp: unable to decrypt message with password: "+
 		"gopenpgp: error in reading password protected message: gopenpgp: wrong password in symmetric decryption")
 
 	decrypted, err := DecryptMessageWithPassword(passphrase, ciphertext)
