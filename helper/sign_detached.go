@@ -55,6 +55,16 @@ func EncryptSignAttachment(
 func EncryptSignArmoredDetached(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
-) (ciphertext, encryptedSignature string, err error) {
+) (ciphertextArmored, encryptedSignatureArmored string, err error) {
 	return encryptSignArmoredDetached(publicKey, privateKey, passphrase, plainData)
+}
+
+// EncryptSignBinaryDetached takes a public key for encryption,
+// a private key and its passphrase for signature, and the plaintext data
+// Returns encrypted binary data and a detached armored encrypted signature.
+func EncryptSignBinaryDetached(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (encryptedData []byte, encryptedSignatureArmored string, err error) {
+	return encryptSignBinaryDetached(publicKey, privateKey, passphrase, plainData)
 }
