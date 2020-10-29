@@ -353,3 +353,125 @@ func TestEncryptSignBinaryDetached(t *testing.T) {
 		t.Fatal("Expected an error while decrypting and verifying with a wrong signature")
 	}
 }
+
+func TestEncryptSignBinaryDetachedEncrypted(t *testing.T) {
+	plainData := []byte("Secret message")
+	privateKeyString := readTestFile("keyring_privateKey", false)
+	privateKey, err := crypto.NewKeyFromArmored(privateKeyString)
+	if err != nil {
+		t.Fatal("Error reading the test private key: ", err)
+	}
+	publicKeyString, err := privateKey.GetArmoredPublicKey()
+	if err != nil {
+		t.Fatal("Error reading the test public key: ", err)
+	}
+	encryptedData, armoredSignature, err := EncryptSignBinaryDetachedEncrypted(
+		publicKeyString,
+		privateKeyString,
+		testMailboxPassword, // Password defined in base_test
+		plainData,
+	)
+	if err != nil {
+		t.Fatal("Expected no error while encrypting and signing, got:", err)
+	}
+
+	decrypted, err := DecryptVerifyBinaryDetachedEncrypted(
+		publicKeyString,
+		privateKeyString,
+		testMailboxPassword,
+		encryptedData,
+		armoredSignature,
+	)
+
+	if err != nil {
+		t.Fatal("Expected no error while decrypting and verifying, got:", err)
+	}
+
+	if !bytes.Equal(decrypted, plainData) {
+		t.Error("Decrypted is not equal to the plaintext")
+	}
+
+	_, modifiedSignature, err := EncryptSignBinaryDetachedEncrypted(
+		publicKeyString,
+		privateKeyString,
+		testMailboxPassword, // Password defined in base_test
+		[]byte("Different message"),
+	)
+
+	if err != nil {
+		t.Fatal("Expected no error while encrypting and signing, got:", err)
+	}
+
+	_, err = DecryptVerifyBinaryDetached(
+		publicKeyString,
+		privateKeyString,
+		testMailboxPassword,
+		encryptedData,
+		modifiedSignature,
+	)
+
+	if err == nil {
+		t.Fatal("Expected an error while decrypting and verifying with a wrong signature")
+	}
+}
+
+func TestEncryptSignArmoredDetachedEncrypted(t *testing.T) {
+	plainData := []byte("Secret message")
+	privateKeyString := readTestFile("keyring_privateKey", false)
+	privateKey, err := crypto.NewKeyFromArmored(privateKeyString)
+	if err != nil {
+		t.Fatal("Error reading the test private key: ", err)
+	}
+	publicKeyString, err := privateKey.GetArmoredPublicKey()
+	if err != nil {
+		t.Fatal("Error reading the test public key: ", err)
+	}
+	armoredCiphertext, armoredSignature, err := EncryptSignArmoredDetachedEncrypted(
+		publicKeyString,
+		privateKeyString,
+		testMailboxPassword, // Password defined in base_test
+		plainData,
+	)
+	if err != nil {
+		t.Fatal("Expected no error while encrypting and signing, got:", err)
+	}
+
+	decrypted, err := DecryptVerifyArmoredDetachedEncrypted(
+		publicKeyString,
+		privateKeyString,
+		testMailboxPassword,
+		armoredCiphertext,
+		armoredSignature,
+	)
+
+	if err != nil {
+		t.Fatal("Expected no error while decrypting and verifying, got:", err)
+	}
+
+	if !bytes.Equal(decrypted, plainData) {
+		t.Error("Decrypted is not equal to the plaintext")
+	}
+
+	_, modifiedSignature, err := EncryptSignArmoredDetachedEncrypted(
+		publicKeyString,
+		privateKeyString,
+		testMailboxPassword, // Password defined in base_test
+		[]byte("Different message"),
+	)
+
+	if err != nil {
+		t.Fatal("Expected no error while encrypting and signing, got:", err)
+	}
+
+	_, err = DecryptVerifyArmoredDetachedEncrypted(
+		publicKeyString,
+		privateKeyString,
+		testMailboxPassword,
+		armoredCiphertext,
+		modifiedSignature,
+	)
+
+	if err == nil {
+		t.Fatal("Expected an error while decrypting and verifying with a wrong signature")
+	}
+}

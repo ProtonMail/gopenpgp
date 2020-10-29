@@ -46,14 +46,42 @@ DecryptBinaryMessageArmored(privateKey string, passphrase []byte, ciphertext str
 (key *Key) ToPublic() (publicKey *Key, err error) 
 ```
 
-- Helpers to handle encryption (both with armored and unarmored cipher) + encrypted detached signatures in one call.
+- Helpers to handle encryption (both with armored and unarmored cipher) + **plain** detached armored signatures in one call.
 ```go
 EncryptSignArmoredDetached(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
-) (ciphertextArmored, encryptedSignatureArmored string, err error)
+) (ciphertextArmored, signatureArmored string, err error)
 
 DecryptVerifyArmoredDetached(
+	publicKey, privateKey string,
+	passphrase []byte,
+	ciphertextArmored string,
+	signatureArmored string,
+) (plainData []byte, err error)
+```
+```go
+EncryptSignBinaryDetached(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (encryptedData []byte, signatureArmored string, err error)
+
+DecryptVerifyBinaryDetached(
+	publicKey, privateKey string,
+	passphrase []byte,
+	encryptedData []byte,
+	signatureArmored string,
+) (plainData []byte, err error)
+```
+
+- Helpers to handle encryption (both with armored and unarmored cipher) + **encrypted** detached armored signatures in one call.
+```go
+EncryptSignArmoredDetachedEncrypted(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (ciphertextArmored, encryptedSignatureArmored string, err error)
+
+DecryptVerifyArmoredDetachedEncrypted(
 	publicKey, privateKey string,
 	passphrase []byte,
 	ciphertextArmored string,
@@ -61,19 +89,20 @@ DecryptVerifyArmoredDetached(
 ) (plainData []byte, err error)
 ```
 ```go
-EncryptSignBinaryDetached(
+EncryptSignBinaryDetachedEncrypted(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
 ) (encryptedData []byte, encryptedSignatureArmored string, err error)
 
-DecryptVerifyBinaryDetached(
+DecryptVerifyBinaryDetachedEncrypted(
 	publicKey, privateKey string,
 	passphrase []byte,
 	encryptedData []byte,
 	encryptedSignatureArmored string,
 ) (plainData []byte, err error)
 ```
-- Wrappers for `EncryptSignArmoredDetached` and `EncryptSignBinaryDetached` helpers, to be usable with gomobile (that doesn't support multiple retun values). These wrappers return custom structs instead.
+
+- Wrappers for `EncryptSignArmoredDetached`, `EncryptSignBinaryDetached`, `EncryptSignArmoredDetachedEncrypted` and `EncryptSignBinaryDetachedEncrypted` helpers, to be usable with gomobile (that doesn't support multiple retun values). These wrappers return custom structs instead.
 ```go
 type EncryptSignArmoredDetachedMobileResult struct {
 	CiphertextArmored, EncryptedSignatureArmored string
@@ -94,6 +123,27 @@ EncryptSignBinaryDetachedMobile(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
 ) (wrappedTuple *EncryptSignBinaryDetachedMobileResult, err error) 
+```
+```go
+type EncryptSignArmoredDetachedEncryptedMobileResult struct {
+	CiphertextArmored, EncryptedSignatureArmored string
+}
+
+EncryptSignArmoredDetachedEncryptedMobile(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (wrappedTuple *EncryptSignArmoredDetachedEncryptedMobileResult, err error) 
+```
+```go
+type EncryptSignBinaryDetachedEncryptedMobileResult struct {
+	EncryptedData             []byte
+	EncryptedSignatureArmored string
+}
+
+func EncryptSignBinaryDetachedEncryptedMobile(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (wrappedTuple *EncryptSignBinaryDetachedEncryptedMobileResult, err error)
 ```
 
 - helpers to encrypt/decrypt session keys with armored keys:

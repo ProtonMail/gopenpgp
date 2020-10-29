@@ -83,8 +83,9 @@ func GetJsonSHA256Fingerprints(publicKey string) ([]byte, error) {
 	return json.Marshal(key.GetSHA256Fingerprints())
 }
 
+// EncryptSignArmoredDetachedMobileResult is a wrapper for gomobile
 type EncryptSignArmoredDetachedMobileResult struct {
-	CiphertextArmored, EncryptedSignatureArmored string
+	CiphertextArmored, SignatureArmored string
 }
 
 // EncryptSignArmoredDetachedMobile wraps the encryptSignArmoredDetached method
@@ -93,20 +94,21 @@ func EncryptSignArmoredDetachedMobile(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
 ) (wrappedTuple *EncryptSignArmoredDetachedMobileResult, err error) {
-	ciphertext, encryptedSignature, err := encryptSignArmoredDetached(publicKey, privateKey, passphrase, plainData)
+	ciphertext, signature, err := encryptSignArmoredDetached(publicKey, privateKey, passphrase, plainData)
 	if err != nil {
 		return nil, err
 	}
 
 	return &EncryptSignArmoredDetachedMobileResult{
-		CiphertextArmored:         ciphertext,
-		EncryptedSignatureArmored: encryptedSignature,
+		CiphertextArmored: ciphertext,
+		SignatureArmored:  signature,
 	}, nil
 }
 
+// EncryptSignBinaryDetachedMobileResult is a wrapper for gomobile
 type EncryptSignBinaryDetachedMobileResult struct {
-	EncryptedData             []byte
-	EncryptedSignatureArmored string
+	EncryptedData    []byte
+	SignatureArmored string
 }
 
 // EncryptSignBinaryDetachedMobile wraps the encryptSignBinaryDetached method
@@ -115,11 +117,56 @@ func EncryptSignBinaryDetachedMobile(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
 ) (wrappedTuple *EncryptSignBinaryDetachedMobileResult, err error) {
-	ciphertext, encryptedSignature, err := encryptSignBinaryDetached(publicKey, privateKey, passphrase, plainData)
+	ciphertext, signature, err := encryptSignBinaryDetached(publicKey, privateKey, passphrase, plainData)
 	if err != nil {
 		return nil, err
 	}
 	return &EncryptSignBinaryDetachedMobileResult{
+		EncryptedData:    ciphertext,
+		SignatureArmored: signature,
+	}, nil
+}
+
+// EncryptSignArmoredDetachedEncryptedMobileResult is a wrapper for gomobile
+type EncryptSignArmoredDetachedEncryptedMobileResult struct {
+	CiphertextArmored, EncryptedSignatureArmored string
+}
+
+// EncryptSignArmoredDetachedEncryptedMobile wraps
+// the encryptSignArmoredDetachedEncrypted method
+// to have only one return argument for mobile.
+func EncryptSignArmoredDetachedEncryptedMobile(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (wrappedTuple *EncryptSignArmoredDetachedEncryptedMobileResult, err error) {
+	ciphertext, encryptedSignature, err := encryptSignArmoredDetachedEncrypted(publicKey, privateKey, passphrase, plainData)
+	if err != nil {
+		return nil, err
+	}
+
+	return &EncryptSignArmoredDetachedEncryptedMobileResult{
+		CiphertextArmored:         ciphertext,
+		EncryptedSignatureArmored: encryptedSignature,
+	}, nil
+}
+
+// EncryptSignBinaryDetachedEncryptedMobileResult is a wrapper for gomobile
+type EncryptSignBinaryDetachedEncryptedMobileResult struct {
+	EncryptedData             []byte
+	EncryptedSignatureArmored string
+}
+
+// EncryptSignBinaryDetachedEncryptedMobile wraps the encryptSignBinaryDetached method
+// to have only one return argument for mobile.
+func EncryptSignBinaryDetachedEncryptedMobile(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (wrappedTuple *EncryptSignBinaryDetachedEncryptedMobileResult, err error) {
+	ciphertext, encryptedSignature, err := encryptSignBinaryDetachedEncrypted(publicKey, privateKey, passphrase, plainData)
+	if err != nil {
+		return nil, err
+	}
+	return &EncryptSignBinaryDetachedEncryptedMobileResult{
 		EncryptedData:             ciphertext,
 		EncryptedSignatureArmored: encryptedSignature,
 	}, nil

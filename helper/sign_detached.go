@@ -51,20 +51,40 @@ func EncryptSignAttachment(
 
 // EncryptSignArmoredDetached takes a public key for encryption,
 // a private key and its passphrase for signature, and the plaintext data
-// Returns an armored ciphertext and a detached armored signature.
+// Returns an armored ciphertext and a detached armored plain signature.
 func EncryptSignArmoredDetached(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
-) (ciphertextArmored, encryptedSignatureArmored string, err error) {
+) (ciphertextArmored, signatureArmored string, err error) {
 	return encryptSignArmoredDetached(publicKey, privateKey, passphrase, plainData)
 }
 
 // EncryptSignBinaryDetached takes a public key for encryption,
 // a private key and its passphrase for signature, and the plaintext data
-// Returns encrypted binary data and a detached armored encrypted signature.
+// Returns encrypted binary data and a detached armored plain signature.
 func EncryptSignBinaryDetached(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
-) (encryptedData []byte, encryptedSignatureArmored string, err error) {
+) (encryptedData []byte, signatureArmored string, err error) {
 	return encryptSignBinaryDetached(publicKey, privateKey, passphrase, plainData)
+}
+
+// EncryptSignArmoredDetachedEncrypted takes a public key for encryption,
+// a private key and its passphrase for signature, and the plaintext data
+// Returns an armored ciphertext and a detached armored encrypted signature.
+func EncryptSignArmoredDetachedEncrypted(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (ciphertextArmored, encryptedSignatureArmored string, err error) {
+	return encryptSignArmoredDetachedEncrypted(publicKey, privateKey, passphrase, plainData)
+}
+
+// EncryptSignBinaryDetachedEncrypted takes a public key for encryption,
+// a private key and its passphrase for signature, and the plaintext data
+// Returns encrypted binary data and a detached armored encrypted signature.
+func EncryptSignBinaryDetachedEncrypted(
+	publicKey, privateKey string,
+	passphrase, plainData []byte,
+) (encryptedData []byte, encryptedSignatureArmored string, err error) {
+	return encryptSignBinaryDetachedEncrypted(publicKey, privateKey, passphrase, plainData)
 }
