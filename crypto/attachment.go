@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -36,11 +37,11 @@ func (ap *AttachmentProcessor) Finish() (*PGPSplitMessage, error) {
 		return nil, ap.err
 	}
 	if err := (*ap.w).Close(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopengpp: unable to close writer")
 	}
 
 	if err := (*ap.pipe).Close(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopengpp: unable to close pipe")
 	}
 
 	ap.done.Wait()
@@ -88,7 +89,7 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 	var encryptErr error
 	ew, encryptErr = openpgp.Encrypt(writer, keyRing.entities, nil, hints, config)
 	if encryptErr != nil {
-		return nil, encryptErr
+		return nil, errors.Wrap(encryptErr, "gopengpp: unable to encrypt attachment")
 	}
 	attachmentProc.w = &ew
 	attachmentProc.pipe = writer
@@ -148,13 +149,13 @@ func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*PlainMessa
 
 	md, err := openpgp.ReadMessage(encryptedReader, privKeyEntries, nil, config)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopengpp: unable to read attachment")
 	}
 
 	decrypted := md.UnverifiedBody
 	b, err := ioutil.ReadAll(decrypted)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopengpp: unable to read attachment body")
 	}
 
 	return &PlainMessage{

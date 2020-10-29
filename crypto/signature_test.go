@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"errors"
 	"regexp"
 	"testing"
 
@@ -44,7 +45,8 @@ func TestVerifyTextDetachedSigWrong(t *testing.T) {
 
 	assert.EqualError(t, verificationError, "Signature Verification Error: Invalid signature")
 
-	err, _ := verificationError.(SignatureVerificationError)
+	err := &SignatureVerificationError{}
+	_ = errors.As(verificationError, err)
 	assert.Exactly(t, constants.SIGNATURE_FAILED, err.Status)
 }
 

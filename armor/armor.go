@@ -9,7 +9,7 @@ import (
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/ProtonMail/gopenpgp/v2/internal"
-
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/openpgp/armor"
 )
 
@@ -46,7 +46,7 @@ func ArmorWithTypeAndCustomHeaders(input []byte, armorType, version, comment str
 func Unarmor(input string) ([]byte, error) {
 	b, err := internal.Unarmor(input)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopengp: unable to unarmor")
 	}
 	return ioutil.ReadAll(b.Body)
 }
@@ -57,13 +57,13 @@ func armorWithTypeAndHeaders(input []byte, armorType string, headers map[string]
 	w, err := armor.Encode(&b, armorType, headers)
 
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopengp: unable to encode armoring")
 	}
 	if _, err = w.Write(input); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopengp: unable to write armored to buffer")
 	}
 	if err := w.Close(); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopengp: unable to close armor buffer")
 	}
 	return b.String(), nil
 }

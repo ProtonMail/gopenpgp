@@ -2,8 +2,10 @@ package helper
 
 import (
 	"encoding/json"
+	goerrors "errors"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
+	"github.com/pkg/errors"
 )
 
 type ExplicitVerifyMessage struct {
@@ -24,14 +26,15 @@ func DecryptExplicitVerify(
 	message, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, verifyTime)
 
 	if err != nil {
-		castedErr, isType := err.(crypto.SignatureVerificationError)
+		castedErr := &crypto.SignatureVerificationError{}
+		isType := goerrors.As(err, castedErr)
 		if !isType {
-			return nil, err
+			return nil, errors.Wrap(err, "gopenpgp: unable to decrypt message")
 		}
 
 		explicitVerify = &ExplicitVerifyMessage{
 			Message:                    message,
-			SignatureVerificationError: &castedErr,
+			SignatureVerificationError: castedErr,
 		}
 	} else {
 		explicitVerify = &ExplicitVerifyMessage{
@@ -51,7 +54,7 @@ func DecryptAttachment(keyPacket []byte, dataPacket []byte, keyRing *crypto.KeyR
 
 	decrypted, err := keyRing.DecryptAttachment(splitMessage)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to decrypt attachment")
 	}
 	return decrypted, nil
 }
@@ -64,7 +67,7 @@ func EncryptAttachment(plainData []byte, filename string, keyRing *crypto.KeyRin
 	plainMessage := crypto.NewPlainMessageFromFile(plainData, filename, uint32(crypto.GetUnixTime()))
 	decrypted, err := keyRing.EncryptAttachment(plainMessage, "")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt attachment")
 	}
 	return decrypted, nil
 }
@@ -74,7 +77,7 @@ func EncryptAttachment(plainData []byte, filename string, keyRing *crypto.KeyRin
 func GetJsonSHA256Fingerprints(publicKey string) ([]byte, error) {
 	key, err := crypto.NewKeyFromArmored(publicKey)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to parse key")
 	}
 
 	return json.Marshal(key.GetSHA256Fingerprints())
@@ -94,7 +97,11 @@ func EncryptSignArmoredDetachedMobile(
 	if err != nil {
 		return nil, err
 	}
-	return &EncryptSignArmoredDetachedMobileResult{ciphertext, encryptedSignature}, nil
+
+	return &EncryptSignArmoredDetachedMobileResult{
+		Ciphertext:         ciphertext,
+		EncryptedSignature: encryptedSignature,
+	}, nil
 }
 
 type EncryptSignBinaryDetachedMobileResult struct {
@@ -112,5 +119,8 @@ func EncryptSignBinaryDetachedMobile(
 	if err != nil {
 		return nil, err
 	}
-	return &EncryptSignBinaryDetachedMobileResult{ciphertext, encryptedSignature}, nil
+	return &EncryptSignBinaryDetachedMobileResult{
+		EncryptedData:             ciphertext,
+		EncryptedSignatureArmored: encryptedSignature,
+	}, nil
 }

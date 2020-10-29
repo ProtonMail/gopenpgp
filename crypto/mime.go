@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	gomime "github.com/ProtonMail/go-mime"
-
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -53,14 +53,14 @@ func parseMIME(
 ) (*gomime.BodyCollector, []string, []string, error) {
 	mm, err := mail.ReadMessage(strings.NewReader(mimeBody))
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, errors.Wrap(err, "gopenpgp: error in reading message")
 	}
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 
 	h := textproto.MIMEHeader(mm.Header)
 	mmBodyData, err := ioutil.ReadAll(mm.Body)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, errors.Wrap(err, "gopenpgp: error in reading message body data")
 	}
 
 	printAccepter := gomime.NewMIMEPrinter()

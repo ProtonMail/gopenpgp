@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"bytes"
-	"fmt"
 	"strconv"
 
 	"github.com/pkg/errors"
@@ -18,7 +17,7 @@ func (keyRing *KeyRing) DecryptSessionKey(keyPacket []byte) (*SessionKey, error)
 	var p packet.Packet
 	var err error
 	if p, err = packets.Next(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in reading packets")
 	}
 
 	ek := p.(*packet.EncryptedKey)
@@ -35,7 +34,7 @@ func (keyRing *KeyRing) DecryptSessionKey(keyPacket []byte) (*SessionKey, error)
 	}
 
 	if decryptErr != nil {
-		return nil, decryptErr
+		return nil, errors.Wrap(decryptErr, "gopenpgp: error in decrypting")
 	}
 
 	if ek == nil {
@@ -68,8 +67,7 @@ func (keyRing *KeyRing) EncryptSessionKey(sk *SessionKey) ([]byte, error) {
 
 	for _, pub := range pubKeys {
 		if err := packet.SerializeEncryptedKey(outbuf, pub, cf, sk.Key, nil); err != nil {
-			err = fmt.Errorf("gopenpgp: cannot set key: %v", err)
-			return nil, err
+			return nil, errors.Wrap(err, "gopenpgp: cannot set key")
 		}
 	}
 	return outbuf.Bytes(), nil

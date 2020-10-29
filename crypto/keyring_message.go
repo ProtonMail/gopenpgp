@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -47,7 +48,7 @@ func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, erro
 	var outBuf bytes.Buffer
 	// sign bin
 	if err := openpgp.DetachSign(&outBuf, signEntity, message.NewReader(), config); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in signing")
 	}
 
 	return NewPGPSignature(outBuf.Bytes()), nil
@@ -95,17 +96,17 @@ func asymmetricEncrypt(plainMessage *PlainMessage, publicKey, privateKey *KeyRin
 		encryptWriter, err = openpgp.EncryptText(&outBuf, publicKey.entities, signEntity, hints, config)
 	}
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
 	}
 
 	_, err = encryptWriter.Write(plainMessage.GetBinary())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in writing to message")
 	}
 
 	err = encryptWriter.Close()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in closing message")
 	}
 
 	return outBuf.Bytes(), nil
@@ -130,12 +131,12 @@ func asymmetricDecrypt(
 
 	messageDetails, err := openpgp.ReadMessage(encryptedIO, privKeyEntries, nil, config)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
 	}
 
 	body, err := ioutil.ReadAll(messageDetails.UnverifiedBody)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in reading message body")
 	}
 
 	if verifyKey != nil {

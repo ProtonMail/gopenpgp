@@ -82,8 +82,7 @@ func (keyRing *KeyRing) getSigningEntity() (*openpgp.Entity, error) {
 		}
 	}
 	if signEntity == nil {
-		err := errors.New("gopenpgp: cannot sign message, unable to unlock signer key")
-		return signEntity, err
+		return nil, errors.New("gopenpgp: cannot sign message, unable to unlock signer key")
 	}
 
 	return signEntity, nil

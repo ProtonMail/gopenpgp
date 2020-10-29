@@ -18,7 +18,8 @@ func TestAESEncryption(t *testing.T) {
 	}
 
 	_, err = DecryptMessageWithPassword([]byte("Wrong passphrase"), ciphertext)
-	assert.EqualError(t, err, "gopenpgp: wrong password in symmetric decryption")
+	assert.EqualError(t, err, "gopenpgp: unable to decrypt message with password: "+
+		"gopenpgp: error in reading password protected message: gopenpgp: wrong password in symmetric decryption")
 
 	decrypted, err := DecryptMessageWithPassword(passphrase, ciphertext)
 	if err != nil {
@@ -71,7 +72,7 @@ func TestArmoredTextMessageEncryptionVerification(t *testing.T) {
 		testMailboxPassword, // Password defined in base_test
 		armored,
 	)
-	assert.EqualError(t, err, "Signature Verification Error: No matching signature")
+	assert.EqualError(t, err, "gopenpgp: unable to decrypt message: Signature Verification Error: No matching signature")
 
 	decrypted, err := DecryptVerifyMessageArmored(
 		readTestFile("keyring_privateKey", false),
