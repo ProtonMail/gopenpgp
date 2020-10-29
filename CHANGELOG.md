@@ -97,6 +97,7 @@ NewPlainMessageFromFile(data []byte, filename string, modTime int) *PlainMessage
     now accept private keys as public keys and perform automatic casting if the keys are locked.
 - The `PlainMessage` struct now contains the fields `Filename` (string) and `Time` (uint32)
 - All the Decrypt* functions return the filename, type, and time specified in the encrypted message
+- Improved error wrapping and management
 
 ### Fixed
 - Public key armoring headers

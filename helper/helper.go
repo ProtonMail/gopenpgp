@@ -2,9 +2,8 @@
 package helper
 
 import (
-	"errors"
-
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
+	"github.com/pkg/errors"
 )
 
 // EncryptMessageWithPassword encrypts a string with a passphrase using AES256.
@@ -14,11 +13,11 @@ func EncryptMessageWithPassword(password []byte, plaintext string) (ciphertext s
 	var message = crypto.NewPlainMessageFromString(plaintext)
 
 	if pgpMessage, err = crypto.EncryptMessageWithPassword(message, password); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to encrypt message with password")
 	}
 
 	if ciphertext, err = pgpMessage.GetArmored(); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to armor ciphertext")
 	}
 
 	return ciphertext, nil
@@ -31,11 +30,11 @@ func DecryptMessageWithPassword(password []byte, ciphertext string) (plaintext s
 	var pgpMessage *crypto.PGPMessage
 
 	if pgpMessage, err = crypto.NewPGPMessageFromArmored(ciphertext); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to unarmor ciphertext")
 	}
 
 	if message, err = crypto.DecryptMessageWithPassword(pgpMessage, password); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to decrypt message with password")
 	}
 
 	return message.GetString(), nil
@@ -63,24 +62,24 @@ func EncryptSignMessageArmored(
 	}
 
 	if privateKeyObj, err = crypto.NewKeyFromArmored(privateKey); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to read key")
 	}
 
 	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to unlock key")
 	}
 	defer unlockedKeyObj.ClearPrivateParams()
 
 	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to create new keyring")
 	}
 
 	if pgpMessage, err = publicKeyRing.Encrypt(message, privateKeyRing); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to encrypt message")
 	}
 
 	if ciphertext, err = pgpMessage.GetArmored(); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to armor ciphertext")
 	}
 
 	return ciphertext, nil
@@ -116,24 +115,24 @@ func DecryptVerifyMessageArmored(
 	}
 
 	if privateKeyObj, err = crypto.NewKeyFromArmored(privateKey); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to unarmor private key")
 	}
 
 	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to unlock private key")
 	}
 	defer unlockedKeyObj.ClearPrivateParams()
 
 	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to create new keyring")
 	}
 
 	if pgpMessage, err = crypto.NewPGPMessageFromArmored(ciphertext); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to unarmor ciphertext")
 	}
 
 	if message, err = privateKeyRing.Decrypt(pgpMessage, publicKeyRing, crypto.GetUnixTime()); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to decrypt message")
 	}
 
 	return message.GetString(), nil
@@ -191,31 +190,31 @@ func encryptSignArmoredDetached(
 	publicKey, privateKey string,
 	passphrase, plainData []byte,
 ) (ciphertext, encryptedSignature string, err error) {
-	var message *crypto.PlainMessage = crypto.NewPlainMessage(plainData)
+	var message = crypto.NewPlainMessage(plainData)
 
 	// We generate the session key
 	sessionKey, err := crypto.GenerateSessionKey()
 	if err != nil {
-		return "", "", err
+		return "", "", errors.Wrap(err, "gopenpgp: unable to generate session key")
 	}
 
 	// We encrypt the message with the session key
 	messageDataPacket, err := sessionKey.Encrypt(message)
 	if err != nil {
-		return "", "", err
+		return "", "", errors.Wrap(err, "gopenpgp: unable to encrypt message")
 	}
 
 	// We sign the message
 	detachedSignature, err := signDetached(privateKey, passphrase, message)
 	if err != nil {
-		return "", "", err
+		return "", "", errors.Wrap(err, "gopenpgp: unable to sign the message")
 	}
 
 	// We encrypt the signature with the session key
 	signaturePlaintext := crypto.NewPlainMessage(detachedSignature.GetBinary())
 	signatureDataPacket, err := sessionKey.Encrypt(signaturePlaintext)
 	if err != nil {
-		return "", "", err
+		return "", "", errors.Wrap(err, "gopenpgp: unable to encrypt signature")
 	}
 
 	// We encrypt the session key
@@ -227,11 +226,11 @@ func encryptSignArmoredDetached(
 	// We join the key packets and datapackets and armor the message
 	ciphertext, err = crypto.NewPGPSplitMessage(keyPacket, messageDataPacket).GetArmored()
 	if err != nil {
-		return "", "", err
+		return "", "", errors.Wrap(err, "gopenpgp: unable to armor message")
 	}
 	encryptedSignature, err = crypto.NewPGPSplitMessage(keyPacket, signatureDataPacket).GetArmored()
 	if err != nil {
-		return "", "", err
+		return "", "", errors.Wrap(err, "gopenpgp: unable to armor signature")
 	}
 
 	return ciphertext, encryptedSignature, nil
@@ -323,45 +322,44 @@ func DecryptSessionKey(
 	passphrase, encryptedSessionKey []byte,
 ) (sessionKey *crypto.SessionKey, err error) {
 	privateKeyObj, err := crypto.NewKeyFromArmored(privateKey)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to read armored key")
 	}
 
 	privateKeyUnlocked, err := privateKeyObj.Unlock(passphrase)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to unlock private key")
 	}
 
 	defer privateKeyUnlocked.ClearPrivateParams()
 
 	privateKeyRing, err := crypto.NewKeyRing(privateKeyUnlocked)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to create new keyring")
 	}
+
 	sessionKey, err = privateKeyRing.DecryptSessionKey(encryptedSessionKey)
-	return
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: unable to decrypt session key")
+	}
+
+	return sessionKey, nil
 }
 
 func encryptMessageArmored(key string, message *crypto.PlainMessage) (string, error) {
 	publicKeyRing, err := createPublicKeyRing(key)
-
 	if err != nil {
 		return "", err
 	}
 
 	pgpMessage, err := publicKeyRing.Encrypt(message, nil)
-
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to encrypt message")
 	}
 
 	ciphertext, err := pgpMessage.GetArmored()
-
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: unable to armor message")
 	}
 
 	return ciphertext, nil
@@ -369,35 +367,30 @@ func encryptMessageArmored(key string, message *crypto.PlainMessage) (string, er
 
 func decryptMessageArmored(privateKey string, passphrase []byte, ciphertext string) (*crypto.PlainMessage, error) {
 	privateKeyObj, err := crypto.NewKeyFromArmored(privateKey)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to parse private key")
 	}
 
 	privateKeyUnlocked, err := privateKeyObj.Unlock(passphrase)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to unlock private key")
 	}
 
 	defer privateKeyUnlocked.ClearPrivateParams()
 
 	privateKeyRing, err := crypto.NewKeyRing(privateKeyUnlocked)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to create new keyring")
 	}
 
 	pgpMessage, err := crypto.NewPGPMessageFromArmored(ciphertext)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to unarmor ciphertext")
 	}
 
 	message, err := privateKeyRing.Decrypt(pgpMessage, nil, 0)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to decrypt message")
 	}
 
 	return message, nil
@@ -405,29 +398,25 @@ func decryptMessageArmored(privateKey string, passphrase []byte, ciphertext stri
 
 func signDetached(privateKey string, passphrase []byte, message *crypto.PlainMessage) (detachedSignature *crypto.PGPSignature, err error) {
 	privateKeyObj, err := crypto.NewKeyFromArmored(privateKey)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to parse private key")
 	}
 
 	privateKeyUnlocked, err := privateKeyObj.Unlock(passphrase)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to unlock key")
 	}
 
 	defer privateKeyUnlocked.ClearPrivateParams()
 
 	privateKeyRing, err := crypto.NewKeyRing(privateKeyUnlocked)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to create new keyring")
 	}
 
 	detachedSignature, err = privateKeyRing.SignDetached(message)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to sign message")
 	}
 
 	return detachedSignature, nil
@@ -438,7 +427,7 @@ func verifyDetachedArmored(publicKey string, message *crypto.PlainMessage, armor
 
 	// We unarmor the signature
 	if detachedSignature, err = crypto.NewPGPSignatureFromArmored(armoredSignature); err != nil {
-		return false, err
+		return false, errors.Wrap(err, "gopenpgp: unable to unarmor signature")
 	}
 	// we verify the signature
 	return verifyDetached(publicKey, message, detachedSignature)
@@ -471,40 +460,41 @@ func decryptAttachment(
 
 	// prepare the private key for decryption
 	if privateKeyObj, err = crypto.NewKeyFromArmored(privateKey); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to parse private key")
 	}
 	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to unlock private key")
 	}
 	defer unlockedKeyObj.ClearPrivateParams()
 
 	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to create new keyring")
 	}
 
 	if message, err = privateKeyRing.DecryptAttachment(packets); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to decrypt attachment")
 	}
 
 	return message, nil
 }
 
-func createPublicKeyRing(
-	publicKey string,
-) (publicKeyRing *crypto.KeyRing, err error) {
+func createPublicKeyRing(publicKey string) (*crypto.KeyRing, error) {
 	publicKeyObj, err := crypto.NewKeyFromArmored(publicKey)
-
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: unable to parse public key")
 	}
 
 	if publicKeyObj.IsPrivate() {
 		publicKeyObj, err = publicKeyObj.ToPublic()
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "gopenpgp: unable to extract public key from private key")
 		}
 	}
 
-	publicKeyRing, err = crypto.NewKeyRing(publicKeyObj)
-	return
+	publicKeyRing, err := crypto.NewKeyRing(publicKeyObj)
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: unable to create new keyring")
+	}
+
+	return publicKeyRing, nil
 }

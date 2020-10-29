@@ -3,8 +3,7 @@ package crypto
 import (
 	"bytes"
 	"encoding/base64"
-	"errors"
-	"fmt"
+	goerrors "errors"
 	"io"
 	"io/ioutil"
 	"regexp"
@@ -15,7 +14,7 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/armor"
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/ProtonMail/gopenpgp/v2/internal"
-
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/openpgp/clearsign"
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -68,6 +67,7 @@ func NewPlainMessage(data []byte) *PlainMessage {
 	return &PlainMessage{
 		Data:     clone(data),
 		TextType: false,
+		Filename: "",
 		Time:     uint32(GetUnixTime()),
 	}
 }
@@ -90,6 +90,7 @@ func NewPlainMessageFromString(text string) *PlainMessage {
 	return &PlainMessage{
 		Data:     []byte(strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\n", "\r\n")),
 		TextType: true,
+		Filename: "",
 		Time:     uint32(GetUnixTime()),
 	}
 }
@@ -105,12 +106,12 @@ func NewPGPMessage(data []byte) *PGPMessage {
 func NewPGPMessageFromArmored(armored string) (*PGPMessage, error) {
 	encryptedIO, err := internal.Unarmor(armored)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in unarmoring message")
 	}
 
 	message, err := ioutil.ReadAll(encryptedIO.Body)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in reading armored message")
 	}
 
 	return &PGPMessage{
@@ -150,12 +151,12 @@ func NewPGPSignature(data []byte) *PGPSignature {
 func NewPGPSignatureFromArmored(armored string) (*PGPSignature, error) {
 	encryptedIO, err := internal.Unarmor(armored)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in unarmoring signature")
 	}
 
 	signature, err := ioutil.ReadAll(encryptedIO.Body)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in reading armored signature")
 	}
 
 	return &PGPSignature{
@@ -182,7 +183,7 @@ func NewClearTextMessageFromArmored(signedMessage string) (*ClearTextMessage, er
 
 	signature, err := ioutil.ReadAll(modulusBlock.ArmoredSignature.Body)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in reading cleartext message")
 	}
 
 	return NewClearTextMessage(modulusBlock.Bytes, signature), nil
@@ -257,7 +258,7 @@ func (msg *PGPMessage) GetEncryptionKeyIDs() ([]uint64, bool) {
 Loop:
 	for {
 		var p packet.Packet
-		if p, err = packets.Next(); err == io.EOF {
+		if p, err = packets.Next(); goerrors.Is(err, io.EOF) {
 			break
 		}
 		switch p := p.(type) {
@@ -333,7 +334,7 @@ func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)
 	var encryptedKey *packet.EncryptedKey
 	for {
 		var p packet.Packet
-		if p, err = packets.Next(); err == io.EOF {
+		if p, err = packets.Next(); goerrors.Is(err, io.EOF) {
 			err = nil
 			break
 		}
@@ -354,22 +355,22 @@ func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)
 			b.Grow(1<<16 + estimatedLength)
 			// empty encoded length + start byte
 			if _, err := b.Write(make([]byte, 6)); err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "gopenpgp: error in writing data packet header")
 			}
 
 			if err := b.WriteByte(byte(1)); err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "gopenpgp: error in writing data packet header")
 			}
 
 			actualLength := 1
 			block := make([]byte, 128)
 			for {
 				n, err := p.Contents.Read(block)
-				if err == io.EOF {
+				if goerrors.Is(err, io.EOF) {
 					break
 				}
 				if _, err := b.Write(block[:n]); err != nil {
-					return nil, err
+					return nil, errors.Wrap(err, "gopenpgp: error in writing data packet body")
 				}
 				actualLength += n
 				gcCounter += n
@@ -409,7 +410,7 @@ func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)
 
 	var buf bytes.Buffer
 	if err := encryptedKey.Serialize(&buf); err != nil {
-		return nil, fmt.Errorf("gopenpgp: cannot serialize encrypted key: %v", err)
+		return nil, errors.Wrap(err, "gopenpgp: cannot serialize encrypted key")
 	}
 	outSplit.KeyPacket = buf.Bytes()
 
@@ -456,7 +457,7 @@ func (msg *ClearTextMessage) GetBinarySignature() []byte {
 func (msg *ClearTextMessage) GetArmored() (string, error) {
 	armSignature, err := armor.ArmorWithType(msg.GetBinarySignature(), constants.PGPSignatureHeader)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "gopenpgp: error in armoring cleartext message")
 	}
 
 	str := "-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: SHA512\r\n\r\n"
@@ -486,7 +487,7 @@ func getSignatureKeyIDs(data []byte) ([]uint64, bool) {
 Loop:
 	for {
 		var p packet.Packet
-		if p, err = packets.Next(); err == io.EOF {
+		if p, err = packets.Next(); goerrors.Is(err, io.EOF) {
 			break
 		}
 		switch p := p.(type) {

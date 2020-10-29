@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"crypto"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -43,8 +44,8 @@ func (e SignatureVerificationError) Error() string {
 // SignatureFailed.
 func newSignatureFailed() SignatureVerificationError {
 	return SignatureVerificationError{
-		constants.SIGNATURE_FAILED,
-		"Invalid signature",
+		Status:  constants.SIGNATURE_FAILED,
+		Message: "Invalid signature",
 	}
 }
 
@@ -52,8 +53,8 @@ func newSignatureFailed() SignatureVerificationError {
 // SignatureFailed, with a message describing the signature as insecure.
 func newSignatureInsecure() SignatureVerificationError {
 	return SignatureVerificationError{
-		constants.SIGNATURE_FAILED,
-		"Insecure signature",
+		Status:  constants.SIGNATURE_FAILED,
+		Message: "Insecure signature",
 	}
 }
 
@@ -61,8 +62,8 @@ func newSignatureInsecure() SignatureVerificationError {
 // SignatureNotSigned.
 func newSignatureNotSigned() SignatureVerificationError {
 	return SignatureVerificationError{
-		constants.SIGNATURE_NOT_SIGNED,
-		"Missing signature",
+		Status:  constants.SIGNATURE_NOT_SIGNED,
+		Message: "Missing signature",
 	}
 }
 
@@ -70,15 +71,15 @@ func newSignatureNotSigned() SignatureVerificationError {
 // SignatureNoVerifier.
 func newSignatureNoVerifier() SignatureVerificationError {
 	return SignatureVerificationError{
-		constants.SIGNATURE_NO_VERIFIER,
-		"No matching signature",
+		Status:  constants.SIGNATURE_NO_VERIFIER,
+		Message: "No matching signature",
 	}
 }
 
 // processSignatureExpiration handles signature time verification manually, so
 // we can add a margin to the creationTime check.
 func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
-	if md.SignatureError != pgpErrors.ErrSignatureExpired {
+	if !errors.Is(md.SignatureError, pgpErrors.ErrSignatureExpired) {
 		return
 	}
 	if verifyTime == 0 {
@@ -131,7 +132,7 @@ func verifySignature(pubKeyEntries openpgp.EntityList, origText io.Reader, signa
 
 	signer, err := openpgp.CheckDetachedSignatureAndHash(pubKeyEntries, origText, signatureReader, allowedHashes, config)
 
-	if err == pgpErrors.ErrSignatureExpired && signer != nil && verifyTime > 0 {
+	if errors.Is(err, pgpErrors.ErrSignatureExpired) && signer != nil && verifyTime > 0 {
 		// if verifyTime = 0: time check disabled, everything is okay
 		// Maybe the creation time offset pushed it over the edge
 		// Retry with the actual verification time

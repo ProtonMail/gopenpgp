@@ -119,16 +119,16 @@ func passwordEncrypt(message *PlainMessage, password []byte) ([]byte, error) {
 
 	encryptWriter, err := openpgp.SymmetricallyEncrypt(&outBuf, password, hints, config)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in encrypting message symmetrically")
 	}
 	_, err = encryptWriter.Write(message.GetBinary())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in writing data to message")
 	}
 
 	err = encryptWriter.Close()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in closing writer")
 	}
 
 	return outBuf.Bytes(), nil
@@ -151,13 +151,13 @@ func passwordDecrypt(encryptedIO io.Reader, password []byte) (*PlainMessage, err
 	var emptyKeyRing openpgp.EntityList
 	md, err := openpgp.ReadMessage(encryptedIO, emptyKeyRing, prompt, config)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in reading password protected message")
 	}
 
 	messageBuf := bytes.NewBuffer(nil)
 	_, err = io.Copy(messageBuf, md.UnverifiedBody)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in reading password protected message body")
 	}
 
 	return &PlainMessage{

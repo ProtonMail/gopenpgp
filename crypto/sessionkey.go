@@ -50,7 +50,7 @@ func RandomToken(size int) ([]byte, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256}
 	symKey := make([]byte, size)
 	if _, err := io.ReadFull(config.Random(), symKey); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in generating random token")
 	}
 	return symKey, nil
 }
@@ -152,12 +152,12 @@ func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
 
 	_, err = encryptWriter.Write(message.GetBinary())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in writing message")
 	}
 
 	err = encryptWriter.Close()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in closing message")
 	}
 
 	return encBuf.Bytes(), nil
@@ -213,7 +213,7 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 	messageBuf := new(bytes.Buffer)
 	_, err = messageBuf.ReadFrom(md.UnverifiedBody)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in reading message body")
 	}
 
 	return &PlainMessage{
@@ -221,7 +221,7 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 		TextType: !md.LiteralData.IsBinary,
 		Filename: md.LiteralData.FileName,
 		Time:     md.LiteralData.Time,
-	}, err
+	}, nil
 }
 
 func (sk *SessionKey) checkSize() error {

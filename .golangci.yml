@@ -29,3 +29,4 @@ linters:
     - gofumpt           # Enforce a stricter format than gofmt
     - gci               # Enforce blank lines check
     - nlreturn          # Enforce blank lines for return statements
+    - exhaustivestruct  # Enforce structures to be fully filled on instantiation - terrible with openpgp configs
