@@ -186,7 +186,7 @@ func (key *Key) Serialize() ([]byte, error) {
 		err = key.entity.SerializePrivateWithoutSigning(&buffer, nil)
 	}
 
-	return buffer.Bytes(), err
+	return buffer.Bytes(), errors.Wrap(err, "gopenpgp: error in serializing key")
 }
 
 // Armor returns the armored key as a string with default gopenpgp headers.
@@ -235,7 +235,7 @@ func (key *Key) GetArmoredPublicKeyWithCustomHeaders(comment, version string) (s
 func (key *Key) GetPublicKey() (b []byte, err error) {
 	var outBuf bytes.Buffer
 	if err = key.entity.Serialize(&outBuf); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: error in serializing public key")
 	}
 
 	return outBuf.Bytes(), nil
@@ -397,7 +397,7 @@ func (key *Key) readFrom(r io.Reader, armored bool) error {
 		entities, err = openpgp.ReadKeyRing(r)
 	}
 	if err != nil {
-		return err
+		return errors.Wrap(err, "gopenpgp: error in reading key ring")
 	}
 
 	if len(entities) > 1 {
@@ -456,7 +456,7 @@ func generateKey(
 
 	newEntity, err := openpgp.NewEntity(name, comments, email, cfg)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopengpp: error in encoding new entity")
 	}
 
 	if newEntity.PrivateKey == nil {

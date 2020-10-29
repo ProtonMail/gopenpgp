@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"io"
 	"testing"
 	"time"
@@ -24,7 +25,7 @@ func TestTextMessageEncryptionWithPassword(t *testing.T) {
 	for {
 		var p packet.Packet
 		var errEOF error
-		if p, errEOF = packets.Next(); errEOF == io.EOF {
+		if p, errEOF = packets.Next(); errors.Is(errEOF, io.EOF) {
 			break
 		}
 		sessionKey, ok := p.(*packet.SymmetricKeyEncrypted)
@@ -138,7 +139,7 @@ func TestIssue11(t *testing.T) {
 
 	issue11Keyring, err := NewKeyRing(issue11Key)
 	if err != nil {
-		t.Fatal("Expected no error while bulding private keyring, got:", err)
+		t.Fatal("Expected no error while building private keyring, got:", err)
 	}
 
 	senderKey, err := NewKeyFromArmored(readTestFile("issue11_publickey", false))
@@ -154,7 +155,7 @@ func TestIssue11(t *testing.T) {
 
 	pgpMessage, err := NewPGPMessageFromArmored(readTestFile("issue11_message", false))
 	if err != nil {
-		t.Fatal("Expected no error while unlocking private keyring, got:", err)
+		t.Fatal("Expected no error while reading ciphertext, got:", err)
 	}
 
 	plainMessage, err := issue11Keyring.Decrypt(pgpMessage, senderKeyring, 0)
