@@ -291,36 +291,7 @@ func (key *Key) IsUnlocked() (bool, error) {
 // Check verifies if the public keys match the private key parameters by
 // signing and verifying.
 func (key *Key) Check() (bool, error) {
-	var err error
-	testSign := bytes.Repeat([]byte{0x01}, 64)
-	testReader := bytes.NewReader(testSign)
-
-	if !key.IsPrivate() {
-		return false, errors.New("gopenpgp: can check only private key")
-	}
-
-	unlocked, err := key.IsUnlocked()
-	if err != nil {
-		return false, err
-	}
-
-	if !unlocked {
-		return false, errors.New("gopenpgp: key is not unlocked")
-	}
-
-	var signBuf bytes.Buffer
-
-	if err = openpgp.DetachSign(&signBuf, key.entity, testReader, nil); err != nil {
-		return false, errors.New("gopenpgp: unable to sign with key")
-	}
-
-	testReader = bytes.NewReader(testSign)
-	signer, err := openpgp.CheckDetachedSignature(openpgp.EntityList{key.entity}, testReader, &signBuf, nil)
-
-	if signer == nil || err != nil {
-		return false, nil
-	}
-
+	// Parameter validation is now carried out by the ProtonMail/crypto module as part of private key parsing
 	return true, nil
 }
 

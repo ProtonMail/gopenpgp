@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/rsa"
@@ -253,21 +254,19 @@ func TestFailCheckIntegrity(t *testing.T) {
 	// This test is done with ECC because in an RSA key we would need to replace the primes, but maintaining the moduli,
 	// that is a private struct element.
 	k1, _ := GenerateKey(keyTestName, keyTestDomain, "x25519", 256)
-	k2, _ := GenerateKey(keyTestName, keyTestDomain, "x25519", 256)
+	// k2, _ := GenerateKey(keyTestName, keyTestDomain, "x25519", 256)
 
-	k1.entity.PrivateKey.PrivateKey = k2.entity.PrivateKey.PrivateKey // Swap private keys
-
-	k3, err := k1.Copy()
+	k1Locked, err := k1.Lock(keyTestPassphrase)
 	if err != nil {
-		t.Fatal("Expected no error while locking keyring kr3, got:", err)
+		t.Fatal("Expected no error while locking keyring kr1, got:", err)
 	}
 
-	isVerified, err := k3.Check()
-	if err != nil {
-		t.Fatal("Expected no error while checking correct passphrase, got:", err)
+	// k1.entity.PrivateKey.PublicKey = k2.entity.PrivateKey.PublicKey // Swap public keys
+	pubBytes := *k1Locked.entity.PrivateKey.PublicKey.PublicKey.(*ed25519.PublicKey)
+	pubBytes[10] ^= 1
+	if _, err = k1Locked.Unlock(keyTestPassphrase); err == nil {
+		t.Fatal("Mismatching private key was not detected")
 	}
-
-	assert.Exactly(t, false, isVerified)
 }
 
 func TestGetPublicKey(t *testing.T) {
