@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/rsa"
@@ -250,22 +249,26 @@ func TestCheckIntegrity(t *testing.T) {
 	assert.Exactly(t, true, isVerified)
 }
 
-func TestFailCheckIntegrity(t *testing.T) {
-	// This test is done with ECC because in an RSA key we would need to replace the primes, but maintaining the moduli,
-	// that is a private struct element.
-	k1, _ := GenerateKey(keyTestName, keyTestDomain, "x25519", 256)
-	// k2, _ := GenerateKey(keyTestName, keyTestDomain, "x25519", 256)
+func TestFailCopyMismatchingKey(t *testing.T) {
+	k1, _ := GenerateKey(keyTestName, keyTestDomain, "rsa", 2048)
+	k2, _ := GenerateKey(keyTestName, keyTestDomain, "rsa", 2048)
 
-	k1Locked, err := k1.Lock(keyTestPassphrase)
-	if err != nil {
-		t.Fatal("Expected no error while locking keyring kr1, got:", err)
+	k1.entity.PrivateKey.PrivateKey = k2.entity.PrivateKey.PrivateKey // Swap private keys
+	// Copying is expected to fail since it serialises and parses the key
+	// and Protonmail/crypto check the parameters during parsing
+	_, err := k1.Copy()
+	if err == nil {
+		t.Fatal("Expected copying of mismatching key to fail")
 	}
+}
 
-	// k1.entity.PrivateKey.PublicKey = k2.entity.PrivateKey.PublicKey // Swap public keys
-	pubBytes := *k1Locked.entity.PrivateKey.PublicKey.PublicKey.(*ed25519.PublicKey)
-	pubBytes[10] ^= 1
-	if _, err = k1Locked.Unlock(keyTestPassphrase); err == nil {
-		t.Fatal("Mismatching private key was not detected")
+func TestUnlockMismatchingKey(t *testing.T) {
+	privateKey, err := NewKeyFromArmored(readTestFile("keyring_mismatching_eddsa_key", false))
+	if err != nil {
+		t.Fatal("Expected no error while unarmoring private key, got:", err)
+	}
+	if _, err = privateKey.Unlock([]byte("123")); err == nil {
+		t.Fatalf("Mismatching private key was not detected")
 	}
 }
 
