@@ -371,25 +371,3 @@ newPGPSplitMessage, err := pgpMessage.SeparateKeyAndData()
 // Key Packet is in newPGPSplitMessage.GetBinaryKeyPacket()
 // Data Packet is in newPGPSplitMessage.GetBinaryDataPacket()
 ```
-
-### Checking keys
-In order to check that the primary key is valid the `Key#Check` function can be used.
-This operation is as of 2.0.0 fairly expensive, as it requires a signature operation.
-It will be improved in the future versions, and possibly expanded to the subkeys, that are
-for now assumed to be correct thanks to the binding signature.
-```go
-const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
-...
------END PGP PRIVATE KEY BLOCK-----` // Encrypted private key
-const passphrase = []byte("LongSecret") // Private key passphrase
-
-privateKeyObj, err := crypto.NewKeyFromArmored(privkey)
-unlockedKeyObj = privateKeyObj.Unlock(passphrase)
-
-isVerified, _ := unlockedKeyObj.Check();
-if !isVerified {
-    // Handle broken keys
-}
-```
-This function runs on unlocked private keys, and it will return an error if called with public keys
-or locked keys.

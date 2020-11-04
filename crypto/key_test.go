@@ -241,33 +241,23 @@ func TestGenerateKeyWithPrimes(t *testing.T) {
 	assert.Exactly(t, prime2, pk.Primes[1].Bytes())
 }
 
-func TestCheckIntegrity(t *testing.T) {
-	isVerified, err := keyTestRSA.Check()
-	if err != nil {
-		t.Fatal("Expected no error while checking correct passphrase, got:", err)
-	}
-
-	assert.Exactly(t, true, isVerified)
+func TestFailCheckIntegrity25519(t *testing.T) {
+	failCheckIntegrity(t, "x25519", 0)
 }
 
-func TestFailCheckIntegrity(t *testing.T) {
-	// This test is done with ECC because in an RSA key we would need to replace the primes, but maintaining the moduli,
-	// that is a private struct element.
-	k1, _ := GenerateKey(keyTestName, keyTestDomain, "x25519", 256)
-	k2, _ := GenerateKey(keyTestName, keyTestDomain, "x25519", 256)
+func TestFailCheckIntegrityRSA(t *testing.T) {
+	failCheckIntegrity(t, "rsa", 2048)
+}
+
+func failCheckIntegrity(t *testing.T, keyType string, bits int) {
+	k1, _ := GenerateKey(keyTestName, keyTestDomain, keyType, bits)
+	k2, _ := GenerateKey(keyTestName, keyTestDomain, keyType, bits)
 
 	k1.entity.PrivateKey.PrivateKey = k2.entity.PrivateKey.PrivateKey // Swap private keys
 
-	isVerified, err := k1.Check()
-	if err != nil {
-		t.Fatal("Expected no error while checking key, got:", err)
-	}
-
-	assert.Exactly(t, false, isVerified)
-
 	serialized, err := k1.Serialize()
 	if err != nil {
-		t.Fatal("Expected no error while serializing keyring kr3, got:", err)
+		t.Fatal("Expected no error while serializing keyring, got:", err)
 	}
 
 	_, err = NewKey(serialized)
