@@ -16,3 +16,6 @@ const (
 	SIGNATURE_NO_VERIFIER int = 2
 	SIGNATURE_FAILED      int = 3
 )
+
+const DefaultCompression = 2      // ZLIB
+const DefaultCompressionLevel = 6 // Corresponds to default -1 for ZLIB

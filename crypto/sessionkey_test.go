@@ -101,13 +101,18 @@ func TestSymmetricKeyPacketWrongSize(t *testing.T) {
 }
 
 func TestDataPacketEncryption(t *testing.T) {
-	var message = NewPlainMessageFromString("The secret code is... 1, 2, 3, 4, 5")
+	var message = NewPlainMessageFromString(
+		"The secret code is... 1, 2, 3, 4, 5. I repeat: the secret code is... 1, 2, 3, 4, 5",
+	)
 
 	// Encrypt data with session key
 	dataPacket, err := testSessionKey.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
+
+	assert.Len(t, dataPacket, 133) // Assert uncompressed encrypted body length
+
 	// Decrypt data with wrong session key
 	wrongKey := SessionKey{
 		Key:  []byte("wrong pass"),
@@ -183,4 +188,25 @@ func TestDataPacketDecryption(t *testing.T) {
 func TestSessionKeyClear(t *testing.T) {
 	testSessionKey.Clear()
 	assertMemCleared(t, testSessionKey.Key)
+}
+
+func TestDataPacketEncryptionWithCompression(t *testing.T) {
+	var message = NewPlainMessageFromString(
+		"The secret code is... 1, 2, 3, 4, 5. I repeat: the secret code is... 1, 2, 3, 4, 5",
+	)
+
+	// Encrypt data with session key
+	dataPacket, err := testSessionKey.EncryptWithCompression(message)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+
+	assert.Len(t, dataPacket, 117) // Assert compressed encrypted body length
+
+	// Decrypt data with the good session key
+	decrypted, err := testSessionKey.Decrypt(dataPacket)
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+	assert.Exactly(t, message.GetString(), decrypted.GetString())
 }

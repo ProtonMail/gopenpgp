@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 
+	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
@@ -16,7 +17,28 @@ import (
 // * message    : The plaintext input as a PlainMessage.
 // * privateKey : (optional) an unlocked private keyring to include signature in the message.
 func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error) {
-	encrypted, err := asymmetricEncrypt(message, keyRing, privateKey)
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
+	encrypted, err := asymmetricEncrypt(message, keyRing, privateKey, config)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewPGPMessage(encrypted), nil
+}
+
+// EncryptWithCompression encrypts with compression support a PlainMessage to PGPMessage using public/private keys.
+// * message : The plain data as a PlainMessage.
+// * privateKey : (optional) an unlocked private keyring to include signature in the message.
+// * output  : The encrypted data as PGPMessage.
+func (keyRing *KeyRing) EncryptWithCompression(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error) {
+	config := &packet.Config{
+		DefaultCipher:          packet.CipherAES256,
+		Time:                   getTimeGenerator(),
+		DefaultCompressionAlgo: constants.DefaultCompression,
+		CompressionConfig:      &packet.CompressionConfig{Level: constants.DefaultCompressionLevel},
+	}
+
+	encrypted, err := asymmetricEncrypt(message, keyRing, privateKey, config)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +90,11 @@ func (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSign
 // ------ INTERNAL FUNCTIONS -------
 
 // Core for encryption+signature functions.
-func asymmetricEncrypt(plainMessage *PlainMessage, publicKey, privateKey *KeyRing) ([]byte, error) {
+func asymmetricEncrypt(
+	plainMessage *PlainMessage,
+	publicKey, privateKey *KeyRing,
+	config *packet.Config,
+) ([]byte, error) {
 	var outBuf bytes.Buffer
 	var encryptWriter io.WriteCloser
 	var signEntity *openpgp.Entity
@@ -81,8 +107,6 @@ func asymmetricEncrypt(plainMessage *PlainMessage, publicKey, privateKey *KeyRin
 			return nil, err
 		}
 	}
-
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 
 	hints := &openpgp.FileHints{
 		IsBinary: plainMessage.IsBinary(),

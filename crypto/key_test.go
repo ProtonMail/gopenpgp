@@ -257,17 +257,21 @@ func TestFailCheckIntegrity(t *testing.T) {
 
 	k1.entity.PrivateKey.PrivateKey = k2.entity.PrivateKey.PrivateKey // Swap private keys
 
-	k3, err := k1.Copy()
+	isVerified, err := k1.Check()
 	if err != nil {
-		t.Fatal("Expected no error while locking keyring kr3, got:", err)
-	}
-
-	isVerified, err := k3.Check()
-	if err != nil {
-		t.Fatal("Expected no error while checking correct passphrase, got:", err)
+		t.Fatal("Expected no error while checking key, got:", err)
 	}
 
 	assert.Exactly(t, false, isVerified)
+
+	serialized, err := k1.Serialize()
+	if err != nil {
+		t.Fatal("Expected no error while serializing keyring kr3, got:", err)
+	}
+
+	_, err = NewKey(serialized)
+
+	assert.Error(t, err)
 }
 
 func TestGetPublicKey(t *testing.T) {

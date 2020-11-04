@@ -57,7 +57,7 @@ func clearPrivateKey(privateKey interface{}) error {
 		return clearElGamalPrivateKey(priv)
 	case *ecdsa.PrivateKey:
 		return clearECDSAPrivateKey(priv)
-	case ed25519.PrivateKey:
+	case *ed25519.PrivateKey:
 		return clearEdDSAPrivateKey(priv)
 	case *ecdh.PrivateKey:
 		return clearECDHPrivateKey(priv)
@@ -115,8 +115,8 @@ func clearECDSAPrivateKey(priv *ecdsa.PrivateKey) error {
 	return nil
 }
 
-func clearEdDSAPrivateKey(priv ed25519.PrivateKey) error {
-	clearMem(priv)
+func clearEdDSAPrivateKey(priv *ed25519.PrivateKey) error {
+	clearMem(*priv)
 
 	return nil
 }

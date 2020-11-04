@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Security
+- Updated underlying crypto library
+
 ### Added
 - Key Armoring with custom headers
 ```go
@@ -138,6 +141,13 @@ NewPlainMessageFromFile(data []byte, filename string, modTime int) *PlainMessage
 (msg *PlainMessage) GetModTime() uint32
 ```
 
+- `EncryptWithCompression` to encrypt specifying a compression for asymmetric and session keys
+```go
+(keyRing *KeyRing) EncryptWithCompression(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error)
+
+(sk *SessionKey) EncryptWithCompression(message *PlainMessage) ([]byte, error)
+```
+
 ### Changed
 - Improved key and message armoring testing
 - `EncryptSessionKey` now creates encrypted key packets for each valid encryption key in the provided keyring. 
@@ -148,6 +158,7 @@ NewPlainMessageFromFile(data []byte, filename string, modTime int) *PlainMessage
 - The `PlainMessage` struct now contains the fields `Filename` (string) and `Time` (uint32)
 - All the Decrypt* functions return the filename, type, and time specified in the encrypted message
 - Improved error wrapping and management
+- CI has been moved from travis to Actions, with automated artifacts build
 
 ### Fixed
 - Public key armoring headers

@@ -328,10 +328,10 @@ func (key *Key) Check() (bool, error) {
 func (key *Key) PrintFingerprints() {
 	for _, subKey := range key.entity.Subkeys {
 		if !subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage || subKey.Sig.FlagEncryptCommunications {
-			fmt.Println("SubKey:" + hex.EncodeToString(subKey.PublicKey.Fingerprint[:]))
+			fmt.Println("SubKey:" + hex.EncodeToString(subKey.PublicKey.Fingerprint))
 		}
 	}
-	fmt.Println("PrimaryKey:" + hex.EncodeToString(key.entity.PrimaryKey.Fingerprint[:]))
+	fmt.Println("PrimaryKey:" + hex.EncodeToString(key.entity.PrimaryKey.Fingerprint))
 }
 
 // GetHexKeyID returns the key ID, hex encoded as a string.
@@ -346,7 +346,7 @@ func (key *Key) GetKeyID() uint64 {
 
 // GetFingerprint gets the fingerprint from the key.
 func (key *Key) GetFingerprint() string {
-	return hex.EncodeToString(key.entity.PrimaryKey.Fingerprint[:])
+	return hex.EncodeToString(key.entity.PrimaryKey.Fingerprint)
 }
 
 // GetSHA256Fingerprints computes the SHA256 fingerprints of the key and subkeys.

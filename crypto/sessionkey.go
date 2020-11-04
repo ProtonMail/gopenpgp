@@ -114,9 +114,6 @@ func newSessionKeyFromEncrypted(ek *packet.EncryptedKey) (*SessionKey, error) {
 // * message : The plain data as a PlainMessage.
 // * output  : The encrypted data as PGPMessage.
 func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
-	var encBuf bytes.Buffer
-	var encryptWriter io.WriteCloser
-
 	dc, err := sk.GetCipherFunc()
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt with session key")
@@ -127,7 +124,33 @@ func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
 		DefaultCipher: dc,
 	}
 
-	encryptWriter, err = packet.SerializeSymmetricallyEncrypted(&encBuf, config.Cipher(), sk.Key, config)
+	return encryptWithSessionKey(message, sk, config)
+}
+
+// EncryptWithCompression encrypts with compression support a PlainMessage to PGPMessage with a SessionKey.
+// * message : The plain data as a PlainMessage.
+// * output  : The encrypted data as PGPMessage.
+func (sk *SessionKey) EncryptWithCompression(message *PlainMessage) ([]byte, error) {
+	dc, err := sk.GetCipherFunc()
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt with session key")
+	}
+
+	config := &packet.Config{
+		Time:                   getTimeGenerator(),
+		DefaultCipher:          dc,
+		DefaultCompressionAlgo: constants.DefaultCompression,
+		CompressionConfig:      &packet.CompressionConfig{Level: constants.DefaultCompressionLevel},
+	}
+
+	return encryptWithSessionKey(message, sk, config)
+}
+
+func encryptWithSessionKey(message *PlainMessage, sk *SessionKey, config *packet.Config) ([]byte, error) {
+	var encBuf bytes.Buffer
+	var encryptWriter io.WriteCloser
+
+	encryptWriter, err := packet.SerializeSymmetricallyEncrypted(&encBuf, config.Cipher(), sk.Key, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt")
 	}
