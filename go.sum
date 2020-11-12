@@ -1,14 +1,6 @@
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/ProtonMail/crypto v0.0.0-20201016191319-576ad9c42ffa h1:RnTRazSOTTBw0S2D0dK6pbC0uEYtHFdO3YQo8lI6coc=
-github.com/ProtonMail/crypto v0.0.0-20201016191319-576ad9c42ffa/go.mod h1:Pxr7w4gA2ikI4sWyYwEffm+oew1WAJHzG1SiDpQMkrI=
-github.com/ProtonMail/crypto v0.0.0-20201019194525-d010555f6cb5 h1:VgYclRLmViKcELmBf27PajBM/XFSlRLf+fUacMC5ahM=
-github.com/ProtonMail/crypto v0.0.0-20201019194525-d010555f6cb5/go.mod h1:Pxr7w4gA2ikI4sWyYwEffm+oew1WAJHzG1SiDpQMkrI=
-github.com/ProtonMail/crypto v0.0.0-20201020131021-8e70b29752f8 h1:L3xFiZBIG8YCbF+DaQyNJ6QwmVhLsd4XQtH20AtZGIE=
-github.com/ProtonMail/crypto v0.0.0-20201020131021-8e70b29752f8/go.mod h1:Pxr7w4gA2ikI4sWyYwEffm+oew1WAJHzG1SiDpQMkrI=
-github.com/ProtonMail/crypto v0.0.0-20201022141144-3fe6b6992c0f h1:CrqdTsoF7teMqQok+iHUx3yjYJfkpDuU7y/nIxRJ2rY=
-github.com/ProtonMail/crypto v0.0.0-20201022141144-3fe6b6992c0f/go.mod h1:Pxr7w4gA2ikI4sWyYwEffm+oew1WAJHzG1SiDpQMkrI=
-github.com/ProtonMail/crypto v0.0.0-20201104134830-fcb5d97d611a h1:1zaMXAQgYCo4ca10i6CKcKbd+M3phLp5VFP+f+VrbSI=
-github.com/ProtonMail/crypto v0.0.0-20201104134830-fcb5d97d611a/go.mod h1:Pxr7w4gA2ikI4sWyYwEffm+oew1WAJHzG1SiDpQMkrI=
+github.com/ProtonMail/crypto v0.0.0-20201112115411-41db4ea0dd1c h1:iaVbEOnskSGgcH7XQWHG6VPirHDRoYe+Idd0/dl4m8A=
+github.com/ProtonMail/crypto v0.0.0-20201112115411-41db4ea0dd1c/go.mod h1:Pxr7w4gA2ikI4sWyYwEffm+oew1WAJHzG1SiDpQMkrI=
 github.com/ProtonMail/go-mime v0.0.0-20190923161245-9b5a4261663a h1:W6RrgN/sTxg1msqzFFb+G80MFmpjMw61IU+slm+wln4=
 github.com/ProtonMail/go-mime v0.0.0-20190923161245-9b5a4261663a/go.mod h1:NYt+V3/4rEeDuaev/zw1zCq8uqVEuPHzDPo3OZrlGJ4=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

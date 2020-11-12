@@ -33,7 +33,7 @@ require (
     github.com/ProtonMail/gopenpgp/v2 v2.0.1
 )
 
-replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20200416114516-1fa7f403fb9c
+replace golang.org/x/crypto => github.com/ProtonMail/crypto master
 ```
 
 It can then be installed by running:
