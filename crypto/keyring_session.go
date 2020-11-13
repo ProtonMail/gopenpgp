@@ -21,27 +21,36 @@ func (keyRing *KeyRing) DecryptSessionKey(keyPacket []byte) (*SessionKey, error)
 	keyReader := bytes.NewReader(keyPacket)
 	packets := packet.NewReader(keyReader)
 
+Loop:
 	for {
 		if p, err = packets.Next(); err != nil {
 			break
 		}
 
-		var ok bool
-		ek, ok = p.(*packet.EncryptedKey)
-		if !ok {
-			continue
-		}
+		switch p := p.(type) {
+		case *packet.EncryptedKey:
+			hasPacket = true
+			ek = p
 
-		hasPacket = true
-		for _, key := range keyRing.entities.DecryptionKeys() {
-			priv := key.PrivateKey
-			if priv.Encrypted {
-				continue
+			for _, key := range keyRing.entities.DecryptionKeys() {
+				priv := key.PrivateKey
+				if priv.Encrypted {
+					continue
+				}
+
+				if decryptErr = ek.Decrypt(priv, nil); decryptErr == nil {
+					break Loop
+				}
 			}
 
-			if decryptErr = ek.Decrypt(priv, nil); decryptErr == nil {
-				break
-			}
+		case *packet.SymmetricallyEncrypted,
+			*packet.AEADEncrypted,
+			*packet.Compressed,
+			*packet.LiteralData:
+			break Loop
+
+		default:
+			continue Loop
 		}
 	}
 
