@@ -9,28 +9,53 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-// DecryptSessionKey returns the decrypted session key from a binary encrypted session key packet.
+// DecryptSessionKey returns the decrypted session key from one or multiple binary encrypted session key packets.
 func (keyRing *KeyRing) DecryptSessionKey(keyPacket []byte) (*SessionKey, error) {
+	var p packet.Packet
+	var ek *packet.EncryptedKey
+
+	var err error
+	var hasPacket = false
+	var decryptErr error
+
 	keyReader := bytes.NewReader(keyPacket)
 	packets := packet.NewReader(keyReader)
 
-	var p packet.Packet
-	var err error
-	if p, err = packets.Next(); err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading packets")
-	}
-
-	ek := p.(*packet.EncryptedKey)
-	var decryptErr error
-	for _, key := range keyRing.entities.DecryptionKeys() {
-		priv := key.PrivateKey
-		if priv.Encrypted {
-			continue
-		}
-
-		if decryptErr = ek.Decrypt(priv, nil); decryptErr == nil {
+Loop:
+	for {
+		if p, err = packets.Next(); err != nil {
 			break
 		}
+
+		switch p := p.(type) {
+		case *packet.EncryptedKey:
+			hasPacket = true
+			ek = p
+
+			for _, key := range keyRing.entities.DecryptionKeys() {
+				priv := key.PrivateKey
+				if priv.Encrypted {
+					continue
+				}
+
+				if decryptErr = ek.Decrypt(priv, nil); decryptErr == nil {
+					break Loop
+				}
+			}
+
+		case *packet.SymmetricallyEncrypted,
+			*packet.AEADEncrypted,
+			*packet.Compressed,
+			*packet.LiteralData:
+			break Loop
+
+		default:
+			continue Loop
+		}
+	}
+
+	if !hasPacket {
+		return nil, errors.Wrap(err, "gopenpgp: couldn't find a session key packet that could be decrypted")
 	}
 
 	if decryptErr != nil {

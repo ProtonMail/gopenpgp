@@ -51,7 +51,7 @@ func TestMultipleAsymmetricKeyPacket(t *testing.T) {
 	}
 
 	// Password defined in keyring_test
-	outputSymmetricKey, err := keyRingTestMultiple.DecryptSessionKey(keyPacket)
+	outputSymmetricKey, err := keyRingTestPrivate.DecryptSessionKey(keyPacket)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting key packet, got:", err)
 	}
