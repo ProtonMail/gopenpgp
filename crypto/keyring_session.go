@@ -55,7 +55,7 @@ Loop:
 	}
 
 	if !hasPacket {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading packets")
+		return nil, errors.Wrap(err, "gopenpgp: couldn't find a session key packet that could be decrypted")
 	}
 
 	if decryptErr != nil {
