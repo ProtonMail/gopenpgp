@@ -10,6 +10,6 @@ require (
 	golang.org/x/mobile v0.0.0-20200801112145-973feb4309de
 )
 
-replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20201104134830-fcb5d97d611a
+replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20201112115411-41db4ea0dd1c
 
 replace golang.org/x/mobile => github.com/zhj4478/mobile v0.0.0-20201014085805-7a2d68bf792f
