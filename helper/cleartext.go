@@ -2,7 +2,6 @@ package helper
 
 import (
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
-	"github.com/ProtonMail/gopenpgp/v2/internal"
 	"github.com/pkg/errors"
 )
 
@@ -49,7 +48,6 @@ func VerifyCleartextMessageArmored(publicKey, armored string, verifyTime int64) 
 // SignCleartextMessage signs text given a private keyring, canonicalizes and
 // trims the newlines, and returns the PGP-compliant special armoring.
 func SignCleartextMessage(keyRing *crypto.KeyRing, text string) (string, error) {
-	text = internal.TrimWhitespace(text)
 	message := crypto.NewPlainMessageFromString(text)
 
 	signature, err := keyRing.SignDetached(message)

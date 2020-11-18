@@ -2,11 +2,11 @@ package helper
 
 import (
 	"regexp"
-	"strings"
 	"testing"
 
-	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/ProtonMail/gopenpgp/v2/internal"
+
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,11 +45,5 @@ func TestSignClearText(t *testing.T) {
 	if err != nil {
 		t.Fatal("Cannot parse message:", err)
 	}
-	assert.Exactly(t, canonicalizeAndTrim(inputPlainText), string(clearTextMessage.GetBinary()))
-}
-
-func canonicalizeAndTrim(text string) string {
-	text = internal.TrimWhitespace(text)
-	text = strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\n", "\r\n")
-	return text
+	assert.Exactly(t, internal.CanonicalizeAndTrim(inputPlainText), string(clearTextMessage.GetBinary()))
 }

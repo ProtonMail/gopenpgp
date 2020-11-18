@@ -2,16 +2,19 @@
 package internal
 
 import (
-	"regexp"
+	"strings"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 )
 
-// TrimWhitespace removes whitespace from the end of each line of the input
-// string.
-func TrimWhitespace(input string) string {
-	var re = regexp.MustCompile(`(?m)[ \t]*$`)
-	return re.ReplaceAllString(input, "")
+func CanonicalizeAndTrim(text string) string {
+	lines := strings.Split(text, "\n")
+
+	for i := range lines {
+		lines[i] = strings.TrimRight(lines[i], " \t\r")
+	}
+
+	return strings.Join(lines, "\r\n")
 }
 
 // CreationTimeOffset stores the amount of seconds that a signature may be

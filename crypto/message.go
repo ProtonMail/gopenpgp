@@ -88,7 +88,7 @@ func NewPlainMessageFromFile(data []byte, filename string, time uint32) *PlainMe
 // ready for encryption, signature, or verification from an unencrypted string.
 func NewPlainMessageFromString(text string) *PlainMessage {
 	return &PlainMessage{
-		Data:     []byte(strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\n", "\r\n")),
+		Data:     []byte(internal.CanonicalizeAndTrim(text)),
 		TextType: true,
 		Filename: "",
 		Time:     uint32(GetUnixTime()),
