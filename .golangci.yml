@@ -30,3 +30,4 @@ linters:
     - gci               # Enforce blank lines check
     - nlreturn          # Enforce blank lines for return statements
     - exhaustivestruct  # Enforce structures to be fully filled on instantiation - terrible with openpgp configs
+    - paralleltest      # detects missing usage of t.Parallel() method in your Go test
