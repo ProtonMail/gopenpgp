@@ -435,7 +435,7 @@ func generateKey(
 	cfg := &packet.Config{
 		Algorithm:     packet.PubKeyAlgoRSA,
 		RSABits:       bits,
-		Time:          getTimeGenerator(),
+		Time:          getKeyGenerationTimeGenerator(),
 		DefaultHash:   crypto.SHA256,
 		DefaultCipher: packet.CipherAES256,
 	}

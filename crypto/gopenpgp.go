@@ -8,6 +8,7 @@ import "time"
 type GopenPGP struct {
 	latestServerTime int64
 	latestClientTime time.Time
+	generationOffset int64
 }
 
 var pgp = GopenPGP{}
