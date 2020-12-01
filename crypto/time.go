@@ -13,7 +13,7 @@ func UpdateTime(newTime int64) {
 	}
 }
 
-// SetKeyGenerationOffset updates the offset when generating keys
+// SetKeyGenerationOffset updates the offset when generating keys.
 func SetKeyGenerationOffset(offset int64) {
 	pgp.generationOffset = offset
 }
@@ -60,10 +60,10 @@ func getNowKeyGenerationOffset() time.Time {
 	extrapolate, err := getDiff()
 
 	if err != nil {
-		return time.Unix(time.Now().Unix() + pgp.generationOffset, 0)
+		return time.Unix(time.Now().Unix()+pgp.generationOffset, 0)
 	}
 
-	return time.Unix(pgp.latestServerTime + extrapolate + pgp.generationOffset, 0)
+	return time.Unix(pgp.latestServerTime+extrapolate+pgp.generationOffset, 0)
 }
 
 // getKeyGenerationTimeGenerator Returns a time generator function with the key generation offset.
