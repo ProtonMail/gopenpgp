@@ -79,9 +79,6 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 
 	go func() {
 		defer attachmentProc.done.Done()
-		if attachmentProc.garbageCollector > 0 {
-			defer runtime.GC()
-		}
 		ciphertext, _ := ioutil.ReadAll(reader)
 		message := NewPGPMessage(ciphertext)
 		split, splitError := message.SeparateKeyAndData(estimatedSize, garbageCollector)
