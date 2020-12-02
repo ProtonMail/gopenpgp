@@ -29,6 +29,9 @@ func (ap *AttachmentProcessor) Process(plainData []byte) {
 	if _, err := (*ap.w).Write(plainData); err != nil {
 		panic(err)
 	}
+	if ap.garbageCollector > 0 {
+		defer runtime.GC()
+	}
 }
 
 // Finish closes the attachment and returns the encrypted data.
@@ -46,7 +49,7 @@ func (ap *AttachmentProcessor) Finish() (*PGPSplitMessage, error) {
 
 	ap.done.Wait()
 	if ap.garbageCollector > 0 {
-		runtime.GC()
+		defer runtime.GC()
 	}
 	return ap.split, nil
 }
@@ -76,14 +79,11 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 
 	go func() {
 		defer attachmentProc.done.Done()
-		ciphertext, err := ioutil.ReadAll(reader)
-		if err != nil {
-			attachmentProc.err = err
+		if attachmentProc.garbageCollector > 0 {
+			defer runtime.GC()
 		}
-		message := &PGPMessage{
-			Data: ciphertext,
-		}
-
+		ciphertext, _ := ioutil.ReadAll(reader)
+		message := NewPGPMessage(ciphertext)
 		split, splitError := message.SeparateKeyAndData(estimatedSize, garbageCollector)
 		if attachmentProc.err != nil {
 			attachmentProc.err = splitError
