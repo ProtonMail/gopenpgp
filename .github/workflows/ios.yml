@@ -32,7 +32,7 @@ jobs:
           platform: ${{ 'iOS Simulator' }}
         run: |
           ./build.sh apple
-          find build
+          find dist
 
       - name: Upload iOS artifacts
         uses: actions/upload-artifact@v2
