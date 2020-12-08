@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"golang.org/x/crypto/openpgp/packet"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 )
 
 // DecryptSessionKey returns the decrypted session key from one or multiple binary encrypted session key packets.

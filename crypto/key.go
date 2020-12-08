@@ -15,8 +15,8 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
 
-	openpgp "golang.org/x/crypto/openpgp"
-	packet "golang.org/x/crypto/openpgp/packet"
+	openpgp "github.com/ProtonMail/go-crypto/openpgp"
+	packet "github.com/ProtonMail/go-crypto/openpgp/packet"
 )
 
 // Key contains a single private or public key.

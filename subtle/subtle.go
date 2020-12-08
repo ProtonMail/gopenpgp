@@ -6,7 +6,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 
-	"golang.org/x/crypto/scrypt"
+	"github.com/ProtonMail/go-crypto/scrypt"
 )
 
 // EncryptWithoutIntegrity encrypts data with AES-CTR. Note: this encryption
