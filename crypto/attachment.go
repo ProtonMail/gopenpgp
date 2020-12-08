@@ -30,6 +30,7 @@ func (ap *AttachmentProcessor) Process(plainData []byte) {
 		panic(err)
 	}
 	if ap.garbageCollector > 0 {
+		// defer debug.FreeOSMemory()
 		defer runtime.GC()
 	}
 }
@@ -39,8 +40,14 @@ func (ap *AttachmentProcessor) Finish() (*PGPSplitMessage, error) {
 	if ap.err != nil {
 		return nil, ap.err
 	}
+
 	if err := (*ap.w).Close(); err != nil {
 		return nil, errors.Wrap(err, "gopengpp: unable to close writer")
+	}
+
+	if ap.garbageCollector > 0 {
+		ap.w = nil
+		runtime.GC()
 	}
 
 	if err := (*ap.pipe).Close(); err != nil {
@@ -48,10 +55,14 @@ func (ap *AttachmentProcessor) Finish() (*PGPSplitMessage, error) {
 	}
 
 	ap.done.Wait()
+	splitMsg := ap.split
+
 	if ap.garbageCollector > 0 {
+		ap.pipe = nil
+		ap.split = nil
 		defer runtime.GC()
 	}
-	return ap.split, nil
+	return splitMsg, nil
 }
 
 // newAttachmentProcessor creates an AttachmentProcessor which can be used to encrypt
