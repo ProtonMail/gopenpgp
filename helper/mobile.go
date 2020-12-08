@@ -3,6 +3,7 @@ package helper
 import (
 	"encoding/json"
 	goerrors "errors"
+	"runtime/debug"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/pkg/errors"
@@ -123,4 +124,11 @@ func EncryptSignBinaryDetachedMobile(
 		EncryptedData:             ciphertext,
 		EncryptedSignatureArmored: encryptedSignature,
 	}, nil
+}
+
+// FreeOSMemory can be used to explicitly
+// call the garbage collector and
+// return the unused memory to the OS.
+func FreeOSMemory() {
+	debug.FreeOSMemory()
 }
