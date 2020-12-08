@@ -38,33 +38,33 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: iOS build
-          path: build/ios
+          path: dist/ios
           if-no-files-found: error
 
       - name: Upload mac OS artifacts
         uses: actions/upload-artifact@v2
         with:
           name: mac OS build
-          path: build/macos
+          path: dist/macos
           if-no-files-found: error
 
       - name: Upload mac OS ui artifacts
         uses: actions/upload-artifact@v2
         with:
           name: mac OS ui build
-          path: build/macos-ui
+          path: dist/macos-ui
           if-no-files-found: error
 
       - name: Upload iOS simulator artifacts
         uses: actions/upload-artifact@v2
         with:
           name: iOS simulator build
-          path: build/ios-simulator
+          path: dist/ios-simulator
           if-no-files-found: error
 
       - name: Upload xcframework
         uses: actions/upload-artifact@v2
         with:
           name: Gopenpgp xcframework
-          path: build/Gopenpgp.xcframework
+          path: dist/Gopenpgp.xcframework
           if-no-files-found: error
