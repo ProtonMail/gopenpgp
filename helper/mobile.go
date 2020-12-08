@@ -127,8 +127,8 @@ func EncryptSignBinaryDetachedMobile(
 }
 
 // FreeOSMemory can be used to explicitly
-// call the garbage collector
-// return the unused memory to the OS
+// call the garbage collector and
+// return the unused memory to the OS.
 func FreeOSMemory() {
 	debug.FreeOSMemory()
 }
