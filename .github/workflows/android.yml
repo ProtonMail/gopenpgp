@@ -16,6 +16,12 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
+        
+    - name: Set up Go 1.15
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.15.6
+        id: go
 
     - name: Checkout
       uses: actions/checkout@v2
