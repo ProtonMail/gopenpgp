@@ -9,8 +9,8 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
 
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/packet"
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 )
 
 // SessionKey stores a decrypted session key.

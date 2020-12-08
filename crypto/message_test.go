@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/crypto/openpgp/packet"
 )
 
 func TestTextMessageEncryptionWithPassword(t *testing.T) {
