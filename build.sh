@@ -26,16 +26,23 @@ import()
 build()
 {
 	TARGET=$1
+	JAVA_PKG=$2
 	if [ $TARGET = "android" ]; then
 		OUT_EXTENSION="aar"
+		if [ -z "$JAVA_PKG" ]; then
+			JAVAPKG_FLAG="-javapkg=$JAVA_PKG"
+		else
+			JAVAPKG_FLAG=""
+		fi
 	else
 		OUT_EXTENSION="framework"
+		JAVAPKG_FLAG=""
 	fi
 	TARGET_DIR=${BUILD_DIR}/${TARGET}
 	TARGET_OUT_FILE=${TARGET_DIR}/${BUILD_NAME}.${OUT_EXTENSION}
 	mkdir -p $TARGET_DIR
 	printf "\e[0;32mStart Building ${TARGET} .. Location: ${TARGET_DIR} \033[0m\n\n"
-	gomobile bind -tags mobile -target $TARGET -x -o ${TARGET_OUT_FILE} -ldflags="${LDFLAGS}" ${PACKAGES}
+	gomobile bind -tags mobile -target $TARGET $JAVAPKG_FLAG -x -o ${TARGET_OUT_FILE} -ldflags="${LDFLAGS}" ${PACKAGES}
 }
 
 
@@ -113,8 +120,8 @@ xcodebuild -create-xcframework -framework $BUILD_DIR/ios/$BUILD_NAME.framework -
 fi
 # ================  Android Build =====================
 if [ "$#" -ne 1 ] || [ $1 = android ]; then
-ANDROID_JAVA_PAG="com.proton.${ANDROID_OUT_FILE_NAME}"
-build android
+ANDROID_JAVA_PAG="com.proton.${BUILD_NAME}"
+build android $ANDROID_JAVA_PAG
 
 printf "\e[0;32mAll Done. \033[0m\n\n"
 fi
