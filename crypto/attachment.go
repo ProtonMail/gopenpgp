@@ -30,7 +30,6 @@ func (ap *AttachmentProcessor) Process(plainData []byte) {
 		panic(err)
 	}
 	if ap.garbageCollector > 0 {
-		// defer debug.FreeOSMemory()
 		defer runtime.GC()
 	}
 }
