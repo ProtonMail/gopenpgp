@@ -21,7 +21,7 @@ jobs:
       - name: Set up Go 1.15
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.15
+          go-version: ^1.15.6
         id: go
 
       - name: Checkout
@@ -32,39 +32,39 @@ jobs:
           platform: ${{ 'iOS Simulator' }}
         run: |
           ./build.sh apple
-          find build
+          find dist
 
       - name: Upload iOS artifacts
         uses: actions/upload-artifact@v2
         with:
           name: iOS build
-          path: build/ios
+          path: dist/ios
           if-no-files-found: error
 
       - name: Upload mac OS artifacts
         uses: actions/upload-artifact@v2
         with:
           name: mac OS build
-          path: build/macos
+          path: dist/macos
           if-no-files-found: error
 
       - name: Upload mac OS ui artifacts
         uses: actions/upload-artifact@v2
         with:
           name: mac OS ui build
-          path: build/macos-ui
+          path: dist/macos-ui
           if-no-files-found: error
 
       - name: Upload iOS simulator artifacts
         uses: actions/upload-artifact@v2
         with:
           name: iOS simulator build
-          path: build/ios-simulator
+          path: dist/ios-simulator
           if-no-files-found: error
 
       - name: Upload xcframework
         uses: actions/upload-artifact@v2
         with:
           name: Gopenpgp xcframework
-          path: build/Gopenpgp.xcframework
+          path: dist/Gopenpgp.xcframework
           if-no-files-found: error

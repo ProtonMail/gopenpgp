@@ -17,17 +17,23 @@ jobs:
       with:
         java-version: 1.8
 
+    - name: Set up Go 1.15
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.15.6
+      id: go
+
     - name: Checkout
       uses: actions/checkout@v2
 
     - name: Build
       run: |
         ./build.sh android
-        find build
+        find dist
 
     - name: Upload Android artifacts
       uses: actions/upload-artifact@v2
       with:
         name: Android build
-        path: build/android
+        path: dist/android
         if-no-files-found: error
