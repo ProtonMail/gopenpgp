@@ -90,6 +90,9 @@ func (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSign
 // SignDetachedEncrypted generates and returns a PGPMessage
 // containing an encrypted detached signature for a given PlainMessage.
 func (keyRing *KeyRing) SignDetachedEncrypted(message *PlainMessage, signingKeyRing *KeyRing) (encryptedSignature *PGPMessage, err error) {
+	if signingKeyRing == nil {
+		return nil, errors.New("gopenpgp: no signing key provided")
+	}
 	signature, err := signingKeyRing.SignDetached(message)
 	if err != nil {
 		return nil, err
@@ -103,6 +106,9 @@ func (keyRing *KeyRing) SignDetachedEncrypted(message *PlainMessage, signingKeyR
 // with a PGPMessage containing an encrypted detached signature
 // and returns a SignatureVerificationError if fails.
 func (keyRing *KeyRing) VerifyDetachedEncrypted(message *PlainMessage, encryptedSignature *PGPMessage, verifyingKeyRing *KeyRing, verifyTime int64) error {
+	if verifyingKeyRing == nil {
+		return errors.New("gopenpgp: no verifying key provided")
+	}
 	plainMessage, err := keyRing.Decrypt(encryptedSignature, nil, 0)
 	if err != nil {
 		return err
