@@ -197,3 +197,28 @@ func TestClearPrivateParams(t *testing.T) {
 		assert.False(t, key.ClearPrivateParams())
 	}
 }
+
+func TestEncryptedDetachedSignature(t *testing.T) {
+	keyRingPrivate, err := keyRingTestPrivate.Copy()
+	if err != nil {
+		t.Fatal("Expected no error while copying keyring, got:", err)
+	}
+	keyRingPublic, err := keyRingTestPublic.Copy()
+	if err != nil {
+		t.Fatal("Expected no error while copying keyring, got:", err)
+	}
+	message := NewPlainMessageFromString("Hello World!")
+	encSign, err := keyRingPrivate.SignDetachedEncrypted(message, keyRingPublic)
+	if err != nil {
+		t.Fatal("Expected no error while encryptedSigning, got:", err)
+	}
+	err = keyRingPublic.VerifyDetachedEncrypted(message, encSign, keyRingPrivate, 0)
+	if err != nil {
+		t.Fatal("Expected no error while verifying encSignature, got:", err)
+	}
+	message2 := NewPlainMessageFromString("Bye!")
+	err = keyRingPublic.VerifyDetachedEncrypted(message2, encSign, keyRingPrivate, 0)
+	if err == nil {
+		t.Fatal("Expected an error while verifying bad encSignature, got nil")
+	}
+}
