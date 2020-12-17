@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Methods for generating an verifying encrypted detached signatures
 ```go
-(keyRing *KeyRing) SignDetachedEncrypted(message *PlainMessage, signingKeyRing *KeyRing) (encryptedSignature *PGPMessage, err error)
-(keyRing *KeyRing) VerifyDetachedEncrypted(message *PlainMessage, encryptedSignature *PGPMessage, verifyingKeyRing *KeyRing, verifyTime int64) error
+(signingKeyRing *KeyRing) SignDetachedEncrypted(message *PlainMessage, encryptionKeyRing *KeyRing) (encryptedSignature *PGPMessage, err error)
+(verifyingKeyRing *KeyRing) VerifyDetachedEncrypted(message *PlainMessage, encryptedSignature *PGPMessage, decryptionKeyRing *KeyRing, verifyTime int64) error
 ```
 
 ## [2.1.3] 2020-12-09

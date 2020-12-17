@@ -208,16 +208,16 @@ func TestEncryptedDetachedSignature(t *testing.T) {
 		t.Fatal("Expected no error while copying keyring, got:", err)
 	}
 	message := NewPlainMessageFromString("Hello World!")
-	encSign, err := keyRingPublic.SignDetachedEncrypted(message, keyRingPrivate)
+	encSign, err := keyRingPrivate.SignDetachedEncrypted(message, keyRingPublic)
 	if err != nil {
 		t.Fatal("Expected no error while encryptedSigning, got:", err)
 	}
-	err = keyRingPrivate.VerifyDetachedEncrypted(message, encSign, keyRingPublic, 0)
+	err = keyRingPublic.VerifyDetachedEncrypted(message, encSign, keyRingPrivate, 0)
 	if err != nil {
 		t.Fatal("Expected no error while verifying encSignature, got:", err)
 	}
 	message2 := NewPlainMessageFromString("Bye!")
-	err = keyRingPrivate.VerifyDetachedEncrypted(message2, encSign, keyRingPublic, 0)
+	err = keyRingPublic.VerifyDetachedEncrypted(message2, encSign, keyRingPrivate, 0)
 	if err == nil {
 		t.Fatal("Expected an error while verifying bad encSignature, got nil")
 	}
