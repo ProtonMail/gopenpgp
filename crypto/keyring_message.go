@@ -63,9 +63,7 @@ func (keyRing *KeyRing) Decrypt(
 // DecryptUnarmoredStreamUnverified decrypts encrypted binary stream using pgp keys, returning a decrypted stream
 // * message    : The encrypted binary input as a io.Reader
 // Any signature is ignored
-func (keyRing *KeyRing) DecryptUnarmoredStreamUnverified(
-	encryptedIO io.Reader,
-) (message io.Reader, err error) {
+func (keyRing *KeyRing) DecryptUnarmoredStreamUnverified(encryptedIO io.Reader) (message io.Reader, err error) {
 	privKeyEntries := keyRing.entities
 
 	config := &packet.Config{Time: getTimeGenerator()}
@@ -81,10 +79,8 @@ func (keyRing *KeyRing) DecryptUnarmoredStreamUnverified(
 // DecryptArmoredStreamUnverified decrypts encrypted armored stream using pgp keys, returning a decrypted stream
 // * message    : The encrypted armored input as a io.Reader
 // Any signature is ignored
-func (keyRing *KeyRing) DecryptArmoredStreamUnverified(
-	encryptedIO io.Reader, privateKey *KeyRing,
-) (message io.Reader, err error) {
-	unarmored, err := armor.Decode(message)
+func (keyRing *KeyRing) DecryptArmoredStreamUnverified(encryptedIO io.Reader) (io.Reader, error) {
+	unarmored, err := armor.Decode(encryptedIO)
 	if err != nil {
 		return nil, err
 	}
