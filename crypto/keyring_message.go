@@ -59,6 +59,37 @@ func (keyRing *KeyRing) Decrypt(
 	return asymmetricDecrypt(message.NewReader(), keyRing, verifyKey, verifyTime)
 }
 
+// DecryptUnarmoredStreamUnverified decrypts encrypted binary stream using pgp keys, returning a decrypted stream
+// * message    : The encrypted binary input as a io.Reader
+// Any signature is ignored
+func (keyRing *KeyRing) DecryptUnarmoredStreamUnverified(
+	encryptedIO io.Reader,
+) (message io.Reader, err error) {
+	privKeyEntries := keyRing.entities
+
+	config := &packet.Config{Time: getTimeGenerator()}
+
+	messageDetails, err := openpgp.ReadMessage(encryptedIO, privKeyEntries, nil, config)
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
+	}
+
+	return messageDetails.UnverifiedBody, nil
+}
+
+// // DecryptArmoredStreamUnverified decrypts encrypted armored stream using pgp keys, returning a decrypted stream
+// // * message    : The encrypted armored input as a io.Reader
+// // Any signature is ignored
+// func (keyRing *KeyRing) DecryptArmoredStreamUnverified(
+// 	encryptedIO io.Reader, privateKey *KeyRing,
+// ) (message io.Reader, err error) {
+// 	unarmored, err := armor.Decode(message)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return keyRing.DecryptUnarmoredStreamUnverified(unarmored)
+// }
+
 // SignDetached generates and returns a PGPSignature for a given PlainMessage.
 func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, error) {
 	signEntity, err := keyRing.getSigningEntity()
