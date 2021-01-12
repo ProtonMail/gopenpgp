@@ -10,6 +10,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
+	"golang.org/x/crypto/openpgp/armor"
 )
 
 // Encrypt encrypts a PlainMessage, outputs a PGPMessage.
@@ -77,18 +78,18 @@ func (keyRing *KeyRing) DecryptUnarmoredStreamUnverified(
 	return messageDetails.UnverifiedBody, nil
 }
 
-// // DecryptArmoredStreamUnverified decrypts encrypted armored stream using pgp keys, returning a decrypted stream
-// // * message    : The encrypted armored input as a io.Reader
-// // Any signature is ignored
-// func (keyRing *KeyRing) DecryptArmoredStreamUnverified(
-// 	encryptedIO io.Reader, privateKey *KeyRing,
-// ) (message io.Reader, err error) {
-// 	unarmored, err := armor.Decode(message)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return keyRing.DecryptUnarmoredStreamUnverified(unarmored)
-// }
+// DecryptArmoredStreamUnverified decrypts encrypted armored stream using pgp keys, returning a decrypted stream
+// * message    : The encrypted armored input as a io.Reader
+// Any signature is ignored
+func (keyRing *KeyRing) DecryptArmoredStreamUnverified(
+	encryptedIO io.Reader, privateKey *KeyRing,
+) (message io.Reader, err error) {
+	unarmored, err := armor.Decode(message)
+	if err != nil {
+		return nil, err
+	}
+	return keyRing.DecryptUnarmoredStreamUnverified(unarmored.Body)
+}
 
 // SignDetached generates and returns a PGPSignature for a given PlainMessage.
 func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, error) {
