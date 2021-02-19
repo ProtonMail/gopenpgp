@@ -7,8 +7,8 @@ linters-settings:
     lines: 100
     statements: 80
   cyclop:
-    # the maximal code complexity to report
-    max-complexity: 20
+    # the minimal code complexity to report
+    min-complexity: 20
 
 issues:
   exclude-use-default: false
