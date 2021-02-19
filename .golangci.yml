@@ -8,7 +8,7 @@ linters-settings:
     statements: 80
   cyclop:
     # the minimal code complexity to report
-    min-complexity: 20
+    max-complexity: 20
 
 issues:
   exclude-use-default: false
@@ -37,3 +37,4 @@ linters:
     - forbidigo         # Static analysis tool to forbid use of particular identifiers
     - thelper           # Enforce test helper formatting
     - revive            # Force CamelCase instead of all caps
+    - cyclop            # Temp disabling because of a bug that ignores the setting TODO : enable it once the fix as been released
