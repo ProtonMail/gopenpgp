@@ -130,7 +130,7 @@ func (keyRing *KeyRing) GetKeyIDs() []uint64 {
 // parts of these KeyRings.
 func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err error) {
 	now := time.Now()
-	hasExpiredEntity := false
+	hasExpiredEntity := false //nolint:ifshort
 	filteredKeys = make([]*KeyRing, 0)
 
 	for _, contactKeyRing := range contactKeys {
