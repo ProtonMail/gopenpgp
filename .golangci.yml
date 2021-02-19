@@ -6,6 +6,9 @@ linters-settings:
   funlen:
     lines: 100
     statements: 80
+  cyclop:
+    # the maximal code complexity to report
+    max-complexity: 20
 
 issues:
   exclude-use-default: false
@@ -33,3 +36,4 @@ linters:
     - paralleltest      # Detects missing usage of t.Parallel() method in your Go test
     - forbidigo         # Static analysis tool to forbid use of particular identifiers
     - thelper           # Enforce test helper formatting
+    - revive            # Force CamelCase instead of all caps
