@@ -125,6 +125,8 @@ func TestAttachmentDecrypt2(t *testing.T) {
 		t.Error("Expected no error while unlocking private key, got:" + err.Error())
 	}
 
+	defer uk.ClearPrivateParams()
+
 	ukr, err := NewKeyRing(uk)
 	if err != nil {
 		t.Error("Expected no error while building private keyring, got:" + err.Error())
