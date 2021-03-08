@@ -200,7 +200,11 @@ func (key *Key) Armor() (string, error) {
 		return "", err
 	}
 
-	return armor.ArmorWithType(serialized, constants.PrivateKeyHeader)
+	if key.IsPrivate() {
+		return armor.ArmorWithType(serialized, constants.PrivateKeyHeader)
+	}
+
+	return armor.ArmorWithType(serialized, constants.PublicKeyHeader)
 }
 
 // ArmorWithCustomHeaders returns the armored key as a string, with

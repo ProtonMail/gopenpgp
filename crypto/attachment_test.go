@@ -103,7 +103,7 @@ func TestAttachmentDecrypt(t *testing.T) {
 	assert.Exactly(t, message, redecData)
 }
 
-func TestAttachmentDecrypt2(t *testing.T) {
+func TestAttachmentDecryptStatic(t *testing.T) {
 	passphrase := []byte("wUMuF/lkDPYWH/0ZqqY8kJKw7YJg6kS")
 	keyPacket, err := base64.StdEncoding.DecodeString(readTestFile("att_keypacket", false))
 	if err != nil {
