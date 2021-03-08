@@ -235,7 +235,8 @@ func TestGenerateKeyWithPrimes(t *testing.T) {
 		t.Fatal("Cannot generate RSA key with primes:", err)
 	}
 
-	pk := staticRsaKey.entity.PrivateKey.PrivateKey.(*rsa.PrivateKey)
+	pk, ok := staticRsaKey.entity.PrivateKey.PrivateKey.(*rsa.PrivateKey)
+	assert.True(t, ok)
 	assert.Exactly(t, prime1, pk.Primes[0].Bytes())
 	assert.Exactly(t, prime2, pk.Primes[1].Bytes())
 }

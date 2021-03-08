@@ -106,7 +106,14 @@ func TestAttachmentDecrypt(t *testing.T) {
 func TestAttachmentDecrypt2(t *testing.T) {
 	passphrase := []byte("wUMuF/lkDPYWH/0ZqqY8kJKw7YJg6kS")
 	keyPacket, err := base64.StdEncoding.DecodeString(readTestFile("att_keypacket", false))
+	if err != nil {
+		t.Error("Expected no error while decoding key packet, got:" + err.Error())
+	}
+
 	dataPacket, err := base64.StdEncoding.DecodeString(readTestFile("att_body", false))
+	if err != nil {
+		t.Error("Expected no error while decoding data packet, got:" + err.Error())
+	}
 
 	pk, err := NewKeyFromArmored(readTestFile("att_key", false))
 	if err != nil {
@@ -122,7 +129,6 @@ func TestAttachmentDecrypt2(t *testing.T) {
 	if err != nil {
 		t.Error("Expected no error while building private keyring, got:" + err.Error())
 	}
-
 
 	pgpSplitMessage := NewPGPSplitMessage(keyPacket, dataPacket)
 	if err != nil {

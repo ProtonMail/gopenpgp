@@ -37,4 +37,4 @@ linters:
     - forbidigo         # Static analysis tool to forbid use of particular identifiers
     - thelper           # Enforce test helper formatting
     - revive            # Force CamelCase instead of all caps
-    - cyclop            # Temp disabling because of a bug that ignores the setting TODO : enable it once the fix as been released
+    - nilerr            # Force return err when not nil
