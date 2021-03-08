@@ -102,3 +102,37 @@ func TestAttachmentDecrypt(t *testing.T) {
 
 	assert.Exactly(t, message, redecData)
 }
+
+func TestAttachmentDecrypt2(t *testing.T) {
+	passphrase := []byte("wUMuF/lkDPYWH/0ZqqY8kJKw7YJg6kS")
+	keyPacket, err := base64.StdEncoding.DecodeString(readTestFile("att_keypacket", false))
+	dataPacket, err := base64.StdEncoding.DecodeString(readTestFile("att_body", false))
+
+	pk, err := NewKeyFromArmored(readTestFile("att_key", false))
+	if err != nil {
+		t.Error("Expected no error while unarmoring private key, got:" + err.Error())
+	}
+
+	uk, err := pk.Unlock(passphrase)
+	if err != nil {
+		t.Error("Expected no error while unlocking private key, got:" + err.Error())
+	}
+
+	ukr, err := NewKeyRing(uk)
+	if err != nil {
+		t.Error("Expected no error while building private keyring, got:" + err.Error())
+	}
+
+
+	pgpSplitMessage := NewPGPSplitMessage(keyPacket, dataPacket)
+	if err != nil {
+		t.Fatal("Expected no error while unarmoring, got:", err)
+	}
+
+	dec, err := ukr.DecryptAttachment(pgpSplitMessage)
+	if err != nil {
+		t.Fatal("Expected no error while decrypting attachment, got:", err)
+	}
+
+	assert.Exactly(t, []byte("PNG"), dec.GetBinary()[1:4])
+}
