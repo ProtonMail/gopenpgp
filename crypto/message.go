@@ -335,7 +335,7 @@ func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)
 	for {
 		var p packet.Packet
 		if p, err = packets.Next(); goerrors.Is(err, io.EOF) {
-			err = nil
+			err = nil //nolint:wastedassign
 			break
 		}
 		switch p := p.(type) {
