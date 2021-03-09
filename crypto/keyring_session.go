@@ -63,7 +63,7 @@ Loop:
 	}
 
 	if ek == nil || ek.Key == nil {
-		return nil, errors.New("gopenpgp: unable to decrypt session key")
+		return nil, errors.New("gopenpgp: unable to decrypt session key: no valid decryption key")
 	}
 
 	return newSessionKeyFromEncrypted(ek)
