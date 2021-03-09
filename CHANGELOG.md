@@ -8,10 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Decryption tests for attachments
 
+### Fixed
+- Armoring headers for public or private keys
+- Session key decoding on invalid keys
+
 ## [2.1.5] 2021-02-19
 
 ## Changed
-- Removed an unecessary cloning in the attachment processor, to perform better in low memory settings
+- Removed an unnecessary cloning in the attachment processor, to perform better in low memory settings
 
 ## [2.1.4] 2021-01-08
 ### Added

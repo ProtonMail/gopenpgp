@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
@@ -209,4 +210,32 @@ func TestDataPacketEncryptionWithCompression(t *testing.T) {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
+}
+
+func TestAsymmetricKeyPacketDecryptionFailure(t *testing.T) {
+	passphrase := []byte("passphrase")
+	keyPacket, err := base64.StdEncoding.DecodeString(readTestFile("sessionkey_packet", false))
+	if err != nil {
+		t.Error("Expected no error while decoding key packet, got:" + err.Error())
+	}
+
+	pk, err := NewKeyFromArmored(readTestFile("sessionkey_key", false))
+	if err != nil {
+		t.Error("Expected no error while unarmoring private key, got:" + err.Error())
+	}
+
+	uk, err := pk.Unlock(passphrase)
+	if err != nil {
+		t.Error("Expected no error while unlocking private key, got:" + err.Error())
+	}
+
+	defer uk.ClearPrivateParams()
+
+	ukr, err := NewKeyRing(uk)
+	if err != nil {
+		t.Error("Expected no error while building private keyring, got:" + err.Error())
+	}
+
+	_, err = ukr.DecryptSessionKey(keyPacket)
+	assert.Error(t, err, "gopenpgp: unable to decrypt session key")
 }
