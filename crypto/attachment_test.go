@@ -191,12 +191,9 @@ func TestAttachmenProcessor2(t *testing.T) {
 		} else if err != nil {
 			t.Error("Expected no error while reading plain data, got:" + err.Error())
 		}
-		nBytesWritten, err := ap.Process(inputBytes[:nBytesRead])
+		err = ap.Process(inputBytes[:nBytesRead])
 		if err != nil {
 			t.Error("Expected no error while writing plain data, got:" + err.Error())
-		}
-		if nBytesWritten != nBytesRead {
-			t.Errorf("Read %d Written %d", nBytesRead, nBytesWritten)
 		}
 	}
 	dataLength, err := ap.Finish()
@@ -270,12 +267,9 @@ func TestAttachmenProcessorNotEnoughBuffer(t *testing.T) {
 		} else if err != nil {
 			t.Error("Expected no error while reading plain data, got:" + err.Error())
 		}
-		nBytesWritten, err := ap.Process(inputBytes[:nBytesRead])
+		err = ap.Process(inputBytes[:nBytesRead])
 		if err != nil {
 			t.Error("Expected no error while writing plain data, got:" + err.Error())
-		}
-		if nBytesWritten != nBytesRead {
-			t.Errorf("Read %d Written %d", nBytesRead, nBytesWritten)
 		}
 	}
 	_, err = ap.Finish()

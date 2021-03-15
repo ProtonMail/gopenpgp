@@ -31,9 +31,10 @@ func (ap *AttachmentProcessor2) GetKeyPacket() []byte {
 }
 
 // Process writes attachment data to be encrypted.
-func (ap *AttachmentProcessor2) Process(plainData []byte) (int, error) {
+func (ap *AttachmentProcessor2) Process(plainData []byte) error {
 	defer runtime.GC()
-	return ap.plaintextWriter.Write(plainData)
+	_, err := ap.plaintextWriter.Write(plainData)
+	return err
 }
 
 // Close tells the processor to finalize encryption.
