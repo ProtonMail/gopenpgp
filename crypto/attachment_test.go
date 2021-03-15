@@ -147,7 +147,7 @@ func TestAttachmentDecryptStatic(t *testing.T) {
 	assert.Exactly(t, []byte("PNG"), dec.GetBinary()[1:4])
 }
 
-func TestAttachmenProcessor2(t *testing.T) {
+func TestAttachmentProcessor2(t *testing.T) {
 	pgp.latestServerTime = 1615394034
 	defer func() { pgp.latestServerTime = testTime }()
 	passphrase := []byte("wUMuF/lkDPYWH/0ZqqY8kJKw7YJg6kS")
@@ -196,10 +196,11 @@ func TestAttachmenProcessor2(t *testing.T) {
 			t.Error("Expected no error while writing plain data, got:" + err.Error())
 		}
 	}
-	dataLength, err := ap.Finish()
+	err = ap.Finish()
 	if err != nil {
 		t.Error("Expected no error while calling finish, got:" + err.Error())
 	}
+	dataLength := ap.GetDataLength()
 	keyPacket := ap.GetKeyPacket()
 	if keyPacket == nil {
 		t.Error("The key packet was nil")
@@ -223,7 +224,7 @@ func TestAttachmenProcessor2(t *testing.T) {
 	}
 }
 
-func TestAttachmenProcessorNotEnoughBuffer(t *testing.T) {
+func TestAttachmentProcessorNotEnoughBuffer(t *testing.T) {
 	pgp.latestServerTime = 1615394034
 	defer func() { pgp.latestServerTime = testTime }()
 	passphrase := []byte("wUMuF/lkDPYWH/0ZqqY8kJKw7YJg6kS")
@@ -272,7 +273,7 @@ func TestAttachmenProcessorNotEnoughBuffer(t *testing.T) {
 			t.Error("Expected no error while writing plain data, got:" + err.Error())
 		}
 	}
-	_, err = ap.Finish()
+	err = ap.Finish()
 	if err == nil {
 		t.Error("Expected an error while calling finish, got nil")
 	}

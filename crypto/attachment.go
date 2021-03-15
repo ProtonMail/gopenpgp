@@ -30,6 +30,11 @@ func (ap *AttachmentProcessor2) GetKeyPacket() []byte {
 	return ap.keyPacket
 }
 
+// KeyPacket.
+func (ap *AttachmentProcessor2) GetDataLength() int {
+	return ap.dataLength
+}
+
 // Process writes attachment data to be encrypted.
 func (ap *AttachmentProcessor2) Process(plainData []byte) error {
 	defer runtime.GC()
@@ -38,22 +43,22 @@ func (ap *AttachmentProcessor2) Process(plainData []byte) error {
 }
 
 // Close tells the processor to finalize encryption.
-func (ap *AttachmentProcessor2) Finish() (int, error) {
+func (ap *AttachmentProcessor2) Finish() error {
 	defer runtime.GC()
 	if ap.err != nil {
-		return 0, ap.err
+		return ap.err
 	}
 	if err := ap.plaintextWriter.Close(); err != nil {
-		return 0, errors.Wrap(err, "gopengpp: unable to close plaintext writer")
+		return errors.Wrap(err, "gopengpp: unable to close plaintext writer")
 	}
 	if err := ap.ciphertextWriter.Close(); err != nil {
-		return 0, errors.Wrap(err, "gopengpp: unable to close the dataPacket writer")
+		return errors.Wrap(err, "gopengpp: unable to close the dataPacket writer")
 	}
 	ap.done.Wait()
 	if ap.err != nil {
-		return 0, ap.err
+		return ap.err
 	}
-	return ap.dataLength, nil
+	return nil
 }
 
 type ReadInfo struct {
