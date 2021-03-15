@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"runtime"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -12,6 +13,142 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/pkg/errors"
 )
+
+// AttachmentProcessor keeps track of the progress of encrypting an attachment
+// (optimized for encrypting large files).
+type AttachmentProcessor2 struct {
+	keyPacket        []byte
+	dataLength       int
+	plaintextWriter  io.WriteCloser
+	ciphertextWriter *io.PipeWriter
+	err              error
+	done             sync.WaitGroup
+}
+
+// KeyPacket.
+func (ap *AttachmentProcessor2) GetKeyPacket() []byte {
+	return ap.keyPacket
+}
+
+// Process writes attachment data to be encrypted.
+func (ap *AttachmentProcessor2) Process(plainData []byte) (int, error) {
+	defer runtime.GC()
+	return ap.plaintextWriter.Write(plainData)
+}
+
+// Close tells the processor to finalize encryption.
+func (ap *AttachmentProcessor2) Finish() (int, error) {
+	defer runtime.GC()
+	if ap.err != nil {
+		return 0, ap.err
+	}
+	if err := ap.plaintextWriter.Close(); err != nil {
+		return 0, errors.Wrap(err, "gopengpp: unable to close plaintext writer")
+	}
+	if err := ap.ciphertextWriter.Close(); err != nil {
+		return 0, errors.Wrap(err, "gopengpp: unable to close the dataPacket writer")
+	}
+	ap.done.Wait()
+	if ap.err != nil {
+		return 0, ap.err
+	}
+	return ap.dataLength, nil
+}
+
+type ReadInfo struct {
+	N   int
+	EOF bool
+}
+
+// NewLowMemoryAttachmentProcessor creates an AttachmentProcessor which can be used
+// to encrypt a file. It takes an estimatedSize and filename as hints about the
+// file. It is optimized for low-memory environments and collects garbage every
+// megabyte.
+func (keyRing *KeyRing) NewLowMemoryAttachmentProcessor2(
+	estimatedSize int, filename string, dataBuffer []byte,
+) (*AttachmentProcessor2, error) {
+	debug.SetGCPercent(10)
+	return keyRing.newAttachmentProcessor2(estimatedSize, filename, true, uint32(GetUnixTime()), dataBuffer)
+}
+
+// newAttachmentProcessor creates an AttachmentProcessor which can be used to encrypt
+// a file. It takes an estimatedSize and fileName as hints about the file.
+func (keyRing *KeyRing) newAttachmentProcessor2(
+	estimatedSize int, filename string, isBinary bool, modTime uint32, dataBuffer []byte,
+) (*AttachmentProcessor2, error) {
+	attachmentProc := &AttachmentProcessor2{}
+
+	hints := &openpgp.FileHints{
+		FileName: filename,
+		IsBinary: isBinary,
+		ModTime:  time.Unix(int64(modTime), 0),
+	}
+
+	config := &packet.Config{
+		DefaultCipher: packet.CipherAES256,
+		Time:          getTimeGenerator(),
+	}
+
+	keyReader, keyWriter := io.Pipe()
+	attachmentProc.done.Add(1)
+	go func() {
+		defer attachmentProc.done.Done()
+		keyPacket, err := ioutil.ReadAll(keyReader)
+		attachmentProc.keyPacket = clone(keyPacket)
+		attachmentProc.err = err
+	}()
+
+	dataReader, dataWriter := io.Pipe()
+	attachmentProc.done.Add(1)
+	go func() {
+		defer attachmentProc.done.Done()
+		totalRead, err := readAll(dataBuffer, dataReader)
+		attachmentProc.dataLength = totalRead
+		attachmentProc.err = err
+	}()
+
+	var ew io.WriteCloser
+	var encryptErr error
+	ew, encryptErr = openpgp.EncryptSplit(keyWriter, dataWriter, keyRing.entities, nil, hints, config)
+	if encryptErr != nil {
+		return nil, errors.Wrap(encryptErr, "gopengpp: unable to encrypt attachment")
+	}
+	attachmentProc.plaintextWriter = ew
+	attachmentProc.ciphertextWriter = dataWriter
+	err := keyWriter.Close()
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: couldn't close the keyPacket writer")
+	}
+	if attachmentProc.err != nil {
+		return nil, attachmentProc.err
+	}
+	return attachmentProc, nil
+}
+
+func readAll(buffer []byte, reader io.Reader) (int, error) {
+	bufferCap := cap(buffer)
+	totalRead := 0
+	overflow := false
+	for {
+		n, err := reader.Read(buffer[totalRead:])
+		totalRead += n
+		if err != nil {
+			if err != io.EOF {
+				return 0, errors.Wrap(err, "gopenpgp: couldn't read data from the encrypted reader")
+			} else {
+				break
+			}
+		}
+		if totalRead == bufferCap {
+			overflow = true
+			totalRead = 0
+		}
+	}
+	if overflow {
+		return 0, errors.New("gopenpgp: read more bytes that was allocated in the buffer")
+	}
+	return totalRead, nil
+}
 
 // AttachmentProcessor keeps track of the progress of encrypting an attachment
 // (optimized for encrypting large files).
