@@ -1,6 +1,6 @@
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/ProtonMail/go-crypto v0.0.0-20201208171014-cdb7591792e2 h1:pQkjJELHayW59jp7r4G5Dlmnicr5McejDfwsjcwI1SU=
-github.com/ProtonMail/go-crypto v0.0.0-20201208171014-cdb7591792e2/go.mod h1:HTM9X7e9oLwn7RiqLG0UVwVRJenLs3wN+tQ0NPAfwMQ=
+github.com/ProtonMail/go-crypto v0.0.0-20210317131446-1ce7a431ff79 h1:Y6Zid4OqXGXRaaowOfYf2+kNE0BYmnqACXnix/VtXQg=
+github.com/ProtonMail/go-crypto v0.0.0-20210317131446-1ce7a431ff79/go.mod h1:HTM9X7e9oLwn7RiqLG0UVwVRJenLs3wN+tQ0NPAfwMQ=
 github.com/ProtonMail/go-mime v0.0.0-20190923161245-9b5a4261663a h1:W6RrgN/sTxg1msqzFFb+G80MFmpjMw61IU+slm+wln4=
 github.com/ProtonMail/go-mime v0.0.0-20190923161245-9b5a4261663a/go.mod h1:NYt+V3/4rEeDuaev/zw1zCq8uqVEuPHzDPo3OZrlGJ4=
 github.com/ProtonMail/go-mobile v0.0.0-20201014085805-7a2d68bf792f h1:u2i2ZBaZNzyJlIpyZWRJAoYMYqKObfJxvja3lr2olWw=
