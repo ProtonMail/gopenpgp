@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"runtime"
@@ -38,12 +39,14 @@ func (ap *AttachmentProcessor2) GetDataLength() int {
 // Process writes attachment data to be encrypted.
 func (ap *AttachmentProcessor2) Process(plainData []byte) error {
 	defer runtime.GC()
-	_, err := ap.plaintextWriter.Write(plainData)
+	n, err := ap.plaintextWriter.Write(plainData)
+	fmt.Printf("Wrote %d\n", n)
 	return err
 }
 
 // Close tells the processor to finalize encryption.
 func (ap *AttachmentProcessor2) Finish() error {
+	fmt.Println("Finishing")
 	defer runtime.GC()
 	if ap.err != nil {
 		return ap.err
@@ -56,6 +59,7 @@ func (ap *AttachmentProcessor2) Finish() error {
 	}
 	ap.done.Wait()
 	if ap.err != nil {
+		fmt.Printf("Error while finishing %v\n", ap.err)
 		return ap.err
 	}
 	return nil
@@ -83,7 +87,9 @@ func (keyRing *KeyRing) newAttachmentProcessor2(
 	estimatedSize int, filename string, isBinary bool, modTime uint32, dataBuffer []byte,
 ) (*AttachmentProcessor2, error) {
 	attachmentProc := &AttachmentProcessor2{}
-
+	if dataBuffer == nil || cap(dataBuffer) == 0 {
+		return nil, errors.New("gopenpgp: can't give a nil or empty buffer to process the attachement")
+	}
 	hints := &openpgp.FileHints{
 		FileName: filename,
 		IsBinary: isBinary,
@@ -133,21 +139,31 @@ func (keyRing *KeyRing) newAttachmentProcessor2(
 
 func readAll(buffer []byte, reader io.Reader) (int, error) {
 	bufferCap := cap(buffer)
+	fmt.Printf("Buffer pointer %p\n", buffer)
+	fmt.Printf("Buffer capacity %d\n", bufferCap)
 	totalRead := 0
 	overflow := false
+	reset := false
 	for {
 		n, err := reader.Read(buffer[totalRead:])
 		totalRead += n
+		fmt.Printf("Read %d Total %d \n", n, totalRead)
+		if !overflow && reset && n != 0 {
+			overflow = true
+			fmt.Println("Overflow")
+		}
 		if err != nil {
 			if err != io.EOF {
 				return 0, errors.Wrap(err, "gopenpgp: couldn't read data from the encrypted reader")
 			} else {
+				fmt.Println("Finished reading")
 				break
 			}
 		}
 		if totalRead == bufferCap {
-			overflow = true
+			reset = true
 			totalRead = 0
+			fmt.Println("Reset buffer limit")
 		}
 	}
 	if overflow {

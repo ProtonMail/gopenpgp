@@ -278,3 +278,38 @@ func TestAttachmentProcessorNotEnoughBuffer(t *testing.T) {
 		t.Error("Expected an error while calling finish, got nil")
 	}
 }
+
+func TestAttachmentProcessorEmptyBuffer(t *testing.T) {
+	pgp.latestServerTime = 1615394034
+	defer func() { pgp.latestServerTime = testTime }()
+	passphrase := []byte("wUMuF/lkDPYWH/0ZqqY8kJKw7YJg6kS")
+	pk, err := NewKeyFromArmored(readTestFile("att_key", false))
+	if err != nil {
+		t.Error("Expected no error while unarmoring private key, got:" + err.Error())
+	}
+
+	uk, err := pk.Unlock(passphrase)
+	if err != nil {
+		t.Error("Expected no error while unlocking private key, got:" + err.Error())
+	}
+
+	defer uk.ClearPrivateParams()
+
+	ukr, err := NewKeyRing(uk)
+	if err != nil {
+		t.Error("Expected no error while building private keyring, got:" + err.Error())
+	}
+
+	inputPlaintext := readTestFile("att_cleartext", false)
+	plaintextBytes := []byte(inputPlaintext)
+	bufferLen := 0
+	dataPacket := make([]byte, bufferLen)
+	_, err = ukr.NewLowMemoryAttachmentProcessor2(
+		len(plaintextBytes),
+		"test.txt",
+		dataPacket,
+	)
+	if err == nil {
+		t.Error("Expected an error while building the attachment processor with an empty buffer got nil")
+	}
+}
