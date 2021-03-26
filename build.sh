@@ -1,9 +1,10 @@
 #!/bin/bash
 
+USER_INPUT=$1
+NB_INPUTS=$#
+
 set -ue pipefail  # End the script if any command, or intermediate command,
                   # returns an error code.
-
-set -o xtrace
 
 trap failed_build EXIT
 
@@ -68,7 +69,6 @@ import()
 
 
 ## ======== Config ===============
-
 # ==== Generic parameters ======
 
 # output directory
@@ -79,7 +79,7 @@ BUILD_NAME="Gopenpgp"
 
 ANDROID_JAVA_PKG="com.proton.${BUILD_NAME}"
 
-# ==== Packages to include =====
+# ==== Packages to included =====
 PACKAGES=""
 ## crypto must be the first one, and the framework name better same with the first package name
 import github.com/ProtonMail/gopenpgp/v2/crypto
@@ -104,7 +104,7 @@ printf "Packages included : ${PACKAGES}\n"
 
 # ================= Apple Builds ======================
 # ========== iOS and Simulator =========
-if [ "$#" -ne 1 ] || [ $1 = apple ]; then
+if [ $NB_INPUTS -ne 1 ] || [ $USER_INPUT = apple ]; then
 # we build the framework for the ios sim on arm64 macs
 
 build ios-simulator
@@ -138,12 +138,10 @@ fi
 
 
 # ================  Android Build =====================
-if [ "$#" -ne 1 ] || [ $1 = android ]; then
+if [ $NB_INPUTS -ne 1 ] || [ $USER_INPUT = android ]; then
 build android
 fi
 
 printf "${green}All Done. ${reset}\n\n"
 
 trap - EXIT
-
-set +o xtrace
