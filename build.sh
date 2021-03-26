@@ -3,6 +3,8 @@
 set -ue pipefail  # End the script if any command, or intermediate command,
                   # returns an error code.
 
+set -o xtrace
+
 trap failed_build EXIT
 
 # Colors for terminal display
@@ -44,9 +46,7 @@ build()
 {
 	TARGET=$1
 	if [ $TARGET = "android" ]; then
-		
-			JAVAPKG_FLAG="-javapkg=${ANDROID_JAVA_PKG}"
-		
+		JAVAPKG_FLAG="-javapkg=${ANDROID_JAVA_PKG}"
 		OUT_EXTENSION="aar"
 	else
 		JAVAPKG_FLAG=""
@@ -145,3 +145,5 @@ fi
 printf "${green}All Done. ${reset}\n\n"
 
 trap - EXIT
+
+set +o xtrace
