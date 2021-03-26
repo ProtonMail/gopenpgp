@@ -44,7 +44,7 @@ func (ap *AttachmentProcessor2) GetDataLength() int {
 func (ap *AttachmentProcessor2) Process(plainData []byte) error {
 	defer runtime.GC()
 	_, err := ap.plaintextWriter.Write(plainData)
-	return err
+	return errors.Wrap(err, "gopenpgp: couldn't write attachment data")
 }
 
 // Finish tells the processor to finalize encryption.
@@ -72,7 +72,7 @@ func (ap *AttachmentProcessor2) Finish() error {
 // file and a buffer to hold the DataPacket.
 // It is optimized for low-memory environments and collects garbage every megabyte.
 // Make sure that the dataBuffer is large enough to hold the whole data packet
-// otherwise Finish() will return an error
+// otherwise Finish() will return an error.
 func (keyRing *KeyRing) NewLowMemoryAttachmentProcessor2(
 	estimatedSize int, filename string, dataBuffer []byte,
 ) (*AttachmentProcessor2, error) {
@@ -139,8 +139,7 @@ func (keyRing *KeyRing) NewLowMemoryAttachmentProcessor2(
 	attachmentProc.ciphertextWriter = dataWriter
 
 	// The key packet should have been already written, so we can close
-	err := keyWriter.Close()
-	if err != nil {
+	if err := keyWriter.Close(); err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: couldn't close the keyPacket writer")
 	}
 
@@ -153,7 +152,7 @@ func (keyRing *KeyRing) NewLowMemoryAttachmentProcessor2(
 
 // readAll works a bit like io.ReadAll
 // but we can choose the buffer to write to
-// and we don't grow the slice in case of overflow
+// and we don't grow the slice in case of overflow.
 func readAll(buffer []byte, reader io.Reader) (int, error) {
 	bufferCap := cap(buffer)
 	totalRead := 0
@@ -169,11 +168,10 @@ func readAll(buffer []byte, reader io.Reader) (int, error) {
 			overflow = true
 		}
 		if err != nil {
-			if err != io.EOF {
-				return 0, errors.Wrap(err, "gopenpgp: couldn't read data from the encrypted reader")
-			} else {
+			if errors.Is(err, io.EOF) {
 				break
 			}
+			return 0, errors.Wrap(err, "gopenpgp: couldn't read data from the encrypted reader")
 		}
 		if totalRead == bufferCap {
 			// Here we've reached the end of the buffer

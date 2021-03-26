@@ -6,6 +6,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -186,7 +187,7 @@ func TestAttachmentProcessor2(t *testing.T) {
 	var readAllPlaintext = false
 	for !readAllPlaintext {
 		nBytesRead, err := plaintextReader.Read(inputBytes)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			readAllPlaintext = true
 		} else if err != nil {
 			t.Error("Expected no error while reading plain data, got:" + err.Error())
@@ -263,7 +264,7 @@ func TestAttachmentProcessorNotEnoughBuffer(t *testing.T) {
 	var readAllPlaintext = false
 	for !readAllPlaintext {
 		nBytesRead, err := plaintextReader.Read(inputBytes)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			readAllPlaintext = true
 		} else if err != nil {
 			t.Error("Expected no error while reading plain data, got:" + err.Error())
