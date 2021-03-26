@@ -15,7 +15,7 @@ reset="\033[0m"
 
 # Trap in case something went wrong
 failed_build() {
-    printf "${red}The build failed!\nRun 'make clean' before retrying...\n${reset}"
+    printf "${red}The build failed!\n${reset}"
 }
 
 install_modules()
