@@ -251,6 +251,46 @@ func (key *Key) GetPublicKey() (b []byte, err error) {
 
 // --- Key object properties
 
+func (key *Key) CanSign() bool {
+	for _, identity := range key.entity.Identities {
+		if identity.SelfSignature.FlagSign {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (key *Key) CanCertify() bool {
+	for _, identity := range key.entity.Identities {
+		if identity.SelfSignature.FlagCertify {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (key *Key) CanEncryptCommunications() bool {
+	for _, identity := range key.entity.Identities {
+		if identity.SelfSignature.FlagEncryptCommunications {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (key *Key) CanEncryptStorage() bool {
+	for _, identity := range key.entity.Identities {
+		if identity.SelfSignature.FlagEncryptStorage {
+			return true
+		}
+	}
+
+	return false
+}
+
 // IsExpired checks whether the key is expired.
 func (key *Key) IsExpired() bool {
 	_, ok := key.entity.EncryptionKey(getNow())
