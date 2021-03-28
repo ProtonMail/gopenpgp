@@ -251,44 +251,39 @@ func (key *Key) GetPublicKey() (b []byte, err error) {
 
 // --- Key object properties
 
+// CanSign returns true if PrimaryKey can be used for signing
 func (key *Key) CanSign() bool {
-	for _, identity := range key.entity.Identities {
-		if identity.SelfSignature.FlagSign {
-			return true
-		}
+	entity := key.entity
+	primaryIdentity := entity.PrimaryIdentity()
+	selfSignature := primaryIdentity.SelfSignature
+	primaryKeyExpired := entity.PrimaryKey.KeyExpired(selfSignature, getNow())
+
+	if primaryKeyExpired {
+		return false
 	}
 
-	return false
+	return selfSignature.FlagsValid && selfSignature.FlagSign
 }
 
+// CanCertify returns true if PrimaryKey can be used for certifying other keys
 func (key *Key) CanCertify() bool {
-	for _, identity := range key.entity.Identities {
-		if identity.SelfSignature.FlagCertify {
-			return true
-		}
+	entity := key.entity
+	primaryIdentity := entity.PrimaryIdentity()
+	selfSignature := primaryIdentity.SelfSignature
+	primaryKeyExpired := entity.PrimaryKey.KeyExpired(selfSignature, getNow())
+
+	if primaryKeyExpired {
+		return false
 	}
 
-	return false
+	return selfSignature.FlagsValid && selfSignature.FlagCertify
 }
 
-func (key *Key) CanEncryptCommunications() bool {
-	for _, identity := range key.entity.Identities {
-		if identity.SelfSignature.FlagEncryptCommunications {
-			return true
-		}
-	}
+// CanEncrypt returns true if any of the Keys can be used for encryption
+func (key *Key) CanEncrypt() bool {
+	_, canEncrypt := key.entity.EncryptionKey(getNow())
 
-	return false
-}
-
-func (key *Key) CanEncryptStorage() bool {
-	for _, identity := range key.entity.Identities {
-		if identity.SelfSignature.FlagEncryptStorage {
-			return true
-		}
-	}
-
-	return false
+	return canEncrypt
 }
 
 // IsExpired checks whether the key is expired.
