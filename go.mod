@@ -5,9 +5,7 @@ go 1.15
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20210326100218-fe57d110ff3d
 	github.com/ProtonMail/go-mime v0.0.0-20190923161245-9b5a4261663a
-	github.com/go-delve/delve v1.6.0 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/pkg/profile v0.0.0-20170413231811-06b906832ed0 // indirect
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/mobile v0.0.0-20200801112145-973feb4309de
 )
