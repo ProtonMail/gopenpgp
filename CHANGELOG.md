@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added 
+- `AttachmentProcessor`: a new kind of attachment processor where the caller has to first allocate a buffer large enough for the whole data packet to be written to. It can be created with 
+```processor, err := keyRing.NewManualAttachmentProcessor(estimatedSize, filename, dataBuffer)```.
+
 ### Changed
 - Updated the x/mobile fork and the build script to work with golang 1.16
 
