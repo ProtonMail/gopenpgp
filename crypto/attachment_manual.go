@@ -154,12 +154,14 @@ func (keyRing *KeyRing) NewManualAttachmentProcessor(
 func readAll(buffer []byte, reader io.Reader) (int, error) {
 	bufferCap := cap(buffer)
 	totalRead := 0
+	offset := 0
 	overflow := false
 	reset := false
 	for {
 		// We read into the buffer
-		n, err := reader.Read(buffer[totalRead:])
+		n, err := reader.Read(buffer[offset:])
 		totalRead += n
+		offset += n
 		if !overflow && reset && n != 0 {
 			// In case we've started overwriting the beginning of the buffer
 			// We will return an error at Finish()
@@ -176,7 +178,7 @@ func readAll(buffer []byte, reader io.Reader) (int, error) {
 			// But we need to keep reading to not block the Process()
 			// So we reset the buffer
 			reset = true
-			totalRead = 0
+			offset = 0
 		}
 	}
 	if overflow {
