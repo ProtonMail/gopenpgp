@@ -74,7 +74,7 @@ func (ap *ManualAttachmentProcessor) Finish() error {
 func (keyRing *KeyRing) NewManualAttachmentProcessor(
 	estimatedSize int, filename string, dataBuffer []byte,
 ) (*ManualAttachmentProcessor, error) {
-	if dataBuffer == nil || cap(dataBuffer) == 0 {
+	if dataBuffer == nil || len(dataBuffer) == 0 {
 		return nil, errors.New("gopenpgp: can't give a nil or empty buffer to process the attachement")
 	}
 
@@ -152,7 +152,7 @@ func (keyRing *KeyRing) NewManualAttachmentProcessor(
 // but we can choose the buffer to write to
 // and we don't grow the slice in case of overflow.
 func readAll(buffer []byte, reader io.Reader) (int, error) {
-	bufferCap := cap(buffer)
+	bufferLen := len(buffer)
 	totalRead := 0
 	offset := 0
 	overflow := false
@@ -173,7 +173,7 @@ func readAll(buffer []byte, reader io.Reader) (int, error) {
 			}
 			return 0, errors.Wrap(err, "gopenpgp: couldn't read data from the encrypted reader")
 		}
-		if offset == bufferCap {
+		if offset == bufferLen {
 			// Here we've reached the end of the buffer
 			// But we need to keep reading to not block the Process()
 			// So we reset the buffer
