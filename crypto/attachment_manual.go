@@ -85,11 +85,11 @@ func (keyRing *KeyRing) NewManualAttachmentProcessor(
 
 	// hints for the encrypted file
 	isBinary := true
-	modTime := uint32(GetUnixTime())
+	modTime := GetUnixTime()
 	hints := &openpgp.FileHints{
 		FileName: filename,
 		IsBinary: isBinary,
-		ModTime:  time.Unix(int64(modTime), 0),
+		ModTime:  time.Unix(modTime, 0),
 	}
 
 	// encryption config
