@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
+### Changed
 - Updated the x/mobile fork and the build script to work with golang 1.16
 
 ## [2.1.6] 2021-03-17
