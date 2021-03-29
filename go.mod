@@ -10,4 +10,4 @@ require (
 	golang.org/x/mobile v0.0.0-20200801112145-973feb4309de
 )
 
-replace golang.org/x/mobile => github.com/ProtonMail/go-mobile v0.0.0-20201014085805-7a2d68bf792f
+replace golang.org/x/mobile => github.com/ProtonMail/go-mobile v0.0.0-20210326110230-f181c70e4e2b
