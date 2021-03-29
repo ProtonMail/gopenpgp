@@ -74,7 +74,7 @@ func (ap *ManualAttachmentProcessor) Finish() error {
 func (keyRing *KeyRing) NewManualAttachmentProcessor(
 	estimatedSize int, filename string, dataBuffer []byte,
 ) (*ManualAttachmentProcessor, error) {
-	if dataBuffer == nil || len(dataBuffer) == 0 {
+	if len(dataBuffer) == 0 {
 		return nil, errors.New("gopenpgp: can't give a nil or empty buffer to process the attachement")
 	}
 
