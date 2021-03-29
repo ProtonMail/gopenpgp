@@ -173,7 +173,7 @@ func readAll(buffer []byte, reader io.Reader) (int, error) {
 			}
 			return 0, errors.Wrap(err, "gopenpgp: couldn't read data from the encrypted reader")
 		}
-		if totalRead == bufferCap {
+		if offset == bufferCap {
 			// Here we've reached the end of the buffer
 			// But we need to keep reading to not block the Process()
 			// So we reset the buffer
