@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
+	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/pkg/errors"
 )
@@ -141,6 +142,8 @@ func passwordDecrypt(encryptedIO io.Reader, password []byte) (*PlainMessage, err
 			firstTimeCalled = false
 			return password, nil
 		}
+		// Re-prompt still occurs if SKESK pasrsing fails (i.e. when decrypted cipher algo is invalid).
+		// For most (but not all) cases, inputting a wrong passwords is expected to trigger this error.
 		return nil, errors.New("gopenpgp: wrong password in symmetric decryption")
 	}
 
@@ -151,13 +154,20 @@ func passwordDecrypt(encryptedIO io.Reader, password []byte) (*PlainMessage, err
 	var emptyKeyRing openpgp.EntityList
 	md, err := openpgp.ReadMessage(encryptedIO, emptyKeyRing, prompt, config)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading password protected message")
+		// Parsing errors when reading the message are most likely caused by incorrect password, but we cannot know for sure
+		return nil, errors.New("gopenpgp: error in reading password protected message: wrong password or malformed message")
 	}
 
 	messageBuf := bytes.NewBuffer(nil)
 	_, err = io.Copy(messageBuf, md.UnverifiedBody)
+	if errors.Is(err, pgpErrors.ErrMDCHashMismatch) {
+		// This MDC error may also be triggered if the password is correct, but the encrypted data was corrupted.
+		// To avoid confusion, we do not inform the user about the second possibility.
+		return nil, errors.New("gopenpgp: wrong password in symmetric decryption")
+	}
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading password protected message body")
+		// Parsing errors after decryption, triggered before parsing the MDC packet, are also usually the result of wrong password
+		return nil, errors.New("gopenpgp: error in reading password protected message: wrong password or malformed message")
 	}
 
 	return &PlainMessage{
