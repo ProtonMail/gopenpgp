@@ -251,7 +251,7 @@ func (key *Key) GetPublicKey() (b []byte, err error) {
 
 // --- Key object properties
 
-// CanSign returns true if PrimaryKey can be used for signing
+// CanSign returns true if PrimaryKey can be used for signing.
 func (key *Key) CanSign() bool {
 	entity := key.entity
 	primaryIdentity := entity.PrimaryIdentity()
@@ -265,7 +265,7 @@ func (key *Key) CanSign() bool {
 	return selfSignature.FlagsValid && selfSignature.FlagSign
 }
 
-// CanCertify returns true if PrimaryKey can be used for certifying other keys
+// CanCertify returns true if PrimaryKey can be used for certifying other keys.
 func (key *Key) CanCertify() bool {
 	entity := key.entity
 	primaryIdentity := entity.PrimaryIdentity()
@@ -279,7 +279,7 @@ func (key *Key) CanCertify() bool {
 	return selfSignature.FlagsValid && selfSignature.FlagCertify
 }
 
-// CanEncrypt returns true if any of the Keys can be used for encryption
+// CanEncrypt returns true if any of the Keys can be used for encryption.
 func (key *Key) CanEncrypt() bool {
 	_, canEncrypt := key.entity.EncryptionKey(getNow())
 
