@@ -16,6 +16,9 @@ type KeyRing struct {
 
 	// FirstKeyID as obtained from API to match salt
 	FirstKeyID string
+
+	// PGP `packet.Config`
+	config *packet.Config
 }
 
 // Identity contains the name and the email of a key holder.
@@ -66,6 +69,11 @@ func (keyRing *KeyRing) GetKey(n int) (*Key, error) {
 		return nil, errors.New("gopenpgp: out of bound when fetching key")
 	}
 	return &Key{keyRing.entities[n]}, nil
+}
+
+func (keyRing *KeyRing) WithConfig(config *packet.Config) *KeyRing {
+	keyRing.config = config
+	return keyRing
 }
 
 // getSigningEntity returns first private unlocked signing entity from keyring.

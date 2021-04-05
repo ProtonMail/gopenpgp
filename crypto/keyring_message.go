@@ -8,8 +8,9 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
+
+	"github.com/ProtonMail/gopenpgp/v2/constants"
 )
 
 // Encrypt encrypts a PlainMessage, outputs a PGPMessage.
@@ -17,8 +18,14 @@ import (
 // * message    : The plaintext input as a PlainMessage.
 // * privateKey : (optional) an unlocked private keyring to include signature in the message.
 func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error) {
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
-	encrypted, err := asymmetricEncrypt(message, keyRing, privateKey, config)
+	if keyRing.config == nil {
+		keyRing.config = &packet.Config{}
+	}
+	if keyRing.config.DefaultCipher == 0 {
+		keyRing.config.DefaultCipher = packet.CipherAES256
+	}
+	keyRing.config.Time = getTimeGenerator()
+	encrypted, err := asymmetricEncrypt(message, keyRing, privateKey, keyRing.config)
 	if err != nil {
 		return nil, err
 	}
@@ -31,14 +38,21 @@ func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PG
 // * privateKey : (optional) an unlocked private keyring to include signature in the message.
 // * output  : The encrypted data as PGPMessage.
 func (keyRing *KeyRing) EncryptWithCompression(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error) {
-	config := &packet.Config{
-		DefaultCipher:          packet.CipherAES256,
-		Time:                   getTimeGenerator(),
-		DefaultCompressionAlgo: constants.DefaultCompression,
-		CompressionConfig:      &packet.CompressionConfig{Level: constants.DefaultCompressionLevel},
+	if keyRing.config == nil {
+		keyRing.config = &packet.Config{}
 	}
+	if keyRing.config.DefaultCipher == 0 {
+		keyRing.config.DefaultCipher = packet.CipherAES256
+	}
+	if keyRing.config.DefaultCompressionAlgo == 0 {
+		keyRing.config.DefaultCompressionAlgo = constants.DefaultCompression
+	}
+	if keyRing.config.CompressionConfig == nil {
+		keyRing.config.CompressionConfig = &packet.CompressionConfig{Level: constants.DefaultCompressionLevel}
+	}
+	keyRing.config.Time = getTimeGenerator()
 
-	encrypted, err := asymmetricEncrypt(message, keyRing, privateKey, config)
+	encrypted, err := asymmetricEncrypt(message, keyRing, privateKey, keyRing.config)
 	if err != nil {
 		return nil, err
 	}
@@ -66,10 +80,17 @@ func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, erro
 		return nil, err
 	}
 
-	config := &packet.Config{DefaultHash: crypto.SHA512, Time: getTimeGenerator()}
+	if keyRing.config == nil {
+		keyRing.config = &packet.Config{}
+	}
+	if keyRing.config.DefaultHash == 0 {
+		keyRing.config.DefaultHash = crypto.SHA512
+	}
+	keyRing.config.Time = getTimeGenerator()
+
 	var outBuf bytes.Buffer
 	// sign bin
-	if err := openpgp.DetachSign(&outBuf, signEntity, message.NewReader(), config); err != nil {
+	if err := openpgp.DetachSign(&outBuf, signEntity, message.NewReader(), keyRing.config); err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in signing")
 	}
 
@@ -181,9 +202,12 @@ func asymmetricDecrypt(
 		privKeyEntries = append(privKeyEntries, additionalEntries...)
 	}
 
-	config := &packet.Config{Time: getTimeGenerator()}
+	if privateKey.config == nil {
+		privateKey.config = &packet.Config{}
+	}
+	privateKey.config.Time = getTimeGenerator()
 
-	messageDetails, err := openpgp.ReadMessage(encryptedIO, privKeyEntries, nil, config)
+	messageDetails, err := openpgp.ReadMessage(encryptedIO, privKeyEntries, nil, privateKey.config)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
 	}
