@@ -8,8 +8,9 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
+
+	"github.com/ProtonMail/gopenpgp/v2/constants"
 )
 
 // Encrypt encrypts a PlainMessage, outputs a PGPMessage.
@@ -59,14 +60,25 @@ func (keyRing *KeyRing) Decrypt(
 	return asymmetricDecrypt(message.NewReader(), keyRing, verifyKey, verifyTime)
 }
 
+// WithSigningHash specifies the hash to use with SignDetached or SignDetachedWithKeyID.
+func (keyRing *KeyRing) WithSigningHash(hash crypto.Hash) *KeyRing {
+	keyRing.signingHash = hash
+	return keyRing
+}
+
 // SignDetached generates and returns a PGPSignature for a given PlainMessage.
 func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, error) {
+	return keyRing.SignDetachedWithKeyID(message, 0)
+}
+
+// SignDetachedWithKeyID generates and returns a PGPSignature for a given PlainMessage, and KeyID.
+func (keyRing *KeyRing) SignDetachedWithKeyID(message *PlainMessage, keyId uint64) (*PGPSignature, error) {
 	signEntity, err := keyRing.getSigningEntity()
 	if err != nil {
 		return nil, err
 	}
 
-	config := &packet.Config{DefaultHash: crypto.SHA512, Time: getTimeGenerator()}
+	config := &packet.Config{DefaultHash: keyRing.signingHash, Time: getTimeGenerator(), SigningKeyId: keyId}
 	var outBuf bytes.Buffer
 	// sign bin
 	if err := openpgp.DetachSign(&outBuf, signEntity, message.NewReader(), config); err != nil {
@@ -90,10 +102,16 @@ func (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSign
 // SignDetachedEncrypted generates and returns a PGPMessage
 // containing an encrypted detached signature for a given PlainMessage.
 func (keyRing *KeyRing) SignDetachedEncrypted(message *PlainMessage, encryptionKeyRing *KeyRing) (encryptedSignature *PGPMessage, err error) {
+	return keyRing.SignDetachedEncryptedWithKeyID(message, encryptionKeyRing, 0)
+}
+
+// SignDetachedEncryptedWithKeyID generates and returns a PGPMessage
+// containing an encrypted detached signature for a given PlainMessage, and KeyID.
+func (keyRing *KeyRing) SignDetachedEncryptedWithKeyID(message *PlainMessage, encryptionKeyRing *KeyRing, keyId uint64) (encryptedSignature *PGPMessage, err error) {
 	if encryptionKeyRing == nil {
 		return nil, errors.New("gopenpgp: no encryption key ring provided")
 	}
-	signature, err := keyRing.SignDetached(message)
+	signature, err := keyRing.SignDetachedWithKeyID(message, keyId)
 	if err != nil {
 		return nil, err
 	}

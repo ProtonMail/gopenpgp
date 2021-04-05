@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"crypto"
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
@@ -16,6 +17,8 @@ type KeyRing struct {
 
 	// FirstKeyID as obtained from API to match salt
 	FirstKeyID string
+
+	signingHash crypto.Hash
 }
 
 // Identity contains the name and the email of a key holder.
@@ -28,7 +31,9 @@ type Identity struct {
 
 // NewKeyRing creates a new KeyRing, empty if key is nil.
 func NewKeyRing(key *Key) (*KeyRing, error) {
-	keyRing := &KeyRing{}
+	keyRing := &KeyRing{
+		signingHash: crypto.SHA512,
+	}
 	var err error
 	if key != nil {
 		err = keyRing.AddKey(key)

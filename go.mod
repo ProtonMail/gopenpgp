@@ -11,3 +11,5 @@ require (
 )
 
 replace golang.org/x/mobile => github.com/ProtonMail/go-mobile v0.0.0-20210326110230-f181c70e4e2b
+
+replace github.com/ProtonMail/go-crypto => github.com/digitalxero/go-crypto v0.0.0-20210406211906-712a9153d2a0
