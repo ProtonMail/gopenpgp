@@ -251,7 +251,7 @@ func (key *Key) GetPublicKey() (b []byte, err error) {
 
 // --- Key object properties
 
-// CanSign returns true if any of the subkeys can can be used for signing.
+// CanSign returns true if any of the subkeys can be used for signing.
 func (key *Key) CanSign() bool {
 	_, canSign := key.entity.SigningKey(getNow())
 	return canSign
