@@ -222,3 +222,12 @@ func TestEncryptedDetachedSignature(t *testing.T) {
 		t.Fatal("Expected an error while verifying bad encSignature, got nil")
 	}
 }
+
+func TestKeyringCapabilities(t *testing.T) {
+	assert.True(t, keyRingTestPrivate.CanSign())
+	assert.True(t, keyRingTestPrivate.CanEncrypt())
+	assert.True(t, keyRingTestPublic.CanSign())
+	assert.True(t, keyRingTestPublic.CanEncrypt())
+	assert.True(t, keyRingTestMultiple.CanSign())
+	assert.True(t, keyRingTestMultiple.CanEncrypt())
+}

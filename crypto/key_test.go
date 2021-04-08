@@ -410,3 +410,10 @@ func TestToPublic(t *testing.T) {
 	assert.False(t, publicKey.IsPrivate())
 	assert.True(t, privateKey.IsPrivate())
 }
+
+func TestKeyCapabilities(t *testing.T) {
+	assert.True(t, keyTestEC.CanSign())
+	assert.True(t, keyTestEC.CanEncrypt())
+	assert.True(t, keyTestRSA.CanSign())
+	assert.True(t, keyTestEC.CanEncrypt())
+}
