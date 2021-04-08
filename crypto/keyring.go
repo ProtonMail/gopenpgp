@@ -114,6 +114,28 @@ func (keyRing *KeyRing) GetIdentities() []*Identity {
 	return identities
 }
 
+// CanSign returns true if any of the keys in the keyring can can be used for signing.
+func (keyRing *KeyRing) CanSign() bool {
+	keys := keyRing.GetKeys()
+	for i := 0; i < len(keys); i++ {
+		if keys[i].CanSign() {
+			return true
+		}
+	}
+	return false
+}
+
+// CanSign returns true if any of the keys in the keyring can can be used for encryption.
+func (keyRing *KeyRing) CanEncrypt() bool {
+	keys := keyRing.GetKeys()
+	for i := 0; i < len(keys); i++ {
+		if keys[i].CanEncrypt() {
+			return true
+		}
+	}
+	return false
+}
+
 // GetKeyIDs returns array of IDs of keys in this KeyRing.
 func (keyRing *KeyRing) GetKeyIDs() []uint64 {
 	var res = make([]uint64, len(keyRing.entities))
