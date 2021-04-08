@@ -125,7 +125,7 @@ func (keyRing *KeyRing) CanSign() bool {
 	return false
 }
 
-// CanSign returns true if any of the keys in the keyring can can be used for encryption.
+// CanEncrypt returns true if any of the keys in the keyring can can be used for encryption.
 func (keyRing *KeyRing) CanEncrypt() bool {
 	keys := keyRing.GetKeys()
 	for i := 0; i < len(keys); i++ {
