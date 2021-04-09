@@ -224,10 +224,10 @@ func TestEncryptedDetachedSignature(t *testing.T) {
 }
 
 func TestKeyringCapabilities(t *testing.T) {
-	assert.True(t, keyRingTestPrivate.CanSign())
+	assert.True(t, keyRingTestPrivate.CanVerify())
 	assert.True(t, keyRingTestPrivate.CanEncrypt())
-	assert.True(t, keyRingTestPublic.CanSign())
+	assert.True(t, keyRingTestPublic.CanVerify())
 	assert.True(t, keyRingTestPublic.CanEncrypt())
-	assert.True(t, keyRingTestMultiple.CanSign())
+	assert.True(t, keyRingTestMultiple.CanVerify())
 	assert.True(t, keyRingTestMultiple.CanEncrypt())
 }

@@ -251,10 +251,10 @@ func (key *Key) GetPublicKey() (b []byte, err error) {
 
 // --- Key object properties
 
-// CanSign returns true if any of the subkeys can be used for signing.
-func (key *Key) CanSign() bool {
-	_, canSign := key.entity.SigningKey(getNow())
-	return canSign
+// CanVerify returns true if any of the subkeys can be used for verification.
+func (key *Key) CanVerify() bool {
+	_, canVerify := key.entity.SigningKey(getNow())
+	return canVerify
 }
 
 // CanEncrypt returns true if any of the subkeys can be used for encryption.

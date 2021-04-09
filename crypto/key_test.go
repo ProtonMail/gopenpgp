@@ -412,8 +412,16 @@ func TestToPublic(t *testing.T) {
 }
 
 func TestKeyCapabilities(t *testing.T) {
-	assert.True(t, keyTestEC.CanSign())
+	assert.True(t, keyTestEC.CanVerify())
 	assert.True(t, keyTestEC.CanEncrypt())
-	assert.True(t, keyTestRSA.CanSign())
-	assert.True(t, keyTestEC.CanEncrypt())
+	assert.True(t, keyTestRSA.CanVerify())
+	assert.True(t, keyTestRSA.CanEncrypt())
+	
+	publicKey, err := keyTestEC.ToPublic()
+	if err != nil {
+		t.Fatal("Cannot make key public:", err)
+	}
+
+	assert.True(t, publicKey.CanVerify())
+	assert.True(t, publicKey.CanEncrypt())
 }
