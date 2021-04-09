@@ -251,6 +251,18 @@ func (key *Key) GetPublicKey() (b []byte, err error) {
 
 // --- Key object properties
 
+// CanVerify returns true if any of the subkeys can be used for verification.
+func (key *Key) CanVerify() bool {
+	_, canVerify := key.entity.SigningKey(getNow())
+	return canVerify
+}
+
+// CanEncrypt returns true if any of the subkeys can be used for encryption.
+func (key *Key) CanEncrypt() bool {
+	_, canEncrypt := key.entity.EncryptionKey(getNow())
+	return canEncrypt
+}
+
 // IsExpired checks whether the key is expired.
 func (key *Key) IsExpired() bool {
 	_, ok := key.entity.EncryptionKey(getNow())
