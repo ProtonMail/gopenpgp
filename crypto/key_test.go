@@ -416,7 +416,7 @@ func TestKeyCapabilities(t *testing.T) {
 	assert.True(t, keyTestEC.CanEncrypt())
 	assert.True(t, keyTestRSA.CanVerify())
 	assert.True(t, keyTestRSA.CanEncrypt())
-	
+
 	publicKey, err := keyTestEC.ToPublic()
 	if err != nil {
 		t.Fatal("Cannot make key public:", err)
