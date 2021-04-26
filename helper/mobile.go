@@ -14,18 +14,33 @@ type ExplicitVerifyMessage struct {
 	SignatureVerificationError *crypto.SignatureVerificationError
 }
 
-// DecryptExplicitVerify decrypts an armored PGP message given a private key
-// and its passphrase and verifies the embedded signature. Returns the plain
-// data or an error on signature verification failure.
+// DecryptExplicitVerify decrypts a PGP message given a private keyring
+// and a public keyring to verify the embedded signature. Returns the plain
+// data and an error on signature verification failure.
 func DecryptExplicitVerify(
 	pgpMessage *crypto.PGPMessage,
 	privateKeyRing, publicKeyRing *crypto.KeyRing,
 	verifyTime int64,
 ) (*ExplicitVerifyMessage, error) {
-	var explicitVerify *ExplicitVerifyMessage
-
 	message, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, verifyTime)
+	return newExplicitVerifyMessage(message, err)
+}
 
+// DecryptSessionKeyExplicitVerify decrypts a PGP data packet given a session key
+// and a public keyring to verify the embedded signature. Returns the plain data and
+// an error on signature verification failure.
+func DecryptSessionKeyExplicitVerify(
+	dataPacket []byte,
+	sessionKey *crypto.SessionKey,
+	publicKeyRing *crypto.KeyRing,
+	verifyTime int64,
+) (*ExplicitVerifyMessage, error) {
+	message, err := sessionKey.DecryptAndVerify(dataPacket, publicKeyRing, verifyTime)
+	return newExplicitVerifyMessage(message, err)
+}
+
+func newExplicitVerifyMessage(message *crypto.PlainMessage, err error) (*ExplicitVerifyMessage, error){
+	var explicitVerify *ExplicitVerifyMessage
 	if err != nil {
 		castedErr := &crypto.SignatureVerificationError{}
 		isType := goerrors.As(err, castedErr)

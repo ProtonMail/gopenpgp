@@ -54,6 +54,57 @@ func TestMobileSignedMessageDecryption(t *testing.T) {
 	assert.Nil(t, decrypted)
 }
 
+func TestMobileSignedMessageDecryptionWithSessionKey(t *testing.T) {
+	var message = crypto.NewPlainMessageFromString(
+		"The secret code is... 1, 2, 3, 4, 5. I repeat: the secret code is... 1, 2, 3, 4, 5",
+	)
+
+	privateKey, _ := crypto.NewKeyFromArmored(readTestFile("keyring_privateKey", false))
+	// Password defined in base_test
+	privateKey, err := privateKey.Unlock(testMailboxPassword)
+	if err != nil {
+		t.Fatal("Expected no error unlocking privateKey, got:", err)
+	}
+	testPrivateKeyRing, _ := crypto.NewKeyRing(privateKey)
+
+	publicKey, _ := crypto.NewKeyFromArmored(readTestFile("keyring_publicKey", false))
+	testPublicKeyRing, _ := crypto.NewKeyRing(publicKey)
+
+	sk, err := crypto.GenerateSessionKey()
+	if err != nil {
+		t.Fatal("Expected no error generating session key, got:", err)
+	}
+
+	pgpMessage, err := sk.Encrypt(message)
+	if err != nil {
+		t.Fatal("Expected no error when unarmoring, got:", err)
+	}
+
+	decrypted, err := DecryptSessionKeyExplicitVerify(pgpMessage, sk, testPublicKeyRing, crypto.GetUnixTime())
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+
+	assert.Exactly(t, constants.SIGNATURE_NO_VERIFIER, decrypted.SignatureVerificationError.Status)
+	assert.Exactly(t, message.GetString(), decrypted.Message.GetString())
+
+	publicKey, _ = crypto.NewKeyFromArmored(readTestFile("keyring_publicKey", false))
+	testPublicKeyRing, _ = crypto.NewKeyRing(publicKey)
+
+	pgpMessage, err = sk.EncryptAndSign(message, testPrivateKeyRing)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+
+	decrypted, err = DecryptSessionKeyExplicitVerify(pgpMessage, sk, testPublicKeyRing, crypto.GetUnixTime())
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+
+	assert.Nil(t, decrypted.SignatureVerificationError)
+	assert.Exactly(t, message.GetString(), decrypted.Message.GetString())
+}
+
 func TestGetJsonSHA256FingerprintsV4(t *testing.T) {
 	sha256Fingerprints, err := GetJsonSHA256Fingerprints(readTestFile("keyring_publicKey", false))
 	if err != nil {
