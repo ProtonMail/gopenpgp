@@ -39,7 +39,7 @@ func DecryptSessionKeyExplicitVerify(
 	return newExplicitVerifyMessage(message, err)
 }
 
-func newExplicitVerifyMessage(message *crypto.PlainMessage, err error) (*ExplicitVerifyMessage, error){
+func newExplicitVerifyMessage(message *crypto.PlainMessage, err error) (*ExplicitVerifyMessage, error) {
 	var explicitVerify *ExplicitVerifyMessage
 	if err != nil {
 		castedErr := &crypto.SignatureVerificationError{}
