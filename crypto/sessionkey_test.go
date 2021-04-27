@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"encoding/base64"
+	"errors"
 	"testing"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
@@ -157,6 +158,90 @@ func TestDataPacketEncryption(t *testing.T) {
 	finalMessage, err := keyRingTestPrivate.Decrypt(pgpMessage, nil, 0)
 	if err != nil {
 		t.Fatal("Unable to decrypt joined keypacket and datapacket, got:", err)
+	}
+
+	assert.Exactly(t, message.GetString(), finalMessage.GetString())
+}
+
+func TestDataPacketEncryptionAndSignature(t *testing.T) {
+	var message = NewPlainMessageFromString(
+		"The secret code is... 1, 2, 3, 4, 5. I repeat: the secret code is... 1, 2, 3, 4, 5",
+	)
+
+	// Encrypt data with session key
+	dataPacket, err := testSessionKey.EncryptAndSign(message, keyRingTestPrivate)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting and signing, got:", err)
+	}
+
+	// Decrypt data with wrong session key
+	wrongKey := SessionKey{
+		Key:  []byte("wrong pass"),
+		Algo: constants.AES256,
+	}
+	_, err = wrongKey.Decrypt(dataPacket)
+	assert.NotNil(t, err)
+
+	// Decrypt data with the good session key
+	decrypted, err := testSessionKey.Decrypt(dataPacket)
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+	assert.Exactly(t, message.GetString(), decrypted.GetString())
+
+	// Decrypt & verify data with the good session key but bad keyring
+	ecKeyRing, err := NewKeyRing(keyTestEC)
+	if err != nil {
+		t.Fatal("Unable to generate EC keyring, got:", err)
+	}
+
+	castedErr := &SignatureVerificationError{}
+	_, err = testSessionKey.DecryptAndVerify(dataPacket, ecKeyRing, GetUnixTime())
+	if err == nil || !errors.As(err, castedErr) {
+		t.Fatal("No error or wrong error returned for verification failure", err)
+	}
+
+	// Decrypt & verify data with the good session key and keyring
+	decrypted, err = testSessionKey.DecryptAndVerify(dataPacket, keyRingTestPublic, GetUnixTime())
+	if err != nil {
+		t.Fatal("Expected no error when decrypting & verifying, got:", err)
+	}
+	assert.Exactly(t, message.GetString(), decrypted.GetString())
+
+	// Encrypt session key
+	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
+	keyPacket, err := keyRingTestMultiple.EncryptSessionKey(testSessionKey)
+	if err != nil {
+		t.Fatal("Unable to encrypt key packet, got:", err)
+	}
+
+	// Join key packet and data packet in single message
+	splitMessage := NewPGPSplitMessage(keyPacket, dataPacket)
+
+	// Armor and un-armor message. In alternative it can also be done with NewPgpMessage(splitMessage.GetBinary())
+	armored, err := splitMessage.GetArmored()
+	if err != nil {
+		t.Fatal("Unable to armor split message, got:", err)
+	}
+
+	pgpMessage, err := NewPGPMessageFromArmored(armored)
+	if err != nil {
+		t.Fatal("Unable to unarmor pgp message, got:", err)
+	}
+	ids, ok := pgpMessage.GetEncryptionKeyIDs()
+	assert.True(t, ok)
+	assert.Exactly(t, 3, len(ids))
+
+	// Test with bad verification key succeeds
+	_, err = keyRingTestPrivate.Decrypt(pgpMessage, ecKeyRing, GetUnixTime())
+	if err == nil || !errors.As(err, castedErr) {
+		t.Fatal("No error or wrong error returned for verification failure")
+	}
+
+	// Test if final decryption & verification succeeds
+	finalMessage, err := keyRingTestPrivate.Decrypt(pgpMessage, keyRingTestPublic, GetUnixTime())
+	if err != nil {
+		t.Fatal("Unable to decrypt and verify joined keypacket and datapacket, got:", err)
 	}
 
 	assert.Exactly(t, message.GetString(), finalMessage.GetString())

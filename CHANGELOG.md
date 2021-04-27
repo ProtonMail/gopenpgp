@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+### Added
+- Key and KeyRing methods to check if a key/keyring can Encrypt or Verify
+```go
+(key *Key) CanVerify() bool
+(key *Key) CanEncrypt() bool
+(keyRing *KeyRing) CanVerify() bool
+(keyRing *KeyRing) CanEncrypt() bool
+```
+- SessionKey methods to encrypt/decrypt and simultaneously sign/verify with an asymmetric key (embedded signature)
+```go
+(sk *SessionKey) EncryptAndSign(message *PlainMessage, signKeyRing *KeyRing) ([]byte, error)
+(sk *SessionKey) DecryptAndVerify(dataPacket []byte, verifyKeyRing *KeyRing, verifyTime int64) (*PlainMessage, error)
+```
+- The mobile helper `DecryptSessionKeyExplicitVerify` to allow using session key decryption + verification operations via gomobile  
+
 ## [2.1.7] 2021-03-30
 
 ### Added 
