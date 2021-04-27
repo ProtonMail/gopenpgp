@@ -11,6 +11,10 @@ import (
 
 var EOF = io.EOF
 
+func IsEOF(err error) bool {
+	return errors.Is(err, EOF)
+}
+
 type Reader interface {
 	Read([]byte) (int, error)
 }
