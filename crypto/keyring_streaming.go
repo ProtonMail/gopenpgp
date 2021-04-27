@@ -19,13 +19,18 @@ type Writer interface {
 	Write([]byte) (int, error)
 }
 
+type WriteCloser interface {
+	Write([]byte) (int, error)
+	Close() error
+}
+
 func (keyRing *KeyRing) EncryptStream(
 	pgpMessageWriter Writer,
 	isBinary bool,
 	filename string,
 	modTime int64,
 	privateKey *KeyRing,
-) (plainMessageWriter Writer, err error) {
+) (plainMessageWriter WriteCloser, err error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 	var signEntity *openpgp.Entity
 
