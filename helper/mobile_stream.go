@@ -1,12 +1,12 @@
-// +build mobile
-
 package helper
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
-	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"io"
+
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
 )
 
 type MobileReadResult struct {
@@ -16,7 +16,13 @@ type MobileReadResult struct {
 }
 
 func NewMobileReadResult(n int, eof bool, data []byte) *MobileReadResult {
-	return &MobileReadResult{n, eof, data}
+	return &MobileReadResult{n, eof, clone(data)}
+}
+
+func clone(src []byte) (dst []byte) {
+	dst = make([]byte, len(src))
+	copy(dst, src)
+	return
 }
 
 type MobileReader interface {
@@ -38,11 +44,13 @@ func (d *Mobile2GoWriter) Write(b []byte) (int, error) {
 }
 
 type Mobile2GoReader struct {
-	reader MobileReader
+	reader  MobileReader
+	debug   []byte
+	counter int
 }
 
 func NewMobile2GoReader(reader MobileReader) *Mobile2GoReader {
-	return &Mobile2GoReader{reader}
+	return &Mobile2GoReader{reader, nil, 0}
 }
 
 func (d *Mobile2GoReader) Read(b []byte) (int, error) {
@@ -52,10 +60,12 @@ func (d *Mobile2GoReader) Read(b []byte) (int, error) {
 		return 0, err
 	}
 	n := result.N
-	fmt.Printf("Read %d\n", n)
+	d.counter++
 	if n > 0 {
 		copy(b, result.Data[:n])
-		fmt.Printf("Bytes %x\n", b[:n])
+		fmt.Printf("Read %d\n", n)
+		d.debug = append(d.debug, b[:n]...)
+		fmt.Printf("%d hash %x bytes %x\n", d.counter, sha256.Sum256(d.debug), b[:n])
 	}
 	if result.IsEOF {
 		fmt.Println("EOF")
@@ -78,17 +88,14 @@ func (d *Go2MobileReader) Read(max int) (*MobileReadResult, error) {
 	result := &MobileReadResult{}
 	if err != nil {
 		if errors.Is(err, io.EOF) {
-			fmt.Println("EOF")
 			result.IsEOF = true
 		} else {
 			return nil, err
 		}
 	}
 	result.N = n
-	fmt.Printf("Read %d\n", n)
 	if n > 0 {
 		result.Data = b[:n]
-		fmt.Printf("Bytes %x\n", b[:n])
 	}
 	return result, nil
 }
