@@ -1,14 +1,14 @@
 package crypto
 
 import (
+	"crypto/ed25519"
+	"crypto/rsa"
 	"io/ioutil"
 	"math/big"
 	"strings"
 	"testing"
 
-	"github.com/ProtonMail/go-crypto/ed25519"
 	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
-	"github.com/ProtonMail/go-crypto/rsa"
 
 	"github.com/stretchr/testify/assert"
 )
