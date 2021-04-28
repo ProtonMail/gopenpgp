@@ -1,13 +1,13 @@
 package crypto
 
 import (
+	"crypto/ed25519"
+	"crypto/rsa"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ProtonMail/go-crypto/ed25519"
 	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
-	"github.com/ProtonMail/go-crypto/rsa"
 )
 
 var testSymmetricKey []byte

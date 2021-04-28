@@ -3,13 +3,13 @@ package crypto
 import (
 	"crypto/dsa" //nolint:staticcheck
 	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/rsa"
 	"errors"
 	"math/big"
 
-	"github.com/ProtonMail/go-crypto/ed25519"
 	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
 	"github.com/ProtonMail/go-crypto/openpgp/elgamal"
-	"github.com/ProtonMail/go-crypto/rsa"
 )
 
 func (sk *SessionKey) Clear() (ok bool) {

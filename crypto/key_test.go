@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"crypto/rsa"
 	"encoding/base64"
 	"io/ioutil"
 	"regexp"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
-	"github.com/ProtonMail/go-crypto/rsa"
 
 	"github.com/stretchr/testify/assert"
 )
