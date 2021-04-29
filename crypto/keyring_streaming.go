@@ -49,31 +49,39 @@ func (keyRing *KeyRing) EncryptStream(
 }
 
 type PlainMessageReader struct {
-	md            *openpgp.MessageDetails
+	details       *openpgp.MessageDetails
 	verifyKeyRing *KeyRing
 	verifyTime    int64
+	readAll       bool
 }
 
 func (msg *PlainMessageReader) IsBinary() bool {
-	return msg.md.LiteralData.IsBinary
+	return msg.details.LiteralData.IsBinary
 }
 
 func (msg *PlainMessageReader) GetFilename() string {
-	return msg.md.LiteralData.FileName
+	return msg.details.LiteralData.FileName
 }
 
 func (msg *PlainMessageReader) GetModificationTime() string {
-	return msg.md.LiteralData.FileName
+	return msg.details.LiteralData.FileName
 }
 
-func (msg *PlainMessageReader) Read(b []byte) (int, error) {
-	return msg.md.UnverifiedBody.Read(b)
+func (msg *PlainMessageReader) Read(b []byte) (n int, err error) {
+	n, err = msg.details.UnverifiedBody.Read(b)
+	if errors.Is(err, io.EOF) {
+		msg.readAll = true
+	}
+	return
 }
 
 func (msg *PlainMessageReader) VerifySignature() (err error) {
+	if !msg.readAll {
+		return errors.New("gopenpg: Can't verify the signature until the message reader has been read entirely")
+	}
 	if msg.verifyKeyRing != nil {
-		processSignatureExpiration(msg.md, msg.verifyTime)
-		err = verifyDetailsSignature(msg.md, msg.verifyKeyRing)
+		processSignatureExpiration(msg.details, msg.verifyTime)
+		err = verifyDetailsSignature(msg.details, msg.verifyKeyRing)
 	}
 	return
 }
@@ -95,5 +103,6 @@ func (keyRing *KeyRing) DecryptStream(
 		messageDetails,
 		verifyKeyRing,
 		verifyTime,
+		false,
 	}, err
 }
