@@ -31,18 +31,9 @@ func (keyRing *KeyRing) EncryptStream(
 	isBinary bool,
 	filename string,
 	modTime int64,
-	privateKey *KeyRing,
+	signKeyRing *KeyRing,
 ) (plainMessageWriter WriteCloser, err error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
-	var signEntity *openpgp.Entity
-
-	if privateKey != nil && len(privateKey.entities) > 0 {
-		var err error
-		signEntity, err = privateKey.getSigningEntity()
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	hints := &openpgp.FileHints{
 		IsBinary: isBinary,
@@ -50,11 +41,7 @@ func (keyRing *KeyRing) EncryptStream(
 		ModTime:  time.Unix(modTime, 0),
 	}
 
-	if isBinary {
-		plainMessageWriter, err = openpgp.Encrypt(pgpMessageWriter, keyRing.entities, signEntity, hints, config)
-	} else {
-		plainMessageWriter, err = openpgp.EncryptText(pgpMessageWriter, keyRing.entities, signEntity, hints, config)
-	}
+	plainMessageWriter, err = asymmetricEncryptStream(hints, pgpMessageWriter, keyRing, signKeyRing, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
 	}
@@ -62,42 +49,46 @@ func (keyRing *KeyRing) EncryptStream(
 }
 
 type PlainMessageReader struct {
-	Data     Reader
-	TextType bool
-	Filename string
-	Time     uint32
+	md *openpgp.MessageDetails
+}
+
+func (msg *PlainMessageReader) IsBinary() bool {
+	return msg.md.LiteralData.IsBinary
+}
+
+func (msg *PlainMessageReader) GetFilename() string {
+	return msg.md.LiteralData.FileName
+}
+
+func (msg *PlainMessageReader) GetModificationTime() string {
+	return msg.md.LiteralData.FileName
+}
+
+func (msg *PlainMessageReader) Read(b []byte) (int, error) {
+	return msg.md.UnverifiedBody.Read(b)
+}
+
+func (msg *PlainMessageReader) VerifySignature(verifyKeyRing *KeyRing, verifyTime int64) (err error) {
+	if verifyKeyRing != nil {
+		processSignatureExpiration(msg.md, verifyTime)
+		err = verifyDetailsSignature(msg.md, verifyKeyRing)
+	}
+	return
 }
 
 func (keyRing *KeyRing) DecryptStream(
-	message Reader, verifyKey *KeyRing, verifyTime int64,
+	message Reader,
 ) (plainMessage *PlainMessageReader, err error) {
-	privKeyEntries := keyRing.entities
-	var additionalEntries openpgp.EntityList
-
-	if verifyKey != nil {
-		additionalEntries = verifyKey.entities
-	}
-
-	if additionalEntries != nil {
-		privKeyEntries = append(privKeyEntries, additionalEntries...)
-	}
-
-	config := &packet.Config{Time: getTimeGenerator()}
-
-	messageDetails, err := openpgp.ReadMessage(message, privKeyEntries, nil, config)
+	messageDetails, err := asymmetricDecryptStream(
+		message,
+		keyRing,
+		nil,
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
 	}
 
-	if verifyKey != nil {
-		processSignatureExpiration(messageDetails, verifyTime)
-		err = verifyDetailsSignature(messageDetails, verifyKey)
-	}
-
 	return &PlainMessageReader{
-		Data:     messageDetails.UnverifiedBody,
-		TextType: !messageDetails.LiteralData.IsBinary,
-		Filename: messageDetails.LiteralData.FileName,
-		Time:     messageDetails.LiteralData.Time,
+		md: messageDetails,
 	}, err
 }

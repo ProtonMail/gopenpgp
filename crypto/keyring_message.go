@@ -127,16 +127,7 @@ func asymmetricEncrypt(
 ) ([]byte, error) {
 	var outBuf bytes.Buffer
 	var encryptWriter io.WriteCloser
-	var signEntity *openpgp.Entity
 	var err error
-
-	if privateKey != nil && len(privateKey.entities) > 0 {
-		var err error
-		signEntity, err = privateKey.getSigningEntity()
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	hints := &openpgp.FileHints{
 		IsBinary: plainMessage.IsBinary(),
@@ -144,11 +135,7 @@ func asymmetricEncrypt(
 		ModTime:  plainMessage.getFormattedTime(),
 	}
 
-	if plainMessage.IsBinary() {
-		encryptWriter, err = openpgp.Encrypt(&outBuf, publicKey.entities, signEntity, hints, config)
-	} else {
-		encryptWriter, err = openpgp.EncryptText(&outBuf, publicKey.entities, signEntity, hints, config)
-	}
+	encryptWriter, err = asymmetricEncryptStream(hints, &outBuf, publicKey, privateKey, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
 	}
@@ -166,24 +153,42 @@ func asymmetricEncrypt(
 	return outBuf.Bytes(), nil
 }
 
+func asymmetricEncryptStream(
+	hints *openpgp.FileHints,
+	outWriter io.Writer,
+	publicKey, privateKey *KeyRing,
+	config *packet.Config,
+) (encryptWriter io.WriteCloser, err error) {
+	var signEntity *openpgp.Entity
+
+	if privateKey != nil && len(privateKey.entities) > 0 {
+		var err error
+		signEntity, err = privateKey.getSigningEntity()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if hints.IsBinary {
+		encryptWriter, err = openpgp.Encrypt(outWriter, publicKey.entities, signEntity, hints, config)
+	} else {
+		encryptWriter, err = openpgp.EncryptText(outWriter, publicKey.entities, signEntity, hints, config)
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
+	}
+	return encryptWriter, nil
+}
+
 // Core for decryption+verification functions.
 func asymmetricDecrypt(
 	encryptedIO io.Reader, privateKey *KeyRing, verifyKey *KeyRing, verifyTime int64,
 ) (message *PlainMessage, err error) {
-	privKeyEntries := privateKey.entities
-	var additionalEntries openpgp.EntityList
-
-	if verifyKey != nil {
-		additionalEntries = verifyKey.entities
-	}
-
-	if additionalEntries != nil {
-		privKeyEntries = append(privKeyEntries, additionalEntries...)
-	}
-
-	config := &packet.Config{Time: getTimeGenerator()}
-
-	messageDetails, err := openpgp.ReadMessage(encryptedIO, privKeyEntries, nil, config)
+	messageDetails, err := asymmetricDecryptStream(
+		encryptedIO,
+		privateKey,
+		verifyKey,
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
 	}
@@ -204,4 +209,28 @@ func asymmetricDecrypt(
 		Filename: messageDetails.LiteralData.FileName,
 		Time:     messageDetails.LiteralData.Time,
 	}, err
+}
+
+// Core for decryption+verification functions.
+func asymmetricDecryptStream(
+	encryptedIO io.Reader, privateKey *KeyRing, verifyKey *KeyRing,
+) (messageDetails *openpgp.MessageDetails, err error) {
+	privKeyEntries := privateKey.entities
+	var additionalEntries openpgp.EntityList
+
+	if verifyKey != nil {
+		additionalEntries = verifyKey.entities
+	}
+
+	if additionalEntries != nil {
+		privKeyEntries = append(privKeyEntries, additionalEntries...)
+	}
+
+	config := &packet.Config{Time: getTimeGenerator()}
+
+	messageDetails, err = openpgp.ReadMessage(encryptedIO, privKeyEntries, nil, config)
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
+	}
+	return messageDetails, err
 }
