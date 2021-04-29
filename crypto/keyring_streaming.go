@@ -49,7 +49,9 @@ func (keyRing *KeyRing) EncryptStream(
 }
 
 type PlainMessageReader struct {
-	md *openpgp.MessageDetails
+	md            *openpgp.MessageDetails
+	verifyKeyRing *KeyRing
+	verifyTime    int64
 }
 
 func (msg *PlainMessageReader) IsBinary() bool {
@@ -68,27 +70,30 @@ func (msg *PlainMessageReader) Read(b []byte) (int, error) {
 	return msg.md.UnverifiedBody.Read(b)
 }
 
-func (msg *PlainMessageReader) VerifySignature(verifyKeyRing *KeyRing, verifyTime int64) (err error) {
-	if verifyKeyRing != nil {
-		processSignatureExpiration(msg.md, verifyTime)
-		err = verifyDetailsSignature(msg.md, verifyKeyRing)
+func (msg *PlainMessageReader) VerifySignature() (err error) {
+	if msg.verifyKeyRing != nil {
+		processSignatureExpiration(msg.md, msg.verifyTime)
+		err = verifyDetailsSignature(msg.md, msg.verifyKeyRing)
 	}
 	return
 }
 
 func (keyRing *KeyRing) DecryptStream(
 	message Reader,
+	verifyKeyRing *KeyRing, verifyTime int64,
 ) (plainMessage *PlainMessageReader, err error) {
 	messageDetails, err := asymmetricDecryptStream(
 		message,
 		keyRing,
-		nil,
+		verifyKeyRing,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
 	}
 
 	return &PlainMessageReader{
-		md: messageDetails,
+		messageDetails,
+		verifyKeyRing,
+		verifyTime,
 	}, err
 }
