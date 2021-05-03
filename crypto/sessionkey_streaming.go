@@ -1,22 +1,20 @@
 package crypto
 
 import (
-	"io"
-
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/pkg/errors"
 )
 
-type signAndEncryptWriteCloser struct {
-	signWriter    io.WriteCloser
-	encryptWriter io.WriteCloser
+type SignAndEncryptWriteCloser struct {
+	signWriter    WriteCloser
+	encryptWriter WriteCloser
 }
 
-func (w *signAndEncryptWriteCloser) Write(b []byte) (int, error) {
+func (w *SignAndEncryptWriteCloser) Write(b []byte) (int, error) {
 	return w.signWriter.Write(b)
 }
 
-func (w *signAndEncryptWriteCloser) Close() error {
+func (w *SignAndEncryptWriteCloser) Close() error {
 	err := w.signWriter.Close()
 	if err != nil {
 		return err
@@ -28,7 +26,7 @@ func (sk *SessionKey) EncryptStream(
 	dataPacketWriter Writer,
 	isBinary bool,
 	filename string,
-	modTime uint32,
+	modTime int64,
 	signKeyRing *KeyRing,
 ) (plainMessageWriter WriteCloser, err error) {
 	dc, err := sk.GetCipherFunc()
@@ -49,7 +47,7 @@ func (sk *SessionKey) EncryptStream(
 	encryptWriter, signWriter, err := encryptStreamWithSessionKey(
 		isBinary,
 		filename,
-		modTime,
+		uint32(modTime),
 		dataPacketWriter,
 		sk,
 		signEntity,
@@ -60,7 +58,7 @@ func (sk *SessionKey) EncryptStream(
 		return nil, err
 	}
 	if signWriter != nil {
-		plainMessageWriter = &signAndEncryptWriteCloser{signWriter, encryptWriter}
+		plainMessageWriter = &SignAndEncryptWriteCloser{signWriter, encryptWriter}
 	} else {
 		plainMessageWriter = encryptWriter
 	}
