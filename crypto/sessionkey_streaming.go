@@ -5,16 +5,16 @@ import (
 	"github.com/pkg/errors"
 )
 
-type SignAndEncryptWriteCloser struct {
+type signAndEncryptWriteCloser struct {
 	signWriter    WriteCloser
 	encryptWriter WriteCloser
 }
 
-func (w *SignAndEncryptWriteCloser) Write(b []byte) (int, error) {
+func (w *signAndEncryptWriteCloser) Write(b []byte) (int, error) {
 	return w.signWriter.Write(b)
 }
 
-func (w *SignAndEncryptWriteCloser) Close() error {
+func (w *signAndEncryptWriteCloser) Close() error {
 	err := w.signWriter.Close()
 	if err != nil {
 		return err
@@ -58,7 +58,7 @@ func (sk *SessionKey) EncryptStream(
 		return nil, err
 	}
 	if signWriter != nil {
-		plainMessageWriter = &SignAndEncryptWriteCloser{signWriter, encryptWriter}
+		plainMessageWriter = &signAndEncryptWriteCloser{signWriter, encryptWriter}
 	} else {
 		plainMessageWriter = encryptWriter
 	}

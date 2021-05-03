@@ -38,8 +38,7 @@ func NewMobile2GoWriter(writer crypto.Writer) *Mobile2GoWriter {
 }
 
 func (d *Mobile2GoWriter) Write(b []byte) (n int, err error) {
-	bufferCopy := make([]byte, len(b))
-	copy(bufferCopy, b)
+	bufferCopy := clone(b)
 	return d.writer.Write(bufferCopy)
 }
 
