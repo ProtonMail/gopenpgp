@@ -15,15 +15,15 @@ func IsEOF(err error) bool {
 }
 
 type Reader interface {
-	Read([]byte) (int, error)
+	Read(b []byte) (n int, err error)
 }
 
 type Writer interface {
-	Write([]byte) (int, error)
+	Write(b []byte) (n int, err error)
 }
 
 type WriteCloser interface {
-	Write([]byte) (int, error)
+	Write(b []byte) (n int, err error)
 	Close() error
 }
 

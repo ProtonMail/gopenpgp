@@ -26,7 +26,7 @@ func clone(src []byte) (dst []byte) {
 }
 
 type MobileReader interface {
-	Read(int) (*MobileReadResult, error)
+	Read(max int) (result *MobileReadResult, err error)
 }
 
 type Mobile2GoWriter struct {
@@ -37,7 +37,7 @@ func NewMobile2GoWriter(writer crypto.Writer) *Mobile2GoWriter {
 	return &Mobile2GoWriter{writer}
 }
 
-func (d *Mobile2GoWriter) Write(b []byte) (int, error) {
+func (d *Mobile2GoWriter) Write(b []byte) (n int, err error) {
 	bufferCopy := make([]byte, len(b))
 	copy(bufferCopy, b)
 	return d.writer.Write(bufferCopy)
@@ -53,13 +53,13 @@ func NewMobile2GoReader(reader MobileReader) *Mobile2GoReader {
 	return &Mobile2GoReader{reader, nil, 0}
 }
 
-func (d *Mobile2GoReader) Read(b []byte) (int, error) {
+func (d *Mobile2GoReader) Read(b []byte) (n int, err error) {
 	result, err := d.reader.Read(len(b))
 	if err != nil {
 		fmt.Printf("error while reading %v\n", err)
 		return 0, err
 	}
-	n := result.N
+	n = result.N
 	d.counter++
 	if n > 0 {
 		copy(b, result.Data[:n])
@@ -82,10 +82,10 @@ func NewGo2MobileReader(reader crypto.Reader) *Go2MobileReader {
 	return &Go2MobileReader{reader}
 }
 
-func (d *Go2MobileReader) Read(max int) (*MobileReadResult, error) {
+func (d *Go2MobileReader) Read(max int) (result *MobileReadResult, err error) {
 	b := make([]byte, max)
 	n, err := d.reader.Read(b)
-	result := &MobileReadResult{}
+	result = &MobileReadResult{}
 	if err != nil {
 		if errors.Is(err, io.EOF) {
 			result.IsEOF = true
