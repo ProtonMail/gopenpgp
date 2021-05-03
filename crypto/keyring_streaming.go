@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"bytes"
 	"io"
 	"time"
 
@@ -41,7 +42,7 @@ func (keyRing *KeyRing) EncryptStream(
 		ModTime:  time.Unix(modTime, 0),
 	}
 
-	plainMessageWriter, err = asymmetricEncryptStream(hints, pgpMessageWriter, keyRing, signKeyRing, config)
+	plainMessageWriter, err = asymmetricEncryptStream(hints, pgpMessageWriter, pgpMessageWriter, keyRing, signKeyRing, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
 	}
@@ -53,6 +54,34 @@ type PlainMessageReader struct {
 	verifyKeyRing *KeyRing
 	verifyTime    int64
 	readAll       bool
+}
+
+type EncryptSplitResult struct {
+	KeyPacket          []byte
+	PlainMessageWriter WriteCloser
+}
+
+func (keyRing *KeyRing) EncryptSplitStream(
+	dataPacketWriter Writer,
+	isBinary bool,
+	filename string,
+	modTime int64,
+	signKeyRing *KeyRing,
+) (*EncryptSplitResult, error) {
+	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
+
+	hints := &openpgp.FileHints{
+		IsBinary: isBinary,
+		FileName: filename,
+		ModTime:  time.Unix(modTime, 0),
+	}
+	var keyPacketBuf bytes.Buffer
+	plainMessageWriter, err := asymmetricEncryptStream(hints, &keyPacketBuf, dataPacketWriter, keyRing, signKeyRing, config)
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
+	}
+	keyPacket := keyPacketBuf.Bytes()
+	return &EncryptSplitResult{keyPacket, plainMessageWriter}, nil
 }
 
 func (msg *PlainMessageReader) IsBinary() bool {
@@ -105,4 +134,20 @@ func (keyRing *KeyRing) DecryptStream(
 		verifyTime,
 		false,
 	}, err
+}
+
+func (keyRing *KeyRing) DecryptSplitStream(
+	keypacket []byte,
+	dataPacketReader Reader,
+	verifyKeyRing *KeyRing, verifyTime int64,
+) (plainMessage *PlainMessageReader, err error) {
+	messageReader := io.MultiReader(
+		bytes.NewReader(keypacket),
+		dataPacketReader,
+	)
+	return keyRing.DecryptStream(
+		messageReader,
+		verifyKeyRing,
+		verifyTime,
+	)
 }

@@ -135,7 +135,7 @@ func asymmetricEncrypt(
 		ModTime:  plainMessage.getFormattedTime(),
 	}
 
-	encryptWriter, err = asymmetricEncryptStream(hints, &outBuf, publicKey, privateKey, config)
+	encryptWriter, err = asymmetricEncryptStream(hints, &outBuf, &outBuf, publicKey, privateKey, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
 	}
@@ -155,7 +155,8 @@ func asymmetricEncrypt(
 
 func asymmetricEncryptStream(
 	hints *openpgp.FileHints,
-	outWriter io.Writer,
+	dataPacketWriter io.Writer,
+	keyPacketWriter io.Writer,
 	publicKey, privateKey *KeyRing,
 	config *packet.Config,
 ) (encryptWriter io.WriteCloser, err error) {
@@ -170,9 +171,9 @@ func asymmetricEncryptStream(
 	}
 
 	if hints.IsBinary {
-		encryptWriter, err = openpgp.Encrypt(outWriter, publicKey.entities, signEntity, hints, config)
+		encryptWriter, err = openpgp.EncryptSplit(keyPacketWriter, dataPacketWriter, publicKey.entities, signEntity, hints, config)
 	} else {
-		encryptWriter, err = openpgp.EncryptText(outWriter, publicKey.entities, signEntity, hints, config)
+		encryptWriter, err = openpgp.EncryptTextSplit(keyPacketWriter, dataPacketWriter, publicKey.entities, signEntity, hints, config)
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
