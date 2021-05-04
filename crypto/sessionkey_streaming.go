@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/pkg/errors"
 )
@@ -38,10 +39,12 @@ func (sk *SessionKey) EncryptStream(
 		Time:          getTimeGenerator(),
 		DefaultCipher: dc,
 	}
-
-	signEntity, err := signKeyRing.getSigningEntity()
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to sign")
+	var signEntity *openpgp.Entity
+	if signKeyRing != nil {
+		signEntity, err = signKeyRing.getSigningEntity()
+		if err != nil {
+			return nil, errors.Wrap(err, "gopenpgp: unable to sign")
+		}
 	}
 
 	encryptWriter, signWriter, err := encryptStreamWithSessionKey(
