@@ -16,13 +16,15 @@ func (w *signAndEncryptWriteCloser) Write(b []byte) (int, error) {
 }
 
 func (w *signAndEncryptWriteCloser) Close() error {
-	err := w.signWriter.Close()
-	if err != nil {
+	if err := w.signWriter.Close(); err != nil {
 		return err
 	}
 	return w.encryptWriter.Close()
 }
 
+// EncryptStream is used to encrypt data as a Writer.
+// It takes a writer for the encrypted data packet and returns a writer for the plaintext data
+// If signKeyRing is not nil, it is used to do an embedded signature.
 func (sk *SessionKey) EncryptStream(
 	dataPacketWriter Writer,
 	isBinary bool,
@@ -68,6 +70,11 @@ func (sk *SessionKey) EncryptStream(
 	return plainMessageWriter, err
 }
 
+// DecryptStream is used to decrypt a data packet as a Reader.
+// It takes a reader for the data packet
+// and returns a PlainMessageReader for the plaintext data.
+// If verifyKeyRing is not nil, PlainMessageReader.VerifySignature() will
+// verify the embedded signature with the given key ring and verification time.
 func (sk *SessionKey) DecryptStream(
 	dataPacketReader Reader,
 	verifyKeyRing *KeyRing, verifyTime int64,
