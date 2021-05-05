@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"crypto"
 	"io"
 	"time"
 
@@ -150,4 +151,62 @@ func (keyRing *KeyRing) DecryptSplitStream(
 		verifyKeyRing,
 		verifyTime,
 	)
+}
+
+// SignDetachedStream generates and returns a PGPSignature for a given message Reader.
+func (keyRing *KeyRing) SignDetachedStream(message Reader) (*PGPSignature, error) {
+	signEntity, err := keyRing.getSigningEntity()
+	if err != nil {
+		return nil, err
+	}
+
+	config := &packet.Config{DefaultHash: crypto.SHA512, Time: getTimeGenerator()}
+	var outBuf bytes.Buffer
+	// sign bin
+	if err := openpgp.DetachSign(&outBuf, signEntity, message, config); err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: error in signing")
+	}
+
+	return NewPGPSignature(outBuf.Bytes()), nil
+}
+
+// VerifyDetachedStream verifies a message reader with a detached PGPSignature
+// and returns a SignatureVerificationError if fails.
+func (keyRing *KeyRing) VerifyDetachedStream(message Reader, signature *PGPSignature, verifyTime int64) error {
+	return verifySignature(
+		keyRing.entities,
+		message,
+		signature.GetBinary(),
+		verifyTime,
+	)
+}
+
+// SignDetachedEncryptedStream generates and returns a PGPMessage
+// containing an encrypted detached signature for a given PlainMessage.
+func (keyRing *KeyRing) SignDetachedEncryptedStream(message Reader, encryptionKeyRing *KeyRing) (encryptedSignature *PGPMessage, err error) {
+	if encryptionKeyRing == nil {
+		return nil, errors.New("gopenpgp: no encryption key ring provided")
+	}
+	signature, err := keyRing.SignDetachedStream(message)
+	if err != nil {
+		return nil, err
+	}
+	plainMessage := NewPlainMessage(signature.GetBinary())
+	encryptedSignature, err = encryptionKeyRing.Encrypt(plainMessage, nil)
+	return
+}
+
+// VerifyDetachedEncryptedStream verifies a PlainMessage
+// with a PGPMessage containing an encrypted detached signature
+// and returns a SignatureVerificationError if fails.
+func (keyRing *KeyRing) VerifyDetachedEncryptedStream(message Reader, encryptedSignature *PGPMessage, decryptionKeyRing *KeyRing, verifyTime int64) error {
+	if decryptionKeyRing == nil {
+		return errors.New("gopenpgp: no decryption key ring provided")
+	}
+	plainMessage, err := decryptionKeyRing.Decrypt(encryptedSignature, nil, 0)
+	if err != nil {
+		return err
+	}
+	signature := NewPGPSignature(plainMessage.GetBinary())
+	return keyRing.VerifyDetachedStream(message, signature, verifyTime)
 }
