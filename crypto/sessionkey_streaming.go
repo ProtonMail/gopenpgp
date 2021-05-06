@@ -19,7 +19,6 @@ func (w *signAndEncryptWriteCloser) Close() error {
 	if err := w.signWriter.Close(); err != nil {
 		return err
 	}
-	// Do we still need to close encryptWriter ?
 	return w.encryptWriter.Close()
 }
 

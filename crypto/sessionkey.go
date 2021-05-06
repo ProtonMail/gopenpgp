@@ -188,11 +188,10 @@ func encryptWithSessionKey(message *PlainMessage, sk *SessionKey, signEntity *op
 	if signWriter != nil {
 		_, err = signWriter.Write(message.GetBinary())
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: error in writing data to sign and encrypt")
+			return nil, errors.Wrap(err, "gopenpgp: error in writing signed message")
 		}
 		err = signWriter.Close()
 		if err != nil {
-			// Do we still need to close encryptWriter ?
 			return nil, errors.Wrap(err, "gopenpgp: error in closing signing writer")
 		}
 	} else {
