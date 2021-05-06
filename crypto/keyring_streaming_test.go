@@ -31,7 +31,7 @@ func TestKeyRing_EncryptStream(t *testing.T) {
 		keyRingPrivate,
 	)
 	if err != nil {
-		t.Fatal("Expected no error while calling EncryptStream, got:", err)
+		t.Fatal("Expected no error while encrypting stream with key ring, got:", err)
 	}
 	reachedEnd := false
 	bufferSize := 2
@@ -64,7 +64,7 @@ func TestKeyRing_EncryptStream(t *testing.T) {
 		GetUnixTime(),
 	)
 	if err != nil {
-		t.Fatal("Expected no error while calling DecryptStream, got:", err)
+		t.Fatal("Expected no error while calling decrypting stream with key ring, got:", err)
 	}
 	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
@@ -111,7 +111,7 @@ func TestKeyRing_EncryptSplitStream(t *testing.T) {
 		keyRingPrivate,
 	)
 	if err != nil {
-		t.Fatal("Expected no error while calling EncryptStream, got:", err)
+		t.Fatal("Expected no error while calling encrypting split stream with key ring, got:", err)
 	}
 	messageWriter := encryptionResult
 	reachedEnd := false
@@ -144,15 +144,6 @@ func TestKeyRing_EncryptSplitStream(t *testing.T) {
 		t.Fatal("Expected no error while accessing key packet, got:", err)
 	}
 	dataPacket := dataPacketBuf.Bytes()
-	pgpSplit := PGPSplitMessage{keyPacket, dataPacket}
-	plainMessage, err := keyRingPrivate.Decrypt(pgpSplit.GetPGPMessage(), nil, 0)
-	if err != nil {
-		t.Fatal("Expected no error while decrypting normally, got:", err)
-	}
-	decryptedBytes := plainMessage.Data
-	if !bytes.Equal(decryptedBytes, messageBytes) {
-		t.Fatalf("Expected the normally decrypted data to be %s got %s", string(decryptedBytes), string(messageBytes))
-	}
 	decryptedReader, err := keyRingPrivate.DecryptSplitStream(
 		keyPacket,
 		bytes.NewReader(dataPacket),
@@ -160,9 +151,9 @@ func TestKeyRing_EncryptSplitStream(t *testing.T) {
 		GetUnixTime(),
 	)
 	if err != nil {
-		t.Fatal("Expected no error while calling DecryptStream, got:", err)
+		t.Fatal("Expected no error while decrypting split stream with key ring, got:", err)
 	}
-	decryptedBytes, err = io.ReadAll(decryptedReader)
+	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}

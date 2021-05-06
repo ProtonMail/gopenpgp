@@ -155,8 +155,8 @@ func asymmetricEncrypt(
 
 func asymmetricEncryptStream(
 	hints *openpgp.FileHints,
-	dataPacketWriter io.Writer,
 	keyPacketWriter io.Writer,
+	dataPacketWriter io.Writer,
 	publicKey, privateKey *KeyRing,
 	config *packet.Config,
 ) (encryptWriter io.WriteCloser, err error) {
