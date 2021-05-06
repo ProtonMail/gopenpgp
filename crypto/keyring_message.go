@@ -137,7 +137,7 @@ func asymmetricEncrypt(
 
 	encryptWriter, err = asymmetricEncryptStream(hints, &outBuf, &outBuf, publicKey, privateKey, config)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
+		return nil, err
 	}
 
 	_, err = encryptWriter.Write(plainMessage.GetBinary())
@@ -191,7 +191,7 @@ func asymmetricDecrypt(
 		verifyKey,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
+		return nil, err
 	}
 
 	body, err := ioutil.ReadAll(messageDetails.UnverifiedBody)

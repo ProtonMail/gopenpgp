@@ -187,6 +187,9 @@ func encryptWithSessionKey(message *PlainMessage, sk *SessionKey, signEntity *op
 	}
 	if signWriter != nil {
 		_, err = signWriter.Write(message.GetBinary())
+		if err != nil {
+			return nil, errors.Wrap(err, "gopenpgp: error in writing data to sign and encrypt")
+		}
 		err = signWriter.Close()
 		if err != nil {
 			// Do we still need to close encryptWriter ?
@@ -266,7 +269,7 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 func (sk *SessionKey) DecryptAndVerify(dataPacket []byte, verifyKeyRing *KeyRing, verifyTime int64) (*PlainMessage, error) {
 	var messageReader = bytes.NewReader(dataPacket)
 
-	md, err := decryptStreamWithSessionKey(sk, messageReader, verifyKeyRing, verifyTime)
+	md, err := decryptStreamWithSessionKey(sk, messageReader, verifyKeyRing)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +292,7 @@ func (sk *SessionKey) DecryptAndVerify(dataPacket []byte, verifyKeyRing *KeyRing
 	}, err
 }
 
-func decryptStreamWithSessionKey(sk *SessionKey, messageReader io.Reader, verifyKeyRing *KeyRing, verifyTime int64) (*openpgp.MessageDetails, error) {
+func decryptStreamWithSessionKey(sk *SessionKey, messageReader io.Reader, verifyKeyRing *KeyRing) (*openpgp.MessageDetails, error) {
 	var decrypted io.ReadCloser
 	var keyring openpgp.EntityList
 

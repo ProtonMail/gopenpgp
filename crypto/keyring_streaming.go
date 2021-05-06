@@ -44,7 +44,7 @@ func (keyRing *KeyRing) EncryptStream(
 
 	plainMessageWriter, err = asymmetricEncryptStream(hints, pgpMessageWriter, pgpMessageWriter, keyRing, signKeyRing, config)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
+		return nil, err
 	}
 	return plainMessageWriter, nil
 }
@@ -99,7 +99,7 @@ func (keyRing *KeyRing) EncryptSplitStream(
 	var keyPacketBuf bytes.Buffer
 	plainMessageWriter, err := asymmetricEncryptStream(hints, &keyPacketBuf, dataPacketWriter, keyRing, signKeyRing, config)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
+		return nil, err
 	}
 	return &EncryptSplitResult{
 		keyPacketBuf:       &keyPacketBuf,
@@ -172,7 +172,7 @@ func (keyRing *KeyRing) DecryptStream(
 		verifyKeyRing,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
+		return nil, err
 	}
 
 	return &PlainMessageReader{
