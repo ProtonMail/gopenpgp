@@ -1,9 +1,7 @@
 package helper
 
 import (
-	"crypto/sha256"
 	"errors"
-	"fmt"
 	"io"
 	"runtime"
 
@@ -45,32 +43,24 @@ func (d *Mobile2GoWriter) Write(b []byte) (n int, err error) {
 }
 
 type Mobile2GoReader struct {
-	reader  MobileReader
-	debug   []byte
-	counter int
+	reader MobileReader
 }
 
 func NewMobile2GoReader(reader MobileReader) *Mobile2GoReader {
-	return &Mobile2GoReader{reader, nil, 0}
+	return &Mobile2GoReader{reader}
 }
 
 func (d *Mobile2GoReader) Read(b []byte) (n int, err error) {
 	defer runtime.GC()
 	result, err := d.reader.Read(len(b))
 	if err != nil {
-		fmt.Printf("error while reading %v\n", err)
 		return 0, err
 	}
 	n = result.N
-	d.counter++
 	if n > 0 {
 		copy(b, result.Data[:n])
-		fmt.Printf("Read %d\n", n)
-		d.debug = append(d.debug, b[:n]...)
-		fmt.Printf("%d hash %x bytes %x\n", d.counter, sha256.Sum256(d.debug), b[:n])
 	}
 	if result.IsEOF {
-		fmt.Println("EOF")
 		err = io.EOF
 	}
 	return n, err
