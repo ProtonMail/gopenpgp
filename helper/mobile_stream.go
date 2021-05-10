@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"runtime"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 )
@@ -38,6 +39,7 @@ func NewMobile2GoWriter(writer crypto.Writer) *Mobile2GoWriter {
 }
 
 func (d *Mobile2GoWriter) Write(b []byte) (n int, err error) {
+	defer runtime.GC()
 	bufferCopy := clone(b)
 	return d.writer.Write(bufferCopy)
 }
@@ -53,6 +55,7 @@ func NewMobile2GoReader(reader MobileReader) *Mobile2GoReader {
 }
 
 func (d *Mobile2GoReader) Read(b []byte) (n int, err error) {
+	defer runtime.GC()
 	result, err := d.reader.Read(len(b))
 	if err != nil {
 		fmt.Printf("error while reading %v\n", err)
@@ -82,6 +85,7 @@ func NewGo2MobileReader(reader crypto.Reader) *Go2MobileReader {
 }
 
 func (d *Go2MobileReader) Read(max int) (result *MobileReadResult, err error) {
+	defer runtime.GC()
 	b := make([]byte, max)
 	n, err := d.reader.Read(b)
 	result = &MobileReadResult{}
