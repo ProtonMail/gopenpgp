@@ -11,37 +11,50 @@ import (
 	errorsWrap "github.com/pkg/errors"
 )
 
+// Mobile2GoWriter is used to wrap a writer in the mobile app runtime,
+// to be usable in the golang runtime (via gomobile).
 type Mobile2GoWriter struct {
 	writer crypto.Writer
 }
 
+// NewMobile2GoWriter wraps a writer to be usable in the golang runtime (via gomobile).
 func NewMobile2GoWriter(writer crypto.Writer) *Mobile2GoWriter {
 	return &Mobile2GoWriter{writer}
 }
 
-func (d *Mobile2GoWriter) Write(b []byte) (n int, err error) {
+// Write writes the data in the provided buffer in the wrapped writer.
+// It clones the provided data to prevent errors with garbage collectors.
+func (w *Mobile2GoWriter) Write(b []byte) (n int, err error) {
 	defer runtime.GC()
 	bufferCopy := clone(b)
-	return d.writer.Write(bufferCopy)
+	return w.writer.Write(bufferCopy)
 }
 
+// Mobile2GoWriterWithSHA256 is used to wrap a writer in the mobile app runtime,
+// to be usable in the golang runtime (via gomobile).
+// It also computes the SHA256 hash of the data being written on the fly.
 type Mobile2GoWriterWithSHA256 struct {
 	writer crypto.Writer
 	sha256 hash.Hash
 }
 
+// NewMobile2GoWriterWithSHA256 wraps a writer to be usable in the golang runtime (via gomobile).
+// The wrapper also computes the SHA256 hash of the data being written on the fly.
 func NewMobile2GoWriterWithSHA256(writer crypto.Writer) *Mobile2GoWriterWithSHA256 {
 	return &Mobile2GoWriterWithSHA256{writer, sha256.New()}
 }
 
-func (d *Mobile2GoWriterWithSHA256) Write(b []byte) (n int, err error) {
+// Write writes the data in the provided buffer in the wrapped writer.
+// It clones the provided data to prevent errors with garbage collectors.
+// It also computes the SHA256 hash of the data being written on the fly.
+func (w *Mobile2GoWriterWithSHA256) Write(b []byte) (n int, err error) {
 	defer runtime.GC()
 	bufferCopy := clone(b)
-	n, err = d.writer.Write(bufferCopy)
+	n, err = w.writer.Write(bufferCopy)
 	if err == nil {
 		hashedTotal := 0
 		for hashedTotal < n {
-			hashed, err := d.sha256.Write(bufferCopy[hashedTotal:n])
+			hashed, err := w.sha256.Write(bufferCopy[hashedTotal:n])
 			if err != nil {
 				return 0, errorsWrap.Wrap(err, "gopenpgp: couldn't hash encrypted data")
 			}
@@ -51,22 +64,30 @@ func (d *Mobile2GoWriterWithSHA256) Write(b []byte) (n int, err error) {
 	return n, err
 }
 
-func (d *Mobile2GoWriterWithSHA256) GetSHA256() []byte {
-	return d.sha256.Sum(nil)
+// GetSHA256 returns the SHA256 hash of the data that's been written so far.
+func (w *Mobile2GoWriterWithSHA256) GetSHA256() []byte {
+	return w.sha256.Sum(nil)
 }
 
+// MobileReader is the interface that readers in the mobile runtime must use and implement.
+// This is a workaround to some of the gomobile limitations.
 type MobileReader interface {
 	Read(max int) (result *MobileReadResult, err error)
 }
 
+// MobileReadResult is what needs to be returned by MobileReader.Read.
+// The read data is passed as a return value rather than passed as an argument to the reader.
+// This avoids problems introduced by gomobile that prevent the use of native golang readers.
 type MobileReadResult struct {
-	N     int
-	IsEOF bool
-	Data  []byte
+	N     int    // N, The number of bytes read
+	IsEOF bool   // IsEOF, If true, then the reader has reached the end of the data to read.
+	Data  []byte // Data, the data that has been read
 }
 
+// NewMobileReadResult initialize a MobileReadResult with the correct values.
+// It clones the data to avoid the garbage collector freeing the data too early.
 func NewMobileReadResult(n int, eof bool, data []byte) *MobileReadResult {
-	return &MobileReadResult{n, eof, clone(data)}
+	return &MobileReadResult{N: n, IsEOF: eof, Data: clone(data)}
 }
 
 func clone(src []byte) (dst []byte) {
@@ -75,19 +96,24 @@ func clone(src []byte) (dst []byte) {
 	return
 }
 
+// Mobile2GoReader is used to wrap a MobileReader in the mobile app runtime,
+// to be usable in the golang runtime (via gomobile) as a native Reader.
 type Mobile2GoReader struct {
 	reader MobileReader
 }
 
+// NewMobile2GoReader wraps a MobileReader to be usable in the golang runtime (via gomobile).
 func NewMobile2GoReader(reader MobileReader) *Mobile2GoReader {
 	return &Mobile2GoReader{reader}
 }
 
-func (d *Mobile2GoReader) Read(b []byte) (n int, err error) {
+// Read reads data from the wrapped MobileReader and copies the read data in the provided buffer.
+// It also handles the conversion of EOF to an error.
+func (r *Mobile2GoReader) Read(b []byte) (n int, err error) {
 	defer runtime.GC()
-	result, err := d.reader.Read(len(b))
+	result, err := r.reader.Read(len(b))
 	if err != nil {
-		return 0, err
+		return 0, errorsWrap.Wrap(err, "gopenpgp: couldn't read from mobile reader")
 	}
 	n = result.N
 	if n > 0 {
@@ -99,18 +125,22 @@ func (d *Mobile2GoReader) Read(b []byte) (n int, err error) {
 	return n, err
 }
 
+// Go2MobileReader is used to wrap a native golang Reader in the golang runtime,
+// to be usable in the mobile app runtime (via gomobile) as a MobileReader.
 type Go2MobileReader struct {
 	reader crypto.Reader
 }
 
+// NewGo2MobileReader wraps a native golang Reader to be usable in the mobile app runtime (via gomobile).
 func NewGo2MobileReader(reader crypto.Reader) *Go2MobileReader {
 	return &Go2MobileReader{reader}
 }
 
-func (d *Go2MobileReader) Read(max int) (result *MobileReadResult, err error) {
+// Read reads at most <max> bytes from the wrapped Reader and returns the read data as a MobileReadResult.
+func (r *Go2MobileReader) Read(max int) (result *MobileReadResult, err error) {
 	defer runtime.GC()
 	b := make([]byte, max)
-	n, err := d.reader.Read(b)
+	n, err := r.reader.Read(b)
 	result = &MobileReadResult{}
 	if err != nil {
 		if errors.Is(err, io.EOF) {

@@ -8,6 +8,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const testFilename = "filename.txt"
+
 func TestKeyRing_EncryptStream(t *testing.T) {
 	keyRingPrivate, err := keyRingTestPrivate.Copy()
 	if err != nil {
