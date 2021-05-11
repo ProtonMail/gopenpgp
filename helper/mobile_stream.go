@@ -11,26 +11,6 @@ import (
 	errorsWrap "github.com/pkg/errors"
 )
 
-type MobileReadResult struct {
-	N     int
-	IsEOF bool
-	Data  []byte
-}
-
-func NewMobileReadResult(n int, eof bool, data []byte) *MobileReadResult {
-	return &MobileReadResult{n, eof, clone(data)}
-}
-
-func clone(src []byte) (dst []byte) {
-	dst = make([]byte, len(src))
-	copy(dst, src)
-	return
-}
-
-type MobileReader interface {
-	Read(max int) (result *MobileReadResult, err error)
-}
-
 type Mobile2GoWriter struct {
 	writer crypto.Writer
 }
@@ -73,6 +53,26 @@ func (d *Mobile2GoWriterWithSHA256) Write(b []byte) (n int, err error) {
 
 func (d *Mobile2GoWriterWithSHA256) GetSHA256() []byte {
 	return d.sha256.Sum(nil)
+}
+
+type MobileReader interface {
+	Read(max int) (result *MobileReadResult, err error)
+}
+
+type MobileReadResult struct {
+	N     int
+	IsEOF bool
+	Data  []byte
+}
+
+func NewMobileReadResult(n int, eof bool, data []byte) *MobileReadResult {
+	return &MobileReadResult{n, eof, clone(data)}
+}
+
+func clone(src []byte) (dst []byte) {
+	dst = make([]byte, len(src))
+	copy(dst, src)
+	return
 }
 
 type Mobile2GoReader struct {
