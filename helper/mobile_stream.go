@@ -1,11 +1,14 @@
 package helper
 
 import (
+	"crypto/sha256"
 	"errors"
+	"hash"
 	"io"
 	"runtime"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
+	errorsWrap "github.com/pkg/errors"
 )
 
 type MobileReadResult struct {
@@ -40,6 +43,36 @@ func (d *Mobile2GoWriter) Write(b []byte) (n int, err error) {
 	defer runtime.GC()
 	bufferCopy := clone(b)
 	return d.writer.Write(bufferCopy)
+}
+
+type Mobile2GoWriterWithSHA256 struct {
+	writer crypto.Writer
+	sha256 hash.Hash
+}
+
+func NewMobile2GoWriterWithSHA256(writer crypto.Writer) *Mobile2GoWriterWithSHA256 {
+	return &Mobile2GoWriterWithSHA256{writer, sha256.New()}
+}
+
+func (d *Mobile2GoWriterWithSHA256) Write(b []byte) (n int, err error) {
+	defer runtime.GC()
+	bufferCopy := clone(b)
+	n, err = d.writer.Write(bufferCopy)
+	if err == nil {
+		hashedTotal := 0
+		for hashedTotal < n {
+			hashed, err := d.sha256.Write(bufferCopy[hashedTotal:n])
+			if err != nil {
+				return 0, errorsWrap.Wrap(err, "gopenpgp: couldn't hash encrypted data")
+			}
+			hashedTotal += hashed
+		}
+	}
+	return n, err
+}
+
+func (d *Mobile2GoWriterWithSHA256) GetSHA256() []byte {
+	return d.sha256.Sum(nil)
 }
 
 type Mobile2GoReader struct {
