@@ -73,7 +73,7 @@ func (res *EncryptSplitResult) Close() (err error) {
 
 func (res *EncryptSplitResult) GetKeyPacket() (keyPacket []byte, err error) {
 	if !res.isClosed {
-		return nil, errors.New("gopenpg: can't access key packet until the message writer has been closed")
+		return nil, errors.New("gopenpgp: can't access key packet until the message writer has been closed")
 	}
 	return res.keyPacket, nil
 }
