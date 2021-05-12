@@ -71,6 +71,8 @@ func (res *EncryptSplitResult) Close() (err error) {
 	return nil
 }
 
+// GetKeyPacket returns the Public-Key Encrypted Session Key Packets (https://datatracker.ietf.org/doc/html/rfc4880#section-5.1).
+// This can be retrieved only after the message has been fully written and the writer is closed.
 func (res *EncryptSplitResult) GetKeyPacket() (keyPacket []byte, err error) {
 	if !res.isClosed {
 		return nil, errors.New("gopenpgp: can't access key packet until the message writer has been closed")
