@@ -23,12 +23,11 @@ func TestKeyRing_EncryptStream(t *testing.T) {
 	messageReader := bytes.NewReader(messageBytes)
 	var ciphertextBuf bytes.Buffer
 	isBinary := true
-	filename := "filename.txt"
 	modTime := GetUnixTime()
 	messageWriter, err := keyRingPublic.EncryptStream(
 		&ciphertextBuf,
 		isBinary,
-		filename,
+		testFilename,
 		modTime,
 		keyRingPrivate,
 	)
@@ -82,8 +81,8 @@ func TestKeyRing_EncryptStream(t *testing.T) {
 	if isBinary != decryptedReader.IsBinary() {
 		t.Fatalf("Expected isBinary to be %t got %t", isBinary, decryptedReader.IsBinary())
 	}
-	if filename != decryptedReader.GetFilename() {
-		t.Fatalf("Expected filename to be %s got %s", filename, decryptedReader.GetFilename())
+	if testFilename != decryptedReader.GetFilename() {
+		t.Fatalf("Expected filename to be %s got %s", testFilename, decryptedReader.GetFilename())
 	}
 	if modTime != decryptedReader.GetModificationTime() {
 		t.Fatalf("Expected modification time to be %d got %d", modTime, decryptedReader.GetModificationTime())
@@ -103,12 +102,11 @@ func TestKeyRing_EncryptSplitStream(t *testing.T) {
 	messageReader := bytes.NewReader(messageBytes)
 	var dataPacketBuf bytes.Buffer
 	isBinary := true
-	filename := "filename.txt"
 	modTime := GetUnixTime()
 	encryptionResult, err := keyRingPublic.EncryptSplitStream(
 		&dataPacketBuf,
 		isBinary,
-		filename,
+		testFilename,
 		modTime,
 		keyRingPrivate,
 	)
@@ -169,8 +167,8 @@ func TestKeyRing_EncryptSplitStream(t *testing.T) {
 	if isBinary != decryptedReader.IsBinary() {
 		t.Fatalf("Expected isBinary to be %t got %t", isBinary, decryptedReader.IsBinary())
 	}
-	if filename != decryptedReader.GetFilename() {
-		t.Fatalf("Expected filename to be %s got %s", filename, decryptedReader.GetFilename())
+	if testFilename != decryptedReader.GetFilename() {
+		t.Fatalf("Expected filename to be %s got %s", testFilename, decryptedReader.GetFilename())
 	}
 	if modTime != decryptedReader.GetModificationTime() {
 		t.Fatalf("Expected modification time to be %d got %d", modTime, decryptedReader.GetModificationTime())

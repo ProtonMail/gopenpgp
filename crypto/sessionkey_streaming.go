@@ -77,7 +77,8 @@ func (sk *SessionKey) EncryptStream(
 // verify the embedded signature with the given key ring and verification time.
 func (sk *SessionKey) DecryptStream(
 	dataPacketReader Reader,
-	verifyKeyRing *KeyRing, verifyTime int64,
+	verifyKeyRing *KeyRing,
+	verifyTime int64,
 ) (plainMessage *PlainMessageReader, err error) {
 	messageDetails, err := decryptStreamWithSessionKey(
 		sk,

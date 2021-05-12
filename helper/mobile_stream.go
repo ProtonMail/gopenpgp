@@ -2,13 +2,12 @@ package helper
 
 import (
 	"crypto/sha256"
-	"errors"
 	"hash"
 	"io"
 	"runtime"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
-	errorsWrap "github.com/pkg/errors"
+	"github.com/pkg/errors"
 )
 
 // Mobile2GoWriter is used to wrap a writer in the mobile app runtime,
@@ -56,7 +55,7 @@ func (w *Mobile2GoWriterWithSHA256) Write(b []byte) (n int, err error) {
 		for hashedTotal < n {
 			hashed, err := w.sha256.Write(bufferCopy[hashedTotal:n])
 			if err != nil {
-				return 0, errorsWrap.Wrap(err, "gopenpgp: couldn't hash encrypted data")
+				return 0, errors.Wrap(err, "gopenpgp: couldn't hash encrypted data")
 			}
 			hashedTotal += hashed
 		}
@@ -113,7 +112,7 @@ func (r *Mobile2GoReader) Read(b []byte) (n int, err error) {
 	defer runtime.GC()
 	result, err := r.reader.Read(len(b))
 	if err != nil {
-		return 0, errorsWrap.Wrap(err, "gopenpgp: couldn't read from mobile reader")
+		return 0, errors.Wrap(err, "gopenpgp: couldn't read from mobile reader")
 	}
 	n = result.N
 	if n > 0 {

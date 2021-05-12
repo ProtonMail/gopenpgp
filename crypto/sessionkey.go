@@ -185,7 +185,7 @@ func encryptWithSessionKey(message *PlainMessage, sk *SessionKey, signEntity *op
 	if err != nil {
 		return nil, err
 	}
-	if signWriter != nil {
+	if signEntity != nil {
 		_, err = signWriter.Write(message.GetBinary())
 		if err != nil {
 			return nil, errors.Wrap(err, "gopenpgp: error in writing signed message")
@@ -335,7 +335,7 @@ func decryptStreamWithSessionKey(sk *SessionKey, messageReader io.Reader, verify
 		return nil, errors.Wrap(err, "gopenpgp: unable to decode symmetric packet")
 	}
 
-	return md, err
+	return md, nil
 }
 
 func (sk *SessionKey) checkSize() error {
