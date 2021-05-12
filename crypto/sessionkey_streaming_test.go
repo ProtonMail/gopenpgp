@@ -9,14 +9,6 @@ import (
 )
 
 func TestSessionKey_EncryptDecryptStream(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
 	var dataPacketBuf bytes.Buffer
@@ -27,7 +19,7 @@ func TestSessionKey_EncryptDecryptStream(t *testing.T) {
 		isBinary,
 		testFilename,
 		modTime,
-		keyRingPrivate,
+		keyRingTestPrivate,
 	)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting stream with session key, got:", err)
@@ -60,7 +52,7 @@ func TestSessionKey_EncryptDecryptStream(t *testing.T) {
 	dataPacket := dataPacketBuf.Bytes()
 	decryptedReader, err := testSessionKey.DecryptStream(
 		bytes.NewReader(dataPacket),
-		keyRingPublic,
+		keyRingTestPublic,
 		GetUnixTime(),
 	)
 	if err != nil {
@@ -89,14 +81,6 @@ func TestSessionKey_EncryptDecryptStream(t *testing.T) {
 }
 
 func TestSessionKey_EncryptStreamCompatible(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
 	var dataPacketBuf bytes.Buffer
@@ -107,7 +91,7 @@ func TestSessionKey_EncryptStreamCompatible(t *testing.T) {
 		isBinary,
 		testFilename,
 		modTime,
-		keyRingPrivate,
+		keyRingTestPrivate,
 	)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting stream with session key, got:", err)
@@ -140,7 +124,7 @@ func TestSessionKey_EncryptStreamCompatible(t *testing.T) {
 	dataPacket := dataPacketBuf.Bytes()
 	decryptedMsg, err := testSessionKey.DecryptAndVerify(
 		dataPacket,
-		keyRingPublic,
+		keyRingTestPublic,
 		GetUnixTime(),
 	)
 	if err != nil {
@@ -165,26 +149,18 @@ func TestSessionKey_EncryptStreamCompatible(t *testing.T) {
 }
 
 func TestSessionKey_DecryptStreamCompatible(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	modTime := GetUnixTime()
 	dataPacket, err := testSessionKey.EncryptAndSign(
 		NewPlainMessageFromFile(messageBytes, testFilename, uint32(modTime)),
-		keyRingPrivate,
+		keyRingTestPrivate,
 	)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting plaintext, got:", err)
 	}
 	decryptedReader, err := testSessionKey.DecryptStream(
 		bytes.NewReader(dataPacket),
-		keyRingPublic,
+		keyRingTestPublic,
 		GetUnixTime(),
 	)
 	if err != nil {

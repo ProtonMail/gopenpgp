@@ -11,25 +11,17 @@ import (
 const testFilename = "filename.txt"
 
 func TestKeyRing_EncryptDecryptStream(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
 	var ciphertextBuf bytes.Buffer
 	isBinary := true
 	modTime := GetUnixTime()
-	messageWriter, err := keyRingPublic.EncryptStream(
+	messageWriter, err := keyRingTestPublic.EncryptStream(
 		&ciphertextBuf,
 		isBinary,
 		testFilename,
 		modTime,
-		keyRingPrivate,
+		keyRingTestPrivate,
 	)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting stream with key ring, got:", err)
@@ -59,9 +51,9 @@ func TestKeyRing_EncryptDecryptStream(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while closing plaintext writer, got:", err)
 	}
-	decryptedReader, err := keyRingPrivate.DecryptStream(
+	decryptedReader, err := keyRingTestPrivate.DecryptStream(
 		&ciphertextBuf,
-		keyRingPublic,
+		keyRingTestPublic,
 		GetUnixTime(),
 	)
 	if err != nil {
@@ -90,25 +82,17 @@ func TestKeyRing_EncryptDecryptStream(t *testing.T) {
 }
 
 func TestKeyRing_EncryptStreamCompatible(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
 	var ciphertextBuf bytes.Buffer
 	isBinary := true
 	modTime := GetUnixTime()
-	messageWriter, err := keyRingPublic.EncryptStream(
+	messageWriter, err := keyRingTestPublic.EncryptStream(
 		&ciphertextBuf,
 		isBinary,
 		testFilename,
 		modTime,
-		keyRingPrivate,
+		keyRingTestPrivate,
 	)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting stream with key ring, got:", err)
@@ -139,9 +123,9 @@ func TestKeyRing_EncryptStreamCompatible(t *testing.T) {
 		t.Fatal("Expected no error while closing plaintext writer, got:", err)
 	}
 	encryptedData := ciphertextBuf.Bytes()
-	decryptedMsg, err := keyRingPrivate.Decrypt(
+	decryptedMsg, err := keyRingTestPrivate.Decrypt(
 		NewPGPMessage(encryptedData),
-		keyRingPublic,
+		keyRingTestPublic,
 		GetUnixTime(),
 	)
 	if err != nil {
@@ -163,26 +147,18 @@ func TestKeyRing_EncryptStreamCompatible(t *testing.T) {
 }
 
 func TestKeyRing_DecryptStreamCompatible(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	modTime := GetUnixTime()
-	pgpMessage, err := keyRingPublic.Encrypt(
+	pgpMessage, err := keyRingTestPublic.Encrypt(
 		NewPlainMessageFromFile(messageBytes, testFilename, uint32(modTime)),
-		keyRingPrivate,
+		keyRingTestPrivate,
 	)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting plaintext, got:", err)
 	}
-	decryptedReader, err := keyRingPrivate.DecryptStream(
+	decryptedReader, err := keyRingTestPrivate.DecryptStream(
 		bytes.NewReader(pgpMessage.GetBinary()),
-		keyRingPublic,
+		keyRingTestPublic,
 		GetUnixTime(),
 	)
 	if err != nil {
@@ -211,25 +187,17 @@ func TestKeyRing_DecryptStreamCompatible(t *testing.T) {
 }
 
 func TestKeyRing_EncryptDecryptSplitStream(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
 	var dataPacketBuf bytes.Buffer
 	isBinary := true
 	modTime := GetUnixTime()
-	encryptionResult, err := keyRingPublic.EncryptSplitStream(
+	encryptionResult, err := keyRingTestPublic.EncryptSplitStream(
 		&dataPacketBuf,
 		isBinary,
 		testFilename,
 		modTime,
-		keyRingPrivate,
+		keyRingTestPrivate,
 	)
 	if err != nil {
 		t.Fatal("Expected no error while calling encrypting split stream with key ring, got:", err)
@@ -265,10 +233,10 @@ func TestKeyRing_EncryptDecryptSplitStream(t *testing.T) {
 		t.Fatal("Expected no error while accessing key packet, got:", err)
 	}
 	dataPacket := dataPacketBuf.Bytes()
-	decryptedReader, err := keyRingPrivate.DecryptSplitStream(
+	decryptedReader, err := keyRingTestPrivate.DecryptSplitStream(
 		keyPacket,
 		bytes.NewReader(dataPacket),
-		keyRingPublic,
+		keyRingTestPublic,
 		GetUnixTime(),
 	)
 	if err != nil {
@@ -297,25 +265,17 @@ func TestKeyRing_EncryptDecryptSplitStream(t *testing.T) {
 }
 
 func TestKeyRing_EncryptSplitStreamCompatible(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
 	var dataPacketBuf bytes.Buffer
 	isBinary := true
 	modTime := GetUnixTime()
-	encryptionResult, err := keyRingPublic.EncryptSplitStream(
+	encryptionResult, err := keyRingTestPublic.EncryptSplitStream(
 		&dataPacketBuf,
 		isBinary,
 		testFilename,
 		modTime,
-		keyRingPrivate,
+		keyRingTestPrivate,
 	)
 	if err != nil {
 		t.Fatal("Expected no error while calling encrypting split stream with key ring, got:", err)
@@ -351,9 +311,9 @@ func TestKeyRing_EncryptSplitStreamCompatible(t *testing.T) {
 		t.Fatal("Expected no error while accessing key packet, got:", err)
 	}
 	dataPacket := dataPacketBuf.Bytes()
-	decryptedMsg, err := keyRingPrivate.Decrypt(
+	decryptedMsg, err := keyRingTestPrivate.Decrypt(
 		NewPGPSplitMessage(keyPacket, dataPacket).GetPGPMessage(),
-		keyRingPublic,
+		keyRingTestPublic,
 		GetUnixTime(),
 	)
 	if err != nil {
@@ -378,19 +338,11 @@ func TestKeyRing_EncryptSplitStreamCompatible(t *testing.T) {
 }
 
 func TestKeyRing_DecryptSplitStreamCompatible(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	modTime := GetUnixTime()
-	pgpMessage, err := keyRingPublic.Encrypt(
+	pgpMessage, err := keyRingTestPublic.Encrypt(
 		NewPlainMessageFromFile(messageBytes, testFilename, uint32(modTime)),
-		keyRingPrivate,
+		keyRingTestPrivate,
 	)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting plaintext, got:", err)
@@ -408,10 +360,10 @@ func TestKeyRing_DecryptSplitStreamCompatible(t *testing.T) {
 		t.Fatal("Expected no error while accessing key packet, got:", err)
 	}
 	dataPacket := splitMsg.DataPacket
-	decryptedReader, err := keyRingPrivate.DecryptSplitStream(
+	decryptedReader, err := keyRingTestPrivate.DecryptSplitStream(
 		keyPacket,
 		bytes.NewReader(dataPacket),
-		keyRingPublic,
+		keyRingTestPublic,
 		GetUnixTime(),
 	)
 	if err != nil {
@@ -440,17 +392,9 @@ func TestKeyRing_DecryptSplitStreamCompatible(t *testing.T) {
 }
 
 func TestKeyRing_SignVerifyDetachedStream(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
-	signature, err := keyRingPrivate.SignDetachedStream(messageReader)
+	signature, err := keyRingTestPrivate.SignDetachedStream(messageReader)
 	if err != nil {
 		t.Fatal("Expected no error while signing the message, got:", err)
 	}
@@ -458,45 +402,29 @@ func TestKeyRing_SignVerifyDetachedStream(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while rewinding the message reader, got:", err)
 	}
-	err = keyRingPublic.VerifyDetachedStream(messageReader, signature, GetUnixTime())
+	err = keyRingTestPublic.VerifyDetachedStream(messageReader, signature, GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error while verifying the detached signature, got:", err)
 	}
 }
 
 func TestKeyRing_SignDetachedStreamCompatible(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
-	signature, err := keyRingPrivate.SignDetachedStream(messageReader)
+	signature, err := keyRingTestPrivate.SignDetachedStream(messageReader)
 	if err != nil {
 		t.Fatal("Expected no error while signing the message, got:", err)
 	}
-	err = keyRingPublic.VerifyDetached(NewPlainMessage(messageBytes), signature, GetUnixTime())
+	err = keyRingTestPublic.VerifyDetached(NewPlainMessage(messageBytes), signature, GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error while verifying the detached signature, got:", err)
 	}
 }
 
 func TestKeyRing_VerifyDetachedStreamCompatible(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
-	signature, err := keyRingPrivate.SignDetached(NewPlainMessage(messageBytes))
+	signature, err := keyRingTestPrivate.SignDetached(NewPlainMessage(messageBytes))
 	if err != nil {
 		t.Fatal("Expected no error while signing the message, got:", err)
 	}
@@ -504,24 +432,16 @@ func TestKeyRing_VerifyDetachedStreamCompatible(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while rewinding the message reader, got:", err)
 	}
-	err = keyRingPublic.VerifyDetachedStream(messageReader, signature, GetUnixTime())
+	err = keyRingTestPublic.VerifyDetachedStream(messageReader, signature, GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error while verifying the detached signature, got:", err)
 	}
 }
 
 func TestKeyRing_SignVerifyDetachedEncryptedStream(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
-	encSignature, err := keyRingPrivate.SignDetachedEncryptedStream(messageReader, keyRingPublic)
+	encSignature, err := keyRingTestPrivate.SignDetachedEncryptedStream(messageReader, keyRingTestPublic)
 	if err != nil {
 		t.Fatal("Expected no error while signing the message, got:", err)
 	}
@@ -529,45 +449,29 @@ func TestKeyRing_SignVerifyDetachedEncryptedStream(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while rewinding the message reader, got:", err)
 	}
-	err = keyRingPublic.VerifyDetachedEncryptedStream(messageReader, encSignature, keyRingPrivate, GetUnixTime())
+	err = keyRingTestPublic.VerifyDetachedEncryptedStream(messageReader, encSignature, keyRingTestPrivate, GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error while verifying the detached signature, got:", err)
 	}
 }
 
 func TestKeyRing_SignDetachedEncryptedStreamCompatible(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
-	encSignature, err := keyRingPrivate.SignDetachedEncryptedStream(messageReader, keyRingPublic)
+	encSignature, err := keyRingTestPrivate.SignDetachedEncryptedStream(messageReader, keyRingTestPublic)
 	if err != nil {
 		t.Fatal("Expected no error while signing the message, got:", err)
 	}
-	err = keyRingPublic.VerifyDetachedEncrypted(NewPlainMessage(messageBytes), encSignature, keyRingPrivate, GetUnixTime())
+	err = keyRingTestPublic.VerifyDetachedEncrypted(NewPlainMessage(messageBytes), encSignature, keyRingTestPrivate, GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error while verifying the detached signature, got:", err)
 	}
 }
 
 func TestKeyRing_VerifyDetachedEncryptedStreamCompatible(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
-	encSignature, err := keyRingPrivate.SignDetachedEncrypted(NewPlainMessage(messageBytes), keyRingPublic)
+	encSignature, err := keyRingTestPrivate.SignDetachedEncrypted(NewPlainMessage(messageBytes), keyRingTestPublic)
 	if err != nil {
 		t.Fatal("Expected no error while signing the message, got:", err)
 	}
@@ -575,7 +479,7 @@ func TestKeyRing_VerifyDetachedEncryptedStreamCompatible(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while rewinding the message reader, got:", err)
 	}
-	err = keyRingPublic.VerifyDetachedEncryptedStream(messageReader, encSignature, keyRingPrivate, GetUnixTime())
+	err = keyRingTestPublic.VerifyDetachedEncryptedStream(messageReader, encSignature, keyRingTestPrivate, GetUnixTime())
 	if err != nil {
 		t.Fatal("Expected no error while verifying the detached signature, got:", err)
 	}
