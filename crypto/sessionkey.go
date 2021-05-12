@@ -228,7 +228,7 @@ func encryptStreamWithSessionKey(
 		}
 	}
 
-	if signEntity != nil { // nolint:nestif
+	if signEntity != nil {
 		hints := &openpgp.FileHints{
 			IsBinary: isBinary,
 			FileName: filename,
