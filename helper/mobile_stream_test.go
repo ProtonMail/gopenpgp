@@ -8,10 +8,13 @@ import (
 	"testing"
 )
 
+func cloneTestData() (a, b []byte) {
+	a = []byte("Hello World!")
+	b = clone(a)
+	return a, b
+}
 func Test_clone(t *testing.T) {
-	a := []byte("Hello World!")
-	b := clone(a)
-	if !bytes.Equal(a, b) {
+	if a, b := cloneTestData(); !bytes.Equal(a, b) {
 		t.Fatalf("expected %x, got %x", a, b)
 	}
 }
