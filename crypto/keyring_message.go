@@ -119,7 +119,7 @@ func (keyRing *KeyRing) VerifyDetachedEncrypted(message *PlainMessage, encrypted
 
 // ------ INTERNAL FUNCTIONS -------
 
-// Core for encryption+signature functions.
+// Core for encryption+signature (non-streaming) functions.
 func asymmetricEncrypt(
 	plainMessage *PlainMessage,
 	publicKey, privateKey *KeyRing,
@@ -153,6 +153,7 @@ func asymmetricEncrypt(
 	return outBuf.Bytes(), nil
 }
 
+// Core for encryption+signature (all) functions.
 func asymmetricEncryptStream(
 	hints *openpgp.FileHints,
 	keyPacketWriter io.Writer,
@@ -181,7 +182,7 @@ func asymmetricEncryptStream(
 	return encryptWriter, nil
 }
 
-// Core for decryption+verification functions.
+// Core for decryption+verification (non streaming) functions.
 func asymmetricDecrypt(
 	encryptedIO io.Reader, privateKey *KeyRing, verifyKey *KeyRing, verifyTime int64,
 ) (message *PlainMessage, err error) {
@@ -212,7 +213,7 @@ func asymmetricDecrypt(
 	}, err
 }
 
-// Core for decryption+verification functions.
+// Core for decryption+verification (all) functions.
 func asymmetricDecryptStream(
 	encryptedIO io.Reader, privateKey *KeyRing, verifyKey *KeyRing,
 ) (messageDetails *openpgp.MessageDetails, err error) {
