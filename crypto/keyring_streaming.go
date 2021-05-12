@@ -81,7 +81,8 @@ func (res *EncryptSplitResult) GetKeyPacket() (keyPacket []byte, err error) {
 }
 
 // EncryptSplitStream is used to encrypt data as a stream.
-// It takes a writer for the encrypted data packet
+// It takes a writer for the Symmetrically Encrypted Data Packet
+// (https://datatracker.ietf.org/doc/html/rfc4880#section-5.7)
 // and returns a writer for the plaintext data and the key packet.
 // If signKeyRing is not nil, it is used to do an embedded signature.
 func (keyRing *KeyRing) EncryptSplitStream(
