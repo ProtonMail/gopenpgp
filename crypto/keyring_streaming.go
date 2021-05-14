@@ -130,7 +130,7 @@ type PlainMessageReader struct {
 	readAll       bool
 }
 
-// IsBinary returns whether the message is binary or text.
+// GetMetadata returns the metadata of the decrypted message.
 func (msg *PlainMessageReader) GetMetadata() *PlainMessageMetadata {
 	return &PlainMessageMetadata{
 		Filename: msg.details.LiteralData.FileName,
