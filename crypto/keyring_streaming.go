@@ -24,22 +24,32 @@ type WriteCloser interface {
 	Close() (err error)
 }
 
+type PlainMessageMetadata struct {
+	IsBinary bool
+	Filename string
+	ModTime  int64
+}
+
+func NewPlainMessageMetadata(isBinary bool, filename string, modTime int64) *PlainMessageMetadata {
+	return &PlainMessageMetadata{IsBinary: isBinary, Filename: filename, ModTime: modTime}
+}
+
 // EncryptStream is used to encrypt data as a Writer.
 // It takes a writer for the encrypted data and returns a writer for the plaintext data
 // If signKeyRing is not nil, it is used to do an embedded signature.
 func (keyRing *KeyRing) EncryptStream(
 	pgpMessageWriter Writer,
-	isBinary bool,
-	filename string,
-	modTime int64,
+	plainMessageMetadata *PlainMessageMetadata,
 	signKeyRing *KeyRing,
 ) (plainMessageWriter WriteCloser, err error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 
-	hints := &openpgp.FileHints{
-		IsBinary: isBinary,
-		FileName: filename,
-		ModTime:  time.Unix(modTime, 0),
+	hints := &openpgp.FileHints{}
+
+	if plainMessageMetadata != nil {
+		hints.FileName = plainMessageMetadata.Filename
+		hints.IsBinary = plainMessageMetadata.IsBinary
+		hints.ModTime = time.Unix(plainMessageMetadata.ModTime, 0)
 	}
 
 	plainMessageWriter, err = asymmetricEncryptStream(hints, pgpMessageWriter, pgpMessageWriter, keyRing, signKeyRing, config)
@@ -87,18 +97,19 @@ func (res *EncryptSplitResult) GetKeyPacket() (keyPacket []byte, err error) {
 // If signKeyRing is not nil, it is used to do an embedded signature.
 func (keyRing *KeyRing) EncryptSplitStream(
 	dataPacketWriter Writer,
-	isBinary bool,
-	filename string,
-	modTime int64,
+	plainMessageMetadata *PlainMessageMetadata,
 	signKeyRing *KeyRing,
 ) (*EncryptSplitResult, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 
-	hints := &openpgp.FileHints{
-		IsBinary: isBinary,
-		FileName: filename,
-		ModTime:  time.Unix(modTime, 0),
+	hints := &openpgp.FileHints{}
+
+	if plainMessageMetadata != nil {
+		hints.FileName = plainMessageMetadata.Filename
+		hints.IsBinary = plainMessageMetadata.IsBinary
+		hints.ModTime = time.Unix(plainMessageMetadata.ModTime, 0)
 	}
+
 	var keyPacketBuf bytes.Buffer
 	plainMessageWriter, err := asymmetricEncryptStream(hints, &keyPacketBuf, dataPacketWriter, keyRing, signKeyRing, config)
 	if err != nil {
@@ -120,18 +131,12 @@ type PlainMessageReader struct {
 }
 
 // IsBinary returns whether the message is binary or text.
-func (msg *PlainMessageReader) IsBinary() bool {
-	return msg.details.LiteralData.IsBinary
-}
-
-// GetFilename returns the filename of the message.
-func (msg *PlainMessageReader) GetFilename() string {
-	return msg.details.LiteralData.FileName
-}
-
-// GetModificationTime returns the modification time of the message.
-func (msg *PlainMessageReader) GetModificationTime() int64 {
-	return int64(msg.details.LiteralData.Time)
+func (msg *PlainMessageReader) GetMetadata() *PlainMessageMetadata {
+	return &PlainMessageMetadata{
+		Filename: msg.details.LiteralData.FileName,
+		IsBinary: msg.details.LiteralData.IsBinary,
+		ModTime:  int64(msg.details.LiteralData.Time),
+	}
 }
 
 // Read is used to access the message decrypted data.

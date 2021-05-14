@@ -27,9 +27,7 @@ func (w *signAndEncryptWriteCloser) Close() error {
 // If signKeyRing is not nil, it is used to do an embedded signature.
 func (sk *SessionKey) EncryptStream(
 	dataPacketWriter Writer,
-	isBinary bool,
-	filename string,
-	modTime int64,
+	plainMessageMetadata *PlainMessageMetadata,
 	signKeyRing *KeyRing,
 ) (plainMessageWriter WriteCloser, err error) {
 	dc, err := sk.GetCipherFunc()
@@ -49,10 +47,14 @@ func (sk *SessionKey) EncryptStream(
 		}
 	}
 
+	if plainMessageMetadata == nil {
+		plainMessageMetadata = &PlainMessageMetadata{}
+	}
+
 	encryptWriter, signWriter, err := encryptStreamWithSessionKey(
-		isBinary,
-		filename,
-		uint32(modTime),
+		plainMessageMetadata.IsBinary,
+		plainMessageMetadata.Filename,
+		uint32(plainMessageMetadata.ModTime),
 		dataPacketWriter,
 		sk,
 		signEntity,
