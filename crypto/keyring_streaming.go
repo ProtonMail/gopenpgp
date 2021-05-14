@@ -44,12 +44,19 @@ func (keyRing *KeyRing) EncryptStream(
 ) (plainMessageWriter WriteCloser, err error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 
-	hints := &openpgp.FileHints{}
+	if plainMessageMetadata == nil {
+		// Use sensible default metadata
+		plainMessageMetadata = &PlainMessageMetadata{
+			IsBinary: true,
+			Filename: "",
+			ModTime:  GetUnixTime(),
+		}
+	}
 
-	if plainMessageMetadata != nil {
-		hints.FileName = plainMessageMetadata.Filename
-		hints.IsBinary = plainMessageMetadata.IsBinary
-		hints.ModTime = time.Unix(plainMessageMetadata.ModTime, 0)
+	hints := &openpgp.FileHints{
+		FileName: plainMessageMetadata.Filename,
+		IsBinary: plainMessageMetadata.IsBinary,
+		ModTime:  time.Unix(plainMessageMetadata.ModTime, 0),
 	}
 
 	plainMessageWriter, err = asymmetricEncryptStream(hints, pgpMessageWriter, pgpMessageWriter, keyRing, signKeyRing, config)
@@ -102,12 +109,19 @@ func (keyRing *KeyRing) EncryptSplitStream(
 ) (*EncryptSplitResult, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 
-	hints := &openpgp.FileHints{}
+	if plainMessageMetadata == nil {
+		// Use sensible default metadata
+		plainMessageMetadata = &PlainMessageMetadata{
+			IsBinary: true,
+			Filename: "",
+			ModTime:  GetUnixTime(),
+		}
+	}
 
-	if plainMessageMetadata != nil {
-		hints.FileName = plainMessageMetadata.Filename
-		hints.IsBinary = plainMessageMetadata.IsBinary
-		hints.ModTime = time.Unix(plainMessageMetadata.ModTime, 0)
+	hints := &openpgp.FileHints{
+		FileName: plainMessageMetadata.Filename,
+		IsBinary: plainMessageMetadata.IsBinary,
+		ModTime:  time.Unix(plainMessageMetadata.ModTime, 0),
 	}
 
 	var keyPacketBuf bytes.Buffer

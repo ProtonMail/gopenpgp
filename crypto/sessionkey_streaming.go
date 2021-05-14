@@ -48,7 +48,12 @@ func (sk *SessionKey) EncryptStream(
 	}
 
 	if plainMessageMetadata == nil {
-		plainMessageMetadata = &PlainMessageMetadata{}
+		// Use sensible default metadata
+		plainMessageMetadata = &PlainMessageMetadata{
+			IsBinary: true,
+			Filename: "",
+			ModTime:  GetUnixTime(),
+		}
 	}
 
 	encryptWriter, signWriter, err := encryptStreamWithSessionKey(
