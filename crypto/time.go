@@ -1,7 +1,6 @@
 package crypto
 
 import (
-	"errors"
 	"time"
 )
 
@@ -30,24 +29,13 @@ func GetTime() time.Time {
 
 // ----- INTERNAL FUNCTIONS -----
 
-// getNow returns current time.
+// getNow returns the latest server time.
 func getNow() time.Time {
-	extrapolate, err := getDiff()
-
-	if err != nil {
+	if pgp.latestServerTime == 0 {
 		return time.Now()
 	}
 
-	return time.Unix(pgp.latestServerTime+extrapolate, 0)
-}
-
-func getDiff() (int64, error) {
-	if pgp.latestServerTime > 0 && !pgp.latestClientTime.IsZero() {
-		// Since is monotonic, it uses a monotonic clock in this case instead of the wall clock
-		return int64(time.Since(pgp.latestClientTime).Seconds()), nil
-	}
-
-	return 0, errors.New("gopenpgp: latest server time not available")
+	return time.Unix(pgp.latestServerTime, 0)
 }
 
 // getTimeGenerator Returns a time generator function.
@@ -57,13 +45,11 @@ func getTimeGenerator() func() time.Time {
 
 // getNowKeyGenerationOffset returns the current time with the key generation offset.
 func getNowKeyGenerationOffset() time.Time {
-	extrapolate, err := getDiff()
-
-	if err != nil {
+	if pgp.latestServerTime == 0 {
 		return time.Unix(time.Now().Unix()+pgp.generationOffset, 0)
 	}
 
-	return time.Unix(pgp.latestServerTime+extrapolate+pgp.generationOffset, 0)
+	return time.Unix(pgp.latestServerTime+pgp.generationOffset, 0)
 }
 
 // getKeyGenerationTimeGenerator Returns a time generator function with the key generation offset.
