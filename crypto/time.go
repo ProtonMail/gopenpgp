@@ -8,7 +8,6 @@ import (
 func UpdateTime(newTime int64) {
 	if newTime > pgp.latestServerTime {
 		pgp.latestServerTime = newTime
-		pgp.latestClientTime = time.Now()
 	}
 }
 
