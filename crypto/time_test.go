@@ -10,12 +10,8 @@ import (
 func TestTime(t *testing.T) {
 	UpdateTime(1571072494)
 	time.Sleep(1 * time.Second)
-	diff, err := getDiff()
+	now := GetUnixTime()
 
-	if err != nil {
-		t.Fatal("Expected no error when calculating time difference, got:", err)
-	}
-	assert.Exactly(t, int64(1), diff)
-
+	assert.Exactly(t, int64(1571072494), now) // Use latest server time
 	UpdateTime(testTime)
 }
