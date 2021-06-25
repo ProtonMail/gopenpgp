@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"hash"
 	"io"
-	"runtime"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/pkg/errors"
@@ -24,7 +23,6 @@ func NewMobile2GoWriter(writer crypto.Writer) *Mobile2GoWriter {
 // Write writes the data in the provided buffer in the wrapped writer.
 // It clones the provided data to prevent errors with garbage collectors.
 func (w *Mobile2GoWriter) Write(b []byte) (n int, err error) {
-	defer runtime.GC()
 	bufferCopy := clone(b)
 	return w.writer.Write(bufferCopy)
 }
@@ -47,7 +45,6 @@ func NewMobile2GoWriterWithSHA256(writer crypto.Writer) *Mobile2GoWriterWithSHA2
 // It clones the provided data to prevent errors with garbage collectors.
 // It also computes the SHA256 hash of the data being written on the fly.
 func (w *Mobile2GoWriterWithSHA256) Write(b []byte) (n int, err error) {
-	defer runtime.GC()
 	bufferCopy := clone(b)
 	n, err = w.writer.Write(bufferCopy)
 	if err == nil {
@@ -109,7 +106,6 @@ func NewMobile2GoReader(reader MobileReader) *Mobile2GoReader {
 // Read reads data from the wrapped MobileReader and copies the read data in the provided buffer.
 // It also handles the conversion of EOF to an error.
 func (r *Mobile2GoReader) Read(b []byte) (n int, err error) {
-	defer runtime.GC()
 	result, err := r.reader.Read(len(b))
 	if err != nil {
 		return 0, errors.Wrap(err, "gopenpgp: couldn't read from mobile reader")
