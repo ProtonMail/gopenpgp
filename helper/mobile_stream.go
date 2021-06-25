@@ -127,30 +127,30 @@ func (r *Mobile2GoReader) Read(b []byte) (n int, err error) {
 // Go2MobileReader is used to wrap a native golang Reader in the golang runtime,
 // to be usable in the mobile app runtime (via gomobile) as a MobileReader.
 type Go2MobileReader struct {
+	isEOF  bool
 	reader crypto.Reader
 }
 
 // NewGo2MobileReader wraps a native golang Reader to be usable in the mobile app runtime (via gomobile).
+// It doesn't follow the standard golang Reader behavior, and returns n = -1 on EOF.
 func NewGo2MobileReader(reader crypto.Reader) *Go2MobileReader {
-	return &Go2MobileReader{reader}
+	return &Go2MobileReader{isEOF: false, reader: reader}
 }
 
-// Read reads at most <max> bytes from the wrapped Reader and returns the read data as a MobileReadResult.
-func (r *Go2MobileReader) Read(max int) (result *MobileReadResult, err error) {
-	defer runtime.GC()
-	b := make([]byte, max)
-	n, err := r.reader.Read(b)
-	result = &MobileReadResult{}
-	if err != nil {
-		if errors.Is(err, io.EOF) {
-			result.IsEOF = true
+// Read reads bytes into the provided buffer and returns the number of bytes read
+// It doesn't follow the standard golang Reader behavior, and returns n = -1 on EOF.
+func (r *Go2MobileReader) Read(b []byte) (n int, err error) {
+	if r.isEOF {
+		return -1, nil
+	}
+	n, err = r.reader.Read(b)
+	if errors.Is(err, io.EOF) {
+		if n == 0 {
+			return -1, nil
 		} else {
-			return nil, err
+			r.isEOF = true
+			return n, nil
 		}
 	}
-	result.N = n
-	if n > 0 {
-		result.Data = b[:n]
-	}
-	return result, nil
+	return
 }

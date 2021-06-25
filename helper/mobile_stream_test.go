@@ -91,16 +91,16 @@ func TestGo2MobileReader(t *testing.T) {
 	reader := NewGo2MobileReader(bytes.NewReader(testData))
 	var readData []byte
 	bufSize := 2
+	buffer := make([]byte, bufSize)
 	reachedEnd := false
 	for !reachedEnd {
-		res, err := reader.Read(bufSize)
+		n, err := reader.Read(buffer)
 		if err != nil {
 			t.Fatal("Expected no error while reading, got:", err)
 		}
-		n := res.N
-		reachedEnd = res.IsEOF
+		reachedEnd = n < 0
 		if n > 0 {
-			readData = append(readData, res.Data[:n]...)
+			readData = append(readData, buffer[:n]...)
 		}
 	}
 	if !bytes.Equal(testData, readData) {
