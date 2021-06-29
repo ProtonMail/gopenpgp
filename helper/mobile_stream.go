@@ -120,22 +120,22 @@ func (r *Mobile2GoReader) Read(b []byte) (n int, err error) {
 	return n, err
 }
 
-// Go2MobileReader is used to wrap a native golang Reader in the golang runtime,
-// to be usable in the mobile app runtime (via gomobile) as a MobileReader.
-type Go2MobileReader struct {
+// Go2AndroidReader is used to wrap a native golang Reader in the golang runtime,
+// to be usable in the android app runtime (via gomobile).
+type Go2AndroidReader struct {
 	isEOF  bool
 	reader crypto.Reader
 }
 
-// NewGo2MobileReader wraps a native golang Reader to be usable in the mobile app runtime (via gomobile).
+// NewGo2AndroidReader wraps a native golang Reader to be usable in the mobile app runtime (via gomobile).
 // It doesn't follow the standard golang Reader behavior, and returns n = -1 on EOF.
-func NewGo2MobileReader(reader crypto.Reader) *Go2MobileReader {
-	return &Go2MobileReader{isEOF: false, reader: reader}
+func NewGo2AndroidReader(reader crypto.Reader) *Go2AndroidReader {
+	return &Go2AndroidReader{isEOF: false, reader: reader}
 }
 
 // Read reads bytes into the provided buffer and returns the number of bytes read
 // It doesn't follow the standard golang Reader behavior, and returns n = -1 on EOF.
-func (r *Go2MobileReader) Read(b []byte) (n int, err error) {
+func (r *Go2AndroidReader) Read(b []byte) (n int, err error) {
 	if r.isEOF {
 		return -1, nil
 	}
@@ -149,4 +149,34 @@ func (r *Go2MobileReader) Read(b []byte) (n int, err error) {
 		}
 	}
 	return
+}
+
+// Go2IOSReader is used to wrap a native golang Reader in the golang runtime,
+// to be usable in the iOS app runtime (via gomobile) as a MobileReader.
+type Go2IOSReader struct {
+	reader crypto.Reader
+}
+
+// NewGo2IOSReader wraps a native golang Reader to be usable in the ios app runtime (via gomobile).
+func NewGo2IOSReader(reader crypto.Reader) *Go2IOSReader {
+	return &Go2IOSReader{reader}
+}
+
+// Read reads at most <max> bytes from the wrapped Reader and returns the read data as a MobileReadResult.
+func (r *Go2IOSReader) Read(max int) (result *MobileReadResult, err error) {
+	b := make([]byte, max)
+	n, err := r.reader.Read(b)
+	result = &MobileReadResult{}
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			result.IsEOF = true
+		} else {
+			return nil, err
+		}
+	}
+	result.N = n
+	if n > 0 {
+		result.Data = b[:n]
+	}
+	return result, nil
 }

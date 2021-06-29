@@ -86,9 +86,9 @@ func TestMobile2GoWriterWithSHA256(t *testing.T) {
 	}
 }
 
-func TestGo2MobileReader(t *testing.T) {
+func TestGo2AndroidReader(t *testing.T) {
 	testData := []byte("Hello World!")
-	reader := NewGo2MobileReader(bytes.NewReader(testData))
+	reader := NewGo2AndroidReader(bytes.NewReader(testData))
 	var readData []byte
 	bufSize := 2
 	buffer := make([]byte, bufSize)
@@ -101,6 +101,28 @@ func TestGo2MobileReader(t *testing.T) {
 		reachedEnd = n < 0
 		if n > 0 {
 			readData = append(readData, buffer[:n]...)
+		}
+	}
+	if !bytes.Equal(testData, readData) {
+		t.Fatalf("expected data to be %x, got %x", testData, readData)
+	}
+}
+
+func TestGo2IOSReader(t *testing.T) {
+	testData := []byte("Hello World!")
+	reader := NewGo2IOSReader(bytes.NewReader(testData))
+	var readData []byte
+	bufSize := 2
+	reachedEnd := false
+	for !reachedEnd {
+		res, err := reader.Read(bufSize)
+		if err != nil {
+			t.Fatal("Expected no error while reading, got:", err)
+		}
+		n := res.N
+		reachedEnd = res.IsEOF
+		if n > 0 {
+			readData = append(readData, res.Data[:n]...)
 		}
 	}
 	if !bytes.Equal(testData, readData) {
