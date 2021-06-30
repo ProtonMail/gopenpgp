@@ -4,6 +4,130 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+### Added
+- Streaming API:
+	- New structs:
+		- `PlainMessageMetadata`:
+			```go
+			type PlainMessageMetadata struct {
+				IsBinary bool
+				Filename string
+				ModTime  int64
+			}
+			```
+		- `PlainMessageReader` implements `Reader` and:
+			```go
+			func (msg *PlainMessageReader) GetMetadata() *PlainMessageMetadata
+			func (msg *PlainMessageReader) VerifySignature() (err error)
+			```
+		- `EncryptSplitResult` implements `WriteCloser` and:
+			```go
+			func (res *EncryptSplitResult) GetKeyPacket() (keyPacket []byte, err error)
+			```
+	- Keyring methods:
+		- Encrypt (and optionally sign) a message directly into a `Writer`:
+			```go
+			func (keyRing *KeyRing) EncryptStream(
+				pgpMessageWriter Writer,
+				plainMessageMetadata *PlainMessageMetadata,
+				signKeyRing *KeyRing,
+			) (plainMessageWriter WriteCloser, err error)
+			```
+		- Encrypt (and optionally sign) a message directly into a `Writer` (split keypacket and datapacket):
+			```go
+			func (keyRing *KeyRing) EncryptSplitStream(
+				dataPacketWriter Writer,
+				plainMessageMetadata *PlainMessageMetadata,
+				signKeyRing *KeyRing,
+			) (*EncryptSplitResult, error)
+			```
+	
+		- Decrypt (and optionally verify) a message from a `Reader`:
+			```go
+			func (keyRing *KeyRing) DecryptStream(
+				message Reader,
+				verifyKeyRing *KeyRing,
+				verifyTime int64,
+			) (plainMessage *PlainMessageReader, err error)
+			```
+		
+		- Decrypt (and optionally verify) a split message, getting the datapacket from a `Reader`:
+			```go
+			func (keyRing *KeyRing) DecryptSplitStream(
+				keypacket []byte,
+				dataPacketReader Reader,
+				verifyKeyRing *KeyRing, verifyTime int64,
+			) (plainMessage *PlainMessageReader, err error)
+			```
+		- Generate a detached signature from a `Reader`:
+			```go
+			func (keyRing *KeyRing) SignDetachedStream(message Reader) (*PGPSignature, error)
+			```
+		- Verify a detached signature for a `Reader`:
+			```go
+			func (keyRing *KeyRing) VerifyDetachedStream(
+				message Reader,
+				signature *PGPSignature,
+				verifyTime int64,
+			) error
+			```
+		- Generate an encrypted detached signature from a `Reader`:
+			```go
+			func (keyRing *KeyRing) SignDetachedEncryptedStream(
+				message Reader,
+				encryptionKeyRing *KeyRing,
+			) (encryptedSignature *PGPMessage, err error)
+			```
+		- Verify an encrypted detached signature for a `Reader`:
+			```go
+			func (keyRing *KeyRing) VerifyDetachedEncryptedStream(
+				message Reader,
+				encryptedSignature *PGPMessage,
+				decryptionKeyRing *KeyRing,
+				verifyTime int64,
+			) error
+			```
+	- SessionKey methods:
+		- Encrypt (and optionally sign) a message into a `Writer`:
+			```go
+			func (sk *SessionKey) EncryptStream(
+				dataPacketWriter Writer,
+				plainMessageMetadata *PlainMessageMetadata,
+				signKeyRing *KeyRing,
+			) (plainMessageWriter WriteCloser, err error)
+			```
+		- Decrypt (and optionally verify) a message from a `Reader`:
+			```go
+			func (sk *SessionKey) DecryptStream(
+				dataPacketReader Reader,
+				verifyKeyRing *KeyRing,
+				verifyTime int64,
+			) (plainMessage *PlainMessageReader, err error)
+			```
+	- Mobile apps helpers for `Reader` and `Writer`: 
+		Due to limitations of `gomobile`, mobile apps can't implement the `Reader` and `Writer` interfaces directly.
+		
+		- Implementing `Reader`: Apps should implement the interface:
+			```go
+			type MobileReader interface {
+				Read(max int) (result *MobileReadResult, err error)
+			}
+			type MobileReadResult struct {
+				N     int    // N, The number of bytes read
+				IsEOF bool   // IsEOF, If true, then the reader has reached the end of the data to read.
+				Data  []byte // Data, the data that has been read
+			}
+			```
+			And then wrap it with `Mobile2GoReader(mobileReader)` to turn it into a `Reader`.
+
+		- Implementing `Writer`:
+		
+			The apps should implement the `Writer` interface directly, but still need to wrap the writer with `Mobile2GoWriter(mobileWriter)`. We also provide the `Mobile2GoWriterWithSHA256` if you want to compute the SHA256 hash of the written data.
+
+		- Using a `Reader`: To use a reader returned by golang in mobile apps: you should wrap it with:
+			- Android: `Go2AndroidReader(reader)`, implements the `Reader` interface, but returns `n == -1` instead of `err == io.EOF`
+			- iOS: `Go2IOSReader(reader)`, implements `MobileReader`.
 ## [2.1.10] 2021-06-16
 ### Fixed
 - Removed time interpolation via monotonic clock that can cause signatures in the future
