@@ -23,7 +23,7 @@ func (w *signAndEncryptWriteCloser) Close() error {
 }
 
 // EncryptStream is used to encrypt data as a Writer.
-// It takes a writer for the encrypted data packet and returns a writer for the plaintext data
+// It takes a writer for the encrypted data packet and returns a writer for the plaintext data.
 // If signKeyRing is not nil, it is used to do an embedded signature.
 func (sk *SessionKey) EncryptStream(
 	dataPacketWriter Writer,
