@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Streaming API:
 	- New structs:
-		- `PlainMessageMetadata`:
+		- `PlainMessageMetadata`: holds the metadata of a plain PGP message
 			```go
 			type PlainMessageMetadata struct {
 				IsBinary bool
@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 				verifyTime int64,
 			) (plainMessage *PlainMessageReader, err error)
 			```
-		
+			N.B.: to verify the signature, you will need to call `plainMessage.VerifySignature()` after all the data has been read from `plainMessage`.
 		- Decrypt (and optionally verify) a split message, getting the datapacket from a `Reader`:
 			```go
 			func (keyRing *KeyRing) DecryptSplitStream(
@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 				verifyKeyRing *KeyRing, verifyTime int64,
 			) (plainMessage *PlainMessageReader, err error)
 			```
+			N.B.: to verify the signature, you will need to call `plainMessage.VerifySignature()` after all the data has been read from `plainMessage`.
 		- Generate a detached signature from a `Reader`:
 			```go
 			func (keyRing *KeyRing) SignDetachedStream(message Reader) (*PGPSignature, error)
@@ -105,6 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 				verifyTime int64,
 			) (plainMessage *PlainMessageReader, err error)
 			```
+			N.B.: to verify the signature, you will need to call `plainMessage.VerifySignature()` after all the data has been read from `plainMessage`.
 	- Mobile apps helpers for `Reader` and `Writer`: 
 		Due to limitations of `gomobile`, mobile apps can't implement the `Reader` and `Writer` interfaces directly.
 		
@@ -128,6 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 		- Using a `Reader`: To use a reader returned by golang in mobile apps: you should wrap it with:
 			- Android: `Go2AndroidReader(reader)`, implements the `Reader` interface, but returns `n == -1` instead of `err == io.EOF`
 			- iOS: `Go2IOSReader(reader)`, implements `MobileReader`.
+		- Using a `Writer`: you can use a writer returned by golang directly.
 ## [2.1.10] 2021-06-16
 ### Fixed
 - Removed time interpolation via monotonic clock that can cause signatures in the future
