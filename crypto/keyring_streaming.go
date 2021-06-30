@@ -35,7 +35,7 @@ func NewPlainMessageMetadata(isBinary bool, filename string, modTime int64) *Pla
 }
 
 // EncryptStream is used to encrypt data as a Writer.
-// It takes a writer for the encrypted data and returns a writer for the plaintext data
+// It takes a writer for the encrypted data and returns a WriteCloser for the plaintext data
 // If signKeyRing is not nil, it is used to do an embedded signature.
 func (keyRing *KeyRing) EncryptStream(
 	pgpMessageWriter Writer,
