@@ -103,7 +103,6 @@ func TestKeyRing_EncryptDecryptStream(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected an error while verifying the signature with no keyring, got nil")
 	}
-
 }
 
 func TestKeyRing_EncryptStreamCompatible(t *testing.T) {
