@@ -169,11 +169,13 @@ func (msg *PlainMessageReader) Read(b []byte) (n int, err error) {
 // or if the message hasn't been read entirely.
 func (msg *PlainMessageReader) VerifySignature() (err error) {
 	if !msg.readAll {
-		return errors.New("gopenpg: can't verify the signature until the message reader has been read entirely")
+		return errors.New("gopenpgp: can't verify the signature until the message reader has been read entirely")
 	}
 	if msg.verifyKeyRing != nil {
 		processSignatureExpiration(msg.details, msg.verifyTime)
 		err = verifyDetailsSignature(msg.details, msg.verifyKeyRing)
+	} else {
+		err = errors.New("gopenpgp: no verify keyring was provided before decryption")
 	}
 	return
 }
