@@ -63,6 +63,7 @@ type ClearTextMessage struct {
 
 // NewPlainMessage generates a new binary PlainMessage ready for encryption,
 // signature, or verification from the unencrypted binary data.
+// This will encrypt the message with the binary flag and preserve the file as is.
 func NewPlainMessage(data []byte) *PlainMessage {
 	return &PlainMessage{
 		Data:     clone(data),
@@ -74,6 +75,7 @@ func NewPlainMessage(data []byte) *PlainMessage {
 
 // NewPlainMessageFromFile generates a new binary PlainMessage ready for encryption,
 // signature, or verification from the unencrypted binary data.
+// This will encrypt the message with the binary flag and preserve the file as is.
 // It assigns a filename and a modification time.
 func NewPlainMessageFromFile(data []byte, filename string, time uint32) *PlainMessage {
 	return &PlainMessage{
@@ -86,6 +88,9 @@ func NewPlainMessageFromFile(data []byte, filename string, time uint32) *PlainMe
 
 // NewPlainMessageFromString generates a new text PlainMessage,
 // ready for encryption, signature, or verification from an unencrypted string.
+// This will encrypt the message with the text flag, canonicalize the line endings
+// (i.e. set all of them to \r\n) and strip the trailing spaces for each line.
+// This allows seamless conversion to clear text signed messages (see RFC 4880 5.2.1 and 7.1).
 func NewPlainMessageFromString(text string) *PlainMessage {
 	return &PlainMessage{
 		Data:     []byte(internal.CanonicalizeAndTrim(text)),
