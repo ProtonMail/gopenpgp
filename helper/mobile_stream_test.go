@@ -5,7 +5,11 @@ import (
 	"crypto/sha256"
 	"errors"
 	"io"
+	"io/ioutil"
 	"testing"
+
+	"github.com/ProtonMail/gopenpgp/v2/constants"
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
 )
 
 func cloneTestData() (a, b []byte) {
@@ -178,5 +182,165 @@ func TestMobile2GoReader(t *testing.T) {
 	readerErr := NewMobile2GoReader(&testMobileReader{bytes.NewReader(testData), true})
 	if _, err := readerErr.Read(readBuf); err == nil {
 		t.Fatal("expected an error while reading, got nil")
+	}
+}
+
+func setUpTestKeyRing() (*crypto.KeyRing, *crypto.KeyRing, error) {
+	testKey, err := crypto.GenerateKey("test", "test@protonmail.com", "x25519", 256)
+	if err != nil {
+		return nil, nil, err
+	}
+	testPublicKey, err := testKey.ToPublic()
+	if err != nil {
+		return nil, nil, err
+	}
+	testPrivateKeyRing, err := crypto.NewKeyRing(testKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	testPublicKeyRing, err := crypto.NewKeyRing(testPublicKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	return testPublicKeyRing, testPrivateKeyRing, nil
+}
+
+func TestExplicitVerifyAllGoesWell(t *testing.T) {
+	data := []byte("hello")
+	pubKR, privKR, err := setUpTestKeyRing()
+	if err != nil {
+		t.Fatalf("Got an error while loading test key: %v", err)
+	}
+	defer privKR.ClearPrivateParams()
+	ciphertext, err := pubKR.Encrypt(crypto.NewPlainMessage(data), privKR)
+	if err != nil {
+		t.Fatalf("Got an error while encrypting test data: %v", err)
+	}
+	reader, err := privKR.DecryptStream(
+		bytes.NewReader(ciphertext.Data),
+		pubKR,
+		crypto.GetUnixTime(),
+	)
+	if err != nil {
+		t.Fatalf("Got an error while decrypting stream data: %v", err)
+	}
+	_, err = ioutil.ReadAll(reader)
+	if err != nil {
+		t.Fatalf("Got an error while reading decrypted data: %v", err)
+	}
+	sigErr, err := VerifySignatureExplicit(reader)
+	if sigErr != nil {
+		t.Fatalf("Got a signature error while verifying embedded sig: %v", sigErr)
+	}
+	if err != nil {
+		t.Fatalf("Got an error while verifying embedded sig: %v", err)
+	}
+}
+
+func TestExplicitVerifyTooEarly(t *testing.T) {
+	data := []byte("hello")
+	pubKR, privKR, err := setUpTestKeyRing()
+	if err != nil {
+		t.Fatalf("Got an error while loading test key: %v", err)
+	}
+	defer privKR.ClearPrivateParams()
+	ciphertext, err := pubKR.Encrypt(crypto.NewPlainMessage(data), privKR)
+	if err != nil {
+		t.Fatalf("Got an error while encrypting test data: %v", err)
+	}
+	reader, err := privKR.DecryptStream(
+		bytes.NewReader(ciphertext.Data),
+		pubKR,
+		crypto.GetUnixTime(),
+	)
+	if err != nil {
+		t.Fatalf("Got an error while decrypting stream data: %v", err)
+	}
+	buff := make([]byte, 1)
+	_, err = reader.Read(buff)
+	if err != nil {
+		t.Fatalf("Got an error while reading decrypted data: %v", err)
+	}
+	sigErr, err := VerifySignatureExplicit(reader)
+	if sigErr != nil {
+		t.Fatalf("Got a signature error while verifying embedded sig: %v", sigErr)
+	}
+	if err == nil {
+		t.Fatalf("Got no error while verifying a reader before reading it entirely")
+	}
+}
+
+func TestExplicitVerifyNoSig(t *testing.T) {
+	data := []byte("hello")
+	pubKR, privKR, err := setUpTestKeyRing()
+	if err != nil {
+		t.Fatalf("Got an error while loading test key: %v", err)
+	}
+	defer privKR.ClearPrivateParams()
+	ciphertext, err := pubKR.Encrypt(crypto.NewPlainMessage(data), nil)
+	if err != nil {
+		t.Fatalf("Got an error while encrypting test data: %v", err)
+	}
+	reader, err := privKR.DecryptStream(
+		bytes.NewReader(ciphertext.Data),
+		pubKR,
+		crypto.GetUnixTime(),
+	)
+	if err != nil {
+		t.Fatalf("Got an error while decrypting stream data: %v", err)
+	}
+	_, err = ioutil.ReadAll(reader)
+	if err != nil {
+		t.Fatalf("Got an error while reading decrypted data: %v", err)
+	}
+	sigErr, err := VerifySignatureExplicit(reader)
+	if sigErr == nil {
+		t.Fatal("Got no signature error while verifying unsigned data")
+	}
+	if sigErr.Status != constants.SIGNATURE_NOT_SIGNED {
+		t.Fatal("Signature error status was not SIGNATURE_NOT_SIGNED")
+	}
+	if err != nil {
+		t.Fatalf("Got an error while verifying embedded sig: %v", err)
+	}
+}
+
+func TestExplicitVerifyWrongVerifier(t *testing.T) {
+	data := []byte("hello")
+	pubKR, privKR, err := setUpTestKeyRing()
+	if err != nil {
+		t.Fatalf("Got an error while loading test key: %v", err)
+	}
+	defer privKR.ClearPrivateParams()
+	_, privKR2, err := setUpTestKeyRing()
+	if err != nil {
+		t.Fatalf("Got an error while loading test key: %v", err)
+	}
+	defer privKR2.ClearPrivateParams()
+	ciphertext, err := pubKR.Encrypt(crypto.NewPlainMessage(data), privKR2)
+	if err != nil {
+		t.Fatalf("Got an error while encrypting test data: %v", err)
+	}
+	reader, err := privKR.DecryptStream(
+		bytes.NewReader(ciphertext.Data),
+		pubKR,
+		crypto.GetUnixTime(),
+	)
+	if err != nil {
+		t.Fatalf("Got an error while decrypting stream data: %v", err)
+	}
+	_, err = ioutil.ReadAll(reader)
+	if err != nil {
+		t.Fatalf("Got an error while reading decrypted data: %v", err)
+	}
+	sigErr, err := VerifySignatureExplicit(reader)
+	if sigErr == nil {
+		t.Fatal("Got no signature error while verifying with wrong key")
+	}
+	if sigErr.Status != constants.SIGNATURE_NO_VERIFIER {
+		t.Fatal("Signature error status was not SIGNATURE_NO_VERIFIER")
+	}
+	if err != nil {
+		t.Fatalf("Got an error while verifying embedded sig: %v", err)
 	}
 }
