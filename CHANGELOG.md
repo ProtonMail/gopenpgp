@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Changed the returned `SignatureVerificationError.Status` when trying to verify a message with no embedded signature. It used to return `constants.SIGNATURE_NO_VERIFIER` and now returns `constants.SIGNATURE_NOT_SIGNED`.
+This change impacts : 
+	- `func (sk *SessionKey) DecryptAndVerify(...)`
+	- `func (msg *PlainMessageReader) VerifySignature(...)`
+	- `func (keyRing *KeyRing) Decrypt(...)`
+
 ### Added 
 - Helper to access the SignatureVerificationError explicitly when decrypting streams  in mobile apps: 
 	```go
