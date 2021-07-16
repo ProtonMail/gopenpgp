@@ -10,6 +10,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
+	"golang.org/x/crypto/openpgp/armor"
 )
 
 // Encrypt encrypts a PlainMessage, outputs a PGPMessage.
@@ -57,6 +58,33 @@ func (keyRing *KeyRing) Decrypt(
 	message *PGPMessage, verifyKey *KeyRing, verifyTime int64,
 ) (*PlainMessage, error) {
 	return asymmetricDecrypt(message.NewReader(), keyRing, verifyKey, verifyTime)
+}
+
+// DecryptUnarmoredStreamUnverified decrypts encrypted binary stream using pgp keys, returning a decrypted stream
+// * message    : The encrypted binary input as a io.Reader
+// Any signature is ignored
+func (keyRing *KeyRing) DecryptUnarmoredStreamUnverified(encryptedIO io.Reader) (message io.Reader, err error) {
+	privKeyEntries := keyRing.entities
+
+	config := &packet.Config{Time: getTimeGenerator()}
+
+	messageDetails, err := openpgp.ReadMessage(encryptedIO, privKeyEntries, nil, config)
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
+	}
+
+	return messageDetails.UnverifiedBody, nil
+}
+
+// DecryptArmoredStreamUnverified decrypts encrypted armored stream using pgp keys, returning a decrypted stream
+// * message    : The encrypted armored input as a io.Reader
+// Any signature is ignored
+func (keyRing *KeyRing) DecryptArmoredStreamUnverified(encryptedIO io.Reader) (io.Reader, error) {
+	unarmored, err := armor.Decode(encryptedIO)
+	if err != nil {
+		return nil, err
+	}
+	return keyRing.DecryptUnarmoredStreamUnverified(unarmored.Body)
 }
 
 // SignDetached generates and returns a PGPSignature for a given PlainMessage.
