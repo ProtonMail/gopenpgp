@@ -99,8 +99,10 @@ func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 
 // verifyDetailsSignature verifies signature from message details.
 func verifyDetailsSignature(md *openpgp.MessageDetails, verifierKey *KeyRing) error {
-	if !md.IsSigned ||
-		md.SignedBy == nil ||
+	if !md.IsSigned {
+		return newSignatureNotSigned()
+	}
+	if md.SignedBy == nil ||
 		len(verifierKey.entities) == 0 ||
 		len(verifierKey.entities.KeysById(md.SignedByKeyId)) == 0 {
 		return newSignatureNoVerifier()
