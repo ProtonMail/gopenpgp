@@ -156,7 +156,7 @@ func (key *Key) Unlock(passphrase []byte) (*Key, error) {
 	}
 
 	for _, sub := range unlockedKey.entity.Subkeys {
-		if sub.PrivateKey != nil {
+		if sub.PrivateKey != nil && !sub.PrivateKey.Dummy() {
 			if err := sub.PrivateKey.Decrypt(passphrase); err != nil {
 				return nil, errors.Wrap(err, "gopenpgp: error in unlocking sub key")
 			}
@@ -280,13 +280,19 @@ func (key *Key) IsLocked() (bool, error) {
 		return true, errors.New("gopenpgp: a public key cannot be locked")
 	}
 
+	encryptedKeys := 0
+
 	for _, sub := range key.entity.Subkeys {
-		if sub.PrivateKey != nil && !sub.PrivateKey.Encrypted {
-			return false, nil
+		if sub.PrivateKey != nil && !sub.PrivateKey.Dummy() && sub.PrivateKey.Encrypted {
+			encryptedKeys++
 		}
 	}
 
-	return key.entity.PrivateKey.Encrypted, nil
+	if key.entity.PrivateKey.Encrypted {
+		encryptedKeys++
+	}
+
+	return encryptedKeys > 0, nil
 }
 
 // IsUnlocked checks if a private key is unlocked.
@@ -295,13 +301,19 @@ func (key *Key) IsUnlocked() (bool, error) {
 		return true, errors.New("gopenpgp: a public key cannot be unlocked")
 	}
 
+	encryptedKeys := 0
+
 	for _, sub := range key.entity.Subkeys {
-		if sub.PrivateKey != nil && sub.PrivateKey.Encrypted {
-			return false, nil
+		if sub.PrivateKey != nil && !sub.PrivateKey.Dummy() && sub.PrivateKey.Encrypted {
+			encryptedKeys++
 		}
 	}
 
-	return !key.entity.PrivateKey.Encrypted, nil
+	if key.entity.PrivateKey.Encrypted {
+		encryptedKeys++
+	}
+
+	return encryptedKeys == 0, nil
 }
 
 // Check verifies if the public keys match the private key parameters by
