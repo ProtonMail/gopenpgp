@@ -415,3 +415,14 @@ func TestKeyCapabilities(t *testing.T) {
 	assert.True(t, publicKey.CanVerify())
 	assert.True(t, publicKey.CanEncrypt())
 }
+
+func TestUnlockMismatchingKey(t *testing.T) {
+	privateKey, err := NewKeyFromArmored(readTestFile("key_mismatching_eddsa_key", false))
+	if err != nil {
+		t.Fatal("Expected no error while unarmoring private key, got:", err)
+	}
+
+	if _, err = privateKey.Unlock([]byte("123")); err == nil {
+		t.Fatalf("Mismatching private key was not detected")
+	}
+}
