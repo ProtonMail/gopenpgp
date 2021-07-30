@@ -371,3 +371,6 @@ newPGPSplitMessage, err := pgpMessage.SeparateKeyAndData()
 // Key Packet is in newPGPSplitMessage.GetBinaryKeyPacket()
 // Data Packet is in newPGPSplitMessage.GetBinaryDataPacket()
 ```
+
+### Checking keys
+Keys are now checked on import and the explicit check via `Key#Check()` is deprecated and no longer necessary.
