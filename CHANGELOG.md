@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Dummy keys now show the correct locked/unlocked status
 
+### Changed
+- Improved documentation for differences between text and binary messages
+
 ### Deprecated
 - `(key *Key) Check() (bool, error)` is now deprecated, all keys are now checked upon import from x/crypto
 
