@@ -59,6 +59,13 @@ func NewKeyFromArmored(armored string) (key *Key, err error) {
 	return NewKeyFromArmoredReader(strings.NewReader(armored))
 }
 
+func NewKeyFromEntity(entity *openpgp.Entity) (*Key, error) {
+	if entity == nil {
+		return nil, errors.New("gopenpgp: nil entity provided")
+	}
+	return &Key{entity: entity}, nil
+}
+
 // GenerateRSAKeyWithPrimes generates a RSA key using the given primes.
 func GenerateRSAKeyWithPrimes(
 	name, email string,
@@ -466,7 +473,7 @@ func generateKey(
 		return nil, errors.New("gopenpgp: error in generating private key")
 	}
 
-	return &Key{newEntity}, nil
+	return NewKeyFromEntity(newEntity)
 }
 
 // keyIDToHex casts a keyID to hex with the correct padding.
