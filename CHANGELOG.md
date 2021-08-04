@@ -5,17 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-### Security
-- All keys are now checked on parsing from the underlying library
-
-### Fixed
-- Dummy keys now show the correct locked/unlocked status
+### Added
+- `NewKeyFromEntity` to create a key from an openpgp entity
 
 ### Changed
 - Improved documentation for differences between text and binary messages
 
 ### Deprecated
 - `(key *Key) Check() (bool, error)` is now deprecated, all keys are now checked upon import from x/crypto
+
+### Fixed
+- Dummy keys now show the correct locked/unlocked status
+
+### Security
+- All keys are now checked on parsing from the underlying library
 
 ## [2.2.1] 2021-07-27
 ### Changed
