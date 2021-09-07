@@ -23,7 +23,14 @@ func DecryptExplicitVerify(
 	verifyTime int64,
 ) (*ExplicitVerifyMessage, error) {
 	message, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, verifyTime)
-	return newExplicitVerifyMessage(message, err)
+	signatureVerificationError, err := extractExplicitSignatureVerificationError(err)
+	if err != nil {
+		return nil, err
+	}
+	return &ExplicitVerifyMessage{
+		Message:                    message,
+		SignatureVerificationError: signatureVerificationError,
+	}, nil
 }
 
 // DecryptSessionKeyExplicitVerify decrypts a PGP data packet given a session key
@@ -36,30 +43,26 @@ func DecryptSessionKeyExplicitVerify(
 	verifyTime int64,
 ) (*ExplicitVerifyMessage, error) {
 	message, err := sessionKey.DecryptAndVerify(dataPacket, publicKeyRing, verifyTime)
-	return newExplicitVerifyMessage(message, err)
+	signatureVerificationError, err := extractExplicitSignatureVerificationError(err)
+	if err != nil {
+		return nil, err
+	}
+	return &ExplicitVerifyMessage{
+		Message:                    message,
+		SignatureVerificationError: signatureVerificationError,
+	}, nil
 }
 
-func newExplicitVerifyMessage(message *crypto.PlainMessage, err error) (*ExplicitVerifyMessage, error) {
-	var explicitVerify *ExplicitVerifyMessage
+func extractExplicitSignatureVerificationError(err error) (*crypto.SignatureVerificationError, error) {
 	if err != nil {
 		castedErr := &crypto.SignatureVerificationError{}
 		isType := goerrors.As(err, castedErr)
 		if !isType {
 			return nil, errors.Wrap(err, "gopenpgp: unable to decrypt message")
 		}
-
-		explicitVerify = &ExplicitVerifyMessage{
-			Message:                    message,
-			SignatureVerificationError: castedErr,
-		}
-	} else {
-		explicitVerify = &ExplicitVerifyMessage{
-			Message:                    message,
-			SignatureVerificationError: nil,
-		}
+		return castedErr, nil
 	}
-
-	return explicitVerify, nil
+	return nil, nil
 }
 
 // DecryptAttachment takes a keypacket and datpacket
@@ -113,7 +116,6 @@ func EncryptSignArmoredDetachedMobile(
 	if err != nil {
 		return nil, err
 	}
-
 	return &EncryptSignArmoredDetachedMobileResult{
 		CiphertextArmored:         ciphertext,
 		EncryptedSignatureArmored: encryptedSignature,
@@ -179,4 +181,29 @@ func (msg *MIMEMessageMobile) GetAttachments(index int) (*crypto.Attachment, err
 		return nil, errors.New("gopenpgp: invalid MIME attachment index")
 	}
 	return msg.message.Attachments[index], nil
+}
+
+type ExplicitVerifyMIMEMessage struct {
+	MIMEMessage                *crypto.MIMEMessage
+	SignatureVerificationError *crypto.SignatureVerificationError
+}
+
+// DecryptMIMEMessageExplicitVerify decrypts a PGP/MIME message given a private keyring
+// and a public keyring to verify the embedded signature.
+// Returns the decrypted MIME message with an explicit signature status
+// and an error in case of non signature failures.
+func DecryptMIMEMessageExplicitVerify(
+	pgpMessage *crypto.PGPMessage,
+	privateKeyRing, publicKeyRing *crypto.KeyRing,
+	verifyTime int64,
+) (*ExplicitVerifyMIMEMessage, error) {
+	message, err := privateKeyRing.DecryptMIMEMessageSynchronously(pgpMessage, publicKeyRing, verifyTime)
+	signatureVerificationError, err := extractExplicitSignatureVerificationError(err)
+	if err != nil {
+		return nil, err
+	}
+	return &ExplicitVerifyMIMEMessage{
+		MIMEMessage:                message,
+		SignatureVerificationError: signatureVerificationError,
+	}, nil
 }
