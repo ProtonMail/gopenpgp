@@ -147,3 +147,36 @@ func EncryptSignBinaryDetachedMobile(
 func FreeOSMemory() {
 	debug.FreeOSMemory()
 }
+
+type MIMEMessageMobile struct {
+	message *crypto.MIMEMessage
+}
+
+func NewMIMEMessageMobile(message *crypto.MIMEMessage) (*MIMEMessageMobile, error) {
+	if message == nil {
+		return nil, errors.New("gopenpgp: can't wrap a nil MIMEMessage")
+	}
+	return &MIMEMessageMobile{message: message}, nil
+}
+
+func (msg *MIMEMessageMobile) GetHeadersCount() int {
+	return len(msg.message.Headers)
+}
+
+func (msg *MIMEMessageMobile) GetHeader(index int) (string, error) {
+	if index < 0 || index >= len(msg.message.Headers) {
+		return "", errors.New("gopenpgp: invalid MIME header index")
+	}
+	return msg.message.Headers[index], nil
+}
+
+func (msg *MIMEMessageMobile) GetAttachmentsCount() int {
+	return len(msg.message.Attachments)
+}
+
+func (msg *MIMEMessageMobile) GetAttachments(index int) (*crypto.Attachment, error) {
+	if index < 0 || index >= len(msg.message.Attachments) {
+		return nil, errors.New("gopenpgp: invalid MIME attachment index")
+	}
+	return msg.message.Attachments[index], nil
+}

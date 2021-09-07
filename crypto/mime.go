@@ -46,6 +46,44 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 	callbacks.OnEncryptedHeaders("")
 }
 
+type MIMEMessage struct {
+	Headers      []string
+	BodyMIMEType string
+	BodyContent  string
+	Attachments  []*Attachment
+}
+
+type Attachment struct {
+	Header  string
+	Content []byte
+}
+
+// DecryptMIMEMessageSynchronously decrypts a MIME message.
+func (keyRing *KeyRing) DecryptMIMEMessageSynchronously(
+	message *PGPMessage, verifyKey *KeyRing, verifyTime int64,
+) (*MIMEMessage, error) {
+	decryptedMessage, err := keyRing.Decrypt(message, verifyKey, verifyTime)
+	if err != nil {
+		return nil, err
+	}
+	var mimeMessage MIMEMessage
+	body, attachments, attachmentHeaders, err := parseMIME(string(decryptedMessage.GetBinary()), verifyKey)
+	if err != nil {
+		return nil, err
+	}
+	bodyContent, bodyMimeType := body.GetBody()
+	mimeMessage.BodyContent = bodyContent
+	mimeMessage.BodyMIMEType = bodyMimeType
+	for i := 0; i < len(attachments); i++ {
+		mimeMessage.Attachments = append(mimeMessage.Attachments, &Attachment{
+			Header:  attachmentHeaders[i],
+			Content: []byte(attachments[i]),
+		})
+	}
+	mimeMessage.Headers = []string{""} // TODO, parse headers
+	return &mimeMessage, nil
+}
+
 // ----- INTERNAL FUNCTIONS -----
 
 func parseMIME(
