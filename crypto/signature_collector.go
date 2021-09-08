@@ -19,7 +19,7 @@ type SignatureCollector struct {
 	keyring   openpgp.KeyRing
 	target    gomime.VisitAcceptor
 	signature string
-	verified  error
+	verified  *SignatureVerificationError
 }
 
 func newSignatureCollector(
@@ -55,7 +55,8 @@ func (sc *SignatureCollector) Accept(
 		hasPlainChild = (mediaType == "text/plain")
 	}
 	if len(multiparts) != 2 {
-		sc.verified = newSignatureNotSigned()
+		sigErr := newSignatureNotSigned()
+		sc.verified = &sigErr
 		// Invalid multipart/signed format just pass along
 		if _, err = ioutil.ReadAll(rawBody); err != nil {
 			return errors.Wrap(err, "gopenpgp: error in reading raw message body")
@@ -100,12 +101,14 @@ func (sc *SignatureCollector) Accept(
 		_, err = openpgp.CheckArmoredDetachedSignature(sc.keyring, rawBody, bytes.NewReader(buffer), sc.config)
 
 		if err != nil {
-			sc.verified = newSignatureFailed()
+			sigErr := newSignatureFailed()
+			sc.verified = &sigErr
 		} else {
 			sc.verified = nil
 		}
 	} else {
-		sc.verified = newSignatureNoVerifier()
+		sigErr := newSignatureNoVerifier()
+		sc.verified = &sigErr
 	}
 
 	return nil

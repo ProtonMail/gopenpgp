@@ -33,9 +33,13 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 		return
 	}
 
-	body, attachments, attachmentHeaders, err := parseMIME(string(decryptedMessage.GetBinary()), verifyKey)
+	body, attachments, attachmentHeaders, sigErr, err := parseMIME(string(decryptedMessage.GetBinary()), verifyKey)
 	if err != nil {
 		callbacks.OnError(err)
+		return
+	}
+	if sigErr != nil {
+		callbacks.OnError(err) // This is wrong and should use OnVerified instead
 		return
 	}
 	bodyContent, bodyMimeType := body.GetBody()
@@ -47,10 +51,11 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 }
 
 type MIMEMessage struct {
-	Headers      []string
-	BodyMIMEType string
-	BodyContent  string
-	Attachments  []*Attachment
+	Headers        []string
+	BodyMIMEType   string
+	BodyContent    string
+	Attachments    []*Attachment
+	SignatureError *SignatureVerificationError
 }
 
 type Attachment struct {
@@ -63,13 +68,21 @@ func (keyRing *KeyRing) DecryptMIMEMessageSynchronously(
 	message *PGPMessage, verifyKey *KeyRing, verifyTime int64,
 ) (*MIMEMessage, error) {
 	decryptedMessage, err := keyRing.Decrypt(message, verifyKey, verifyTime)
+	var mimeMessage MIMEMessage
+	if err != nil {
+		castedErr := &SignatureVerificationError{}
+		isType := errors.As(err, castedErr)
+		if !isType {
+			return nil, err
+		}
+		mimeMessage.SignatureError = castedErr
+	}
+	body, attachments, attachmentHeaders, sigErr, err := parseMIME(string(decryptedMessage.GetBinary()), verifyKey)
 	if err != nil {
 		return nil, err
 	}
-	var mimeMessage MIMEMessage
-	body, attachments, attachmentHeaders, err := parseMIME(string(decryptedMessage.GetBinary()), verifyKey)
-	if err != nil {
-		return nil, err
+	if sigErr != nil && mimeMessage.SignatureError == nil {
+		mimeMessage.SignatureError = sigErr
 	}
 	bodyContent, bodyMimeType := body.GetBody()
 	mimeMessage.BodyContent = bodyContent
@@ -88,17 +101,17 @@ func (keyRing *KeyRing) DecryptMIMEMessageSynchronously(
 
 func parseMIME(
 	mimeBody string, verifierKey *KeyRing,
-) (*gomime.BodyCollector, []string, []string, error) {
+) (*gomime.BodyCollector, []string, []string, *SignatureVerificationError, error) {
 	mm, err := mail.ReadMessage(strings.NewReader(mimeBody))
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "gopenpgp: error in reading message")
+		return nil, nil, nil, nil, errors.Wrap(err, "gopenpgp: error in reading message")
 	}
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 
 	h := textproto.MIMEHeader(mm.Header)
 	mmBodyData, err := ioutil.ReadAll(mm.Body)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "gopenpgp: error in reading message body data")
+		return nil, nil, nil, nil, errors.Wrap(err, "gopenpgp: error in reading message body data")
 	}
 
 	printAccepter := gomime.NewMIMEPrinter()
@@ -114,12 +127,14 @@ func parseMIME(
 	signatureCollector := newSignatureCollector(mimeVisitor, pgpKering, config)
 
 	err = gomime.VisitAll(bytes.NewReader(mmBodyData), h, signatureCollector)
-	if err == nil && verifierKey != nil {
-		err = signatureCollector.verified
+	var signatureError *SignatureVerificationError
+	if verifierKey != nil {
+		signatureError = signatureCollector.verified
 	}
 
 	return bodyCollector,
 		attachmentsCollector.GetAttachments(),
 		attachmentsCollector.GetAttHeaders(),
+		signatureError,
 		err
 }

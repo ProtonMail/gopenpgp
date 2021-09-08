@@ -65,10 +65,14 @@ func TestDecrypt(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	body, atts, attHeaders, err := parseMIME(readTestFile("mime_testMessage", false), nil)
+	body, atts, attHeaders, sigErr, err := parseMIME(readTestFile("mime_testMessage", false), nil)
 
 	if err != nil {
 		t.Fatal("Expected no error while parsing message, got:", err)
+	}
+
+	if sigErr != nil {
+		t.Fatal("Expected no signature verification error while parsing message, got:", sigErr)
 	}
 
 	_ = atts

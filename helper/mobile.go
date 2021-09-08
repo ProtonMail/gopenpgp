@@ -182,28 +182,3 @@ func (msg *MIMEMessageMobile) GetAttachments(index int) (*crypto.Attachment, err
 	}
 	return msg.message.Attachments[index], nil
 }
-
-type ExplicitVerifyMIMEMessage struct {
-	MIMEMessage                *crypto.MIMEMessage
-	SignatureVerificationError *crypto.SignatureVerificationError
-}
-
-// DecryptMIMEMessageExplicitVerify decrypts a PGP/MIME message given a private keyring
-// and a public keyring to verify the embedded signature.
-// Returns the decrypted MIME message with an explicit signature status
-// and an error in case of non signature failures.
-func DecryptMIMEMessageExplicitVerify(
-	pgpMessage *crypto.PGPMessage,
-	privateKeyRing, publicKeyRing *crypto.KeyRing,
-	verifyTime int64,
-) (*ExplicitVerifyMIMEMessage, error) {
-	message, err := privateKeyRing.DecryptMIMEMessageSynchronously(pgpMessage, publicKeyRing, verifyTime)
-	signatureVerificationError, err := extractExplicitSignatureVerificationError(err)
-	if err != nil {
-		return nil, err
-	}
-	return &ExplicitVerifyMIMEMessage{
-		MIMEMessage:                message,
-		SignatureVerificationError: signatureVerificationError,
-	}, nil
-}
