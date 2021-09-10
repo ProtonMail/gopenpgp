@@ -83,3 +83,43 @@ func TestParse(t *testing.T) {
 	assert.Exactly(t, readTestFile("mime_decodedBodyHeaders", false), body.GetHeaders())
 	assert.Exactly(t, 2, len(atts))
 }
+
+func TestDecryptSynchronously(t *testing.T) {
+	privateKey, err := NewKeyFromArmored(readTestFile("mime_privateKey", false))
+	if err != nil {
+		t.Fatal("Cannot unarmor private key:", err)
+	}
+
+	privateKey, err = privateKey.Unlock(MIMEKeyPassword)
+	if err != nil {
+		t.Fatal("Cannot unlock private key:", err)
+	}
+
+	privateKeyRing, err := NewKeyRing(privateKey)
+	if err != nil {
+		t.Fatal("Cannot create private keyring:", err)
+	}
+
+	message, err := NewPGPMessageFromArmored(readTestFile("mime_pgpMessage", false))
+	if err != nil {
+		t.Fatal("Cannot decode armored message:", err)
+	}
+
+	mimeMessage, err := privateKeyRing.DecryptMIMEMessageSynchronously(
+		message,
+		nil,
+		GetUnixTime(),
+	)
+
+	if err != nil {
+		t.Fatal("Cannot decrypt message:", err)
+	}
+
+	assert.Exactly(t, readTestFile("mime_decryptedBody", false), mimeMessage.BodyContent)
+	if mimeMessage.SignatureError != nil {
+		t.Fatal("Cannot verify message:", mimeMessage.SignatureError)
+	}
+	assert.Exactly(t, 0, len(mimeMessage.Attachments), "attachments are not empty")
+	assert.Exactly(t, 1, len(mimeMessage.Headers), "headers are not empty")
+	assert.Exactly(t, "", mimeMessage.Headers[0])
+}

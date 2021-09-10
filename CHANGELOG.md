@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- Function to decrypt PGP/MIME messages directly without callbacks
+```go
+func (keyRing *KeyRing) DecryptMIMEMessageSynchronously(
+	message *PGPMessage, verifyKey *KeyRing, verifyTime int64,
+) (*MIMEMessage, error)
+```
+- struct `MIMEMessage` and `Attachment` to represent a decrypted PGP/MIME message.
+```go
+type MIMEMessage struct {
+	Headers        []string
+	BodyMIMEType   string
+	BodyContent    string
+	Attachments    []*Attachment
+	SignatureError *SignatureVerificationError
+}
+
+type Attachment struct {
+	Header  string
+	Content []byte
+}
+```
+- Helper wrapper `MIMEMessageMobile` to deal with arrays in mobile apps.
 ## [2.2.2] 2021-08-04
 ### Added
 - `NewKeyFromEntity` to create a key from an openpgp entity
