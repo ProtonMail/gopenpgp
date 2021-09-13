@@ -84,7 +84,7 @@ func TestParse(t *testing.T) {
 	assert.Exactly(t, 2, len(atts))
 }
 
-func TestDecryptSynchronously(t *testing.T) {
+func TestDecryptSync(t *testing.T) {
 	privateKey, err := NewKeyFromArmored(readTestFile("mime_privateKey", false))
 	if err != nil {
 		t.Fatal("Cannot unarmor private key:", err)
@@ -105,7 +105,7 @@ func TestDecryptSynchronously(t *testing.T) {
 		t.Fatal("Cannot decode armored message:", err)
 	}
 
-	mimeMessage, err := privateKeyRing.DecryptMIMEMessageSynchronously(
+	mimeMessage, err := privateKeyRing.DecryptMIMEMessageSync(
 		message,
 		nil,
 		GetUnixTime(),

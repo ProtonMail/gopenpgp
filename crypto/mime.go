@@ -10,6 +10,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	gomime "github.com/ProtonMail/go-mime"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
 )
 
@@ -63,8 +64,8 @@ type Attachment struct {
 	Content []byte
 }
 
-// DecryptMIMEMessageSynchronously decrypts a MIME message.
-func (keyRing *KeyRing) DecryptMIMEMessageSynchronously(
+// DecryptMIMEMessageSync decrypts a MIME message.
+func (keyRing *KeyRing) DecryptMIMEMessageSync(
 	message *PGPMessage, verifyKey *KeyRing, verifyTime int64,
 ) (*MIMEMessage, error) {
 	decryptedMessage, err := keyRing.Decrypt(message, verifyKey, verifyTime)
@@ -81,7 +82,8 @@ func (keyRing *KeyRing) DecryptMIMEMessageSynchronously(
 	if err != nil {
 		return nil, err
 	}
-	if sigErr != nil && mimeMessage.SignatureError == nil {
+	if mimeMessage.SignatureError != nil &&
+		mimeMessage.SignatureError.Status == constants.SIGNATURE_NOT_SIGNED {
 		mimeMessage.SignatureError = sigErr
 	}
 	bodyContent, bodyMimeType := body.GetBody()

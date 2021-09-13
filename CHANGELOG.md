@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Function to decrypt PGP/MIME messages directly without callbacks
 ```go
-func (keyRing *KeyRing) DecryptMIMEMessageSynchronously(
+func (keyRing *KeyRing) DecryptMIMEMessageSync(
 	message *PGPMessage, verifyKey *KeyRing, verifyTime int64,
 ) (*MIMEMessage, error)
 ```
