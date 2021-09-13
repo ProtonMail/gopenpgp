@@ -29,6 +29,10 @@ type Attachment struct {
 }
 ```
 - Helper wrapper `MIMEMessageMobile` to deal with arrays in mobile apps.
+
+### Fixed
+- Before verifying PGP/MIME signature, we now canonicalize the message body to be complient 
+with the [RFC](https://datatracker.ietf.org/doc/html/rfc3156)
 ## [2.2.2] 2021-08-04
 ### Added
 - `NewKeyFromEntity` to create a key from an openpgp entity
