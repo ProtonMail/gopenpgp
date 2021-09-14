@@ -100,14 +100,24 @@ func TestDecryptSync(t *testing.T) {
 		t.Fatal("Cannot create private keyring:", err)
 	}
 
-	message, err := NewPGPMessageFromArmored(readTestFile("mime_pgpMessage", false))
+	verificationKey, err := NewKeyFromArmored(readTestFile("mime_publicKey", false))
 	if err != nil {
-		t.Fatal("Cannot decode armored message:", err)
+		t.Fatal("Cannot unarmor public key:", err)
+	}
+
+	verificationKeyRing, err := NewKeyRing(verificationKey)
+	if err != nil {
+		t.Fatal("Cannot create public keyring:", err)
+	}
+
+	encryptedMessage, err := NewPGPMessageFromArmored(readTestFile("mime_pgpMessage", false))
+	if err != nil {
+		t.Fatal("Cannot unarmor message:", err)
 	}
 
 	mimeMessage, err := privateKeyRing.DecryptMIMEMessageSync(
-		message,
-		nil,
+		encryptedMessage,
+		verificationKeyRing,
 		GetUnixTime(),
 	)
 
