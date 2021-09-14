@@ -151,25 +151,38 @@ func FreeOSMemory() {
 }
 
 type MIMEMessageMobile struct {
-	message *crypto.MIMEMessage
+	message    *crypto.MIMEMessage
+	headerKeys []string
 }
 
 func NewMIMEMessageMobile(message *crypto.MIMEMessage) (*MIMEMessageMobile, error) {
 	if message == nil {
 		return nil, errors.New("gopenpgp: can't wrap a nil MIMEMessage")
 	}
-	return &MIMEMessageMobile{message: message}, nil
+	headerKeys := make([]string, len(message.Headers))
+	index := 0
+	for k := range message.Headers {
+		headerKeys[index] = k
+		index++
+	}
+	return &MIMEMessageMobile{message: message, headerKeys: headerKeys}, nil
 }
 
 func (msg *MIMEMessageMobile) GetHeadersCount() int {
-	return len(msg.message.Headers)
+	return len(msg.headerKeys)
 }
 
-func (msg *MIMEMessageMobile) GetHeader(index int) (string, error) {
-	if index < 0 || index >= len(msg.message.Headers) {
-		return "", errors.New("gopenpgp: invalid MIME header index")
+type MobileHeader struct {
+	Key   string
+	Value string
+}
+
+func (msg *MIMEMessageMobile) GetHeader(index int) (*MobileHeader, error) {
+	if index < 0 || index >= len(msg.headerKeys) {
+		return nil, errors.New("gopenpgp: invalid MIME header index")
 	}
-	return msg.message.Headers[index], nil
+	key := msg.headerKeys[index]
+	return &MobileHeader{Key: key, Value: msg.message.Headers[key]}, nil
 }
 
 func (msg *MIMEMessageMobile) GetAttachmentsCount() int {

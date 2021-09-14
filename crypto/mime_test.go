@@ -130,6 +130,5 @@ func TestDecryptSync(t *testing.T) {
 		t.Fatal("Cannot verify message:", mimeMessage.SignatureError)
 	}
 	assert.Exactly(t, 0, len(mimeMessage.Attachments), "attachments are not empty")
-	assert.Exactly(t, 1, len(mimeMessage.Headers), "headers are not empty")
-	assert.Exactly(t, "", mimeMessage.Headers[0])
+	assert.Exactly(t, 0, len(mimeMessage.Headers), "headers are not empty")
 }

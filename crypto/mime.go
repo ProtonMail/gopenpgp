@@ -52,7 +52,7 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 }
 
 type MIMEMessage struct {
-	Headers        []string
+	Headers        map[string]string
 	BodyMIMEType   string
 	BodyContent    string
 	Attachments    []*Attachment
@@ -95,7 +95,7 @@ func (keyRing *KeyRing) DecryptMIMEMessageSync(
 			Content: []byte(attachments[i]),
 		})
 	}
-	mimeMessage.Headers = []string{""} // TODO, parse headers
+	mimeMessage.Headers = make(map[string]string) // TODO, parse headers
 	return &mimeMessage, nil
 }
 
