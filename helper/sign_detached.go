@@ -1,5 +1,5 @@
-// +build !ios
-// +build !android
+//go:build !ios && !android
+// +build !ios,!android
 
 package helper
 
