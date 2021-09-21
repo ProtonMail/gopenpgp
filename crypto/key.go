@@ -439,11 +439,12 @@ func generateKey(
 	comments := ""
 
 	cfg := &packet.Config{
-		Algorithm:     packet.PubKeyAlgoRSA,
-		RSABits:       bits,
-		Time:          getKeyGenerationTimeGenerator(),
-		DefaultHash:   crypto.SHA256,
-		DefaultCipher: packet.CipherAES256,
+		Algorithm:              packet.PubKeyAlgoRSA,
+		RSABits:                bits,
+		Time:                   getKeyGenerationTimeGenerator(),
+		DefaultHash:            crypto.SHA256,
+		DefaultCipher:          packet.CipherAES256,
+		DefaultCompressionAlgo: packet.CompressionZLIB,
 	}
 
 	if keyType == "x25519" {
