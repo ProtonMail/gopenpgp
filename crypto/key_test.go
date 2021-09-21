@@ -10,6 +10,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -425,4 +426,12 @@ func TestUnlockMismatchingKey(t *testing.T) {
 	if _, err = privateKey.Unlock([]byte("123")); err == nil {
 		t.Fatalf("Mismatching private key was not detected")
 	}
+}
+
+func TestKeyCompression(t *testing.T) {
+	assert.Equal(
+		t,
+		[]uint8{uint8(packet.CompressionNone), uint8(packet.CompressionZLIB)},
+		keyTestEC.entity.PrimaryIdentity().SelfSignature.PreferredCompression,
+	)
 }
