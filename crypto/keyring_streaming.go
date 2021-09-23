@@ -194,6 +194,7 @@ func (keyRing *KeyRing) DecryptStream(
 		message,
 		keyRing,
 		verifyKeyRing,
+		verifyTime,
 	)
 	if err != nil {
 		return nil, err
