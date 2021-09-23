@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"io"
 	"io/ioutil"
+	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
@@ -190,6 +191,7 @@ func asymmetricDecrypt(
 		encryptedIO,
 		privateKey,
 		verifyKey,
+		verifyTime,
 	)
 	if err != nil {
 		return nil, err
@@ -215,7 +217,10 @@ func asymmetricDecrypt(
 
 // Core for decryption+verification (all) functions.
 func asymmetricDecryptStream(
-	encryptedIO io.Reader, privateKey *KeyRing, verifyKey *KeyRing,
+	encryptedIO io.Reader,
+	privateKey *KeyRing,
+	verifyKey *KeyRing,
+	verifyTime int64,
 ) (messageDetails *openpgp.MessageDetails, err error) {
 	privKeyEntries := privateKey.entities
 	var additionalEntries openpgp.EntityList
@@ -228,7 +233,19 @@ func asymmetricDecryptStream(
 		privKeyEntries = append(privKeyEntries, additionalEntries...)
 	}
 
-	config := &packet.Config{Time: getTimeGenerator()}
+	config := &packet.Config{
+		Time: func() time.Time {
+			if verifyTime == 0 {
+				/*
+					We default to current time while decrypting and verifying
+					but the caller will remove signature expiration errors later on.
+					See processSignatureExpiration().
+				*/
+				return getNow()
+			}
+			return time.Unix(verifyTime, 0)
+		},
+	}
 
 	messageDetails, err = openpgp.ReadMessage(encryptedIO, privKeyEntries, nil, config)
 	if err != nil {
