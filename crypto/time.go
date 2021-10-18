@@ -6,6 +6,9 @@ import (
 
 // UpdateTime updates cached time.
 func UpdateTime(newTime int64) {
+	pgp.lock.Lock()
+	defer pgp.lock.Unlock()
+
 	if newTime > pgp.latestServerTime {
 		pgp.latestServerTime = newTime
 	}
@@ -13,6 +16,9 @@ func UpdateTime(newTime int64) {
 
 // SetKeyGenerationOffset updates the offset when generating keys.
 func SetKeyGenerationOffset(offset int64) {
+	pgp.lock.Lock()
+	defer pgp.lock.Unlock()
+
 	pgp.generationOffset = offset
 }
 
@@ -30,6 +36,9 @@ func GetTime() time.Time {
 
 // getNow returns the latest server time.
 func getNow() time.Time {
+	pgp.lock.Lock()
+	defer pgp.lock.Unlock()
+
 	if pgp.latestServerTime == 0 {
 		return time.Now()
 	}
@@ -44,6 +53,9 @@ func getTimeGenerator() func() time.Time {
 
 // getNowKeyGenerationOffset returns the current time with the key generation offset.
 func getNowKeyGenerationOffset() time.Time {
+	pgp.lock.Lock()
+	defer pgp.lock.Unlock()
+
 	if pgp.latestServerTime == 0 {
 		return time.Unix(time.Now().Unix()+pgp.generationOffset, 0)
 	}
