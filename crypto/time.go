@@ -36,8 +36,8 @@ func GetTime() time.Time {
 
 // getNow returns the latest server time.
 func getNow() time.Time {
-	pgp.lock.Lock()
-	defer pgp.lock.Unlock()
+	pgp.lock.RLock()
+	defer pgp.lock.RUnlock()
 
 	if pgp.latestServerTime == 0 {
 		return time.Now()
@@ -53,8 +53,8 @@ func getTimeGenerator() func() time.Time {
 
 // getNowKeyGenerationOffset returns the current time with the key generation offset.
 func getNowKeyGenerationOffset() time.Time {
-	pgp.lock.Lock()
-	defer pgp.lock.Unlock()
+	pgp.lock.RLock()
+	defer pgp.lock.RUnlock()
 
 	if pgp.latestServerTime == 0 {
 		return time.Unix(time.Now().Unix()+pgp.generationOffset, 0)

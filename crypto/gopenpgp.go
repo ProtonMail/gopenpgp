@@ -8,13 +8,13 @@ import "sync"
 type GopenPGP struct {
 	latestServerTime int64
 	generationOffset int64
-	lock             *sync.Mutex
+	lock             *sync.RWMutex
 }
 
 var pgp = GopenPGP{
 	latestServerTime: 0,
 	generationOffset: 0,
-	lock: &sync.Mutex{},
+	lock: &sync.RWMutex{},
 }
 
 // clone returns a clone of the byte slice. Internal function used to make sure
