@@ -14,7 +14,7 @@ type GopenPGP struct {
 var pgp = GopenPGP{
 	latestServerTime: 0,
 	generationOffset: 0,
-	lock: &sync.RWMutex{},
+	lock:             &sync.RWMutex{},
 }
 
 // clone returns a clone of the byte slice. Internal function used to make sure
