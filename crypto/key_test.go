@@ -417,6 +417,23 @@ func TestKeyCapabilities(t *testing.T) {
 	assert.True(t, publicKey.CanEncrypt())
 }
 
+func TestRevokedKeyCapabilities(t *testing.T) {
+	pgp.latestServerTime = 1632219895
+	defer func() {
+		pgp.latestServerTime = testTime
+	}()
+
+	revokedKey, err := NewKeyFromArmored(readTestFile("key_revoked", false))
+	if err != nil {
+		t.Fatal("Cannot unarmor key:", err)
+	}
+
+	assert.False(t, revokedKey.CanVerify())
+	assert.False(t, revokedKey.CanEncrypt())
+	assert.False(t, revokedKey.IsExpired())
+	assert.True(t, revokedKey.IsRevoked())
+}
+
 func TestUnlockMismatchingKey(t *testing.T) {
 	privateKey, err := NewKeyFromArmored(readTestFile("key_mismatching_eddsa_key", false))
 	if err != nil {

@@ -276,8 +276,14 @@ func (key *Key) CanEncrypt() bool {
 
 // IsExpired checks whether the key is expired.
 func (key *Key) IsExpired() bool {
-	_, ok := key.entity.EncryptionKey(getNow())
-	return !ok
+	i := key.entity.PrimaryIdentity()
+	return key.entity.PrimaryKey.KeyExpired(i.SelfSignature, getNow()) || // primary key has expired
+		i.SelfSignature.SigExpired(getNow()) // user ID self-signature has expired
+}
+
+// IsRevoked checks whether the key or the primary identity has a valid revocation signature.
+func (key *Key) IsRevoked() bool {
+	return key.entity.Revoked(getNow()) || key.entity.PrimaryIdentity().Revoked(getNow())
 }
 
 // IsPrivate returns true if the key is private.

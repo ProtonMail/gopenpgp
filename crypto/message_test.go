@@ -173,6 +173,11 @@ func TestBinaryMessageEncryption(t *testing.T) {
 }
 
 func TestIssue11(t *testing.T) {
+	pgp.latestServerTime = 1559655272
+	defer func() {
+		pgp.latestServerTime = testTime
+	}()
+
 	var issue11Password = []byte("1234")
 
 	issue11Key, err := NewKeyFromArmored(readTestFile("issue11_privatekey", false))
