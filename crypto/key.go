@@ -114,13 +114,15 @@ func (key *Key) Lock(passphrase []byte) (*Key, error) {
 		return lockedKey, nil
 	}
 
-	err = lockedKey.entity.PrivateKey.Encrypt(passphrase)
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in locking key")
+	if lockedKey.entity.PrivateKey != nil && !lockedKey.entity.PrivateKey.Dummy() {
+		err = lockedKey.entity.PrivateKey.Encrypt(passphrase)
+		if err != nil {
+			return nil, errors.Wrap(err, "gopenpgp: error in locking key")
+		}
 	}
 
 	for _, sub := range lockedKey.entity.Subkeys {
-		if sub.PrivateKey != nil {
+		if sub.PrivateKey != nil && !sub.PrivateKey.Dummy() {
 			if err := sub.PrivateKey.Encrypt(passphrase); err != nil {
 				return nil, errors.Wrap(err, "gopenpgp: error in locking sub key")
 			}
@@ -157,9 +159,11 @@ func (key *Key) Unlock(passphrase []byte) (*Key, error) {
 		return nil, err
 	}
 
-	err = unlockedKey.entity.PrivateKey.Decrypt(passphrase)
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in unlocking key")
+	if unlockedKey.entity.PrivateKey != nil && !unlockedKey.entity.PrivateKey.Dummy() {
+		err = unlockedKey.entity.PrivateKey.Decrypt(passphrase)
+		if err != nil {
+			return nil, errors.Wrap(err, "gopenpgp: error in unlocking key")
+		}
 	}
 
 	for _, sub := range unlockedKey.entity.Subkeys {
