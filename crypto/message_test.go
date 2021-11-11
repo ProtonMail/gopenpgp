@@ -214,7 +214,6 @@ func TestIssue11(t *testing.T) {
 	assert.Exactly(t, "message from sender", plainMessage.GetString())
 }
 
-
 func TestDummy(t *testing.T) {
 	pgp.latestServerTime = 1636644417
 	defer func() { pgp.latestServerTime = testTime }()
