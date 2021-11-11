@@ -42,3 +42,5 @@ linters:
     - nilerr            # Force return err when not nil
     - wrapcheck         # Force wrapping of external error TODO: when the bug is fixed update the linter
     - gomoddirectives   # Prohibits the use of replace statements
+    - varnamelen        # Forbids short var names
+    - ireturn           # Prevents returning interfaces

@@ -214,6 +214,53 @@ func TestIssue11(t *testing.T) {
 	assert.Exactly(t, "message from sender", plainMessage.GetString())
 }
 
+func TestDummy(t *testing.T) {
+	pgp.latestServerTime = 1636644417
+	defer func() { pgp.latestServerTime = testTime }()
+
+	dummyKey, err := NewKeyFromArmored(readTestFile("key_dummy", false))
+	if err != nil {
+		t.Fatal("Expected no error while unarmoring public keyring, got:", err)
+	}
+
+	unlockedDummyKey, err := dummyKey.Unlock([]byte("golang"))
+	if err != nil {
+		t.Fatal("Expected no error while unlocking private key, got:", err)
+	}
+
+	_, err = unlockedDummyKey.Lock([]byte("golang"))
+	if err != nil {
+		t.Fatal("Expected no error while unlocking private key, got:", err)
+	}
+
+	dummyKeyRing, err := NewKeyRing(unlockedDummyKey)
+	if err != nil {
+		t.Fatal("Expected no error while building private keyring, got:", err)
+	}
+
+	var message = NewPlainMessageFromString(
+		"The secret code is... 1, 2, 3, 4, 5. I repeat: the secret code is... 1, 2, 3, 4, 5",
+	)
+
+	ciphertext, err := dummyKeyRing.Encrypt(message, nil)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+
+	split, err := ciphertext.SeparateKeyAndData(1024, 0)
+	if err != nil {
+		t.Fatal("Expected no error when splitting, got:", err)
+	}
+
+	assert.Len(t, split.GetBinaryDataPacket(), 133) // Assert uncompressed encrypted body length
+
+	decrypted, err := dummyKeyRing.Decrypt(ciphertext, nil, 0)
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+	assert.Exactly(t, message.GetString(), decrypted.GetString())
+}
+
 func TestSignedMessageDecryption(t *testing.T) {
 	pgpMessage, err := NewPGPMessageFromArmored(readTestFile("message_signed", false))
 	if err != nil {
