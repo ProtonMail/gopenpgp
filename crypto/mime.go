@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/mail"
 	"net/textproto"
+	"sort"
 	"strings"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
@@ -40,15 +41,14 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 		callbacks.OnError(err)
 		return
 	}
-	if verifyKey != nil {
-		returnVerificationStatus(embeddedSigError, callbacks)
-		returnVerificationStatus(mimeSigError, callbacks)
-	}
 	// We only consider the signature to be failed if both embedded and mime verification failed
 	if embeddedSigError != nil && mimeSigError != nil {
 		callbacks.OnError(embeddedSigError)
 		callbacks.OnError(mimeSigError)
+		callbacks.OnVerified(prioritizeSignatureErrors(embeddedSigError, mimeSigError))
 		return
+	} else if verifyKey != nil {
+		callbacks.OnVerified(constants.SIGNATURE_OK)
 	}
 	bodyContent, bodyMimeType := body.GetBody()
 	callbacks.OnBody(bodyContent, bodyMimeType)
@@ -60,12 +60,26 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 
 // ----- INTERNAL FUNCTIONS -----
 
-func returnVerificationStatus(signatureErr *SignatureVerificationError, callbacks MIMECallbacks) {
-	status := constants.SIGNATURE_OK
-	if signatureErr != nil {
-		status = signatureErr.Status
+type signatureErrorList []*SignatureVerificationError
+
+func (l signatureErrorList) Len() int { return len(l) }
+func (l signatureErrorList) Less(i, j int) bool {
+	return l[i].Status > l[j].Status
+}
+func (l signatureErrorList) Swap(i, j int) { l[i], l[j] = l[j], l[i] }
+
+func prioritizeSignatureErrors(signatureErrs ...*SignatureVerificationError) int {
+	var nonNilSigErrs []*SignatureVerificationError
+	for _, err := range signatureErrs {
+		if err != nil {
+			nonNilSigErrs = append(nonNilSigErrs, err)
+		}
 	}
-	callbacks.OnVerified(status)
+	sort.Sort(signatureErrorList(nonNilSigErrs))
+	if len(nonNilSigErrs) == 0 {
+		return constants.SIGNATURE_OK
+	}
+	return nonNilSigErrs[0].Status
 }
 
 func separateSigError(err error) (*SignatureVerificationError, error) {
