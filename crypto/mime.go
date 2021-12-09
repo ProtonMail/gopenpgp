@@ -28,28 +28,16 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 	message *PGPMessage, verifyKey *KeyRing, callbacks MIMECallbacks, verifyTime int64,
 ) {
 	decryptedMessage, err := keyRing.Decrypt(message, verifyKey, verifyTime)
-	var embeddedSigError *SignatureVerificationError
+	embeddedSigError, err := separateSigError(err)
 	if err != nil {
-		sigErr := &SignatureVerificationError{}
-		isSigError := errors.As(err, sigErr)
-		if !isSigError {
-			callbacks.OnError(err)
-			return
-		} else {
-			embeddedSigError = sigErr
-		}
+		callbacks.OnError(err)
+		return
 	}
 	body, attachments, attachmentHeaders, err := parseMIME(string(decryptedMessage.GetBinary()), verifyKey)
-	var mimeSigError *SignatureVerificationError
+	mimeSigError, err := separateSigError(err)
 	if err != nil {
-		sigErr := &SignatureVerificationError{}
-		isSigError := errors.As(err, sigErr)
-		if !isSigError {
-			callbacks.OnError(err)
-			return
-		} else {
-			mimeSigError = sigErr
-		}
+		callbacks.OnError(err)
+		return
 	}
 	// We only consider the signature to be failed if both embedded and mime verification failed
 	if embeddedSigError != nil && mimeSigError != nil {
@@ -66,6 +54,15 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 }
 
 // ----- INTERNAL FUNCTIONS -----
+
+func separateSigError(err error) (*SignatureVerificationError, error) {
+	sigErr := &SignatureVerificationError{}
+	isSigError := errors.As(err, sigErr)
+	if isSigError {
+		return sigErr, nil
+	}
+	return nil, err
+}
 
 func parseMIME(
 	mimeBody string, verifierKey *KeyRing,
