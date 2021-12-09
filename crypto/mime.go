@@ -10,6 +10,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	gomime "github.com/ProtonMail/go-mime"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
 )
 
@@ -39,6 +40,10 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 		callbacks.OnError(err)
 		return
 	}
+	if verifyKey != nil {
+		returnVerificationStatus(embeddedSigError, callbacks)
+		returnVerificationStatus(mimeSigError, callbacks)
+	}
 	// We only consider the signature to be failed if both embedded and mime verification failed
 	if embeddedSigError != nil && mimeSigError != nil {
 		callbacks.OnError(embeddedSigError)
@@ -54,6 +59,14 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 }
 
 // ----- INTERNAL FUNCTIONS -----
+
+func returnVerificationStatus(signatureErr *SignatureVerificationError, callbacks MIMECallbacks) {
+	status := constants.SIGNATURE_OK
+	if signatureErr != nil {
+		status = signatureErr.Status
+	}
+	callbacks.OnVerified(status)
+}
 
 func separateSigError(err error) (*SignatureVerificationError, error) {
 	sigErr := &SignatureVerificationError{}
