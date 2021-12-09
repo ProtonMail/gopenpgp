@@ -28,14 +28,33 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 	message *PGPMessage, verifyKey *KeyRing, callbacks MIMECallbacks, verifyTime int64,
 ) {
 	decryptedMessage, err := keyRing.Decrypt(message, verifyKey, verifyTime)
+	var embeddedSigError *SignatureVerificationError
 	if err != nil {
-		callbacks.OnError(err)
-		return
+		sigErr := &SignatureVerificationError{}
+		isSigError := errors.As(err, sigErr)
+		if !isSigError {
+			callbacks.OnError(err)
+			return
+		} else {
+			embeddedSigError = sigErr
+		}
 	}
-
 	body, attachments, attachmentHeaders, err := parseMIME(string(decryptedMessage.GetBinary()), verifyKey)
+	var mimeSigError *SignatureVerificationError
 	if err != nil {
-		callbacks.OnError(err)
+		sigErr := &SignatureVerificationError{}
+		isSigError := errors.As(err, sigErr)
+		if !isSigError {
+			callbacks.OnError(err)
+			return
+		} else {
+			mimeSigError = sigErr
+		}
+	}
+	// We only consider the signature to be failed if both embedded and mime verification failed
+	if embeddedSigError != nil && mimeSigError != nil {
+		callbacks.OnError(embeddedSigError)
+		callbacks.OnError(mimeSigError)
 		return
 	}
 	bodyContent, bodyMimeType := body.GetBody()
