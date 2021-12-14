@@ -1,0 +1,17 @@
+Content-Type: multipart/mixed; boundary="vZugDVVUW98WoyphBRoTcK04CQy1A1hvh";
+ protected-headers="v1"
+Subject: PGP/MIME signed message
+From: John Doe <redacted@gmail.com>
+To: redacted@protonmail.com
+Message-ID: <redacted@gmail.com>
+
+--vZugDVVUW98WoyphBRoTcK04CQy1A1hvh
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: quoted-printable
+Content-Language: en-US
+
+This is a signed pgp message
+
+
+
+--vZugDVVUW98WoyphBRoTcK04CQy1A1hvh--
