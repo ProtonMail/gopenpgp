@@ -40,6 +40,7 @@ func (sc *SignatureCollector) Accept(
 	parentMediaType, params, _ := mime.ParseMediaType(header.Get("Content-Type"))
 
 	if parentMediaType != "multipart/signed" {
+		sc.verified = newSignatureNotSigned()
 		return sc.target.Accept(part, header, hasPlainSibling, isFirst, isLast)
 	}
 
