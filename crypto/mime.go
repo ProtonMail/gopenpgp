@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/mail"
 	"net/textproto"
-	"sort"
 	"strings"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
@@ -59,27 +58,16 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 }
 
 // ----- INTERNAL FUNCTIONS -----
-
-type signatureErrorList []*SignatureVerificationError
-
-func (l signatureErrorList) Len() int { return len(l) }
-func (l signatureErrorList) Less(i, j int) bool {
-	return l[i].Status > l[j].Status
-}
-func (l signatureErrorList) Swap(i, j int) { l[i], l[j] = l[j], l[i] }
-
-func prioritizeSignatureErrors(signatureErrs ...*SignatureVerificationError) int {
-	var nonNilSigErrs []*SignatureVerificationError
+func prioritizeSignatureErrors(signatureErrs ...*SignatureVerificationError) (maxError int) {
+	// select error with the highest value, if any
+	// FAILED > NO VERIFIER > NOT SIGNED > SIGNATURE OK
+	maxError = constants.SIGNATURE_OK
 	for _, err := range signatureErrs {
-		if err != nil {
-			nonNilSigErrs = append(nonNilSigErrs, err)
+		if err.Status > maxError {
+			maxError = err.Status
 		}
 	}
-	sort.Sort(signatureErrorList(nonNilSigErrs))
-	if len(nonNilSigErrs) == 0 {
-		return constants.SIGNATURE_OK
-	}
-	return nonNilSigErrs[0].Status
+	return
 }
 
 func separateSigError(err error) (*SignatureVerificationError, error) {
@@ -111,12 +99,12 @@ func parseMIME(
 	attachmentsCollector := gomime.NewAttachmentsCollector(bodyCollector)
 	mimeVisitor := gomime.NewMimeVisitor(attachmentsCollector)
 
-	var pgpKering openpgp.KeyRing
+	var verifierEntities openpgp.KeyRing
 	if verifierKey != nil {
-		pgpKering = verifierKey.entities
+		verifierEntities = verifierKey.entities
 	}
 
-	signatureCollector := newSignatureCollector(mimeVisitor, pgpKering, config)
+	signatureCollector := newSignatureCollector(mimeVisitor, verifierEntities, config)
 
 	err = gomime.VisitAll(bytes.NewReader(mmBodyData), h, signatureCollector)
 	if err == nil && verifierKey != nil {

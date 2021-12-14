@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
 	"io"
 	"io/ioutil"
 	"mime"
@@ -98,12 +99,14 @@ func (sc *SignatureCollector) Accept(
 	str, _ := ioutil.ReadAll(rawBody)
 	rawBody = bytes.NewReader(str)
 	if sc.keyring != nil {
-		_, err = openpgp.CheckArmoredDetachedSignature(sc.keyring, rawBody, bytes.NewReader(buffer), sc.config)
+		_, err := openpgp.CheckArmoredDetachedSignature(sc.keyring, rawBody, bytes.NewReader(buffer), sc.config)
 
-		if err != nil {
-			sc.verified = newSignatureFailed()
-		} else {
+		if err == nil {
 			sc.verified = nil
+		} else if errors.Is(err, pgpErrors.ErrUnknownIssuer) {
+			sc.verified = newSignatureNoVerifier()
+		} else {
+			sc.verified = newSignatureFailed()
 		}
 	} else {
 		sc.verified = newSignatureNoVerifier()
