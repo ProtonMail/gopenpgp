@@ -190,10 +190,6 @@ func runScenario(t *testing.T, messageFile string) *testMIMECallbacks {
 		t.Errorf("Failed to load message %v", err)
 	}
 	callbacks := &testMIMECallbacks{}
-	_, err = decryptionKeyRing.Decrypt(message, verificationKeyRing, 0)
-	if err != nil {
-		t.Logf("Embedded sig verification failed %v", err)
-	}
 	decryptionKeyRing.DecryptMIMEMessage(message, verificationKeyRing, callbacks, 0)
 	return callbacks
 }
