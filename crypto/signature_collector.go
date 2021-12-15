@@ -100,7 +100,7 @@ func (sc *SignatureCollector) Accept(
 	str, _ := ioutil.ReadAll(rawBody)
 	rawBody = bytes.NewReader(str)
 	if sc.keyring != nil {
-		_, err := openpgp.CheckArmoredDetachedSignature(sc.keyring, rawBody, bytes.NewReader(buffer), sc.config)
+		_, err = openpgp.CheckArmoredDetachedSignature(sc.keyring, rawBody, bytes.NewReader(buffer), sc.config)
 
 		switch {
 		case err == nil:

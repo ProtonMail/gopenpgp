@@ -73,8 +73,7 @@ func prioritizeSignatureErrors(signatureErrs ...*SignatureVerificationError) (ma
 
 func separateSigError(err error) (*SignatureVerificationError, error) {
 	sigErr := &SignatureVerificationError{}
-	isSigError := errors.As(err, sigErr)
-	if isSigError {
+	if errors.As(err, sigErr) {
 		return sigErr, nil
 	}
 	return nil, err
