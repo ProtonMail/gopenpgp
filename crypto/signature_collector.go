@@ -7,6 +7,8 @@ import (
 	"mime"
 	"net/textproto"
 
+	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
+
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	gomime "github.com/ProtonMail/go-mime"
@@ -40,6 +42,7 @@ func (sc *SignatureCollector) Accept(
 	parentMediaType, params, _ := mime.ParseMediaType(header.Get("Content-Type"))
 
 	if parentMediaType != "multipart/signed" {
+		sc.verified = newSignatureNotSigned()
 		return sc.target.Accept(part, header, hasPlainSibling, isFirst, isLast)
 	}
 
@@ -99,10 +102,13 @@ func (sc *SignatureCollector) Accept(
 	if sc.keyring != nil {
 		_, err = openpgp.CheckArmoredDetachedSignature(sc.keyring, rawBody, bytes.NewReader(buffer), sc.config)
 
-		if err != nil {
-			sc.verified = newSignatureFailed()
-		} else {
+		switch {
+		case err == nil:
 			sc.verified = nil
+		case errors.Is(err, pgpErrors.ErrUnknownIssuer):
+			sc.verified = newSignatureNoVerifier()
+		default:
+			sc.verified = newSignatureFailed()
 		}
 	} else {
 		sc.verified = newSignatureNoVerifier()
