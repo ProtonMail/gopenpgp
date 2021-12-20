@@ -118,6 +118,44 @@ func (keyRing *KeyRing) VerifyDetachedEncrypted(message *PlainMessage, encrypted
 	return keyRing.VerifyDetached(message, signature, verifyTime)
 }
 
+// GetVerifiedSignatureTimestamp verifies a PlainMessage with a detached PGPSignature
+// returns the creation time of the signature if it succeeds
+// and returns a SignatureVerificationError if fails.
+func (keyRing *KeyRing) GetVerifiedSignatureTimestamp(message *PlainMessage, signature *PGPSignature, verifyTime int64) (int64, error) {
+	packets := packet.NewReader(bytes.NewReader(signature.Data))
+	var err error
+	var p packet.Packet
+	for {
+		p, err = packets.Next()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			continue
+		}
+		sigPacket, ok := p.(*packet.Signature)
+		if !ok {
+			continue
+		}
+		var outBuf bytes.Buffer
+		err = sigPacket.Serialize(&outBuf)
+		if err != nil {
+			continue
+		}
+		err = verifySignature(
+			keyRing.entities,
+			message.NewReader(),
+			outBuf.Bytes(),
+			verifyTime,
+		)
+		if err != nil {
+			continue
+		}
+		return sigPacket.CreationTime.Unix(), nil
+	}
+	return 0, errors.Wrap(err, "gopenpgp: can't verify any signature packets")
+}
+
 // ------ INTERNAL FUNCTIONS -------
 
 // Core for encryption+signature (non-streaming) functions.

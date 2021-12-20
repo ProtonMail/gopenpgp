@@ -423,23 +423,23 @@ func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)
 }
 
 // GetBinary returns the unarmored binary content of the signature as a []byte.
-func (msg *PGPSignature) GetBinary() []byte {
-	return msg.Data
+func (sig *PGPSignature) GetBinary() []byte {
+	return sig.Data
 }
 
 // GetArmored returns the armored signature as a string.
-func (msg *PGPSignature) GetArmored() (string, error) {
-	return armor.ArmorWithType(msg.Data, constants.PGPSignatureHeader)
+func (sig *PGPSignature) GetArmored() (string, error) {
+	return armor.ArmorWithType(sig.Data, constants.PGPSignatureHeader)
 }
 
 // GetSignatureKeyIDs Returns the key IDs of the keys to which the (readable) signature packets are encrypted to.
-func (msg *PGPSignature) GetSignatureKeyIDs() ([]uint64, bool) {
-	return getSignatureKeyIDs(msg.Data)
+func (sig *PGPSignature) GetSignatureKeyIDs() ([]uint64, bool) {
+	return getSignatureKeyIDs(sig.Data)
 }
 
 // GetHexSignatureKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
-func (msg *PGPSignature) GetHexSignatureKeyIDs() ([]string, bool) {
-	return getHexKeyIDs(msg.GetSignatureKeyIDs())
+func (sig *PGPSignature) GetHexSignatureKeyIDs() ([]string, bool) {
+	return getHexKeyIDs(sig.GetSignatureKeyIDs())
 }
 
 // GetBinary returns the unarmored signed data as a []byte.
