@@ -333,7 +333,6 @@ func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)
 	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
 	packets := packet.NewReader(bytes.NewReader(msg.Data))
 	outSplit = &PGPSplitMessage{}
-	gcCounter := 0
 
 	// Store encrypted key and symmetrically encrypted packet separately
 	var encryptedKey *packet.EncryptedKey
@@ -345,68 +344,21 @@ func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)
 		}
 		switch p := p.(type) {
 		case *packet.EncryptedKey:
+			// TODO: add support for multiple keypackets
 			if encryptedKey != nil && encryptedKey.Key != nil {
 				break
 			}
 			encryptedKey = p
-
 		case *packet.SymmetricallyEncrypted:
-			// TODO: add support for multiple keypackets
-			var b bytes.Buffer
-			// 2^16 is an estimation of the size difference between input and output, the size difference is most probably
-			// 16 bytes at a maximum though.
-			// We need to avoid triggering a grow from the system as this will allocate too much memory causing problems
-			// in low-memory environments
-			b.Grow(1<<16 + estimatedLength)
-			// empty encoded length + start byte
-			if _, err := b.Write(make([]byte, 6)); err != nil {
-				return nil, errors.Wrap(err, "gopenpgp: error in writing data packet header")
+			outSplit.DataPacket, err = readPacketContents(p.Contents, estimatedLength, garbageCollector)
+			if err != nil {
+				return nil, err
 			}
-
-			if err := b.WriteByte(byte(1)); err != nil {
-				return nil, errors.Wrap(err, "gopenpgp: error in writing data packet header")
+		case *packet.AEADEncrypted:
+			outSplit.DataPacket, err = readPacketContents(p.Contents, estimatedLength, garbageCollector)
+			if err != nil {
+				return nil, err
 			}
-
-			actualLength := 1
-			block := make([]byte, 128)
-			for {
-				n, err := p.Contents.Read(block)
-				if goerrors.Is(err, io.EOF) {
-					break
-				}
-				if _, err := b.Write(block[:n]); err != nil {
-					return nil, errors.Wrap(err, "gopenpgp: error in writing data packet body")
-				}
-				actualLength += n
-				gcCounter += n
-				if gcCounter > garbageCollector && garbageCollector > 0 {
-					runtime.GC()
-					gcCounter = 0
-				}
-			}
-
-			// quick encoding
-			symEncryptedData := b.Bytes()
-			switch {
-			case actualLength < 192:
-				symEncryptedData[4] = byte(210)
-				symEncryptedData[5] = byte(actualLength)
-				symEncryptedData = symEncryptedData[4:]
-			case actualLength < 8384:
-				actualLength -= 192
-				symEncryptedData[3] = byte(210)
-				symEncryptedData[4] = 192 + byte(actualLength>>8)
-				symEncryptedData[5] = byte(actualLength)
-				symEncryptedData = symEncryptedData[3:]
-			default:
-				symEncryptedData[0] = byte(210)
-				symEncryptedData[1] = byte(255)
-				symEncryptedData[2] = byte(actualLength >> 24)
-				symEncryptedData[3] = byte(actualLength >> 16)
-				symEncryptedData[4] = byte(actualLength >> 8)
-				symEncryptedData[5] = byte(actualLength)
-			}
-			outSplit.DataPacket = symEncryptedData
 		}
 	}
 	if encryptedKey == nil {
@@ -420,6 +372,65 @@ func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int)
 	outSplit.KeyPacket = buf.Bytes()
 
 	return outSplit, nil
+}
+
+func readPacketContents(contents io.Reader, estimatedLength int, garbageCollector int) ([]byte, error) {
+	gcCounter := 0
+	var b bytes.Buffer
+	// 2^16 is an estimation of the size difference between input and output, the size difference is most probably
+	// 16 bytes at a maximum though.
+	// We need to avoid triggering a grow from the system as this will allocate too much memory causing problems
+	// in low-memory environments
+	b.Grow(1<<16 + estimatedLength)
+	// empty encoded length + start byte
+	if _, err := b.Write(make([]byte, 6)); err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: error in writing data packet header")
+	}
+
+	if err := b.WriteByte(byte(1)); err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: error in writing data packet header")
+	}
+
+	actualLength := 1
+	block := make([]byte, 128)
+	for {
+		n, err := contents.Read(block)
+		if goerrors.Is(err, io.EOF) {
+			break
+		}
+		if _, err := b.Write(block[:n]); err != nil {
+			return nil, errors.Wrap(err, "gopenpgp: error in writing data packet body")
+		}
+		actualLength += n
+		gcCounter += n
+		if gcCounter > garbageCollector && garbageCollector > 0 {
+			runtime.GC()
+			gcCounter = 0
+		}
+	}
+
+	// quick encoding
+	symEncryptedData := b.Bytes()
+	switch {
+	case actualLength < 192:
+		symEncryptedData[4] = byte(210)
+		symEncryptedData[5] = byte(actualLength)
+		symEncryptedData = symEncryptedData[4:]
+	case actualLength < 8384:
+		actualLength -= 192
+		symEncryptedData[3] = byte(210)
+		symEncryptedData[4] = 192 + byte(actualLength>>8)
+		symEncryptedData[5] = byte(actualLength)
+		symEncryptedData = symEncryptedData[3:]
+	default:
+		symEncryptedData[0] = byte(210)
+		symEncryptedData[1] = byte(255)
+		symEncryptedData[2] = byte(actualLength >> 24)
+		symEncryptedData[3] = byte(actualLength >> 16)
+		symEncryptedData[4] = byte(actualLength >> 8)
+		symEncryptedData[5] = byte(actualLength)
+	}
+	return symEncryptedData, nil
 }
 
 // GetBinary returns the unarmored binary content of the signature as a []byte.

@@ -439,3 +439,26 @@ func TestMessageGetArmoredWithEmptyHeaders(t *testing.T) {
 	assert.NotContains(t, armored, "Version")
 	assert.NotContains(t, armored, "Comment")
 }
+
+func TestPGPSplitMessageFromArmoredWithAEAD(t *testing.T) {
+	var message = `-----BEGIN PGP MESSAGE-----
+
+hF4DJDxTg/yg6TkSAQdA3Ogzuxwz7IdSRCh81gdYuB0bKqkYDs7EksOkYJ7eUnMw
+FsRNg+X3KbCj9j747An4J7V8trghOIN00dlpuR77wELS79XHoP55qmyVyPzmTXdx
+1F8BCQIQyGCAxAA1ppydoBVp7ithTEl2bU72tbOsLCFY8TBamG6t3jfqJpO2lz+G
+M0xNgvwIDrAQsN35VGw72I/FvWJ0VG3rpBKgFp5nPK0NblRomXTRRfoNgSoVUcxU
+vA==
+=YNf2
+-----END PGP MESSAGE-----
+`
+	split, err := NewPGPSplitMessageFromArmored(message)
+	if err != nil {
+		t.Errorf("Couldn't parse split message: %v", err)
+	}
+	if split.KeyPacket == nil {
+		t.Error("Key packet was nil")
+	}
+	if split.DataPacket == nil {
+		t.Error("Data packet was nil")
+	}
+}
