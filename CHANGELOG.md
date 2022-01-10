@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed bug with `NewPGPSplitMessageFromArmored(armored)` and `PGPMessage.SeparateKeyAndData()`.
-Those functions didn't parse AEAD encrypted messages correctly (eg messages encrypted with the latest versions of gnupg.), resulting in a nil `DataPacket`.
+Those functions didn't parse AEAD encrypted messages correctly (eg messages encrypted with the latest versions of gnupg), resulting in a nil `DataPacket`.
 
 ## [2.4.0] 2021-12-21
 
