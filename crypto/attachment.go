@@ -96,7 +96,7 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 		message := &PGPMessage{
 			Data: ciphertext,
 		}
-		split, splitError := message.SeparateKeyAndData(estimatedSize, garbageCollector)
+		split, splitError := message.SeparateKeyAndData()
 		if attachmentProc.err == nil {
 			attachmentProc.err = splitError
 		}
