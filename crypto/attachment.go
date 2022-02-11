@@ -54,6 +54,9 @@ func (ap *AttachmentProcessor) Finish() (*PGPSplitMessage, error) {
 	}
 
 	ap.done.Wait()
+	if ap.err != nil {
+		return nil, ap.err
+	}
 	splitMsg := ap.split
 
 	if ap.garbageCollector > 0 {
@@ -94,7 +97,7 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 			Data: ciphertext,
 		}
 		split, splitError := message.SeparateKeyAndData(estimatedSize, garbageCollector)
-		if attachmentProc.err != nil {
+		if attachmentProc.err == nil {
 			attachmentProc.err = splitError
 		}
 		attachmentProc.split = split
