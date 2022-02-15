@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+- `SeparateKeyAndData` is now implemented in a more generic way, by checking for the location in the bytes of the last session key packet, then splitting the binary message after that point.
+
+### Fixed
+- `SeparateKeyAndData` now correctly parses AEAD packets.
+- `(ap *AttachmentProcessor) Finish()` now returns encryption errors correctly.
+
+
 ## [2.4.2] 2022-01-13
 
 ### Changed
