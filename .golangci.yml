@@ -44,3 +44,4 @@ linters:
     - gomoddirectives   # Prohibits the use of replace statements
     - varnamelen        # Forbids short var names
     - ireturn           # Prevents returning interfaces
+    - forcetypeassert   # Forces to assert types in tests
