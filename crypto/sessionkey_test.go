@@ -253,7 +253,7 @@ func TestDataPacketDecryption(t *testing.T) {
 		t.Fatal("Expected no error when unarmoring, got:", err)
 	}
 
-	split, err := pgpMessage.SeparateKeyAndData(1024, 0)
+	split, err := pgpMessage.SeparateKeyAndData(1024, 0) // Test passing parameters for backwards compatibility
 	if err != nil {
 		t.Fatal("Expected no error when splitting, got:", err)
 	}

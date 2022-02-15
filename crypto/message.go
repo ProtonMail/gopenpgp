@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/ioutil"
 	"regexp"
-	"runtime"
 	"strings"
 	"time"
 
@@ -141,7 +140,7 @@ func NewPGPSplitMessageFromArmored(encrypted string) (*PGPSplitMessage, error) {
 		return nil, err
 	}
 
-	return message.SeparateKeyAndData(len(encrypted), -1)
+	return message.SeparateKeyAndData()
 }
 
 // NewPGPSignature generates a new PGPSignature from the unarmored binary data.
@@ -325,112 +324,32 @@ func (msg *PGPSplitMessage) GetPGPMessage() *PGPMessage {
 	return NewPGPMessage(append(msg.KeyPacket, msg.DataPacket...))
 }
 
-// SeparateKeyAndData returns the first keypacket and the (hopefully unique)
-// dataPacket (not verified).
-// * estimatedLength is the estimate length of the message.
-// * garbageCollector > 0 activates the garbage collector.
-func (msg *PGPMessage) SeparateKeyAndData(estimatedLength, garbageCollector int) (outSplit *PGPSplitMessage, err error) {
-	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
-	packets := packet.NewReader(bytes.NewReader(msg.Data))
-	outSplit = &PGPSplitMessage{}
-
-	// Store encrypted key and symmetrically encrypted packet separately
-	var encryptedKey *packet.EncryptedKey
+// SeparateKeyAndData splits the message into key and data packet(s).
+// Parameters are for backwards compatibility and are unused.
+func (msg *PGPMessage) SeparateKeyAndData(_ ...int) (*PGPSplitMessage, error) {
+	bytesReader := bytes.NewReader(msg.Data)
+	packets := packet.NewReader(bytesReader)
+	splitPoint := int64(0)
+Loop:
 	for {
-		var p packet.Packet
-		if p, err = packets.Next(); goerrors.Is(err, io.EOF) {
-			err = nil //nolint:wastedassign
-			break
-		}
-		switch p := p.(type) {
-		case *packet.EncryptedKey:
-			// TODO: add support for multiple keypackets
-			if encryptedKey != nil && encryptedKey.Key != nil {
-				break
-			}
-			encryptedKey = p
-		case *packet.SymmetricallyEncrypted:
-			outSplit.DataPacket, err = readPacketContents(p.Contents, estimatedLength, garbageCollector)
-			if err != nil {
-				return nil, err
-			}
-		case *packet.AEADEncrypted:
-			outSplit.DataPacket, err = readPacketContents(p.Contents, estimatedLength, garbageCollector)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	if encryptedKey == nil {
-		return nil, errors.New("gopenpgp: packets don't include an encrypted key packet")
-	}
-
-	var buf bytes.Buffer
-	if err := encryptedKey.Serialize(&buf); err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: cannot serialize encrypted key")
-	}
-	outSplit.KeyPacket = buf.Bytes()
-
-	return outSplit, nil
-}
-
-func readPacketContents(contents io.Reader, estimatedLength int, garbageCollector int) ([]byte, error) {
-	gcCounter := 0
-	var b bytes.Buffer
-	// 2^16 is an estimation of the size difference between input and output, the size difference is most probably
-	// 16 bytes at a maximum though.
-	// We need to avoid triggering a grow from the system as this will allocate too much memory causing problems
-	// in low-memory environments
-	b.Grow(1<<16 + estimatedLength)
-	// empty encoded length + start byte
-	if _, err := b.Write(make([]byte, 6)); err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in writing data packet header")
-	}
-
-	if err := b.WriteByte(byte(1)); err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in writing data packet header")
-	}
-
-	actualLength := 1
-	block := make([]byte, 128)
-	for {
-		n, err := contents.Read(block)
+		p, err := packets.Next()
 		if goerrors.Is(err, io.EOF) {
 			break
 		}
-		if _, err := b.Write(block[:n]); err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: error in writing data packet body")
+		if err != nil {
+			return nil, err
 		}
-		actualLength += n
-		gcCounter += n
-		if gcCounter > garbageCollector && garbageCollector > 0 {
-			runtime.GC()
-			gcCounter = 0
+		switch p.(type) {
+		case *packet.SymmetricKeyEncrypted, *packet.EncryptedKey:
+			splitPoint = bytesReader.Size() - int64(bytesReader.Len())
+		case *packet.SymmetricallyEncrypted, *packet.AEADEncrypted:
+			break Loop
 		}
 	}
-
-	// quick encoding
-	symEncryptedData := b.Bytes()
-	switch {
-	case actualLength < 192:
-		symEncryptedData[4] = byte(210)
-		symEncryptedData[5] = byte(actualLength)
-		symEncryptedData = symEncryptedData[4:]
-	case actualLength < 8384:
-		actualLength -= 192
-		symEncryptedData[3] = byte(210)
-		symEncryptedData[4] = 192 + byte(actualLength>>8)
-		symEncryptedData[5] = byte(actualLength)
-		symEncryptedData = symEncryptedData[3:]
-	default:
-		symEncryptedData[0] = byte(210)
-		symEncryptedData[1] = byte(255)
-		symEncryptedData[2] = byte(actualLength >> 24)
-		symEncryptedData[3] = byte(actualLength >> 16)
-		symEncryptedData[4] = byte(actualLength >> 8)
-		symEncryptedData[5] = byte(actualLength)
-	}
-	return symEncryptedData, nil
+	return &PGPSplitMessage{
+		KeyPacket:  msg.Data[:splitPoint],
+		DataPacket: msg.Data[splitPoint:],
+	}, nil
 }
 
 // GetBinary returns the unarmored binary content of the signature as a []byte.
