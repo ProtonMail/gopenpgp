@@ -70,7 +70,7 @@ func (ap *AttachmentProcessor) Finish() (*PGPSplitMessage, error) {
 // newAttachmentProcessor creates an AttachmentProcessor which can be used to encrypt
 // a file. It takes an estimatedSize and fileName as hints about the file.
 func (keyRing *KeyRing) newAttachmentProcessor(
-	estimatedSize int, filename string, isBinary bool, modTime uint32, garbageCollector int,
+	estimatedSize int, filename string, isBinary bool, modTime uint32, garbageCollector int, //nolint:unparam
 ) (*AttachmentProcessor, error) {
 	attachmentProc := &AttachmentProcessor{}
 	// You could also add these one at a time if needed.
