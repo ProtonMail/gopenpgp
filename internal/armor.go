@@ -12,7 +12,7 @@ func Unarmor(input string) (*armor.Block, error) {
 	io := strings.NewReader(input)
 	b, err := armor.Decode(io)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to armor")
+		return nil, errors.Wrap(err, "gopenpgp: unable to unarmor")
 	}
 	return b, nil
 }
