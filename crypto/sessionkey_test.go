@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"testing"
 
@@ -269,6 +270,25 @@ func TestDataPacketDecryption(t *testing.T) {
 	}
 
 	assert.Exactly(t, readTestFile("message_plaintext", true), decrypted.GetString())
+}
+
+func TestMDCFailDecryption(t *testing.T) {
+	pgpMessage, err := NewPGPMessageFromArmored(readTestFile("message_badmdc", false))
+	if err != nil {
+		t.Fatal("Expected no error when unarmoring, got:", err)
+	}
+
+	split, err := pgpMessage.SeparateKeyAndData()
+	if err != nil {
+		t.Fatal("Expected no error when splitting, got:", err)
+	}
+
+	sk, _ := hex.DecodeString("F76D3236E4F8A38785C50BDE7167475E95360BCE67A952710F6C16F18BB0655E")
+
+	sessionKey := NewSessionKeyFromToken(sk, "aes256")
+
+	_, err = sessionKey.Decrypt(split.GetBinaryDataPacket())
+	assert.NotNil(t, err)
 }
 
 func TestSessionKeyClear(t *testing.T) {
