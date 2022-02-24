@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
+	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 )
 
@@ -29,6 +30,28 @@ var symKeyAlgos = map[string]packet.CipherFunction{
 	constants.AES128:    packet.CipherAES128,
 	constants.AES192:    packet.CipherAES192,
 	constants.AES256:    packet.CipherAES256,
+}
+
+type checkReader struct {
+	decrypted io.ReadCloser
+	body      io.Reader
+}
+
+func (cr checkReader) Read(buf []byte) (int, error) {
+	n, sensitiveParsingError := cr.body.Read(buf)
+	if sensitiveParsingError == io.EOF {
+		mdcErr := cr.decrypted.Close()
+		if mdcErr != nil {
+			return n, mdcErr
+		}
+		return n, io.EOF
+	}
+
+	if sensitiveParsingError != nil {
+		return n, pgpErrors.StructuralError("parsing error")
+	}
+
+	return n, nil
 }
 
 // GetCipherFunc returns the cipher function corresponding to the algorithm used
@@ -335,6 +358,7 @@ func decryptStreamWithSessionKey(sk *SessionKey, messageReader io.Reader, verify
 		return nil, errors.Wrap(err, "gopenpgp: unable to decode symmetric packet")
 	}
 
+	md.UnverifiedBody = checkReader{decrypted, md.UnverifiedBody}
 	return md, nil
 }
 
