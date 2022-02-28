@@ -140,7 +140,7 @@ func NewPGPSplitMessageFromArmored(encrypted string) (*PGPSplitMessage, error) {
 		return nil, err
 	}
 
-	return message.SeparateKeyAndData()
+	return message.SplitMessage()
 }
 
 // NewPGPSignature generates a new PGPSignature from the unarmored binary data.
@@ -324,9 +324,9 @@ func (msg *PGPSplitMessage) GetPGPMessage() *PGPMessage {
 	return NewPGPMessage(append(msg.KeyPacket, msg.DataPacket...))
 }
 
-// SeparateKeyAndData splits the message into key and data packet(s).
+// SplitMessage splits the message into key and data packet(s).
 // Parameters are for backwards compatibility and are unused.
-func (msg *PGPMessage) SeparateKeyAndData(_ ...int) (*PGPSplitMessage, error) {
+func (msg *PGPMessage) SplitMessage() (*PGPSplitMessage, error) {
 	bytesReader := bytes.NewReader(msg.Data)
 	packets := packet.NewReader(bytesReader)
 	splitPoint := int64(0)
@@ -350,6 +350,13 @@ Loop:
 		KeyPacket:  clone(msg.Data[:splitPoint]),
 		DataPacket: clone(msg.Data[splitPoint:]),
 	}, nil
+}
+
+// SeparateKeyAndData splits the message into key and data packet(s).
+// Parameters are for backwards compatibility and are unused.
+// Deprecated in favor of SplitMessage().
+func (msg *PGPMessage) SeparateKeyAndData(_ int, _ int) (*PGPSplitMessage, error) {
+	return msg.SplitMessage()
 }
 
 // GetBinary returns the unarmored binary content of the signature as a []byte.

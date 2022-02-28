@@ -278,7 +278,7 @@ func TestMDCFailDecryption(t *testing.T) {
 		t.Fatal("Expected no error when unarmoring, got:", err)
 	}
 
-	split, err := pgpMessage.SeparateKeyAndData()
+	split, err := pgpMessage.SplitMessage()
 	if err != nil {
 		t.Fatal("Expected no error when splitting, got:", err)
 	}
