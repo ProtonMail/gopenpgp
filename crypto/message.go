@@ -347,8 +347,8 @@ Loop:
 		}
 	}
 	return &PGPSplitMessage{
-		KeyPacket:  msg.Data[:splitPoint],
-		DataPacket: msg.Data[splitPoint:],
+		KeyPacket:  clone(msg.Data[:splitPoint]),
+		DataPacket: clone(msg.Data[splitPoint:]),
 	}, nil
 }
 
