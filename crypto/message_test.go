@@ -96,7 +96,7 @@ func TestTextMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	split, err := ciphertext.SeparateKeyAndData()
+	split, err := ciphertext.SplitMessage()
 	if err != nil {
 		t.Fatal("Expected no error when splitting, got:", err)
 	}
@@ -120,7 +120,7 @@ func TestTextMessageEncryptionWithCompression(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	split, err := ciphertext.SeparateKeyAndData()
+	split, err := ciphertext.SplitMessage()
 	if err != nil {
 		t.Fatal("Expected no error when splitting, got:", err)
 	}
@@ -252,7 +252,7 @@ func TestDummy(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	split, err := ciphertext.SeparateKeyAndData()
+	split, err := ciphertext.SplitMessage()
 	if err != nil {
 		t.Fatal("Expected no error when splitting, got:", err)
 	}
