@@ -354,7 +354,7 @@ Loop:
 
 // SeparateKeyAndData splits the message into key and data packet(s).
 // Parameters are for backwards compatibility and are unused.
-// Deprecated in favor of SplitMessage().
+// Deprecated: use SplitMessage().
 func (msg *PGPMessage) SeparateKeyAndData(_ int, _ int) (*PGPSplitMessage, error) {
 	return msg.SplitMessage()
 }
