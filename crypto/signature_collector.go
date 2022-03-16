@@ -2,12 +2,11 @@ package crypto
 
 import (
 	"bytes"
+	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
 	"io"
 	"io/ioutil"
 	"mime"
 	"net/textproto"
-
-	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
@@ -98,7 +97,7 @@ func (sc *SignatureCollector) Accept(
 	}
 	sc.signature = string(buffer)
 	str, _ := ioutil.ReadAll(rawBody)
-	rawBody = bytes.NewReader(str)
+	rawBody = bytes.NewReader(canonicalizeAndTrimByte(str))
 	if sc.keyring != nil {
 		_, err = openpgp.CheckArmoredDetachedSignature(sc.keyring, rawBody, bytes.NewReader(buffer), sc.config)
 
@@ -120,4 +119,14 @@ func (sc *SignatureCollector) Accept(
 // GetSignature collected by Accept.
 func (sc SignatureCollector) GetSignature() string {
 	return sc.signature
+}
+
+func canonicalizeAndTrimByte(text []byte) []byte {
+	lines := bytes.Split(text, []byte("\n"))
+
+	for i := range lines {
+		lines[i] = bytes.TrimRight(lines[i], " \t\r")
+	}
+
+	return bytes.Join(lines, []byte("\r\n"))
 }
