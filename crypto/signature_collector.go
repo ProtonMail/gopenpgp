@@ -8,6 +8,7 @@ import (
 	"net/textproto"
 
 	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
+	"github.com/ProtonMail/gopenpgp/v2/internal"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
@@ -98,7 +99,8 @@ func (sc *SignatureCollector) Accept(
 	}
 	sc.signature = string(buffer)
 	str, _ := ioutil.ReadAll(rawBody)
-	rawBody = bytes.NewReader(str)
+	canonicalizedBody := internal.CanonicalizeAndTrim(string(str))
+	rawBody = bytes.NewReader([]byte(canonicalizedBody))
 	if sc.keyring != nil {
 		_, err = openpgp.CheckArmoredDetachedSignature(sc.keyring, rawBody, bytes.NewReader(buffer), sc.config)
 
