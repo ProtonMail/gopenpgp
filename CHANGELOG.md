@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Fixed
 - Update dependency `github.com/ProtonMail/go-mime`. It makes the parsing 
 of MIME messages more flexible to messages with no specified charsets.
+- Fix the verification of PGP/MIME signature, the signature is now verified 
+against the canonicalized content rather than the raw content.
 
 ## [2.4.5] 2022-03-01
 
