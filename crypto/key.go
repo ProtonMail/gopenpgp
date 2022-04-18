@@ -81,6 +81,15 @@ func GenerateRSAKeyWithPrimes(
 func GenerateKey(name, email string, keyType string, bits int) (*Key, error) {
 	return generateKey(name, email, keyType, bits, nil, nil, nil, nil)
 }
+// GenerateNoEmailKey generates a key of the given keyType ("rsa" or "x25519").
+// The key might not be usable for the email use case as it doesn't ensure that
+// name and email are set. Setting one will suffice.
+// If keyType is "rsa", bits is the RSA bitsize of the key.
+// If keyType is "x25519" bits is unused.
+func GenerateNoEmailKey(name, email string, keyType string, bits int) (*Key, error) {
+	return generateNoEmailKey(name, email, keyType, bits, nil, nil, nil, nil)
+}
+
 
 // --- Operate on key
 
@@ -444,6 +453,57 @@ func generateKey(
 
 	if len(name) == 0 {
 		return nil, errors.New("gopenpgp: invalid name format")
+	}
+
+	comments := ""
+
+	cfg := &packet.Config{
+		Algorithm:              packet.PubKeyAlgoRSA,
+		RSABits:                bits,
+		Time:                   getKeyGenerationTimeGenerator(),
+		DefaultHash:            crypto.SHA256,
+		DefaultCipher:          packet.CipherAES256,
+		DefaultCompressionAlgo: packet.CompressionZLIB,
+	}
+
+	if keyType == "x25519" {
+		cfg.Algorithm = packet.PubKeyAlgoEdDSA
+	}
+
+	if prime1 != nil && prime2 != nil && prime3 != nil && prime4 != nil {
+		var bigPrimes [4]*big.Int
+		bigPrimes[0] = new(big.Int)
+		bigPrimes[0].SetBytes(prime1)
+		bigPrimes[1] = new(big.Int)
+		bigPrimes[1].SetBytes(prime2)
+		bigPrimes[2] = new(big.Int)
+		bigPrimes[2].SetBytes(prime3)
+		bigPrimes[3] = new(big.Int)
+		bigPrimes[3].SetBytes(prime4)
+
+		cfg.RSAPrimes = bigPrimes[:]
+	}
+
+	newEntity, err := openpgp.NewEntity(name, comments, email, cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "gopengpp: error in encoding new entity")
+	}
+
+	if newEntity.PrivateKey == nil {
+		return nil, errors.New("gopenpgp: error in generating private key")
+	}
+
+	return NewKeyFromEntity(newEntity)
+}
+
+func generateNoEmailKey(
+	name, email string,
+	keyType string,
+	bits int,
+	prime1, prime2, prime3, prime4 []byte,
+) (*Key, error) {
+	if len(email) == 0 && len(name) == 0 {
+		return nil, errors.New("gopenpgp: neither name nor email set.")
 	}
 
 	comments := ""
