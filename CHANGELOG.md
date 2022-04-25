@@ -4,9 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+- `DecryptMIMEMessage` will return the decrypted content in the `OnBody` callback, even when there's a signature verification error. That lets the caller decide whether they want to use the content with a warning or hard fail on signature errors.
+
 ## [2.4.6] 2022-03-25
 
-## Fixed
+### Fixed
 - Update dependency `github.com/ProtonMail/go-mime`. It makes the parsing 
 of MIME messages more flexible to messages with no specified charsets.
 - Fix the verification of PGP/MIME signature, the signature is now verified 

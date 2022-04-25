@@ -45,7 +45,6 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 		callbacks.OnError(embeddedSigError)
 		callbacks.OnError(mimeSigError)
 		callbacks.OnVerified(prioritizeSignatureErrors(embeddedSigError, mimeSigError))
-		return
 	} else if verifyKey != nil {
 		callbacks.OnVerified(constants.SIGNATURE_OK)
 	}
