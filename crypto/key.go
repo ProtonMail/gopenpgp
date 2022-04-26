@@ -438,12 +438,8 @@ func generateKey(
 	bits int,
 	prime1, prime2, prime3, prime4 []byte,
 ) (*Key, error) {
-	if len(email) == 0 {
-		return nil, errors.New("gopenpgp: invalid email format")
-	}
-
-	if len(name) == 0 {
-		return nil, errors.New("gopenpgp: invalid name format")
+	if len(email) == 0 && len(name) == 0 {
+		return nil, errors.New("gopenpgp: neither name nor email set.")
 	}
 
 	comments := ""
