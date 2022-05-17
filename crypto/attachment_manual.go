@@ -148,7 +148,7 @@ func (keyRing *KeyRing) NewManualAttachmentProcessor(
 	return attachmentProc, nil
 }
 
-// readAll works a bit like io.ReadAll
+// readAll works a bit like ioutil.ReadAll
 // but we can choose the buffer to write to
 // and we don't grow the slice in case of overflow.
 func readAll(buffer []byte, reader io.Reader) (int, error) {
