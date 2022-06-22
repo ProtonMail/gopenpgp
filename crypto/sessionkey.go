@@ -327,17 +327,19 @@ func decryptStreamWithSessionKey(sk *SessionKey, messageReader io.Reader, verify
 
 	// Decrypt data packet
 	switch p := p.(type) {
-	case *packet.SymmetricallyEncrypted:
+	case *packet.SymmetricallyEncrypted, *packet.AEADEncrypted:
 		dc, err := sk.GetCipherFunc()
 		if err != nil {
 			return nil, errors.Wrap(err, "gopenpgp: unable to decrypt with session key")
 		}
-
-		decrypted, err = p.Decrypt(dc, sk.Key)
+		encryptedDataPacket, isDataPacket := p.(packet.EncryptedDataPacket)
+		if !isDataPacket {
+			return nil, errors.Wrap(err, "gopenpgp: unknown data packet")
+		}
+		decrypted, err = encryptedDataPacket.Decrypt(dc, sk.Key)
 		if err != nil {
 			return nil, errors.Wrap(err, "gopenpgp: unable to decrypt symmetric packet")
 		}
-
 	default:
 		return nil, errors.New("gopenpgp: invalid packet type")
 	}

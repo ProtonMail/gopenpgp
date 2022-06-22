@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
+	"io/ioutil"
 	"testing"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
@@ -343,4 +344,43 @@ func TestAsymmetricKeyPacketDecryptionFailure(t *testing.T) {
 
 	_, err = ukr.DecryptSessionKey(keyPacket)
 	assert.Error(t, err, "gopenpgp: unable to decrypt session key")
+}
+
+func TestAEADDataPacketDecryption(t *testing.T) {
+	pgpMessageData, err := ioutil.ReadFile("testdata/gpg2.3-aead-pgp-message.pgp")
+	if err != nil {
+		t.Fatal("Expected no error when reading message data, got:", err)
+	}
+	pgpMessage := NewPGPMessage(pgpMessageData)
+
+	split, err := pgpMessage.SplitMessage()
+	if err != nil {
+		t.Fatal("Expected no error when splitting, got:", err)
+	}
+
+	aeadKey, err := NewKeyFromArmored(readTestFile("gpg2.3-aead-test-key.asc", false))
+	if err != nil {
+		t.Fatal("Expected no error when unarmoring key, got:", err)
+	}
+
+	aeadKeyUnlocked, err := aeadKey.Unlock([]byte("test"))
+	if err != nil {
+		t.Fatal("Expected no error when unlocking, got:", err)
+	}
+	kR, err := NewKeyRing(aeadKeyUnlocked)
+	if err != nil {
+		t.Fatal("Expected no error when creating the keyring, got:", err)
+	}
+	defer kR.ClearPrivateParams()
+	sessionKey, err := kR.DecryptSessionKey(split.GetBinaryKeyPacket())
+	if err != nil {
+		t.Fatal("Expected no error when decrypting session key, got:", err)
+	}
+
+	decrypted, err := sessionKey.Decrypt(split.GetBinaryDataPacket())
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+
+	assert.Exactly(t, "hello world\n", decrypted.GetString())
 }
