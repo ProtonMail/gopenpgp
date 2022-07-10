@@ -412,7 +412,7 @@ DecryptVerifyBinaryDetached(
 	encryptedSignatureArmored string,
 ) (plainData []byte, err error)
 ```
-- Wrappers for `EncryptSignArmoredDetached` and `EncryptSignBinaryDetached` helpers, to be usable with gomobile (that doesn't support multiple retun values). These wrappers return custom structs instead.
+- Wrappers for `EncryptSignArmoredDetached` and `EncryptSignBinaryDetached` helpers, to be usable with gomobile (that doesn't support multiple return values). These wrappers return custom structs instead.
 ```go
 type EncryptSignArmoredDetachedMobileResult struct {
 	CiphertextArmored, EncryptedSignatureArmored string
@@ -727,7 +727,7 @@ models.DecryptSignedVerify struct {
 	Message string
 }
 // Is now
-// ExplicitVerifyMessage contains explicitely the signature verification error, for gomobile users
+// ExplicitVerifyMessage contains explicitly the signature verification error, for gomobile users
 type ExplicitVerifyMessage struct {
 	Message *crypto.PlainMessage
 	SignatureVerificationError *crypto.SignatureVerificationError

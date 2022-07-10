@@ -75,7 +75,7 @@ func (keyRing *KeyRing) NewManualAttachmentProcessor(
 	estimatedSize int, filename string, dataBuffer []byte,
 ) (*ManualAttachmentProcessor, error) {
 	if len(dataBuffer) == 0 {
-		return nil, errors.New("gopenpgp: can't give a nil or empty buffer to process the attachement")
+		return nil, errors.New("gopenpgp: can't give a nil or empty buffer to process the attachment")
 	}
 
 	// forces the gc to be called often
