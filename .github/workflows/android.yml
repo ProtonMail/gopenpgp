@@ -28,6 +28,9 @@ jobs:
 
     - name: Build
       run: |
+        for d in $ANDROID_NDK_HOME/../23*; do
+          ANDROID_NDK_HOME=$d
+        done
         ./build.sh android
         find dist
 
