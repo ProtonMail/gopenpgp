@@ -2,13 +2,13 @@ package crypto
 
 import (
 	"crypto/dsa" //nolint:staticcheck
-	"crypto/ecdsa"
-	"crypto/ed25519"
 	"crypto/rsa"
 	"errors"
 	"math/big"
 
 	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
+	"github.com/ProtonMail/go-crypto/openpgp/ecdsa"
+	"github.com/ProtonMail/go-crypto/openpgp/eddsa"
 	"github.com/ProtonMail/go-crypto/openpgp/elgamal"
 )
 
@@ -57,7 +57,7 @@ func clearPrivateKey(privateKey interface{}) error {
 		return clearElGamalPrivateKey(priv)
 	case *ecdsa.PrivateKey:
 		return clearECDSAPrivateKey(priv)
-	case *ed25519.PrivateKey:
+	case *eddsa.PrivateKey:
 		return clearEdDSAPrivateKey(priv)
 	case *ecdh.PrivateKey:
 		return clearECDHPrivateKey(priv)
@@ -115,8 +115,8 @@ func clearECDSAPrivateKey(priv *ecdsa.PrivateKey) error {
 	return nil
 }
 
-func clearEdDSAPrivateKey(priv *ed25519.PrivateKey) error {
-	clearMem(*priv)
+func clearEdDSAPrivateKey(priv *eddsa.PrivateKey) error {
+	clearMem(priv.D)
 
 	return nil
 }

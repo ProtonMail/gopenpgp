@@ -97,6 +97,7 @@ install_gomobile
 go env
 echo "PATH=$PATH"
 echo "gomobile:$(which gomobile)"
+echo "ndk:$ANDROID_NDK_HOME"
 
 printf "Packages included : ${PACKAGES}\n"
 ## start building
