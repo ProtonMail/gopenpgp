@@ -4,5 +4,5 @@ show_downloads: true
 google_analytics:
 theme: jekyll-theme-cayman
 github:
-  library: https://github.com/ProtonMail/crypto
+  library: https://github.com/ProtonMail/go-crypto
   wrapper: https://github.com/ProtonMail/gopenpgp
