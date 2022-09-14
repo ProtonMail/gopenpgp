@@ -6,7 +6,7 @@ description: An easy-to-use OpenPGP wrapper library written in golang
 
 # What is GopenPGP?
 
-GopenPGP is a high-level OpenPGP wrapper library developed by ProtonMail, as well as a fork of the golang crypto library, which the wrapper library is built on. The goal of this project is to provide an easy-to-use, open source encryption wrapper library for the developer community that is well-maintained, up-to-date with the latest OpenPGP RFC changes, and periodically audited for security. 
+GopenPGP is a high-level OpenPGP wrapper library developed by Proton Mail, as well as a fork of the golang crypto library, which the wrapper library is built on. The goal of this project is to provide an easy-to-use, open source encryption wrapper library for the developer community that is well-maintained, up-to-date with the latest OpenPGP RFC changes, and periodically audited for security. 
 
 # Updates
 
@@ -26,9 +26,9 @@ We welcome contributions and feedback from the community. We will continuously i
 
 # Supporters
 
-<a class="card text-center" href="https://protonmail.com/" title="ProtonMail" target="_blank">
-  <img id="logo-protonmail" alt="protonmail logo" title="ProtonMail" src="/assets/img/protonmail-logo-white.svg">
-  <small>ProtonMail</small>
+<a class="card text-center" href="https://proton.me/mail" title="Proton Mail" target="_blank">
+  <img id="logo-proton-mail" alt="Proton Mail logo" title="Proton Mail" src="/assets/img/logo-proton-mail-white.svg">
+  <small>Proton Mail</small>
 </a>
 <a class="card text-center" href="https://ec.europa.eu/programmes/horizon2020/en" title="Horizon 2020" target="_blank">
   <img id="logo-eu" alt="Horizon2020 logo" title="This project is supported by the Horizon 2020 Framework Programme of the European Union" src="/assets/img/logo-gdpr-eu-white.svg">
