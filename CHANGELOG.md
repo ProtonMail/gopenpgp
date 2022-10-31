@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- Updated `github.com/ProtonMail/go-mime` to latest versions, which cleans up uneeded dependencies. And fix an issue with PGP/MIME messages with non standard encodings.
+
 ## [2.4.10] 2022-08-22
 ### Changed
 - Updated underlying crypto library
