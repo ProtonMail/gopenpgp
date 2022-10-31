@@ -202,7 +202,7 @@ func (msg *PlainMessage) GetBinary() []byte {
 
 // GetString returns the content of the message as a string.
 func (msg *PlainMessage) GetString() string {
-	return strings.ReplaceAll(string(msg.Data), "\r\n", "\n")
+	return sanitizeString(strings.ReplaceAll(string(msg.Data), "\r\n", "\n"))
 }
 
 // GetBase64 returns the base-64 encoded binary content of the message as a
