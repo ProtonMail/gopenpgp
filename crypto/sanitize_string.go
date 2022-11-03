@@ -1,8 +1,7 @@
-//go:build !ios
-// +build !ios
-
 package crypto
 
+import "strings"
+
 func sanitizeString(input string) string {
-	return input
+	return strings.ToValidUTF8(input, "\ufffd")
 }

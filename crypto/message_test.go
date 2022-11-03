@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
+	"io/ioutil"
 	"testing"
 	"time"
 
@@ -83,7 +84,12 @@ func TestTextMixedMessageDecryptionWithPassword(t *testing.T) {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 
-	assert.Exactly(t, readTestFile("message_mixedPasswordPublicExpected", true), decrypted.GetString())
+	expected, err := ioutil.ReadFile("testdata/message_mixedPasswordPublicExpected")
+	if err != nil {
+		panic(err)
+	}
+
+	assert.Exactly(t, expected, decrypted.GetBinary())
 }
 
 func TestTextMessageEncryption(t *testing.T) {
