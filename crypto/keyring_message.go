@@ -69,8 +69,12 @@ func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, erro
 
 	config := &packet.Config{DefaultHash: crypto.SHA512, Time: getTimeGenerator()}
 	var outBuf bytes.Buffer
-	// sign bin
-	if err := openpgp.DetachSign(&outBuf, signEntity, message.NewReader(), config); err != nil {
+	if message.IsBinary() {
+		err = openpgp.DetachSign(&outBuf, signEntity, message.NewReader(), config)
+	} else {
+		err = openpgp.DetachSignText(&outBuf, signEntity, message.NewReader(), config)
+	}
+	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in signing")
 	}
 
