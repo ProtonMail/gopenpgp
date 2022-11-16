@@ -92,7 +92,7 @@ func NewPlainMessageFromFile(data []byte, filename string, time uint32) *PlainMe
 // This allows seamless conversion to clear text signed messages (see RFC 4880 5.2.1 and 7.1).
 func NewPlainMessageFromString(text string) *PlainMessage {
 	return &PlainMessage{
-		Data:     []byte(internal.CanonicalizeAndTrim(text)),
+		Data:     []byte(internal.Canonicalize(text)),
 		TextType: true,
 		Filename: "",
 		Time:     uint32(GetUnixTime()),

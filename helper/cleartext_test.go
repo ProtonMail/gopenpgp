@@ -45,5 +45,5 @@ func TestSignClearText(t *testing.T) {
 	if err != nil {
 		t.Fatal("Cannot parse message:", err)
 	}
-	assert.Exactly(t, internal.CanonicalizeAndTrim(inputPlainText), string(clearTextMessage.GetBinary()))
+	assert.Exactly(t, internal.Canonicalize(internal.TrimEachLine(inputPlainText)), string(clearTextMessage.GetBinary()))
 }

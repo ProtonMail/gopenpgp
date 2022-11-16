@@ -7,14 +7,18 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 )
 
-func CanonicalizeAndTrim(text string) string {
+func Canonicalize(text string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\n", "\r\n")
+}
+
+func TrimEachLine(text string) string {
 	lines := strings.Split(text, "\n")
 
 	for i := range lines {
 		lines[i] = strings.TrimRight(lines[i], " \t\r")
 	}
 
-	return strings.Join(lines, "\r\n")
+	return strings.Join(lines, "\n")
 }
 
 // CreationTimeOffset stores the amount of seconds that a signature may be
