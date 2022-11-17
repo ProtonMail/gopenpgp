@@ -125,13 +125,6 @@ func TestTextMessageEncryptionWithTrailingSpaces(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	split, err := ciphertext.SplitMessage()
-	if err != nil {
-		t.Fatal("Expected no error when splitting, got:", err)
-	}
-
-	assert.Len(t, split.GetBinaryDataPacket(), 133) // Assert uncompressed encrypted body length
-
 	decrypted, err := keyRingTestPrivate.Decrypt(ciphertext, nil, 0)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
@@ -147,13 +140,6 @@ func TestTextMessageEncryptionWithNonCanonicalLinebreak(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
-
-	split, err := ciphertext.SplitMessage()
-	if err != nil {
-		t.Fatal("Expected no error when splitting, got:", err)
-	}
-
-	assert.Len(t, split.GetBinaryDataPacket(), 133) // Assert uncompressed encrypted body length
 
 	decrypted, err := keyRingTestPrivate.Decrypt(ciphertext, nil, 0)
 	if err != nil {
