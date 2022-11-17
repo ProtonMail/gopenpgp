@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `github.com/ProtonMail/go-mime` to latest versions, which cleans up uneeded dependencies. And fix an issue with PGP/MIME messages with non standard encodings.
 - Sanitize strings returned in `MIMECallbacks.OnBody()` and `PlainMessage.GetString()`. Strings that have non utf8 characters will be sanitized to have the "character unknown" character : � instead.
 - Detached sign text messages with signature type text. Similarly, clearsigned messages now also use signature type text.
+- Leave trailing spaces of text messages intact (except for clearsigned messages, where the spec requires us to trim trailing spaces). Note that for backwards compatibility, when verifying detached signatures over text messages, the application will have to trim trailing spaces in order for the signature to verify, if it was created by a previous version of this library (using `crypto.NewPlainMessageFromString()`).
 
 ## [2.4.10] 2022-08-22
 ### Changed
