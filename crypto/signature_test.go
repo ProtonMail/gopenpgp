@@ -19,6 +19,26 @@ var textSignature, binSignature *PGPSignature
 var message *PlainMessage
 var signatureTest = regexp.MustCompile("(?s)^-----BEGIN PGP SIGNATURE-----.*-----END PGP SIGNATURE-----$")
 
+func getSignatureType(sig *PGPSignature) (packet.SignatureType, error) {
+	sigPacket, err := getSignaturePacket(sig)
+	if err != nil {
+		return 0, err
+	}
+	return sigPacket.SigType, nil
+}
+
+func getSignaturePacket(sig *PGPSignature) (*packet.Signature, error) {
+	p, err := packet.Read(bytes.NewReader(sig.Data))
+	if err != nil {
+		return nil, err
+	}
+	sigPacket, ok := p.(*packet.Signature)
+	if !ok {
+		return nil, errors.New("")
+	}
+	return sigPacket, nil
+}
+
 func TestSignTextDetached(t *testing.T) {
 	var err error
 
@@ -31,6 +51,16 @@ func TestSignTextDetached(t *testing.T) {
 	armoredSignature, err := textSignature.GetArmored()
 	if err != nil {
 		t.Fatal("Cannot armor signature:", err)
+	}
+
+	sigType, err := getSignatureType(textSignature)
+
+	if err != nil {
+		t.Fatal("Cannot get signature type:", err)
+	}
+
+	if sigType != packet.SigTypeText {
+		t.Fatal("Signature type was not text")
 	}
 
 	assert.Regexp(t, signatureTest, armoredSignature)
@@ -66,6 +96,16 @@ func TestSignBinDetached(t *testing.T) {
 	armoredSignature, err := binSignature.GetArmored()
 	if err != nil {
 		t.Fatal("Cannot armor signature:", err)
+	}
+
+	sigType, err := getSignatureType(binSignature)
+
+	if err != nil {
+		t.Fatal("Cannot get signature type:", err)
+	}
+
+	if sigType != packet.SigTypeBinary {
+		t.Fatal("Signature type was not binary")
 	}
 
 	assert.Regexp(t, signatureTest, armoredSignature)
