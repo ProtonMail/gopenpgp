@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated `github.com/ProtonMail/go-mime` to latest versions, which cleans up uneeded dependencies. And fix an issue with PGP/MIME messages with non standard encodings.
 - Sanitize strings returned in `MIMECallbacks.OnBody()` and `PlainMessage.GetString()`. Strings that have non utf8 characters will be sanitized to have the "character unknown" character : � instead.
+- Detached sign text messages with signature type text. Similarly, clearsigned messages now also use signature type text.
 
 ## [2.4.10] 2022-08-22
 ### Changed
