@@ -99,7 +99,7 @@ func (sc *SignatureCollector) Accept(
 	}
 	sc.signature = string(buffer)
 	str, _ := ioutil.ReadAll(rawBody)
-	canonicalizedBody := internal.CanonicalizeAndTrim(string(str))
+	canonicalizedBody := internal.Canonicalize(internal.TrimEachLine(string(str)))
 	rawBody = bytes.NewReader([]byte(canonicalizedBody))
 	if sc.keyring != nil {
 		_, err = openpgp.CheckArmoredDetachedSignature(sc.keyring, rawBody, bytes.NewReader(buffer), sc.config)
