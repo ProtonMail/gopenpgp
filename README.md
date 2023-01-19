@@ -1,5 +1,6 @@
 # GopenPGP V2
 [![Build Status](https://travis-ci.org/ProtonMail/gopenpgp.svg?branch=master)](https://travis-ci.org/ProtonMail/gopenpgp)
+[![Go Reference](https://pkg.go.dev/badge/github.com/ProtonMail/gopenpgp/v2.svg)](https://pkg.go.dev/github.com/ProtonMail/gopenpgp/v2)
 
 GopenPGP is a high-level OpenPGP library built on top of [a fork of the golang
 crypto library](https://github.com/ProtonMail/crypto).
