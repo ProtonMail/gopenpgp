@@ -107,10 +107,34 @@ func TestKeyRing_EncryptDecryptStream(t *testing.T) {
 }
 
 func TestKeyRing_EncryptStreamCompatible(t *testing.T) {
+	enc := func(w io.Writer, meta *PlainMessageMetadata, kr *KeyRing) (io.WriteCloser, error) {
+		return keyRingTestPublic.EncryptStream(
+			w,
+			meta,
+			kr,
+		)
+	}
+	testKeyRing_EncryptStreamCompatible(enc, t)
+}
+
+func TestKeyRing_EncryptStreamWithCompressionCompatible(t *testing.T) {
+	enc := func(w io.Writer, meta *PlainMessageMetadata, kr *KeyRing) (io.WriteCloser, error) {
+		return keyRingTestPublic.EncryptStreamWithCompression(
+			w,
+			meta,
+			kr,
+		)
+	}
+	testKeyRing_EncryptStreamCompatible(enc, t)
+}
+
+type keyringEncryptionFunction = func(io.Writer, *PlainMessageMetadata, *KeyRing) (io.WriteCloser, error)
+
+func testKeyRing_EncryptStreamCompatible(encrypt keyringEncryptionFunction, t *testing.T) {
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
 	var ciphertextBuf bytes.Buffer
-	messageWriter, err := keyRingTestPublic.EncryptStream(
+	messageWriter, err := encrypt(
 		&ciphertextBuf,
 		testMeta,
 		keyRingTestPrivate,
@@ -276,10 +300,34 @@ func TestKeyRing_EncryptDecryptSplitStream(t *testing.T) {
 }
 
 func TestKeyRing_EncryptSplitStreamCompatible(t *testing.T) {
+	enc := func(w io.Writer, meta *PlainMessageMetadata, kr *KeyRing) (*EncryptSplitResult, error) {
+		return keyRingTestPublic.EncryptSplitStream(
+			w,
+			meta,
+			kr,
+		)
+	}
+	testKeyRing_EncryptSplitStreamCompatible(enc, t)
+}
+
+func TestKeyRing_EncryptSplitStreamWithCompressionCompatible(t *testing.T) {
+	enc := func(w io.Writer, meta *PlainMessageMetadata, kr *KeyRing) (*EncryptSplitResult, error) {
+		return keyRingTestPublic.EncryptSplitStreamWithCompression(
+			w,
+			meta,
+			kr,
+		)
+	}
+	testKeyRing_EncryptSplitStreamCompatible(enc, t)
+}
+
+type keyringEncryptionSplitFunction = func(io.Writer, *PlainMessageMetadata, *KeyRing) (*EncryptSplitResult, error)
+
+func testKeyRing_EncryptSplitStreamCompatible(encrypt keyringEncryptionSplitFunction, t *testing.T) {
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
 	var dataPacketBuf bytes.Buffer
-	encryptionResult, err := keyRingTestPublic.EncryptSplitStream(
+	encryptionResult, err := encrypt(
 		&dataPacketBuf,
 		testMeta,
 		keyRingTestPrivate,

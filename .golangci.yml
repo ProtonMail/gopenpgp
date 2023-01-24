@@ -47,3 +47,4 @@ linters:
     - forcetypeassert   # Forces to assert types in tests
     - nonamedreturns    # Disallows named returns
     - exhaustruct       # Forces all structs to be named
+    - nosnakecase       # Disallows snake case 

@@ -8,6 +8,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
 )
 
@@ -44,6 +45,47 @@ func (keyRing *KeyRing) EncryptStream(
 ) (plainMessageWriter WriteCloser, err error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 
+	return keyRing.encryptStreamWithConfig(
+		config,
+		pgpMessageWriter,
+		pgpMessageWriter,
+		plainMessageMetadata,
+		signKeyRing,
+	)
+}
+
+// EncryptStreamWithCompression is used to encrypt data as a Writer.
+// The plaintext data is compressed before being encrypted.
+// It takes a writer for the encrypted data and returns a WriteCloser for the plaintext data
+// If signKeyRing is not nil, it is used to do an embedded signature.
+func (keyRing *KeyRing) EncryptStreamWithCompression(
+	pgpMessageWriter Writer,
+	plainMessageMetadata *PlainMessageMetadata,
+	signKeyRing *KeyRing,
+) (plainMessageWriter WriteCloser, err error) {
+	config := &packet.Config{
+		DefaultCipher:          packet.CipherAES256,
+		Time:                   getTimeGenerator(),
+		DefaultCompressionAlgo: constants.DefaultCompression,
+		CompressionConfig:      &packet.CompressionConfig{Level: constants.DefaultCompressionLevel},
+	}
+
+	return keyRing.encryptStreamWithConfig(
+		config,
+		pgpMessageWriter,
+		pgpMessageWriter,
+		plainMessageMetadata,
+		signKeyRing,
+	)
+}
+
+func (keyRing *KeyRing) encryptStreamWithConfig(
+	config *packet.Config,
+	keyPacketWriter Writer,
+	dataPacketWriter Writer,
+	plainMessageMetadata *PlainMessageMetadata,
+	signKeyRing *KeyRing,
+) (plainMessageWriter WriteCloser, err error) {
 	if plainMessageMetadata == nil {
 		// Use sensible default metadata
 		plainMessageMetadata = &PlainMessageMetadata{
@@ -59,7 +101,7 @@ func (keyRing *KeyRing) EncryptStream(
 		ModTime:  time.Unix(plainMessageMetadata.ModTime, 0),
 	}
 
-	plainMessageWriter, err = asymmetricEncryptStream(hints, pgpMessageWriter, pgpMessageWriter, keyRing, signKeyRing, config)
+	plainMessageWriter, err = asymmetricEncryptStream(hints, keyPacketWriter, dataPacketWriter, keyRing, signKeyRing, config)
 	if err != nil {
 		return nil, err
 	}
@@ -109,26 +151,55 @@ func (keyRing *KeyRing) EncryptSplitStream(
 ) (*EncryptSplitResult, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 
-	if plainMessageMetadata == nil {
-		// Use sensible default metadata
-		plainMessageMetadata = &PlainMessageMetadata{
-			IsBinary: true,
-			Filename: "",
-			ModTime:  GetUnixTime(),
-		}
-	}
-
-	hints := &openpgp.FileHints{
-		FileName: plainMessageMetadata.Filename,
-		IsBinary: plainMessageMetadata.IsBinary,
-		ModTime:  time.Unix(plainMessageMetadata.ModTime, 0),
-	}
-
 	var keyPacketBuf bytes.Buffer
-	plainMessageWriter, err := asymmetricEncryptStream(hints, &keyPacketBuf, dataPacketWriter, keyRing, signKeyRing, config)
+
+	plainMessageWriter, err := keyRing.encryptStreamWithConfig(
+		config,
+		&keyPacketBuf,
+		dataPacketWriter,
+		plainMessageMetadata,
+		signKeyRing,
+	)
 	if err != nil {
 		return nil, err
 	}
+
+	return &EncryptSplitResult{
+		keyPacketBuf:       &keyPacketBuf,
+		plainMessageWriter: plainMessageWriter,
+	}, nil
+}
+
+// EncryptSplitStreamWithCompression is used to encrypt data as a stream.
+// It takes a writer for the Symmetrically Encrypted Data Packet
+// (https://datatracker.ietf.org/doc/html/rfc4880#section-5.7)
+// and returns a writer for the plaintext data and the key packet.
+// If signKeyRing is not nil, it is used to do an embedded signature.
+func (keyRing *KeyRing) EncryptSplitStreamWithCompression(
+	dataPacketWriter Writer,
+	plainMessageMetadata *PlainMessageMetadata,
+	signKeyRing *KeyRing,
+) (*EncryptSplitResult, error) {
+	config := &packet.Config{
+		DefaultCipher:          packet.CipherAES256,
+		Time:                   getTimeGenerator(),
+		DefaultCompressionAlgo: constants.DefaultCompression,
+		CompressionConfig:      &packet.CompressionConfig{Level: constants.DefaultCompressionLevel},
+	}
+
+	var keyPacketBuf bytes.Buffer
+
+	plainMessageWriter, err := keyRing.encryptStreamWithConfig(
+		config,
+		&keyPacketBuf,
+		dataPacketWriter,
+		plainMessageMetadata,
+		signKeyRing,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &EncryptSplitResult{
 		keyPacketBuf:       &keyPacketBuf,
 		plainMessageWriter: plainMessageWriter,

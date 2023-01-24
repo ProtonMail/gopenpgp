@@ -74,10 +74,26 @@ func TestSessionKey_EncryptDecryptStream(t *testing.T) {
 }
 
 func TestSessionKey_EncryptStreamCompatible(t *testing.T) {
+	enc := func(w io.Writer, meta *PlainMessageMetadata, kr *KeyRing) (io.WriteCloser, error) {
+		return testSessionKey.EncryptStream(w, meta, kr)
+	}
+	testSessionKey_EncryptStreamCompatible(enc, t)
+}
+
+func TestSessionKey_EncryptStreamWithCompressionCompatible(t *testing.T) {
+	enc := func(w io.Writer, meta *PlainMessageMetadata, kr *KeyRing) (io.WriteCloser, error) {
+		return testSessionKey.EncryptStreamWithCompression(w, meta, kr)
+	}
+	testSessionKey_EncryptStreamCompatible(enc, t)
+}
+
+type sessionKeyEncryptionFunction = func(io.Writer, *PlainMessageMetadata, *KeyRing) (io.WriteCloser, error)
+
+func testSessionKey_EncryptStreamCompatible(enc sessionKeyEncryptionFunction, t *testing.T) {
 	messageBytes := []byte("Hello World!")
 	messageReader := bytes.NewReader(messageBytes)
 	var dataPacketBuf bytes.Buffer
-	messageWriter, err := testSessionKey.EncryptStream(
+	messageWriter, err := enc(
 		&dataPacketBuf,
 		testMeta,
 		keyRingTestPrivate,

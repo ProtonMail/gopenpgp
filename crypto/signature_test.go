@@ -228,8 +228,8 @@ func Test_KeyRing_GetVerifiedSignatureTimestampError(t *testing.T) {
 	if err != nil {
 		t.Errorf("Got an error while generating the signature: %v", err)
 	}
-	message_corrupted := NewPlainMessageFromString("Ciao world!")
-	_, err = keyRingTestPublic.GetVerifiedSignatureTimestamp(message_corrupted, signature, 0)
+	messageCorrupted := NewPlainMessageFromString("Ciao world!")
+	_, err = keyRingTestPublic.GetVerifiedSignatureTimestamp(messageCorrupted, signature, 0)
 	if err == nil {
 		t.Errorf("Expected an error while parsing the creation time of a wrong signature, got nil")
 	}

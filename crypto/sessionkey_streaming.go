@@ -3,6 +3,7 @@ package crypto
 import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
 )
 
@@ -30,15 +31,50 @@ func (sk *SessionKey) EncryptStream(
 	plainMessageMetadata *PlainMessageMetadata,
 	signKeyRing *KeyRing,
 ) (plainMessageWriter WriteCloser, err error) {
+	config := &packet.Config{
+		Time: getTimeGenerator(),
+	}
+	return sk.encryptStreamWithConfig(
+		config,
+		dataPacketWriter,
+		plainMessageMetadata,
+		signKeyRing,
+	)
+}
+
+// EncryptStreamWithCompression is used to encrypt data as a Writer.
+// The plaintext data is compressed before being encrypted.
+// It takes a writer for the encrypted data packet and returns a writer for the plaintext data.
+// If signKeyRing is not nil, it is used to do an embedded signature.
+func (sk *SessionKey) EncryptStreamWithCompression(
+	dataPacketWriter Writer,
+	plainMessageMetadata *PlainMessageMetadata,
+	signKeyRing *KeyRing,
+) (plainMessageWriter WriteCloser, err error) {
+	config := &packet.Config{
+		Time:                   getTimeGenerator(),
+		DefaultCompressionAlgo: constants.DefaultCompression,
+		CompressionConfig:      &packet.CompressionConfig{Level: constants.DefaultCompressionLevel},
+	}
+	return sk.encryptStreamWithConfig(
+		config,
+		dataPacketWriter,
+		plainMessageMetadata,
+		signKeyRing,
+	)
+}
+
+func (sk *SessionKey) encryptStreamWithConfig(
+	config *packet.Config,
+	dataPacketWriter Writer,
+	plainMessageMetadata *PlainMessageMetadata,
+	signKeyRing *KeyRing,
+) (plainMessageWriter WriteCloser, err error) {
 	dc, err := sk.GetCipherFunc()
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt with session key")
 	}
-
-	config := &packet.Config{
-		Time:          getTimeGenerator(),
-		DefaultCipher: dc,
-	}
+	config.DefaultCipher = dc
 	var signEntity *openpgp.Entity
 	if signKeyRing != nil {
 		signEntity, err = signKeyRing.getSigningEntity()
