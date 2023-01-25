@@ -239,7 +239,15 @@ func encryptStreamWithSessionKey(
 	signEntity *openpgp.Entity,
 	config *packet.Config,
 ) (encryptWriter, signWriter io.WriteCloser, err error) {
-	encryptWriter, err = packet.SerializeSymmetricallyEncrypted(dataPacketWriter, config.Cipher(), sk.Key, config)
+	encryptWriter, err = packet.SerializeSymmetricallyEncrypted(
+		dataPacketWriter,
+		config.Cipher(),
+		config.AEAD() != nil,
+		packet.CipherSuite{Cipher: config.Cipher(), Mode: config.AEAD().Mode()},
+		sk.Key,
+		config,
+	)
+
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "gopenpgp: unable to encrypt")
 	}
