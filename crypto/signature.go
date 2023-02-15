@@ -132,10 +132,13 @@ func verifySignature(pubKeyEntries openpgp.EntityList, origText io.Reader, signa
 	}
 	signatureReader := bytes.NewReader(signature)
 
-	signer, err := openpgp.CheckDetachedSignatureAndHash(pubKeyEntries, origText, signatureReader, allowedHashes, config)
+	sig, signer, err := openpgp.VerifyDetachedSignatureAndHash(pubKeyEntries, origText, signatureReader, allowedHashes, config)
 
-	if errors.Is(err, pgpErrors.ErrSignatureExpired) && signer != nil && verifyTime > 0 {
-		// if verifyTime = 0: time check disabled, everything is okay
+	if signer != nil && (errors.Is(err, pgpErrors.ErrSignatureExpired) || errors.Is(err, pgpErrors.ErrKeyExpired)) {
+		if verifyTime == 0 { // Expiration check disabled
+			return nil
+		}
+
 		// Maybe the creation time offset pushed it over the edge
 		// Retry with the actual verification time
 		config.Time = func() time.Time {
@@ -147,13 +150,10 @@ func verifySignature(pubKeyEntries openpgp.EntityList, origText io.Reader, signa
 			return newSignatureFailed()
 		}
 
-		signer, err = openpgp.CheckDetachedSignatureAndHash(pubKeyEntries, origText, signatureReader, allowedHashes, config)
-		if err != nil {
-			return newSignatureFailed()
-		}
+		sig, signer, err = openpgp.VerifyDetachedSignatureAndHash(pubKeyEntries, origText, signatureReader, allowedHashes, config)
 	}
 
-	if signer == nil {
+	if err != nil || sig == nil || signer == nil {
 		return newSignatureFailed()
 	}
 
