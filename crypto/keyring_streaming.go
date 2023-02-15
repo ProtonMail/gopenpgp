@@ -324,12 +324,13 @@ func (keyRing *KeyRing) VerifyDetachedStream(
 	signature *PGPSignature,
 	verifyTime int64,
 ) error {
-	return verifySignature(
+	_, err := verifySignature(
 		keyRing.entities,
 		message,
 		signature.GetBinary(),
 		verifyTime,
 	)
+	return err
 }
 
 // SignDetachedEncryptedStream generates and returns a PGPMessage

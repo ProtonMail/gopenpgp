@@ -84,12 +84,13 @@ func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, erro
 // VerifyDetached verifies a PlainMessage with a detached PGPSignature
 // and returns a SignatureVerificationError if fails.
 func (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSignature, verifyTime int64) error {
-	return verifySignature(
+	_, err := verifySignature(
 		keyRing.entities,
 		message.NewReader(),
 		signature.GetBinary(),
 		verifyTime,
 	)
+	return err
 }
 
 // SignDetachedEncrypted generates and returns a PGPMessage
@@ -126,38 +127,16 @@ func (keyRing *KeyRing) VerifyDetachedEncrypted(message *PlainMessage, encrypted
 // returns the creation time of the signature if it succeeds
 // and returns a SignatureVerificationError if fails.
 func (keyRing *KeyRing) GetVerifiedSignatureTimestamp(message *PlainMessage, signature *PGPSignature, verifyTime int64) (int64, error) {
-	packets := packet.NewReader(bytes.NewReader(signature.Data))
-	var err error
-	var p packet.Packet
-	for {
-		p, err = packets.Next()
-		if errors.Is(err, io.EOF) {
-			break
-		}
-		if err != nil {
-			continue
-		}
-		sigPacket, ok := p.(*packet.Signature)
-		if !ok {
-			continue
-		}
-		var outBuf bytes.Buffer
-		err = sigPacket.Serialize(&outBuf)
-		if err != nil {
-			continue
-		}
-		err = verifySignature(
-			keyRing.entities,
-			message.NewReader(),
-			outBuf.Bytes(),
-			verifyTime,
-		)
-		if err != nil {
-			continue
-		}
-		return sigPacket.CreationTime.Unix(), nil
+	sigPacket, err := verifySignature(
+		keyRing.entities,
+		message.NewReader(),
+		signature.GetBinary(),
+		verifyTime,
+	)
+	if err != nil {
+		return 0, err
 	}
-	return 0, errors.Wrap(err, "gopenpgp: can't verify any signature packets")
+	return sigPacket.CreationTime.Unix(), nil
 }
 
 // ------ INTERNAL FUNCTIONS -------
