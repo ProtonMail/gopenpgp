@@ -1,0 +1,55 @@
+name: 'build-gosop'
+description: 'Build gosop from the current branch'
+
+inputs:
+
+  gopenpgp-ref: 
+    description: 'gopenpgp branch tag or commit to build from'
+    required: true
+    default: ''
+
+  binary-location: 
+    description: 'Path for the gosop binary'
+    required: true
+    default: './gosop-${{ github.sha }}'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout gopenpgp
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.gopenpgp-ref }}
+        path: gopenpgp
+    # Build gosop
+    - name: Set up latest golang
+      uses: actions/setup-go@v3
+      with:
+        go-version: ^1.18
+    - name: Check out gosop
+      uses: actions/checkout@v3
+      with:
+        repository: ProtonMail/gosop
+        path: gosop
+    - name: Cache go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    - name: Build gosop
+      run: ./.github/test-suite/build_gosop.sh
+      shell: bash
+    # Test the binary
+    - name: Print gosop version
+      run: ./gosop/gosop version --extended
+      shell: bash
+    # Move and rename binary
+    - name: Move binary
+      run: mv gosop/gosop ${{ inputs.binary-location }}
+      shell: bash
+    
+    
