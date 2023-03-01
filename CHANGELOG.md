@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+# Changed
+- Update `github.com/ProtonMail/go-crypto` to the latest version
+- More strictly verify detached signatures: reject detached signatures from revoked and expired keys.
+- In `GetVerifiedSignatureTimestamp`, use the new `VerifyDetachedSignatureAndHash` function to get the verified signature, instead of parsing the signature packets manually to get the timestamp.
+
 ## [2.5.2] 2022-01-25
 # Changed
 - Update `github.com/ProtonMail/go-crypto` to the latest version
