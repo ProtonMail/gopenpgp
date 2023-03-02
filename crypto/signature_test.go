@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const testMessage = "Hello world!"
+
 const signedPlainText = "Signed message\n"
 
 var textSignature, binSignature *PGPSignature
@@ -119,7 +121,7 @@ func TestVerifyBinDetachedSig(t *testing.T) {
 }
 
 func Test_KeyRing_GetVerifiedSignatureTimestampSuccess(t *testing.T) {
-	message := NewPlainMessageFromString("Hello world!")
+	message := NewPlainMessageFromString(testMessage)
 	var time int64 = 1600000000
 	pgp.latestServerTime = time
 	defer func() {
@@ -218,7 +220,7 @@ func getTimestampOfIssuer(signature *PGPSignature, keyID uint64) int64 {
 }
 
 func Test_KeyRing_GetVerifiedSignatureTimestampError(t *testing.T) {
-	message := NewPlainMessageFromString("Hello world!")
+	message := NewPlainMessageFromString(testMessage)
 	var time int64 = 1600000000
 	pgp.latestServerTime = time
 	defer func() {
@@ -232,5 +234,354 @@ func Test_KeyRing_GetVerifiedSignatureTimestampError(t *testing.T) {
 	_, err = keyRingTestPublic.GetVerifiedSignatureTimestamp(messageCorrupted, signature, 0)
 	if err == nil {
 		t.Errorf("Expected an error while parsing the creation time of a wrong signature, got nil")
+	}
+}
+
+func Test_SignDetachedWithNonCriticalContext(t *testing.T) {
+	// given
+
+	context := NewSigningContext(
+		"test-context",
+		false,
+	)
+	// when
+	signature, err := keyRingTestPrivate.SignDetachedWithContext(
+		NewPlainMessage([]byte(testMessage)),
+		context,
+	)
+	// then
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := packet.Read(bytes.NewReader(signature.Data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	sig, ok := p.(*packet.Signature)
+	if !ok {
+		t.Fatal("Packet was not a signature")
+	}
+	notations := sig.Notations
+	if len(notations) != 1 {
+		t.Fatal("Wrong number of notations")
+	}
+	notation := notations[0]
+	if notation.Name != constants.SignatureContextName {
+		t.Fatalf("Expected notation name to be %s, got %s", constants.SignatureContextName, notation.Name)
+	}
+	if string(notation.Value) != context.Value {
+		t.Fatalf("Expected notation value to be %s, got %s", context.Value, notation.Value)
+	}
+	if notation.IsCritical {
+		t.Fatal("Expected notation to be non critical")
+	}
+	if !notation.IsHumanReadable {
+		t.Fatal("Expected notation to be human readable")
+	}
+}
+
+func Test_SignDetachedWithCriticalContext(t *testing.T) {
+	// given
+
+	context := NewSigningContext(
+		"test-context",
+		true,
+	)
+	// when
+	signature, err := keyRingTestPrivate.SignDetachedWithContext(
+		NewPlainMessage([]byte(testMessage)),
+		context,
+	)
+	// then
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := packet.Read(bytes.NewReader(signature.Data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	sig, ok := p.(*packet.Signature)
+	if !ok {
+		t.Fatal("Packet was not a signature")
+	}
+	notations := sig.Notations
+	if len(notations) != 1 {
+		t.Fatal("Wrong number of notations")
+	}
+	notation := notations[0]
+	if notation.Name != constants.SignatureContextName {
+		t.Fatalf("Expected notation name to be %s, got %s", constants.SignatureContextName, notation.Name)
+	}
+	if string(notation.Value) != context.Value {
+		t.Fatalf("Expected notation value to be %s, got %s", context.Value, notation.Value)
+	}
+	if !notation.IsCritical {
+		t.Fatal("Expected notation to be critical")
+	}
+	if !notation.IsHumanReadable {
+		t.Fatal("Expected notation to be human readable")
+	}
+}
+
+func Test_VerifyDetachedWithUnknownCriticalContext(t *testing.T) {
+	// given
+
+	signatureArmored, err := ioutil.ReadFile("testdata/signature/critical_context_detached_sig")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// when
+	err = keyRingTestPublic.VerifyDetached(
+		NewPlainMessage([]byte(testMessage)),
+		sig,
+		0,
+	)
+	// then
+	if err == nil || !errors.Is(err, newSignatureFailed()) {
+		t.Fatalf("Expected a verification error")
+	}
+}
+
+func Test_VerifyDetachedWithUnKnownNonCriticalContext(t *testing.T) {
+	// given
+
+	signatureArmored, err := ioutil.ReadFile("testdata/signature/non_critical_context_detached_sig")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// when
+	err = keyRingTestPublic.VerifyDetached(
+		NewPlainMessage([]byte(testMessage)),
+		sig,
+		0,
+	)
+	// then
+	if err != nil {
+		t.Fatalf("Expected no verification error, got %v", err)
+	}
+}
+
+func Test_VerifyDetachedWithKnownCriticalContext(t *testing.T) {
+	// given
+
+	signatureArmored, err := ioutil.ReadFile("testdata/signature/critical_context_detached_sig")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	if err != nil {
+		t.Fatal(err)
+	}
+	verificationContext := NewVerificationContext(
+		"test-context",
+		false,
+		0,
+	)
+	// when
+	err = keyRingTestPublic.VerifyDetachedWithContext(
+		NewPlainMessage([]byte(testMessage)),
+		sig,
+		0,
+		verificationContext,
+	)
+	// then
+	if err != nil {
+		t.Fatalf("Expected no verification error, got %v", err)
+	}
+}
+
+func Test_VerifyDetachedWithWrongContext(t *testing.T) {
+	// given
+
+	signatureArmored, err := ioutil.ReadFile("testdata/signature/critical_context_detached_sig")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	if err != nil {
+		t.Fatal(err)
+	}
+	verificationContext := NewVerificationContext(
+		"another-test-context",
+		false,
+		0,
+	)
+	// when
+	err = keyRingTestPublic.VerifyDetachedWithContext(
+		NewPlainMessage([]byte(testMessage)),
+		sig,
+		0,
+		verificationContext,
+	)
+	// then
+	if err == nil || !errors.Is(err, newSignatureFailed()) {
+		t.Fatalf("Expected a verification error")
+	}
+}
+
+func Test_VerifyDetachedWithMissingNonRequiredContext(t *testing.T) {
+	// given
+
+	signatureArmored, err := ioutil.ReadFile("testdata/signature/no_context_detached_sig")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	if err != nil {
+		t.Fatal(err)
+	}
+	verificationContext := NewVerificationContext(
+		"test-context",
+		false,
+		0,
+	)
+	// when
+	err = keyRingTestPublic.VerifyDetachedWithContext(
+		NewPlainMessage([]byte(testMessage)),
+		sig,
+		0,
+		verificationContext,
+	)
+	// then
+	if err != nil {
+		t.Fatalf("Expected no verification error, got %v", err)
+	}
+}
+
+func Test_VerifyDetachedWithMissingRequiredContext(t *testing.T) {
+	// given
+
+	signatureArmored, err := ioutil.ReadFile("testdata/signature/no_context_detached_sig")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	if err != nil {
+		t.Fatal(err)
+	}
+	verificationContext := NewVerificationContext(
+		"test-context",
+		true,
+		0,
+	)
+	// when
+	err = keyRingTestPublic.VerifyDetachedWithContext(
+		NewPlainMessage([]byte(testMessage)),
+		sig,
+		0,
+		verificationContext,
+	)
+	// then
+	if err == nil || !errors.Is(err, newSignatureFailed()) {
+		t.Fatalf("Expected a verification error")
+	}
+}
+
+func Test_VerifyDetachedWithMissingRequiredContextBeforeCutoff(t *testing.T) {
+	// given
+	signatureArmored, err := ioutil.ReadFile("testdata/signature/no_context_detached_sig")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := packet.Read(bytes.NewReader(sig.Data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	sigPacket, ok := p.(*packet.Signature)
+	if !ok {
+		t.Fatal("Packet was not a signature")
+	}
+	verificationContext := NewVerificationContext(
+		"test-context",
+		true,
+		sigPacket.CreationTime.Unix()+10000,
+	)
+	// when
+	err = keyRingTestPublic.VerifyDetachedWithContext(
+		NewPlainMessage([]byte(testMessage)),
+		sig,
+		0,
+		verificationContext,
+	)
+	// then
+	if err != nil {
+		t.Fatalf("Expected no verification error, got %v", err)
+	}
+}
+
+func Test_VerifyDetachedWithMissingRequiredContextAfterCutoff(t *testing.T) {
+	// given
+	signatureArmored, err := ioutil.ReadFile("testdata/signature/no_context_detached_sig")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := packet.Read(bytes.NewReader(sig.Data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	sigPacket, ok := p.(*packet.Signature)
+	if !ok {
+		t.Fatal("Packet was not a signature")
+	}
+	verificationContext := NewVerificationContext(
+		"test-context",
+		true,
+		sigPacket.CreationTime.Unix()-10000,
+	)
+	// when
+	err = keyRingTestPublic.VerifyDetachedWithContext(
+		NewPlainMessage([]byte(testMessage)),
+		sig,
+		0,
+		verificationContext,
+	)
+	// then
+	if err == nil || !errors.Is(err, newSignatureFailed()) {
+		t.Fatalf("Expected a verification error")
+	}
+}
+
+func Test_VerifyDetachedWithDoubleContext(t *testing.T) {
+	// given
+	signatureArmored, err := ioutil.ReadFile("testdata/signature/double_critical_context_detached_sig")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	if err != nil {
+		t.Fatal(err)
+	}
+	verificationContext := NewVerificationContext(
+		"test-context",
+		true,
+		0,
+	)
+	// when
+	err = keyRingTestPublic.VerifyDetachedWithContext(
+		NewPlainMessage([]byte(testMessage)),
+		sig,
+		0,
+		verificationContext,
+	)
+	// then
+	if err == nil || !errors.Is(err, newSignatureFailed()) {
+		t.Fatalf("Expected a verification error")
 	}
 }

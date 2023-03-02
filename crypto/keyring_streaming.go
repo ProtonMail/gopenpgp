@@ -329,6 +329,27 @@ func (keyRing *KeyRing) VerifyDetachedStream(
 		message,
 		signature.GetBinary(),
 		verifyTime,
+		nil,
+	)
+	return err
+}
+
+// VerifyDetachedStreamWithContext verifies a message reader with a detached PGPSignature
+// and returns a SignatureVerificationError if fails.
+// If a context is provided, it verifies that the signature is valid in the given context, using
+// the signature notations.
+func (keyRing *KeyRing) VerifyDetachedStreamWithContext(
+	message Reader,
+	signature *PGPSignature,
+	verifyTime int64,
+	verificationContext *VerificationContext,
+) error {
+	_, err := verifySignature(
+		keyRing.entities,
+		message,
+		signature.GetBinary(),
+		verifyTime,
+		verificationContext,
 	)
 	return err
 }
