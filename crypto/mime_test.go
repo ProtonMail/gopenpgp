@@ -303,7 +303,7 @@ func TestMessageVerificationNotSignedNoVerifier(t *testing.T) {
 
 func TestMessageVerificationNotSignedFailed(t *testing.T) {
 	callbackResults := runScenario(t, "testdata/mime/scenario_13.asc")
-	var expectedErrors = []SignatureVerificationError{newSignatureNotSigned(), newSignatureFailed()}
+	var expectedErrors = []SignatureVerificationError{newSignatureNotSigned(), newSignatureFailed(nil)}
 	compareErrors(expectedErrors, callbackResults.onError, t)
 	expectedStatus := []int{3}
 	compareStatus(expectedStatus, callbackResults.onVerified, t)
@@ -335,7 +335,7 @@ func TestMessageVerificationNoVerifierNoVerifier(t *testing.T) {
 
 func TestMessageVerificationNoVerifierFailed(t *testing.T) {
 	callbackResults := runScenario(t, "testdata/mime/scenario_23.asc")
-	var expectedErrors = []SignatureVerificationError{newSignatureNoVerifier(), newSignatureFailed()}
+	var expectedErrors = []SignatureVerificationError{newSignatureNoVerifier(), newSignatureFailed(nil)}
 	compareErrors(expectedErrors, callbackResults.onError, t)
 	expectedStatus := []int{3}
 	compareStatus(expectedStatus, callbackResults.onVerified, t)

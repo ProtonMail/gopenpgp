@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `github.com/ProtonMail/go-crypto` to the latest version
 - More strictly verify detached signatures: reject detached signatures from revoked and expired keys.
 - In `GetVerifiedSignatureTimestamp`, use the new `VerifyDetachedSignatureAndHash` function to get the verified signature, instead of parsing the signature packets manually to get the timestamp.
+- The `SignatureVerificationError` struct now has a `Cause error` field, which is returned by the the Unwrap function.
+	NB: If the caller was relying on the exact message of the error, it might break the flow.
 
 ## [2.5.2] 2022-01-25
 ### Changed

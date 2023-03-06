@@ -110,7 +110,7 @@ func (sc *SignatureCollector) Accept(
 		case errors.Is(err, pgpErrors.ErrUnknownIssuer):
 			sc.verified = newSignatureNoVerifier()
 		default:
-			sc.verified = newSignatureFailed()
+			sc.verified = newSignatureFailed(err)
 		}
 	} else {
 		sc.verified = newSignatureNoVerifier()
