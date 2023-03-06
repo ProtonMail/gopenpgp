@@ -75,11 +75,25 @@ func TestVerifyTextDetachedSig(t *testing.T) {
 	}
 }
 
+func checkVerificationError(t *testing.T, err error, expectedStatus int) { //nolint: unparam
+	if err == nil {
+		t.Fatalf("Expected a verification error")
+	}
+	castedErr := &SignatureVerificationError{}
+	isType := errors.As(err, castedErr)
+	if !isType {
+		t.Fatalf("Error was not a verification errror: %v", err)
+	}
+	if castedErr.Status != expectedStatus {
+		t.Fatalf("Expected status to be %d got %d", expectedStatus, castedErr.Status)
+	}
+}
+
 func TestVerifyTextDetachedSigWrong(t *testing.T) {
 	fakeMessage := NewPlainMessageFromString("wrong text")
 	verificationError := keyRingTestPublic.VerifyDetached(fakeMessage, textSignature, testTime)
 
-	assert.EqualError(t, verificationError, "Signature Verification Error: Invalid signature")
+	checkVerificationError(t, verificationError, constants.SIGNATURE_FAILED)
 
 	err := &SignatureVerificationError{}
 	_ = errors.As(verificationError, err)
@@ -342,9 +356,7 @@ func Test_VerifyDetachedWithUnknownCriticalContext(t *testing.T) {
 		0,
 	)
 	// then
-	if err == nil || !errors.Is(err, newSignatureFailed()) {
-		t.Fatalf("Expected a verification error")
-	}
+	checkVerificationError(t, err, constants.SIGNATURE_FAILED)
 }
 
 func Test_VerifyDetachedWithUnKnownNonCriticalContext(t *testing.T) {
@@ -423,9 +435,7 @@ func Test_VerifyDetachedWithWrongContext(t *testing.T) {
 		verificationContext,
 	)
 	// then
-	if err == nil || !errors.Is(err, newSignatureFailed()) {
-		t.Fatalf("Expected a verification error")
-	}
+	checkVerificationError(t, err, constants.SIGNATURE_FAILED)
 }
 
 func Test_VerifyDetachedWithMissingNonRequiredContext(t *testing.T) {
@@ -481,9 +491,7 @@ func Test_VerifyDetachedWithMissingRequiredContext(t *testing.T) {
 		verificationContext,
 	)
 	// then
-	if err == nil || !errors.Is(err, newSignatureFailed()) {
-		t.Fatalf("Expected a verification error")
-	}
+	checkVerificationError(t, err, constants.SIGNATURE_FAILED)
 }
 
 func Test_VerifyDetachedWithMissingRequiredContextBeforeCutoff(t *testing.T) {
@@ -553,9 +561,7 @@ func Test_VerifyDetachedWithMissingRequiredContextAfterCutoff(t *testing.T) {
 		verificationContext,
 	)
 	// then
-	if err == nil || !errors.Is(err, newSignatureFailed()) {
-		t.Fatalf("Expected a verification error")
-	}
+	checkVerificationError(t, err, constants.SIGNATURE_FAILED)
 }
 
 func Test_VerifyDetachedWithDoubleContext(t *testing.T) {
@@ -581,7 +587,5 @@ func Test_VerifyDetachedWithDoubleContext(t *testing.T) {
 		verificationContext,
 	)
 	// then
-	if err == nil || !errors.Is(err, newSignatureFailed()) {
-		t.Fatalf("Expected a verification error")
-	}
+	checkVerificationError(t, err, constants.SIGNATURE_FAILED)
 }

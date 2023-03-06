@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+### Changed
+- The `SignatureVerificationError` struct now has a `Cause error` field, which is returned by the the Unwrap function. The cause is also included in the error message.
+	NB: If the caller was relying on the exact message of the error, it might break the flow.
+
 ## [2.6.1] 2023-03-22
 
 ### Security fix
