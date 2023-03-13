@@ -62,12 +62,26 @@ func (keyRing *KeyRing) Decrypt(
 
 // SignDetached generates and returns a PGPSignature for a given PlainMessage.
 func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, error) {
+	return keyRing.SignDetachedWithContext(message, nil)
+}
+
+// SignDetachedWithContext generates and returns a PGPSignature for a given PlainMessage.
+// If a context is provided, it is added to the signature as notation data
+// with the name set in `constants.SignatureContextName`.
+func (keyRing *KeyRing) SignDetachedWithContext(message *PlainMessage, context *SigningContext) (*PGPSignature, error) {
 	signEntity, err := keyRing.getSigningEntity()
 	if err != nil {
 		return nil, err
 	}
-
-	config := &packet.Config{DefaultHash: crypto.SHA512, Time: getTimeGenerator()}
+	var signatureNotations []*packet.Notation
+	if context != nil {
+		signatureNotations = []*packet.Notation{context.getNotation()}
+	}
+	config := &packet.Config{
+		DefaultHash:        crypto.SHA512,
+		Time:               getTimeGenerator(),
+		SignatureNotations: signatureNotations,
+	}
 	var outBuf bytes.Buffer
 	if message.IsBinary() {
 		err = openpgp.DetachSign(&outBuf, signEntity, message.NewReader(), config)
@@ -89,6 +103,22 @@ func (keyRing *KeyRing) VerifyDetached(message *PlainMessage, signature *PGPSign
 		message.NewReader(),
 		signature.GetBinary(),
 		verifyTime,
+		nil,
+	)
+	return err
+}
+
+// VerifyDetachedWithContext verifies a PlainMessage with a detached PGPSignature
+// and returns a SignatureVerificationError if fails.
+// If a context is provided, it verifies that the signature is valid in the given context, using
+// the signature notation with name the name set in `constants.SignatureContextName`.
+func (keyRing *KeyRing) VerifyDetachedWithContext(message *PlainMessage, signature *PGPSignature, verifyTime int64, verificationContext *VerificationContext) error {
+	_, err := verifySignature(
+		keyRing.entities,
+		message.NewReader(),
+		signature.GetBinary(),
+		verifyTime,
+		verificationContext,
 	)
 	return err
 }
@@ -132,6 +162,31 @@ func (keyRing *KeyRing) GetVerifiedSignatureTimestamp(message *PlainMessage, sig
 		message.NewReader(),
 		signature.GetBinary(),
 		verifyTime,
+		nil,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return sigPacket.CreationTime.Unix(), nil
+}
+
+// GetVerifiedSignatureTimestampWithContext verifies a PlainMessage with a detached PGPSignature
+// returns the creation time of the signature if it succeeds
+// and returns a SignatureVerificationError if fails.
+// If a context is provided, it verifies that the signature is valid in the given context, using
+// the signature notation with name the name set in `constants.SignatureContextName`.
+func (keyRing *KeyRing) GetVerifiedSignatureTimestampWithContext(
+	message *PlainMessage,
+	signature *PGPSignature,
+	verifyTime int64,
+	verificationContext *VerificationContext,
+) (int64, error) {
+	sigPacket, err := verifySignature(
+		keyRing.entities,
+		message.NewReader(),
+		signature.GetBinary(),
+		verifyTime,
+		verificationContext,
 	)
 	if err != nil {
 		return 0, err
