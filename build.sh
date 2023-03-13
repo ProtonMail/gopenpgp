@@ -15,7 +15,7 @@ reset="\033[0m"
 
 # Trap in case something went wrong
 failed_build() {
-    printf "${red}The build failed!\n${reset}"
+    printf "${red}The build failed!\nRun 'make clean' before retrying...\n${reset}"
 }
 
 install_modules()
@@ -28,11 +28,23 @@ install_modules()
 install_gomobile()
 {
 	printf "${green}Installing gomobile fork${reset}\n\n"
+	
+	go get golang.org/x/mobile/cmd/gomobile@latest
+	go get golang.org/x/mobile/cmd/gobind@latest
+	
 	go build golang.org/x/mobile/cmd/gomobile
 	go build golang.org/x/mobile/cmd/gobind
 	PATH=$(pwd):$PATH
 	printf "${green}Done ${reset}\n\n"
 }
+
+
+get_modules(){
+	printf "${green}Start installing go modules and their dependencies ${reset}\n\n"
+	GO111MODULE=on go mod download
+	printf "${green}Done ${reset}\n\n"
+}
+
 
 remove_dir()
 {
@@ -46,19 +58,22 @@ remove_dir()
 build()
 {
 	TARGET=$1
+	OUTPUT_DIR=$2
+	TAGS="mobile"
 	if [ $TARGET = "android" ]; then
-		JAVAPKG_FLAG="-javapkg=${ANDROID_JAVA_PKG}"
+		JAVAPKG_FLAG="-javapkg=com.proton.gopenpgp"
 		OUT_EXTENSION="aar"
 	else
 		JAVAPKG_FLAG=""
-		OUT_EXTENSION="framework"
+		OUT_EXTENSION="xcframework"
+		TAGS="$TAGS,ios"
 	fi
-	TARGET_DIR=${OUT_DIR}/${TARGET}
+	TARGET_DIR=${OUT_DIR}/${OUTPUT_DIR}
 	TARGET_OUT_FILE=${TARGET_DIR}/${BUILD_NAME}.${OUT_EXTENSION}
 	mkdir -p $TARGET_DIR
 	printf "${green}Start Building ${TARGET} .. Location: ${TARGET_DIR} ${reset}\n\n"
 	remove_dir $TARGET_OUT_FILE
-	./gomobile bind -tags mobile -target $TARGET $JAVAPKG_FLAG -x -ldflags="-s -w" -o ${TARGET_OUT_FILE}  ${PACKAGES}
+	./gomobile bind -tags $TAGS -target $TARGET $JAVAPKG_FLAG -x -ldflags="-s -w " -o ${TARGET_OUT_FILE}  ${PACKAGES}
 }
 
 # import function, add internal package in the build
@@ -69,15 +84,14 @@ import()
 
 
 ## ======== Config ===============
+
 # ==== Generic parameters ======
 
 # output directory
-OUT_DIR="./dist"
+OUT_DIR="dist"
 
 # name of the build output
-BUILD_NAME="Gopenpgp"
-
-ANDROID_JAVA_PKG="com.proton.${BUILD_NAME}"
+BUILD_NAME="gopenpgp"
 
 # ==== Packages to included =====
 PACKAGES=""
@@ -91,58 +105,31 @@ import github.com/ProtonMail/gopenpgp/v2/helper
 
 ######## ======== Main ===========
 
-# We get the needed go modules stated in the go.mod file
 install_modules
 install_gomobile
+
+get_modules
+
 go env
 echo "PATH=$PATH"
 echo "gomobile:$(which gomobile)"
-echo "ndk:$ANDROID_NDK_HOME"
 
 printf "Packages included : ${PACKAGES}\n"
 ## start building
 
 
 # ================= Apple Builds ======================
-# ========== iOS and Simulator =========
+# we build the framework for the ios devices and simulator
 if [ $NB_INPUTS -ne 1 ] || [ $USER_INPUT = apple ]; then
-# we build the framework for the ios sim on arm64 macs
-
-build ios-simulator
-
-# we build the framework for the ios devices
-build ios
-
-# ========== macOs ====================
-
-# we build the framework for the macos devices
-
-build macos
-
-# ======== macOSUI ===============
-
-# we build the framework for the macos-ui target
-
-build macos-ui
-
-# we join all platform's framework in a xcframework
-XCFRAMEWORK_OUT_FILE=$OUT_DIR/$BUILD_NAME.xcframework
-remove_dir $XCFRAMEWORK_OUT_FILE;
-xcodebuild -create-xcframework \
- -framework $OUT_DIR/ios/$BUILD_NAME.framework \
- -framework $OUT_DIR/macos/$BUILD_NAME.framework \
- -framework $OUT_DIR/macos-ui/$BUILD_NAME.framework \
- -framework $OUT_DIR/ios-simulator/$BUILD_NAME.framework \
- -output $XCFRAMEWORK_OUT_FILE
-
+build ios,iossimulator,macos apple
 fi
-
 
 # ================  Android Build =====================
 if [ $NB_INPUTS -ne 1 ] || [ $USER_INPUT = android ]; then
-build android
+build android android
 fi
 
 printf "${green}All Done. ${reset}\n\n"
+
 
 trap - EXIT
