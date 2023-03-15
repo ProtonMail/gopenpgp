@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [2.6.0] 2023-03-15
 
 ### Added
 - API for adding context to detached signatures:
@@ -21,11 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - In `GetVerifiedSignatureTimestamp`, use the new `VerifyDetachedSignatureAndHash` function to get the verified signature, instead of parsing the signature packets manually to get the timestamp.
 - Upgraded golang.org/x/crypto dependency to v0.7.0
 
-## [2.5.2] 2022-01-25
+## [2.5.2] 2023-01-25
 ### Changed
 - Update `github.com/ProtonMail/go-crypto` to the latest version
 
-## [2.5.1] 2022-01-24
+## [2.5.1] 2023-01-24
 
 ### Added
 - Streaming API to encrypt with compression:
