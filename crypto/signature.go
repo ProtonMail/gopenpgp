@@ -3,7 +3,6 @@ package crypto
 import (
 	"bytes"
 	"crypto"
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -12,6 +11,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	"github.com/pkg/errors"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/ProtonMail/gopenpgp/v2/internal"
@@ -51,6 +51,14 @@ func (e SignatureVerificationError) Unwrap() error {
 
 // newSignatureFailed creates a new SignatureVerificationError, type
 // SignatureFailed.
+func newSignatureBadContext(cause error) SignatureVerificationError {
+	return SignatureVerificationError{
+		Status:  constants.SIGNATURE_BAD_CONTEXT,
+		Message: "Invalid signature context",
+		Cause:   cause,
+	}
+}
+
 func newSignatureFailed(cause error) SignatureVerificationError {
 	return SignatureVerificationError{
 		Status:  constants.SIGNATURE_FAILED,
@@ -266,7 +274,7 @@ func verifySignature(
 	if verificationContext != nil {
 		err := verificationContext.verifyContext(sig)
 		if err != nil {
-			return nil, newSignatureFailed(err)
+			return nil, newSignatureBadContext(err)
 		}
 	}
 
