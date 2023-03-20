@@ -280,3 +280,36 @@ func verifySignature(
 
 	return sig, nil
 }
+
+func signMessageDetached(
+	signKeyRing *KeyRing,
+	messageReader io.Reader,
+	isBinary bool,
+	context *SigningContext,
+) (*PGPSignature, error) {
+	config := &packet.Config{
+		DefaultHash: crypto.SHA512,
+		Time:        getTimeGenerator(),
+	}
+
+	signEntity, err := signKeyRing.getSigningEntity()
+	if err != nil {
+		return nil, err
+	}
+
+	if context != nil {
+		config.SignatureNotations = append(config.SignatureNotations, context.getNotation())
+	}
+
+	var outBuf bytes.Buffer
+	if isBinary {
+		err = openpgp.DetachSign(&outBuf, signEntity, messageReader, config)
+	} else {
+		err = openpgp.DetachSignText(&outBuf, signEntity, messageReader, config)
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: error in signing")
+	}
+
+	return NewPGPSignature(outBuf.Bytes()), nil
+}

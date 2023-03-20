@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When a signature fails verification because of the signature context, it returns a `SignatureVerificationError` with 
 status `constants.SIGNATURE_BAD_CONTEXT` instead of `constants.SIGNATURE_FAILED`.
 
+## Added
+- Add api for signature context on streams `SignDetachedStreamWithContext`.
+
 ## [2.6.1] 2023-03-22
 
 ### Security fix
