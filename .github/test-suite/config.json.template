@@ -1,0 +1,28 @@
+{
+    "drivers": [
+      {
+        "id": "gosop-branch",
+        "path": "__GOSOP_BRANCH__"
+      },
+      {
+        "id": "gosop-main",
+        "path": "__GOSOP_MAIN__"
+      },
+      {
+        "path": "__SQOP__"
+      },
+      {
+        "path": "__GPGME_SOP__"
+      },
+      {
+        "path": "__SOP_OPENPGPJS__"
+      },
+      {
+        "path": "__RNP_SOP__"
+      }
+    ],
+    "rlimits": {
+      "DATA": 1073741824
+    }
+}
+  
