@@ -230,6 +230,9 @@ func (msg *PlainMessageReader) Read(b []byte) (n int, err error) {
 	n, err = msg.details.UnverifiedBody.Read(b)
 	if errors.Is(err, io.EOF) {
 		msg.readAll = true
+		if vErr := msg.VerifySignature(); vErr != nil {
+			err = vErr
+		}
 	}
 	return
 }
@@ -245,8 +248,6 @@ func (msg *PlainMessageReader) VerifySignature() (err error) {
 	if msg.verifyKeyRing != nil {
 		processSignatureExpiration(msg.details, msg.verifyTime)
 		err = verifyDetailsSignature(msg.details, msg.verifyKeyRing)
-	} else {
-		err = errors.New("gopenpgp: no verify keyring was provided before decryption")
 	}
 	return
 }
