@@ -15,6 +15,7 @@ const (
 	SIGNATURE_NOT_SIGNED  int = 1
 	SIGNATURE_NO_VERIFIER int = 2
 	SIGNATURE_FAILED      int = 3
+	SIGNATURE_BAD_CONTEXT int = 4
 )
 
 const DefaultCompression = 2      // ZLIB
