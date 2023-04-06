@@ -29,11 +29,20 @@ var allowedHashes = []crypto.Hash{
 type SignatureVerificationError struct {
 	Status  int
 	Message string
+	Cause   error
 }
 
 // Error is the base method for all errors.
 func (e SignatureVerificationError) Error() string {
+	if e.Cause != nil {
+		return fmt.Sprintf("Signature Verification Error: %v caused by %v", e.Message, e.Cause)
+	}
 	return fmt.Sprintf("Signature Verification Error: %v", e.Message)
+}
+
+// Unwrap returns the cause of failure.
+func (e SignatureVerificationError) Unwrap() error {
+	return e.Cause
 }
 
 // ------------------
@@ -42,10 +51,11 @@ func (e SignatureVerificationError) Error() string {
 
 // newSignatureFailed creates a new SignatureVerificationError, type
 // SignatureFailed.
-func newSignatureFailed() SignatureVerificationError {
+func newSignatureFailed(cause error) SignatureVerificationError {
 	return SignatureVerificationError{
 		Status:  constants.SIGNATURE_FAILED,
 		Message: "Invalid signature",
+		Cause:   cause,
 	}
 }
 
@@ -108,7 +118,7 @@ func verifyDetailsSignature(md *openpgp.MessageDetails, verifierKey *KeyRing) er
 		return newSignatureNoVerifier()
 	}
 	if md.SignatureError != nil {
-		return newSignatureFailed()
+		return newSignatureFailed(md.SignatureError)
 	}
 	if md.Signature == nil ||
 		md.Signature.Hash < allowedHashes[0] ||
@@ -238,21 +248,25 @@ func verifySignature(
 
 			_, err = signatureReader.Seek(0, io.SeekStart)
 			if err != nil {
-				return nil, newSignatureFailed()
+				return nil, newSignatureFailed(err)
 			}
 
 			sig, signer, err = openpgp.VerifyDetachedSignatureAndHash(pubKeyEntries, origText, signatureReader, allowedHashes, config)
 		}
 	}
 
-	if err != nil || sig == nil || signer == nil {
-		return nil, newSignatureFailed()
+	if err != nil {
+		return nil, newSignatureFailed(err)
+	}
+
+	if sig == nil || signer == nil {
+		return nil, newSignatureFailed(errors.New("gopenpgp: no signer or valid signature"))
 	}
 
 	if verificationContext != nil {
 		err := verificationContext.verifyContext(sig)
 		if err != nil {
-			return nil, newSignatureFailed()
+			return nil, newSignatureFailed(err)
 		}
 	}
 
