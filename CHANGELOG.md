@@ -13,6 +13,7 @@ status `constants.SIGNATURE_BAD_CONTEXT` instead of `constants.SIGNATURE_FAILED`
 
 ## Added
 - Add api for signature context on streams `SignDetachedStreamWithContext`.
+- Add API for signature context on embedded signatures.
 
 ## [2.6.1] 2023-03-22
 
