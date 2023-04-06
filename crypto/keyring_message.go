@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"bytes"
-	"crypto"
 	"io"
 	"io/ioutil"
 	"time"
@@ -69,30 +68,12 @@ func (keyRing *KeyRing) SignDetached(message *PlainMessage) (*PGPSignature, erro
 // If a context is provided, it is added to the signature as notation data
 // with the name set in `constants.SignatureContextName`.
 func (keyRing *KeyRing) SignDetachedWithContext(message *PlainMessage, context *SigningContext) (*PGPSignature, error) {
-	signEntity, err := keyRing.getSigningEntity()
-	if err != nil {
-		return nil, err
-	}
-	var signatureNotations []*packet.Notation
-	if context != nil {
-		signatureNotations = []*packet.Notation{context.getNotation()}
-	}
-	config := &packet.Config{
-		DefaultHash:        crypto.SHA512,
-		Time:               getTimeGenerator(),
-		SignatureNotations: signatureNotations,
-	}
-	var outBuf bytes.Buffer
-	if message.IsBinary() {
-		err = openpgp.DetachSign(&outBuf, signEntity, message.NewReader(), config)
-	} else {
-		err = openpgp.DetachSignText(&outBuf, signEntity, message.NewReader(), config)
-	}
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in signing")
-	}
-
-	return NewPGPSignature(outBuf.Bytes()), nil
+	return signMessageDetached(
+		keyRing,
+		message.NewReader(),
+		message.IsBinary(),
+		context,
+	)
 }
 
 // VerifyDetached verifies a PlainMessage with a detached PGPSignature

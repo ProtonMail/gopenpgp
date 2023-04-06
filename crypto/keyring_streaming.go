@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"bytes"
-	"crypto"
 	"io"
 	"time"
 
@@ -302,19 +301,19 @@ func (keyRing *KeyRing) DecryptSplitStream(
 
 // SignDetachedStream generates and returns a PGPSignature for a given message Reader.
 func (keyRing *KeyRing) SignDetachedStream(message Reader) (*PGPSignature, error) {
-	signEntity, err := keyRing.getSigningEntity()
-	if err != nil {
-		return nil, err
-	}
+	return keyRing.SignDetachedStreamWithContext(message, nil)
+}
 
-	config := &packet.Config{DefaultHash: crypto.SHA512, Time: getTimeGenerator()}
-	var outBuf bytes.Buffer
-	// sign bin
-	if err := openpgp.DetachSign(&outBuf, signEntity, message, config); err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in signing")
-	}
-
-	return NewPGPSignature(outBuf.Bytes()), nil
+// SignDetachedStreamWithContext generates and returns a PGPSignature for a given message Reader.
+// If a context is provided, it is added to the signature as notation data
+// with the name set in `constants.SignatureContextName`.
+func (keyRing *KeyRing) SignDetachedStreamWithContext(message Reader, context *SigningContext) (*PGPSignature, error) {
+	return signMessageDetached(
+		keyRing,
+		message,
+		true,
+		context,
+	)
 }
 
 // VerifyDetachedStream verifies a message reader with a detached PGPSignature
