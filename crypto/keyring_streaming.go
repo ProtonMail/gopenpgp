@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
 )
 
@@ -42,14 +40,35 @@ func (keyRing *KeyRing) EncryptStream(
 	plainMessageMetadata *PlainMessageMetadata,
 	signKeyRing *KeyRing,
 ) (plainMessageWriter WriteCloser, err error) {
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
-
-	return keyRing.encryptStreamWithConfig(
-		config,
+	return encryptStream(
+		keyRing,
 		pgpMessageWriter,
 		pgpMessageWriter,
 		plainMessageMetadata,
 		signKeyRing,
+		false,
+		nil,
+	)
+}
+
+// EncryptStreamWithContext is used to encrypt data as a Writer.
+// It takes a writer for the encrypted data and returns a WriteCloser for the plaintext data
+// If signKeyRing is not nil, it is used to do an embedded signature.
+// * signingContext : (optional) a context for the embedded signature.
+func (keyRing *KeyRing) EncryptStreamWithContext(
+	pgpMessageWriter Writer,
+	plainMessageMetadata *PlainMessageMetadata,
+	signKeyRing *KeyRing,
+	signingContext *SigningContext,
+) (plainMessageWriter WriteCloser, err error) {
+	return encryptStream(
+		keyRing,
+		pgpMessageWriter,
+		pgpMessageWriter,
+		plainMessageMetadata,
+		signKeyRing,
+		false,
+		signingContext,
 	)
 }
 
@@ -62,28 +81,47 @@ func (keyRing *KeyRing) EncryptStreamWithCompression(
 	plainMessageMetadata *PlainMessageMetadata,
 	signKeyRing *KeyRing,
 ) (plainMessageWriter WriteCloser, err error) {
-	config := &packet.Config{
-		DefaultCipher:          packet.CipherAES256,
-		Time:                   getTimeGenerator(),
-		DefaultCompressionAlgo: constants.DefaultCompression,
-		CompressionConfig:      &packet.CompressionConfig{Level: constants.DefaultCompressionLevel},
-	}
-
-	return keyRing.encryptStreamWithConfig(
-		config,
+	return encryptStream(
+		keyRing,
 		pgpMessageWriter,
 		pgpMessageWriter,
 		plainMessageMetadata,
 		signKeyRing,
+		true,
+		nil,
 	)
 }
 
-func (keyRing *KeyRing) encryptStreamWithConfig(
-	config *packet.Config,
+// EncryptStreamWithContextAndCompression is used to encrypt data as a Writer.
+// The plaintext data is compressed before being encrypted.
+// It takes a writer for the encrypted data and returns a WriteCloser for the plaintext data
+// If signKeyRing is not nil, it is used to do an embedded signature.
+// * signingContext : (optional) a context for the embedded signature.
+func (keyRing *KeyRing) EncryptStreamWithContextAndCompression(
+	pgpMessageWriter Writer,
+	plainMessageMetadata *PlainMessageMetadata,
+	signKeyRing *KeyRing,
+	signingContext *SigningContext,
+) (plainMessageWriter WriteCloser, err error) {
+	return encryptStream(
+		keyRing,
+		pgpMessageWriter,
+		pgpMessageWriter,
+		plainMessageMetadata,
+		signKeyRing,
+		true,
+		signingContext,
+	)
+}
+
+func encryptStream(
+	encryptionKeyRing *KeyRing,
 	keyPacketWriter Writer,
 	dataPacketWriter Writer,
 	plainMessageMetadata *PlainMessageMetadata,
 	signKeyRing *KeyRing,
+	compress bool,
+	signingContext *SigningContext,
 ) (plainMessageWriter WriteCloser, err error) {
 	if plainMessageMetadata == nil {
 		// Use sensible default metadata
@@ -100,7 +138,7 @@ func (keyRing *KeyRing) encryptStreamWithConfig(
 		ModTime:  time.Unix(plainMessageMetadata.ModTime, 0),
 	}
 
-	plainMessageWriter, err = asymmetricEncryptStream(hints, keyPacketWriter, dataPacketWriter, keyRing, signKeyRing, config)
+	plainMessageWriter, err = asymmetricEncryptStream(hints, keyPacketWriter, dataPacketWriter, encryptionKeyRing, signKeyRing, compress, signingContext)
 	if err != nil {
 		return nil, err
 	}
@@ -148,25 +186,36 @@ func (keyRing *KeyRing) EncryptSplitStream(
 	plainMessageMetadata *PlainMessageMetadata,
 	signKeyRing *KeyRing,
 ) (*EncryptSplitResult, error) {
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
-
-	var keyPacketBuf bytes.Buffer
-
-	plainMessageWriter, err := keyRing.encryptStreamWithConfig(
-		config,
-		&keyPacketBuf,
+	return encryptSplitStream(
+		keyRing,
 		dataPacketWriter,
 		plainMessageMetadata,
 		signKeyRing,
+		false,
+		nil,
 	)
-	if err != nil {
-		return nil, err
-	}
+}
 
-	return &EncryptSplitResult{
-		keyPacketBuf:       &keyPacketBuf,
-		plainMessageWriter: plainMessageWriter,
-	}, nil
+// EncryptSplitStreamWithContext is used to encrypt data as a stream.
+// It takes a writer for the Symmetrically Encrypted Data Packet
+// (https://datatracker.ietf.org/doc/html/rfc4880#section-5.7)
+// and returns a writer for the plaintext data and the key packet.
+// If signKeyRing is not nil, it is used to do an embedded signature.
+// * signingContext : (optional) a context for the embedded signature.
+func (keyRing *KeyRing) EncryptSplitStreamWithContext(
+	dataPacketWriter Writer,
+	plainMessageMetadata *PlainMessageMetadata,
+	signKeyRing *KeyRing,
+	signingContext *SigningContext,
+) (*EncryptSplitResult, error) {
+	return encryptSplitStream(
+		keyRing,
+		dataPacketWriter,
+		plainMessageMetadata,
+		signKeyRing,
+		false,
+		signingContext,
+	)
 }
 
 // EncryptSplitStreamWithCompression is used to encrypt data as a stream.
@@ -179,21 +228,55 @@ func (keyRing *KeyRing) EncryptSplitStreamWithCompression(
 	plainMessageMetadata *PlainMessageMetadata,
 	signKeyRing *KeyRing,
 ) (*EncryptSplitResult, error) {
-	config := &packet.Config{
-		DefaultCipher:          packet.CipherAES256,
-		Time:                   getTimeGenerator(),
-		DefaultCompressionAlgo: constants.DefaultCompression,
-		CompressionConfig:      &packet.CompressionConfig{Level: constants.DefaultCompressionLevel},
-	}
+	return encryptSplitStream(
+		keyRing,
+		dataPacketWriter,
+		plainMessageMetadata,
+		signKeyRing,
+		true,
+		nil,
+	)
+}
 
+// EncryptSplitStreamWithContextAndCompression is used to encrypt data as a stream.
+// It takes a writer for the Symmetrically Encrypted Data Packet
+// (https://datatracker.ietf.org/doc/html/rfc4880#section-5.7)
+// and returns a writer for the plaintext data and the key packet.
+// If signKeyRing is not nil, it is used to do an embedded signature.
+// * signingContext : (optional) a context for the embedded signature.
+func (keyRing *KeyRing) EncryptSplitStreamWithContextAndCompression(
+	dataPacketWriter Writer,
+	plainMessageMetadata *PlainMessageMetadata,
+	signKeyRing *KeyRing,
+	signingContext *SigningContext,
+) (*EncryptSplitResult, error) {
+	return encryptSplitStream(
+		keyRing,
+		dataPacketWriter,
+		plainMessageMetadata,
+		signKeyRing,
+		true,
+		signingContext,
+	)
+}
+
+func encryptSplitStream(
+	encryptionKeyRing *KeyRing,
+	dataPacketWriter Writer,
+	plainMessageMetadata *PlainMessageMetadata,
+	signKeyRing *KeyRing,
+	compress bool,
+	signingContext *SigningContext,
+) (*EncryptSplitResult, error) {
 	var keyPacketBuf bytes.Buffer
-
-	plainMessageWriter, err := keyRing.encryptStreamWithConfig(
-		config,
+	plainMessageWriter, err := encryptStream(
+		encryptionKeyRing,
 		&keyPacketBuf,
 		dataPacketWriter,
 		plainMessageMetadata,
 		signKeyRing,
+		compress,
+		signingContext,
 	)
 	if err != nil {
 		return nil, err
@@ -208,10 +291,11 @@ func (keyRing *KeyRing) EncryptSplitStreamWithCompression(
 // PlainMessageReader is used to wrap the data of the decrypted plain message.
 // It can be used to read the decrypted data and verify the embedded signature.
 type PlainMessageReader struct {
-	details       *openpgp.MessageDetails
-	verifyKeyRing *KeyRing
-	verifyTime    int64
-	readAll       bool
+	details             *openpgp.MessageDetails
+	verifyKeyRing       *KeyRing
+	verifyTime          int64
+	readAll             bool
+	verificationContext *VerificationContext
 }
 
 // GetMetadata returns the metadata of the decrypted message.
@@ -243,7 +327,7 @@ func (msg *PlainMessageReader) VerifySignature() (err error) {
 	}
 	if msg.verifyKeyRing != nil {
 		processSignatureExpiration(msg.details, msg.verifyTime)
-		err = verifyDetailsSignature(msg.details, msg.verifyKeyRing)
+		err = verifyDetailsSignature(msg.details, msg.verifyKeyRing, msg.verificationContext)
 	} else {
 		err = errors.New("gopenpgp: no verify keyring was provided before decryption")
 	}
@@ -260,11 +344,49 @@ func (keyRing *KeyRing) DecryptStream(
 	verifyKeyRing *KeyRing,
 	verifyTime int64,
 ) (plainMessage *PlainMessageReader, err error) {
-	messageDetails, err := asymmetricDecryptStream(
-		message,
+	return decryptStream(
 		keyRing,
+		message,
 		verifyKeyRing,
 		verifyTime,
+		nil,
+	)
+}
+
+// DecryptStreamWithContext is used to decrypt a pgp message as a Reader.
+// It takes a reader for the message data
+// and returns a PlainMessageReader for the plaintext data.
+// If verifyKeyRing is not nil, PlainMessageReader.VerifySignature() will
+// verify the embedded signature with the given key ring and verification time.
+// * verificationContext (optional): context for the signature verification.
+func (keyRing *KeyRing) DecryptStreamWithContext(
+	message Reader,
+	verifyKeyRing *KeyRing,
+	verifyTime int64,
+	verificationContext *VerificationContext,
+) (plainMessage *PlainMessageReader, err error) {
+	return decryptStream(
+		keyRing,
+		message,
+		verifyKeyRing,
+		verifyTime,
+		verificationContext,
+	)
+}
+
+func decryptStream(
+	decryptionKeyRing *KeyRing,
+	message Reader,
+	verifyKeyRing *KeyRing,
+	verifyTime int64,
+	verificationContext *VerificationContext,
+) (plainMessage *PlainMessageReader, err error) {
+	messageDetails, err := asymmetricDecryptStream(
+		message,
+		decryptionKeyRing,
+		verifyKeyRing,
+		verifyTime,
+		verificationContext,
 	)
 	if err != nil {
 		return nil, err
@@ -275,6 +397,7 @@ func (keyRing *KeyRing) DecryptStream(
 		verifyKeyRing,
 		verifyTime,
 		false,
+		verificationContext,
 	}, err
 }
 
@@ -296,6 +419,30 @@ func (keyRing *KeyRing) DecryptSplitStream(
 		messageReader,
 		verifyKeyRing,
 		verifyTime,
+	)
+}
+
+// DecryptSplitStreamWithContext is used to decrypt a split pgp message as a Reader.
+// It takes a key packet and a reader for the data packet
+// and returns a PlainMessageReader for the plaintext data.
+// If verifyKeyRing is not nil, PlainMessageReader.VerifySignature() will
+// verify the embedded signature with the given key ring and verification time.
+// * verificationContext (optional): context for the signature verification.
+func (keyRing *KeyRing) DecryptSplitStreamWithContext(
+	keypacket []byte,
+	dataPacketReader Reader,
+	verifyKeyRing *KeyRing, verifyTime int64,
+	verificationContext *VerificationContext,
+) (plainMessage *PlainMessageReader, err error) {
+	messageReader := io.MultiReader(
+		bytes.NewReader(keypacket),
+		dataPacketReader,
+	)
+	return keyRing.DecryptStreamWithContext(
+		messageReader,
+		verifyKeyRing,
+		verifyTime,
+		verificationContext,
 	)
 }
 

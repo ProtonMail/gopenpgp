@@ -154,6 +154,27 @@ func Test_KeyRing_GetVerifiedSignatureTimestampSuccess(t *testing.T) {
 	}
 }
 
+func Test_KeyRing_GetVerifiedSignatureTimestampWithContext(t *testing.T) {
+	message := NewPlainMessageFromString(testMessage)
+	var time int64 = 1600000000
+	pgp.latestServerTime = time
+	defer func() {
+		pgp.latestServerTime = testTime
+	}()
+	var testContext = "test-context"
+	signature, err := keyRingTestPrivate.SignDetachedWithContext(message, NewSigningContext(testContext, true))
+	if err != nil {
+		t.Errorf("Got an error while generating the signature: %v", err)
+	}
+	actualTime, err := keyRingTestPublic.GetVerifiedSignatureTimestampWithContext(message, signature, 0, NewVerificationContext(testContext, true, 0))
+	if err != nil {
+		t.Errorf("Got an error while parsing the signature creation time: %v", err)
+	}
+	if time != actualTime {
+		t.Errorf("Expected creation time to be %d, got %d", time, actualTime)
+	}
+}
+
 func Test_KeyRing_GetVerifiedSignatureWithTwoKeysTimestampSuccess(t *testing.T) {
 	publicKey1Armored, err := ioutil.ReadFile("testdata/signature/publicKey1")
 	if err != nil {

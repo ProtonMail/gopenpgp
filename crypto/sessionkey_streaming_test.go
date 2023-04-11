@@ -73,6 +73,104 @@ func TestSessionKey_EncryptDecryptStream(t *testing.T) {
 	}
 }
 
+func TestSessionKey_EncryptDecryptStreamWithContext(t *testing.T) {
+	messageBytes := []byte("Hello World!")
+	messageReader := bytes.NewReader(messageBytes)
+	var dataPacketBuf bytes.Buffer
+	testContext := "test-context"
+	messageWriter, err := testSessionKey.EncryptStreamWithContext(
+		&dataPacketBuf,
+		testMeta,
+		keyRingTestPrivate,
+		NewSigningContext(testContext, true),
+	)
+	if err != nil {
+		t.Fatal("Expected no error while encrypting, got:", err)
+	}
+	_, err = io.Copy(messageWriter, messageReader)
+	if err != nil {
+		t.Fatal("Expected no error while copying plaintext, got:", err)
+	}
+	err = messageWriter.Close()
+	if err != nil {
+		t.Fatal("Expected no error while closing plaintext writer, got:", err)
+	}
+	dataPacket := dataPacketBuf.Bytes()
+	decryptedReader, err := testSessionKey.DecryptStreamWithContext(
+		bytes.NewReader(dataPacket),
+		keyRingTestPublic,
+		GetUnixTime(),
+		NewVerificationContext(testContext, true, 0),
+	)
+	if err != nil {
+		t.Fatal("Expected no error while calling DecryptStream, got:", err)
+	}
+	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	if err != nil {
+		t.Fatal("Expected no error while reading the decrypted data, got:", err)
+	}
+	err = decryptedReader.VerifySignature()
+	if err != nil {
+		t.Fatal("Expected no error while verifying the signature, got:", err)
+	}
+	if !bytes.Equal(decryptedBytes, messageBytes) {
+		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptedBytes), string(messageBytes))
+	}
+	decryptedMeta := decryptedReader.GetMetadata()
+	if !reflect.DeepEqual(testMeta, decryptedMeta) {
+		t.Fatalf("Expected the decrypted metadata to be %v got %v", testMeta, decryptedMeta)
+	}
+}
+
+func TestSessionKey_EncryptDecryptStreamWithContextAndCompression(t *testing.T) {
+	messageBytes := []byte("Hello World!")
+	messageReader := bytes.NewReader(messageBytes)
+	var dataPacketBuf bytes.Buffer
+	testContext := "test-context"
+	messageWriter, err := testSessionKey.EncryptStreamWithContextAndCompression(
+		&dataPacketBuf,
+		testMeta,
+		keyRingTestPrivate,
+		NewSigningContext(testContext, true),
+	)
+	if err != nil {
+		t.Fatal("Expected no error while encrypting, got:", err)
+	}
+	_, err = io.Copy(messageWriter, messageReader)
+	if err != nil {
+		t.Fatal("Expected no error while copying plaintext, got:", err)
+	}
+	err = messageWriter.Close()
+	if err != nil {
+		t.Fatal("Expected no error while closing plaintext writer, got:", err)
+	}
+	dataPacket := dataPacketBuf.Bytes()
+	decryptedReader, err := testSessionKey.DecryptStreamWithContext(
+		bytes.NewReader(dataPacket),
+		keyRingTestPublic,
+		GetUnixTime(),
+		NewVerificationContext(testContext, true, 0),
+	)
+	if err != nil {
+		t.Fatal("Expected no error while calling DecryptStream, got:", err)
+	}
+	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	if err != nil {
+		t.Fatal("Expected no error while reading the decrypted data, got:", err)
+	}
+	err = decryptedReader.VerifySignature()
+	if err != nil {
+		t.Fatal("Expected no error while verifying the signature, got:", err)
+	}
+	if !bytes.Equal(decryptedBytes, messageBytes) {
+		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptedBytes), string(messageBytes))
+	}
+	decryptedMeta := decryptedReader.GetMetadata()
+	if !reflect.DeepEqual(testMeta, decryptedMeta) {
+		t.Fatalf("Expected the decrypted metadata to be %v got %v", testMeta, decryptedMeta)
+	}
+}
+
 func TestSessionKey_EncryptStreamCompatible(t *testing.T) {
 	enc := func(w io.Writer, meta *PlainMessageMetadata, kr *KeyRing) (io.WriteCloser, error) {
 		return testSessionKey.EncryptStream(w, meta, kr)

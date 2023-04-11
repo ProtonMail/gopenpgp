@@ -17,13 +17,16 @@ import (
 // * message    : The plaintext input as a PlainMessage.
 // * privateKey : (optional) an unlocked private keyring to include signature in the message.
 func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error) {
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
-	encrypted, err := asymmetricEncrypt(message, keyRing, privateKey, config)
-	if err != nil {
-		return nil, err
-	}
+	return asymmetricEncrypt(message, keyRing, privateKey, false, nil)
+}
 
-	return NewPGPMessage(encrypted), nil
+// EncryptWithContext encrypts a PlainMessage, outputs a PGPMessage.
+// If an unlocked private key is also provided it will also sign the message.
+// * message    : The plaintext input as a PlainMessage.
+// * privateKey : (optional) an unlocked private keyring to include signature in the message.
+// * signingContext : (optional) the context for the signature.
+func (keyRing *KeyRing) EncryptWithContext(message *PlainMessage, privateKey *KeyRing, signingContext *SigningContext) (*PGPMessage, error) {
+	return asymmetricEncrypt(message, keyRing, privateKey, false, signingContext)
 }
 
 // EncryptWithCompression encrypts with compression support a PlainMessage to PGPMessage using public/private keys.
@@ -31,32 +34,47 @@ func (keyRing *KeyRing) Encrypt(message *PlainMessage, privateKey *KeyRing) (*PG
 // * privateKey : (optional) an unlocked private keyring to include signature in the message.
 // * output  : The encrypted data as PGPMessage.
 func (keyRing *KeyRing) EncryptWithCompression(message *PlainMessage, privateKey *KeyRing) (*PGPMessage, error) {
-	config := &packet.Config{
-		DefaultCipher:          packet.CipherAES256,
-		Time:                   getTimeGenerator(),
-		DefaultCompressionAlgo: constants.DefaultCompression,
-		CompressionConfig:      &packet.CompressionConfig{Level: constants.DefaultCompressionLevel},
-	}
+	return asymmetricEncrypt(message, keyRing, privateKey, true, nil)
+}
 
-	encrypted, err := asymmetricEncrypt(message, keyRing, privateKey, config)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewPGPMessage(encrypted), nil
+// EncryptWithContextAndCompression encrypts with compression support a PlainMessage to PGPMessage using public/private keys.
+// * message : The plain data as a PlainMessage.
+// * privateKey : (optional) an unlocked private keyring to include signature in the message.
+// * signingContext : (optional) the context for the signature.
+// * output  : The encrypted data as PGPMessage.
+func (keyRing *KeyRing) EncryptWithContextAndCompression(message *PlainMessage, privateKey *KeyRing, signingContext *SigningContext) (*PGPMessage, error) {
+	return asymmetricEncrypt(message, keyRing, privateKey, true, signingContext)
 }
 
 // Decrypt decrypts encrypted string using pgp keys, returning a PlainMessage
 // * message    : The encrypted input as a PGPMessage
 // * verifyKey  : Public key for signature verification (optional)
 // * verifyTime : Time at verification (necessary only if verifyKey is not nil)
+// * verificationContext : (optional) the context for the signature verification.
 //
 // When verifyKey is not provided, then verifyTime should be zero, and
 // signature verification will be ignored.
 func (keyRing *KeyRing) Decrypt(
 	message *PGPMessage, verifyKey *KeyRing, verifyTime int64,
 ) (*PlainMessage, error) {
-	return asymmetricDecrypt(message.NewReader(), keyRing, verifyKey, verifyTime)
+	return asymmetricDecrypt(message.NewReader(), keyRing, verifyKey, verifyTime, nil)
+}
+
+// DecryptWithContext decrypts encrypted string using pgp keys, returning a PlainMessage
+// * message    : The encrypted input as a PGPMessage
+// * verifyKey  : Public key for signature verification (optional)
+// * verifyTime : Time at verification (necessary only if verifyKey is not nil)
+// * verificationContext : (optional) the context for the signature verification.
+//
+// When verifyKey is not provided, then verifyTime should be zero, and
+// signature verification will be ignored.
+func (keyRing *KeyRing) DecryptWithContext(
+	message *PGPMessage,
+	verifyKey *KeyRing,
+	verifyTime int64,
+	verificationContext *VerificationContext,
+) (*PlainMessage, error) {
+	return asymmetricDecrypt(message.NewReader(), keyRing, verifyKey, verifyTime, verificationContext)
 }
 
 // SignDetached generates and returns a PGPSignature for a given PlainMessage.
@@ -181,8 +199,9 @@ func (keyRing *KeyRing) GetVerifiedSignatureTimestampWithContext(
 func asymmetricEncrypt(
 	plainMessage *PlainMessage,
 	publicKey, privateKey *KeyRing,
-	config *packet.Config,
-) ([]byte, error) {
+	compress bool,
+	signingContext *SigningContext,
+) (*PGPMessage, error) {
 	var outBuf bytes.Buffer
 	var encryptWriter io.WriteCloser
 	var err error
@@ -193,7 +212,7 @@ func asymmetricEncrypt(
 		ModTime:  plainMessage.getFormattedTime(),
 	}
 
-	encryptWriter, err = asymmetricEncryptStream(hints, &outBuf, &outBuf, publicKey, privateKey, config)
+	encryptWriter, err = asymmetricEncryptStream(hints, &outBuf, &outBuf, publicKey, privateKey, compress, signingContext)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +227,7 @@ func asymmetricEncrypt(
 		return nil, errors.Wrap(err, "gopenpgp: error in closing message")
 	}
 
-	return outBuf.Bytes(), nil
+	return &PGPMessage{outBuf.Bytes()}, nil
 }
 
 // Core for encryption+signature (all) functions.
@@ -217,10 +236,24 @@ func asymmetricEncryptStream(
 	keyPacketWriter io.Writer,
 	dataPacketWriter io.Writer,
 	publicKey, privateKey *KeyRing,
-	config *packet.Config,
+	compress bool,
+	signingContext *SigningContext,
 ) (encryptWriter io.WriteCloser, err error) {
-	var signEntity *openpgp.Entity
+	config := &packet.Config{
+		DefaultCipher: packet.CipherAES256,
+		Time:          getTimeGenerator(),
+	}
 
+	if compress {
+		config.DefaultCompressionAlgo = constants.DefaultCompression
+		config.CompressionConfig = &packet.CompressionConfig{Level: constants.DefaultCompressionLevel}
+	}
+
+	if signingContext != nil {
+		config.SignatureNotations = append(config.SignatureNotations, signingContext.getNotation())
+	}
+
+	var signEntity *openpgp.Entity
 	if privateKey != nil && len(privateKey.entities) > 0 {
 		var err error
 		signEntity, err = privateKey.getSigningEntity()
@@ -242,13 +275,18 @@ func asymmetricEncryptStream(
 
 // Core for decryption+verification (non streaming) functions.
 func asymmetricDecrypt(
-	encryptedIO io.Reader, privateKey *KeyRing, verifyKey *KeyRing, verifyTime int64,
+	encryptedIO io.Reader,
+	privateKey *KeyRing,
+	verifyKey *KeyRing,
+	verifyTime int64,
+	verificationContext *VerificationContext,
 ) (message *PlainMessage, err error) {
 	messageDetails, err := asymmetricDecryptStream(
 		encryptedIO,
 		privateKey,
 		verifyKey,
 		verifyTime,
+		verificationContext,
 	)
 	if err != nil {
 		return nil, err
@@ -261,7 +299,7 @@ func asymmetricDecrypt(
 
 	if verifyKey != nil {
 		processSignatureExpiration(messageDetails, verifyTime)
-		err = verifyDetailsSignature(messageDetails, verifyKey)
+		err = verifyDetailsSignature(messageDetails, verifyKey, verificationContext)
 	}
 
 	return &PlainMessage{
@@ -278,6 +316,7 @@ func asymmetricDecryptStream(
 	privateKey *KeyRing,
 	verifyKey *KeyRing,
 	verifyTime int64,
+	verificationContext *VerificationContext,
 ) (messageDetails *openpgp.MessageDetails, err error) {
 	privKeyEntries := privateKey.entities
 	var additionalEntries openpgp.EntityList
@@ -302,6 +341,10 @@ func asymmetricDecryptStream(
 			}
 			return time.Unix(verifyTime, 0)
 		},
+	}
+
+	if verificationContext != nil {
+		config.KnownNotations = map[string]bool{constants.SignatureContextName: true}
 	}
 
 	messageDetails, err = openpgp.ReadMessage(encryptedIO, privKeyEntries, nil, config)

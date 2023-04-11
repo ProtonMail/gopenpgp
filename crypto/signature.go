@@ -116,7 +116,7 @@ func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
 }
 
 // verifyDetailsSignature verifies signature from message details.
-func verifyDetailsSignature(md *openpgp.MessageDetails, verifierKey *KeyRing) error {
+func verifyDetailsSignature(md *openpgp.MessageDetails, verifierKey *KeyRing, verificationContext *VerificationContext) error {
 	if !md.IsSigned {
 		return newSignatureNotSigned()
 	}
@@ -133,6 +133,13 @@ func verifyDetailsSignature(md *openpgp.MessageDetails, verifierKey *KeyRing) er
 		md.Signature.Hash > allowedHashes[len(allowedHashes)-1] {
 		return newSignatureInsecure()
 	}
+	if verificationContext != nil {
+		err := verificationContext.verifyContext(md.Signature)
+		if err != nil {
+			return newSignatureBadContext(err)
+		}
+	}
+
 	return nil
 }
 

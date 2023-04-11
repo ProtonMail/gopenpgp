@@ -10,6 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const testContext = "test-context"
+
 var testMeta = &PlainMessageMetadata{
 	IsBinary: true,
 	Filename: "filename.txt",
@@ -58,6 +60,190 @@ func TestKeyRing_EncryptDecryptStream(t *testing.T) {
 		bytes.NewReader(ciphertextBytes),
 		keyRingTestPublic,
 		GetUnixTime(),
+	)
+	if err != nil {
+		t.Fatal("Expected no error while calling decrypting stream with key ring, got:", err)
+	}
+	err = decryptedReader.VerifySignature()
+	if err == nil {
+		t.Fatal("Expected an error while verifying the signature before reading the data, got nil")
+	}
+	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	if err != nil {
+		t.Fatal("Expected no error while reading the decrypted data, got:", err)
+	}
+	if !bytes.Equal(decryptedBytes, messageBytes) {
+		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptedBytes), string(messageBytes))
+	}
+	err = decryptedReader.VerifySignature()
+	if err != nil {
+		t.Fatal("Expected no error while verifying the signature, got:", err)
+	}
+	decryptedMeta := decryptedReader.GetMetadata()
+	if !reflect.DeepEqual(testMeta, decryptedMeta) {
+		t.Fatalf("Expected the decrypted metadata to be %v got %v", testMeta, decryptedMeta)
+	}
+	decryptedReaderNoVerify, err := keyRingTestPrivate.DecryptStream(
+		bytes.NewReader(ciphertextBytes),
+		nil,
+		0,
+	)
+	if err != nil {
+		t.Fatal("Expected no error while calling decrypting stream with key ring, got:", err)
+	}
+	decryptedBytes, err = ioutil.ReadAll(decryptedReaderNoVerify)
+	if err != nil {
+		t.Fatal("Expected no error while reading the decrypted data, got:", err)
+	}
+	if !bytes.Equal(decryptedBytes, messageBytes) {
+		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptedBytes), string(messageBytes))
+	}
+	decryptedMeta = decryptedReaderNoVerify.GetMetadata()
+	if !reflect.DeepEqual(testMeta, decryptedMeta) {
+		t.Fatalf("Expected the decrypted metadata to be %v got %v", testMeta, decryptedMeta)
+	}
+	err = decryptedReaderNoVerify.VerifySignature()
+	if err == nil {
+		t.Fatal("Expected an error while verifying the signature with no keyring, got nil")
+	}
+}
+
+func TestKeyRing_EncryptDecryptStreamWithContext(t *testing.T) {
+	messageBytes := []byte("Hello World!")
+	messageReader := bytes.NewReader(messageBytes)
+	var ciphertextBuf bytes.Buffer
+	messageWriter, err := keyRingTestPublic.EncryptStreamWithContext(
+		&ciphertextBuf,
+		testMeta,
+		keyRingTestPrivate,
+		NewSigningContext(testContext, true),
+	)
+	if err != nil {
+		t.Fatal("Expected no error while encrypting stream with key ring, got:", err)
+	}
+	reachedEnd := false
+	bufferSize := 2
+	buffer := make([]byte, bufferSize)
+	for !reachedEnd {
+		n, err := messageReader.Read(buffer)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				reachedEnd = true
+			} else {
+				t.Fatal("Expected no error while reading data, got:", err)
+			}
+		}
+		writtenTotal := 0
+		for writtenTotal < n {
+			written, err := messageWriter.Write(buffer[writtenTotal:n])
+			if err != nil {
+				t.Fatal("Expected no error while writing data, got:", err)
+			}
+			writtenTotal += written
+		}
+	}
+	err = messageWriter.Close()
+	if err != nil {
+		t.Fatal("Expected no error while closing plaintext writer, got:", err)
+	}
+	ciphertextBytes := ciphertextBuf.Bytes()
+	decryptedReader, err := keyRingTestPrivate.DecryptStreamWithContext(
+		bytes.NewReader(ciphertextBytes),
+		keyRingTestPublic,
+		GetUnixTime(),
+		NewVerificationContext(testContext, true, 0),
+	)
+	if err != nil {
+		t.Fatal("Expected no error while calling decrypting stream with key ring, got:", err)
+	}
+	err = decryptedReader.VerifySignature()
+	if err == nil {
+		t.Fatal("Expected an error while verifying the signature before reading the data, got nil")
+	}
+	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	if err != nil {
+		t.Fatal("Expected no error while reading the decrypted data, got:", err)
+	}
+	if !bytes.Equal(decryptedBytes, messageBytes) {
+		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptedBytes), string(messageBytes))
+	}
+	err = decryptedReader.VerifySignature()
+	if err != nil {
+		t.Fatal("Expected no error while verifying the signature, got:", err)
+	}
+	decryptedMeta := decryptedReader.GetMetadata()
+	if !reflect.DeepEqual(testMeta, decryptedMeta) {
+		t.Fatalf("Expected the decrypted metadata to be %v got %v", testMeta, decryptedMeta)
+	}
+	decryptedReaderNoVerify, err := keyRingTestPrivate.DecryptStream(
+		bytes.NewReader(ciphertextBytes),
+		nil,
+		0,
+	)
+	if err != nil {
+		t.Fatal("Expected no error while calling decrypting stream with key ring, got:", err)
+	}
+	decryptedBytes, err = ioutil.ReadAll(decryptedReaderNoVerify)
+	if err != nil {
+		t.Fatal("Expected no error while reading the decrypted data, got:", err)
+	}
+	if !bytes.Equal(decryptedBytes, messageBytes) {
+		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptedBytes), string(messageBytes))
+	}
+	decryptedMeta = decryptedReaderNoVerify.GetMetadata()
+	if !reflect.DeepEqual(testMeta, decryptedMeta) {
+		t.Fatalf("Expected the decrypted metadata to be %v got %v", testMeta, decryptedMeta)
+	}
+	err = decryptedReaderNoVerify.VerifySignature()
+	if err == nil {
+		t.Fatal("Expected an error while verifying the signature with no keyring, got nil")
+	}
+}
+
+func TestKeyRing_EncryptDecryptStreamWithContextAndCompression(t *testing.T) {
+	messageBytes := []byte("Hello World!")
+	messageReader := bytes.NewReader(messageBytes)
+	var ciphertextBuf bytes.Buffer
+	messageWriter, err := keyRingTestPublic.EncryptStreamWithContextAndCompression(
+		&ciphertextBuf,
+		testMeta,
+		keyRingTestPrivate,
+		NewSigningContext(testContext, true),
+	)
+	if err != nil {
+		t.Fatal("Expected no error while encrypting stream with key ring, got:", err)
+	}
+	reachedEnd := false
+	bufferSize := 2
+	buffer := make([]byte, bufferSize)
+	for !reachedEnd {
+		n, err := messageReader.Read(buffer)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				reachedEnd = true
+			} else {
+				t.Fatal("Expected no error while reading data, got:", err)
+			}
+		}
+		writtenTotal := 0
+		for writtenTotal < n {
+			written, err := messageWriter.Write(buffer[writtenTotal:n])
+			if err != nil {
+				t.Fatal("Expected no error while writing data, got:", err)
+			}
+			writtenTotal += written
+		}
+	}
+	err = messageWriter.Close()
+	if err != nil {
+		t.Fatal("Expected no error while closing plaintext writer, got:", err)
+	}
+	ciphertextBytes := ciphertextBuf.Bytes()
+	decryptedReader, err := keyRingTestPrivate.DecryptStreamWithContext(
+		bytes.NewReader(ciphertextBytes),
+		keyRingTestPublic,
+		GetUnixTime(),
+		NewVerificationContext(testContext, true, 0),
 	)
 	if err != nil {
 		t.Fatal("Expected no error while calling decrypting stream with key ring, got:", err)
@@ -299,6 +485,57 @@ func TestKeyRing_EncryptDecryptSplitStream(t *testing.T) {
 	}
 }
 
+func TestKeyRing_EncryptDecryptSplitStreamWithCont(t *testing.T) {
+	messageBytes := []byte("Hello World!")
+	messageReader := bytes.NewReader(messageBytes)
+
+	var dataPacketBuf bytes.Buffer
+	encryptionResult, err := keyRingTestPublic.EncryptSplitStreamWithContext(
+		&dataPacketBuf,
+		testMeta,
+		keyRingTestPrivate,
+		NewSigningContext(testContext, true),
+	)
+	if err != nil {
+		t.Fatal("Expected no error while calling encrypting split stream with key ring, got:", err)
+	}
+	messageWriter := encryptionResult
+	_, err = io.Copy(messageWriter, messageReader)
+	if err != nil {
+		t.Fatal("Expected no error while copying plaintext writer, got:", err)
+	}
+	err = messageWriter.Close()
+	if err != nil {
+		t.Fatal("Expected no error while closing plaintext writer, got:", err)
+	}
+	keyPacket, err := encryptionResult.GetKeyPacket()
+	if err != nil {
+		t.Fatal("Expected no error while accessing key packet, got:", err)
+	}
+	dataPacket := dataPacketBuf.Bytes()
+	decryptedReader, err := keyRingTestPrivate.DecryptSplitStreamWithContext(
+		keyPacket,
+		bytes.NewReader(dataPacket),
+		keyRingTestPublic,
+		GetUnixTime(),
+		NewVerificationContext(testContext, true, 0),
+	)
+	if err != nil {
+		t.Fatal("Expected no error while decrypting split stream with key ring, got:", err)
+	}
+	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	if err != nil {
+		t.Fatal("Expected no error while reading the decrypted data, got:", err)
+	}
+	err = decryptedReader.VerifySignature()
+	if err != nil {
+		t.Fatal("Expected no error while verifying the signature, got:", err)
+	}
+	if !bytes.Equal(decryptedBytes, messageBytes) {
+		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptedBytes), string(messageBytes))
+	}
+}
+
 func TestKeyRing_EncryptSplitStreamCompatible(t *testing.T) {
 	enc := func(w io.Writer, meta *PlainMessageMetadata, kr *KeyRing) (*EncryptSplitResult, error) {
 		return keyRingTestPublic.EncryptSplitStream(
@@ -457,6 +694,23 @@ func TestKeyRing_SignVerifyDetachedStream(t *testing.T) {
 		t.Fatal("Expected no error while rewinding the message reader, got:", err)
 	}
 	err = keyRingTestPublic.VerifyDetachedStream(messageReader, signature, GetUnixTime())
+	if err != nil {
+		t.Fatal("Expected no error while verifying the detached signature, got:", err)
+	}
+}
+
+func TestKeyRing_SignVerifyDetachedStreamWithContext(t *testing.T) {
+	messageBytes := []byte("Hello World!")
+	messageReader := bytes.NewReader(messageBytes)
+	signature, err := keyRingTestPrivate.SignDetachedStreamWithContext(messageReader, NewSigningContext(testContext, true))
+	if err != nil {
+		t.Fatal("Expected no error while signing the message, got:", err)
+	}
+	_, err = messageReader.Seek(0, 0)
+	if err != nil {
+		t.Fatal("Expected no error while rewinding the message reader, got:", err)
+	}
+	err = keyRingTestPublic.VerifyDetachedStreamWithContext(messageReader, signature, GetUnixTime(), NewVerificationContext(testContext, true, 0))
 	if err != nil {
 		t.Fatal("Expected no error while verifying the detached signature, got:", err)
 	}

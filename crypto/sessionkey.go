@@ -138,17 +138,7 @@ func newSessionKeyFromEncrypted(ek *packet.EncryptedKey) (*SessionKey, error) {
 // * message : The plain data as a PlainMessage.
 // * output  : The encrypted data as PGPMessage.
 func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
-	dc, err := sk.GetCipherFunc()
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt with session key")
-	}
-
-	config := &packet.Config{
-		Time:          getTimeGenerator(),
-		DefaultCipher: dc,
-	}
-
-	return encryptWithSessionKey(message, sk, nil, config)
+	return encryptWithSessionKey(message, sk, nil, false, nil)
 }
 
 // EncryptAndSign encrypts a PlainMessage to PGPMessage with a SessionKey and signs it with a Private key.
@@ -156,59 +146,50 @@ func (sk *SessionKey) Encrypt(message *PlainMessage) ([]byte, error) {
 // * signKeyRing: The KeyRing to sign the message
 // * output  : The encrypted data as PGPMessage.
 func (sk *SessionKey) EncryptAndSign(message *PlainMessage, signKeyRing *KeyRing) ([]byte, error) {
-	dc, err := sk.GetCipherFunc()
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt with session key")
-	}
+	return encryptWithSessionKey(message, sk, signKeyRing, false, nil)
+}
 
-	config := &packet.Config{
-		Time:          getTimeGenerator(),
-		DefaultCipher: dc,
-	}
-
-	signEntity, err := signKeyRing.getSigningEntity()
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to sign")
-	}
-
-	return encryptWithSessionKey(message, sk, signEntity, config)
+// EncryptAndSignWithContext encrypts a PlainMessage to PGPMessage with a SessionKey and signs it with a Private key.
+// * message : The plain data as a PlainMessage.
+// * signKeyRing: The KeyRing to sign the message
+// * output  : The encrypted data as PGPMessage.
+// * signingContext : (optional) the context for the signature.
+func (sk *SessionKey) EncryptAndSignWithContext(message *PlainMessage, signKeyRing *KeyRing, signingContext *SigningContext) ([]byte, error) {
+	return encryptWithSessionKey(message, sk, signKeyRing, false, signingContext)
 }
 
 // EncryptWithCompression encrypts with compression support a PlainMessage to PGPMessage with a SessionKey.
 // * message : The plain data as a PlainMessage.
 // * output  : The encrypted data as PGPMessage.
 func (sk *SessionKey) EncryptWithCompression(message *PlainMessage) ([]byte, error) {
-	dc, err := sk.GetCipherFunc()
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt with session key")
-	}
-
-	config := &packet.Config{
-		Time:                   getTimeGenerator(),
-		DefaultCipher:          dc,
-		DefaultCompressionAlgo: constants.DefaultCompression,
-		CompressionConfig:      &packet.CompressionConfig{Level: constants.DefaultCompressionLevel},
-	}
-
-	return encryptWithSessionKey(message, sk, nil, config)
+	return encryptWithSessionKey(message, sk, nil, true, nil)
 }
 
-func encryptWithSessionKey(message *PlainMessage, sk *SessionKey, signEntity *openpgp.Entity, config *packet.Config) ([]byte, error) {
+func encryptWithSessionKey(
+	message *PlainMessage,
+	sk *SessionKey,
+	signKeyRing *KeyRing,
+	compress bool,
+	signingContext *SigningContext,
+) ([]byte, error) {
 	var encBuf = new(bytes.Buffer)
 
 	encryptWriter, signWriter, err := encryptStreamWithSessionKey(
-		message.IsBinary(),
-		message.Filename,
-		message.Time,
+		NewPlainMessageMetadata(
+			message.IsBinary(),
+			message.Filename,
+			int64(message.Time),
+		),
 		encBuf,
 		sk,
-		signEntity,
-		config,
+		signKeyRing,
+		compress,
+		signingContext,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if signEntity != nil {
+	if signKeyRing != nil {
 		_, err = signWriter.Write(message.GetBinary())
 		if err != nil {
 			return nil, errors.Wrap(err, "gopenpgp: error in writing signed message")
@@ -231,6 +212,61 @@ func encryptWithSessionKey(message *PlainMessage, sk *SessionKey, signEntity *op
 }
 
 func encryptStreamWithSessionKey(
+	plainMessageMetadata *PlainMessageMetadata,
+	dataPacketWriter io.Writer,
+	sk *SessionKey,
+	signKeyRing *KeyRing,
+	compress bool,
+	signingContext *SigningContext,
+) (encryptWriter, signWriter io.WriteCloser, err error) {
+	dc, err := sk.GetCipherFunc()
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "gopenpgp: unable to encrypt with session key")
+	}
+
+	config := &packet.Config{
+		Time:          getTimeGenerator(),
+		DefaultCipher: dc,
+	}
+
+	var signEntity *openpgp.Entity
+	if signKeyRing != nil {
+		signEntity, err = signKeyRing.getSigningEntity()
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "gopenpgp: unable to sign")
+		}
+	}
+
+	if compress {
+		config.DefaultCompressionAlgo = constants.DefaultCompression
+		config.CompressionConfig = &packet.CompressionConfig{Level: constants.DefaultCompressionLevel}
+	}
+
+	if signingContext != nil {
+		config.SignatureNotations = append(config.SignatureNotations, signingContext.getNotation())
+	}
+
+	if plainMessageMetadata == nil {
+		// Use sensible default metadata
+		plainMessageMetadata = &PlainMessageMetadata{
+			IsBinary: true,
+			Filename: "",
+			ModTime:  GetUnixTime(),
+		}
+	}
+
+	return encryptStreamWithSessionKeyAndConfig(
+		plainMessageMetadata.IsBinary,
+		plainMessageMetadata.Filename,
+		uint32(plainMessageMetadata.ModTime),
+		dataPacketWriter,
+		sk,
+		signEntity,
+		config,
+	)
+}
+
+func encryptStreamWithSessionKeyAndConfig(
 	isBinary bool,
 	filename string,
 	modTime uint32,
@@ -297,9 +333,41 @@ func (sk *SessionKey) Decrypt(dataPacket []byte) (*PlainMessage, error) {
 // * verifyTime: when should the signature be valid, as timestamp. If 0 time verification is disabled.
 // * output: PlainMessage.
 func (sk *SessionKey) DecryptAndVerify(dataPacket []byte, verifyKeyRing *KeyRing, verifyTime int64) (*PlainMessage, error) {
+	return decryptWithSessionKeyAndContext(
+		sk,
+		dataPacket,
+		verifyKeyRing,
+		verifyTime,
+		nil,
+	)
+}
+
+// DecryptAndVerifyWithContext decrypts pgp data packets using directly a session key and verifies embedded signatures.
+// * encrypted: PGPMessage.
+// * verifyKeyRing: KeyRing with verification public keys
+// * verifyTime: when should the signature be valid, as timestamp. If 0 time verification is disabled.
+// * output: PlainMessage.
+// * verificationContext (optional): context for the signature verification.
+func (sk *SessionKey) DecryptAndVerifyWithContext(dataPacket []byte, verifyKeyRing *KeyRing, verifyTime int64, verificationContext *VerificationContext) (*PlainMessage, error) {
+	return decryptWithSessionKeyAndContext(
+		sk,
+		dataPacket,
+		verifyKeyRing,
+		verifyTime,
+		verificationContext,
+	)
+}
+
+func decryptWithSessionKeyAndContext(
+	sk *SessionKey,
+	dataPacket []byte,
+	verifyKeyRing *KeyRing,
+	verifyTime int64,
+	verificationContext *VerificationContext,
+) (*PlainMessage, error) {
 	var messageReader = bytes.NewReader(dataPacket)
 
-	md, err := decryptStreamWithSessionKey(sk, messageReader, verifyKeyRing)
+	md, err := decryptStreamWithSessionKey(sk, messageReader, verifyKeyRing, verificationContext)
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +379,7 @@ func (sk *SessionKey) DecryptAndVerify(dataPacket []byte, verifyKeyRing *KeyRing
 
 	if verifyKeyRing != nil {
 		processSignatureExpiration(md, verifyTime)
-		err = verifyDetailsSignature(md, verifyKeyRing)
+		err = verifyDetailsSignature(md, verifyKeyRing, verificationContext)
 	}
 
 	return &PlainMessage{
@@ -322,7 +390,12 @@ func (sk *SessionKey) DecryptAndVerify(dataPacket []byte, verifyKeyRing *KeyRing
 	}, err
 }
 
-func decryptStreamWithSessionKey(sk *SessionKey, messageReader io.Reader, verifyKeyRing *KeyRing) (*openpgp.MessageDetails, error) {
+func decryptStreamWithSessionKey(
+	sk *SessionKey,
+	messageReader io.Reader,
+	verifyKeyRing *KeyRing,
+	verificationContext *VerificationContext,
+) (*openpgp.MessageDetails, error) {
 	var decrypted io.ReadCloser
 	var keyring openpgp.EntityList
 
@@ -354,6 +427,10 @@ func decryptStreamWithSessionKey(sk *SessionKey, messageReader io.Reader, verify
 
 	config := &packet.Config{
 		Time: getTimeGenerator(),
+	}
+
+	if verificationContext != nil {
+		config.KnownNotations = map[string]bool{constants.SignatureContextName: true}
 	}
 
 	// Push decrypted packet as literal packet and use openpgp's reader
