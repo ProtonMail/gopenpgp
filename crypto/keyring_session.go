@@ -83,8 +83,17 @@ func (keyRing *KeyRing) EncryptSessionKey(sk *SessionKey) ([]byte, error) {
 	}
 
 	pubKeys := make([]*packet.PublicKey, 0, len(keyRing.entities))
+	aeadSupport := true
 	for _, e := range keyRing.entities {
 		encryptionKey, ok := e.EncryptionKey(getNow())
+		primarySelfSignature, _ := e.PrimarySelfSignature()
+		if primarySelfSignature == nil {
+			return nil, errors.Wrap(err, "gopenpgp: entity without a self-signature") 
+		}
+
+		if !primarySelfSignature.SEIPDv2 {
+			aeadSupport = false
+		}
 		if !ok {
 			return nil, errors.New("gopenpgp: encryption key is unavailable for key id " + strconv.FormatUint(e.PrimaryKey.KeyId, 16))
 		}
@@ -95,7 +104,7 @@ func (keyRing *KeyRing) EncryptSessionKey(sk *SessionKey) ([]byte, error) {
 	}
 
 	for _, pub := range pubKeys {
-		if err := packet.SerializeEncryptedKey(outbuf, pub, cf, sk.Key, nil); err != nil {
+		if err := packet.SerializeEncryptedKey(outbuf, pub, cf, aeadSupport, sk.Key, false, nil); err != nil {
 			return nil, errors.Wrap(err, "gopenpgp: cannot set key")
 		}
 	}
