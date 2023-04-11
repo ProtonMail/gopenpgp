@@ -105,7 +105,7 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 
 	var ew io.WriteCloser
 	var encryptErr error
-	ew, encryptErr = openpgp.Encrypt(writer, keyRing.entities, nil, hints, config)
+	ew, encryptErr = openpgp.Encrypt(writer, keyRing.entities, nil, nil, hints, config)
 	if encryptErr != nil {
 		return nil, errors.Wrap(encryptErr, "gopengpp: unable to encrypt attachment")
 	}

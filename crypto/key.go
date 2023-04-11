@@ -114,7 +114,7 @@ func (key *Key) Lock(passphrase []byte) (*Key, error) {
 		return lockedKey, nil
 	}
 
-	err = lockedKey.entity.EncryptAllKeys(passphrase, nil)
+	err = lockedKey.entity.EncryptPrivateKeys(passphrase, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in locking key")
 	}
@@ -149,7 +149,7 @@ func (key *Key) Unlock(passphrase []byte) (*Key, error) {
 		return nil, err
 	}
 
-	err = unlockedKey.entity.DecryptAllKeys(passphrase)
+	err = unlockedKey.entity.DecryptPrivateKeys(passphrase)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in unlocking key")
 	}
