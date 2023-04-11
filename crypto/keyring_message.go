@@ -263,9 +263,9 @@ func asymmetricEncryptStream(
 	}
 
 	if hints.IsBinary {
-		encryptWriter, err = openpgp.EncryptSplit(keyPacketWriter, dataPacketWriter, publicKey.entities, signEntity, hints, config)
+		encryptWriter, err = openpgp.EncryptSplit(keyPacketWriter, dataPacketWriter, publicKey.entities, nil, signEntity, hints, config)
 	} else {
-		encryptWriter, err = openpgp.EncryptTextSplit(keyPacketWriter, dataPacketWriter, publicKey.entities, signEntity, hints, config)
+		encryptWriter, err = openpgp.EncryptTextSplit(keyPacketWriter, dataPacketWriter, publicKey.entities, nil, signEntity, hints, config)
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
