@@ -128,7 +128,7 @@ func (keyRing *KeyRing) NewManualAttachmentProcessor(
 	// We generate the encrypting writer
 	var ew io.WriteCloser
 	var encryptErr error
-	ew, encryptErr = openpgp.EncryptSplit(keyWriter, dataWriter, keyRing.entities, nil, hints, config)
+	ew, encryptErr = openpgp.EncryptSplit(keyWriter, dataWriter, keyRing.entities, nil, nil, hints, config)
 	if encryptErr != nil {
 		return nil, errors.Wrap(encryptErr, "gopengpp: unable to encrypt attachment")
 	}
