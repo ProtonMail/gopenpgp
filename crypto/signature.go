@@ -251,7 +251,7 @@ func verifySignature(
 
 	sig, signer, err := openpgp.VerifyDetachedSignatureAndHash(pubKeyEntries, origText, signatureReader, allowedHashes, config)
 
-	if sig != nil && signer != nil && (errors.Is(err, pgpErrors.ErrSignatureExpired) || errors.Is(err, pgpErrors.ErrKeyExpired)) {
+	if sig != nil && signer != nil && (errors.Is(err, pgpErrors.ErrSignatureExpired) || errors.Is(err, pgpErrors.ErrKeyExpired)) { //nolint:nestif
 		if verifyTime == 0 { // Expiration check disabled
 			err = nil
 		} else {
@@ -261,12 +261,22 @@ func verifySignature(
 				return time.Unix(verifyTime, 0)
 			}
 
+			seeker, ok := origText.(io.ReadSeeker)
+			if !ok {
+				return nil, errors.Wrap(err, "gopenpgp: message reader do not support seeking, cannot retry signature verification")
+			}
+
+			_, err = seeker.Seek(0, io.SeekStart)
+			if err != nil {
+				return nil, newSignatureFailed(errors.Wrap(err, "gopenpgp: could not rewind the data reader."))
+			}
+
 			_, err = signatureReader.Seek(0, io.SeekStart)
 			if err != nil {
 				return nil, newSignatureFailed(err)
 			}
 
-			sig, signer, err = openpgp.VerifyDetachedSignatureAndHash(pubKeyEntries, origText, signatureReader, allowedHashes, config)
+			sig, signer, err = openpgp.VerifyDetachedSignatureAndHash(pubKeyEntries, seeker, signatureReader, allowedHashes, config)
 		}
 	}
 
