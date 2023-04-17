@@ -80,7 +80,7 @@ func DecryptAttachment(keyPacket []byte, dataPacket []byte, keyRing *crypto.KeyR
 // encrypted data. Specifically designed for attachments rather than text
 // messages.
 func EncryptAttachment(plainData []byte, filename string, keyRing *crypto.KeyRing) (*crypto.PGPSplitMessage, error) {
-	plainMessage := crypto.NewPlainMessageFromFile(plainData, filename, uint32(crypto.GetUnixTime()))
+	plainMessage := crypto.NewPlainMessageFromFile(plainData, filename, crypto.GetUnixTime())
 	decrypted, err := keyRing.EncryptAttachment(plainMessage, "")
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt attachment")
