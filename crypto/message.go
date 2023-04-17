@@ -20,16 +20,20 @@ import (
 
 // ---- MODELS -----
 
-// PlainMessage stores a plain text / unencrypted message.
-type PlainMessage struct {
-	// The content of the message
-	Data []byte
+type PlainMessageMetadata struct {
 	// If the content is text or binary
-	TextType bool
-	// The file's latest modification time
-	Time uint32
+	IsUTF8 bool
 	// The encrypted message's filename
 	Filename string
+	// The file's latest modification time
+	ModTime int64
+}
+
+// PlainMessage stores a plain text / unencrypted message.
+type PlainMessage struct {
+	PlainMessageMetadata
+	// The content of the message
+	Data []byte
 }
 
 // PGPMessage stores a PGP-encrypted message.
@@ -58,17 +62,27 @@ type ClearTextMessage struct {
 	Signature []byte
 }
 
+type PGPMessageBuffer struct {
+	buffer *bytes.Buffer
+}
+
 // ---- GENERATORS -----
+
+func NewPlainMessageMetadata(isUTF8 bool, filename string, modTime int64) *PlainMessageMetadata {
+	return &PlainMessageMetadata{IsUTF8: isUTF8, Filename: filename, ModTime: modTime}
+}
 
 // NewPlainMessage generates a new binary PlainMessage ready for encryption,
 // signature, or verification from the unencrypted binary data.
 // This will encrypt the message with the binary flag and preserve the file as is.
 func NewPlainMessage(data []byte) *PlainMessage {
 	return &PlainMessage{
-		Data:     clone(data),
-		TextType: false,
-		Filename: "",
-		Time:     uint32(GetUnixTime()),
+		Data: clone(data),
+		PlainMessageMetadata: PlainMessageMetadata{
+			IsUTF8:   false,
+			Filename: "",
+			ModTime:  GetUnixTime(),
+		},
 	}
 }
 
@@ -76,12 +90,14 @@ func NewPlainMessage(data []byte) *PlainMessage {
 // signature, or verification from the unencrypted binary data.
 // This will encrypt the message with the binary flag and preserve the file as is.
 // It assigns a filename and a modification time.
-func NewPlainMessageFromFile(data []byte, filename string, time uint32) *PlainMessage {
+func NewPlainMessageFromFile(data []byte, filename string, time int64) *PlainMessage {
 	return &PlainMessage{
-		Data:     clone(data),
-		TextType: false,
-		Filename: filename,
-		Time:     time,
+		Data: clone(data),
+		PlainMessageMetadata: PlainMessageMetadata{
+			IsUTF8:   false,
+			Filename: filename,
+			ModTime:  time,
+		},
 	}
 }
 
@@ -92,10 +108,12 @@ func NewPlainMessageFromFile(data []byte, filename string, time uint32) *PlainMe
 // This allows seamless conversion to clear text signed messages (see RFC 4880 5.2.1 and 7.1).
 func NewPlainMessageFromString(text string) *PlainMessage {
 	return &PlainMessage{
-		Data:     []byte(internal.Canonicalize(text)),
-		TextType: true,
-		Filename: "",
-		Time:     uint32(GetUnixTime()),
+		Data: []byte(internal.Canonicalize(text)),
+		PlainMessageMetadata: PlainMessageMetadata{
+			IsUTF8:   true,
+			Filename: "",
+			ModTime:  GetUnixTime(),
+		},
 	}
 }
 
@@ -193,6 +211,12 @@ func NewClearTextMessageFromArmored(signedMessage string) (*ClearTextMessage, er
 	return NewClearTextMessage(modulusBlock.Bytes, signature), nil
 }
 
+func NewPGPMessageBuffer() *PGPMessageBuffer {
+	return &PGPMessageBuffer{
+		buffer: new(bytes.Buffer),
+	}
+}
+
 // ---- MODEL METHODS -----
 
 // GetBinary returns the binary content of the message as a []byte.
@@ -217,18 +241,18 @@ func (msg *PlainMessage) NewReader() io.Reader {
 }
 
 // IsText returns whether the message is a text message.
-func (msg *PlainMessage) IsText() bool {
-	return msg.TextType
+func (msg *PlainMessage) IsUTF8() bool {
+	return msg.PlainMessageMetadata.IsUTF8
 }
 
 // IsBinary returns whether the message is a binary message.
 func (msg *PlainMessage) IsBinary() bool {
-	return !msg.TextType
+	return !msg.PlainMessageMetadata.IsUTF8
 }
 
 // getFormattedTime returns the message (latest modification) Time as time.Time.
 func (msg *PlainMessage) getFormattedTime() time.Time {
-	return time.Unix(int64(msg.Time), 0)
+	return time.Unix(int64(msg.ModTime), 0)
 }
 
 // GetBinary returns the unarmored binary content of the message as a []byte.
@@ -408,6 +432,16 @@ func (msg *ClearTextMessage) GetArmored() (string, error) {
 	str += armSignature
 
 	return str, nil
+}
+
+func (w *PGPMessageBuffer) Write(b []byte) (n int, err error) {
+	return w.buffer.Write(b)
+}
+
+func (w *PGPMessageBuffer) PGPMessage() *PGPMessage {
+	return &PGPMessage{
+		Data: w.buffer.Bytes(),
+	}
 }
 
 // ---- UTILS -----

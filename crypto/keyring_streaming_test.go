@@ -13,7 +13,7 @@ import (
 const testContext = "test-context"
 
 var testMeta = &PlainMessageMetadata{
-	IsBinary: true,
+	IsUTF8:   false,
 	Filename: "filename.txt",
 	ModTime:  GetUnixTime(),
 }
@@ -366,8 +366,8 @@ func testKeyRing_EncryptStreamCompatible(encrypt keyringEncryptionFunction, t *t
 	if !bytes.Equal(decryptedBytes, messageBytes) {
 		t.Fatalf("Expected the normally decrypted data to be %s got %s", string(decryptedBytes), string(messageBytes))
 	}
-	if testMeta.IsBinary != decryptedMsg.IsBinary() {
-		t.Fatalf("Expected isBinary to be %t got %t", testMeta.IsBinary, decryptedMsg.IsBinary())
+	if testMeta.IsUTF8 != decryptedMsg.IsUTF8() {
+		t.Fatalf("Expected isBinary to be %t got %t", testMeta.IsUTF8, decryptedMsg.IsBinary())
 	}
 	if testMeta.Filename != decryptedMsg.GetFilename() {
 		t.Fatalf("Expected filename to be %s got %s", testMeta.Filename, decryptedMsg.GetFilename())
@@ -381,10 +381,12 @@ func TestKeyRing_DecryptStreamCompatible(t *testing.T) {
 	messageBytes := []byte("Hello World!")
 	pgpMessage, err := keyRingTestPublic.Encrypt(
 		&PlainMessage{
-			Data:     messageBytes,
-			TextType: !testMeta.IsBinary,
-			Time:     uint32(testMeta.ModTime),
-			Filename: testMeta.Filename,
+			Data: messageBytes,
+			PlainMessageMetadata: PlainMessageMetadata{
+				IsUTF8:   testMeta.IsUTF8,
+				ModTime:  testMeta.ModTime,
+				Filename: testMeta.Filename,
+			},
 		},
 		keyRingTestPrivate,
 	)
@@ -618,8 +620,8 @@ func testKeyRing_EncryptSplitStreamCompatible(encrypt keyringEncryptionSplitFunc
 	if !bytes.Equal(decryptedBytes, messageBytes) {
 		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptedBytes), string(messageBytes))
 	}
-	if testMeta.IsBinary != decryptedMsg.IsBinary() {
-		t.Fatalf("Expected isBinary to be %t got %t", testMeta.IsBinary, decryptedMsg.IsBinary())
+	if testMeta.IsUTF8 != decryptedMsg.IsUTF8() {
+		t.Fatalf("Expected isBinary to be %t got %t", testMeta.IsUTF8, decryptedMsg.IsBinary())
 	}
 	if testMeta.Filename != decryptedMsg.GetFilename() {
 		t.Fatalf("Expected filename to be %s got %s", testMeta.Filename, decryptedMsg.GetFilename())
@@ -633,13 +635,16 @@ func TestKeyRing_DecryptSplitStreamCompatible(t *testing.T) {
 	messageBytes := []byte("Hello World!")
 	pgpMessage, err := keyRingTestPublic.Encrypt(
 		&PlainMessage{
-			Data:     messageBytes,
-			TextType: !testMeta.IsBinary,
-			Time:     uint32(testMeta.ModTime),
-			Filename: testMeta.Filename,
+			Data: messageBytes,
+			PlainMessageMetadata: PlainMessageMetadata{
+				IsUTF8:   testMeta.IsUTF8,
+				ModTime:  testMeta.ModTime,
+				Filename: testMeta.Filename,
+			},
 		},
 		keyRingTestPrivate,
 	)
+
 	if err != nil {
 		t.Fatal("Expected no error while encrypting plaintext, got:", err)
 	}

@@ -70,7 +70,7 @@ func (ap *AttachmentProcessor) Finish() (*PGPSplitMessage, error) {
 // newAttachmentProcessor creates an AttachmentProcessor which can be used to encrypt
 // a file. It takes an estimatedSize and fileName as hints about the file.
 func (keyRing *KeyRing) newAttachmentProcessor(
-	estimatedSize int, filename string, isBinary bool, modTime uint32, garbageCollector int, //nolint:unparam
+	estimatedSize int, filename string, isUTF8 bool, modTime uint32, garbageCollector int, //nolint:unparam
 ) (*AttachmentProcessor, error) {
 	attachmentProc := &AttachmentProcessor{}
 	// You could also add these one at a time if needed.
@@ -79,7 +79,7 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 
 	hints := &openpgp.FileHints{
 		FileName: filename,
-		IsBinary: isBinary,
+		IsUTF8:   isUTF8,
 		ModTime:  time.Unix(int64(modTime), 0),
 	}
 
@@ -127,8 +127,8 @@ func (keyRing *KeyRing) EncryptAttachment(message *PlainMessage, filename string
 	ap, err := keyRing.newAttachmentProcessor(
 		len(message.GetBinary()),
 		filename,
-		message.IsBinary(),
-		message.Time,
+		message.IsUTF8(),
+		uint32(message.ModTime),
 		-1,
 	)
 	if err != nil {
@@ -177,9 +177,11 @@ func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*PlainMessa
 	}
 
 	return &PlainMessage{
-		Data:     b,
-		TextType: !md.LiteralData.IsBinary,
-		Filename: md.LiteralData.FileName,
-		Time:     md.LiteralData.Time,
+		Data: b,
+		PlainMessageMetadata: PlainMessageMetadata{
+			IsUTF8:   md.LiteralData.IsUTF8,
+			Filename: md.LiteralData.FileName,
+			ModTime:  int64(md.LiteralData.Time),
+		},
 	}, nil
 }

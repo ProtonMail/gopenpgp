@@ -1,25 +1,5 @@
 package crypto
 
-import (
-	"github.com/pkg/errors"
-)
-
-type signAndEncryptWriteCloser struct {
-	signWriter    WriteCloser
-	encryptWriter WriteCloser
-}
-
-func (w *signAndEncryptWriteCloser) Write(b []byte) (int, error) {
-	return w.signWriter.Write(b)
-}
-
-func (w *signAndEncryptWriteCloser) Close() error {
-	if err := w.signWriter.Close(); err != nil {
-		return err
-	}
-	return w.encryptWriter.Close()
-}
-
 // EncryptStream is used to encrypt data as a Writer.
 // It takes a writer for the encrypted data packet and returns a writer for the plaintext data.
 // If signKeyRing is not nil, it is used to do an embedded signature.
@@ -109,6 +89,7 @@ func (sk *SessionKey) encryptStream(
 		signKeyRing,
 		compress,
 		signingContext,
+		nil,
 	)
 
 	if err != nil {
@@ -138,6 +119,7 @@ func (sk *SessionKey) DecryptStream(
 		verifyKeyRing,
 		verifyTime,
 		nil,
+		false,
 	)
 }
 
@@ -159,31 +141,6 @@ func (sk *SessionKey) DecryptStreamWithContext(
 		verifyKeyRing,
 		verifyTime,
 		verificationContext,
-	)
-}
-
-func decryptStreamWithSessionKeyAndContext(
-	sessionKey *SessionKey,
-	dataPacketReader Reader,
-	verifyKeyRing *KeyRing,
-	verifyTime int64,
-	verificationContext *VerificationContext,
-) (plainMessage *PlainMessageReader, err error) {
-	messageDetails, err := decryptStreamWithSessionKey(
-		sessionKey,
-		dataPacketReader,
-		verifyKeyRing,
-		verificationContext,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
-	}
-
-	return &PlainMessageReader{
-		messageDetails,
-		verifyKeyRing,
-		verifyTime,
 		false,
-		verificationContext,
-	}, err
+	)
 }

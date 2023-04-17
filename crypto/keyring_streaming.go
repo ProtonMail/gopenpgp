@@ -3,50 +3,28 @@ package crypto
 import (
 	"bytes"
 	"io"
-	"time"
+	"io/ioutil"
 
-	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/pkg/errors"
 )
-
-type Reader interface {
-	Read(b []byte) (n int, err error)
-}
-
-type Writer interface {
-	Write(b []byte) (n int, err error)
-}
-
-type WriteCloser interface {
-	Write(b []byte) (n int, err error)
-	Close() (err error)
-}
-
-type PlainMessageMetadata struct {
-	IsBinary bool
-	Filename string
-	ModTime  int64
-}
-
-func NewPlainMessageMetadata(isBinary bool, filename string, modTime int64) *PlainMessageMetadata {
-	return &PlainMessageMetadata{IsBinary: isBinary, Filename: filename, ModTime: modTime}
-}
 
 // EncryptStream is used to encrypt data as a Writer.
 // It takes a writer for the encrypted data and returns a WriteCloser for the plaintext data
 // If signKeyRing is not nil, it is used to do an embedded signature.
 func (keyRing *KeyRing) EncryptStream(
-	pgpMessageWriter Writer,
+	outputWriter Writer,
 	plainMessageMetadata *PlainMessageMetadata,
 	signKeyRing *KeyRing,
 ) (plainMessageWriter WriteCloser, err error) {
 	return encryptStream(
 		keyRing,
-		pgpMessageWriter,
-		pgpMessageWriter,
+		nil,
+		outputWriter,
+		outputWriter,
 		plainMessageMetadata,
 		signKeyRing,
 		false,
+		nil,
 		nil,
 	)
 }
@@ -63,12 +41,14 @@ func (keyRing *KeyRing) EncryptStreamWithContext(
 ) (plainMessageWriter WriteCloser, err error) {
 	return encryptStream(
 		keyRing,
+		nil,
 		pgpMessageWriter,
 		pgpMessageWriter,
 		plainMessageMetadata,
 		signKeyRing,
 		false,
 		signingContext,
+		nil,
 	)
 }
 
@@ -83,11 +63,13 @@ func (keyRing *KeyRing) EncryptStreamWithCompression(
 ) (plainMessageWriter WriteCloser, err error) {
 	return encryptStream(
 		keyRing,
+		nil,
 		pgpMessageWriter,
 		pgpMessageWriter,
 		plainMessageMetadata,
 		signKeyRing,
 		true,
+		nil,
 		nil,
 	)
 }
@@ -105,44 +87,15 @@ func (keyRing *KeyRing) EncryptStreamWithContextAndCompression(
 ) (plainMessageWriter WriteCloser, err error) {
 	return encryptStream(
 		keyRing,
+		nil,
 		pgpMessageWriter,
 		pgpMessageWriter,
 		plainMessageMetadata,
 		signKeyRing,
 		true,
 		signingContext,
+		nil,
 	)
-}
-
-func encryptStream(
-	encryptionKeyRing *KeyRing,
-	keyPacketWriter Writer,
-	dataPacketWriter Writer,
-	plainMessageMetadata *PlainMessageMetadata,
-	signKeyRing *KeyRing,
-	compress bool,
-	signingContext *SigningContext,
-) (plainMessageWriter WriteCloser, err error) {
-	if plainMessageMetadata == nil {
-		// Use sensible default metadata
-		plainMessageMetadata = &PlainMessageMetadata{
-			IsBinary: true,
-			Filename: "",
-			ModTime:  GetUnixTime(),
-		}
-	}
-
-	hints := &openpgp.FileHints{
-		FileName: plainMessageMetadata.Filename,
-		IsBinary: plainMessageMetadata.IsBinary,
-		ModTime:  time.Unix(plainMessageMetadata.ModTime, 0),
-	}
-
-	plainMessageWriter, err = asymmetricEncryptStream(hints, keyPacketWriter, dataPacketWriter, encryptionKeyRing, signKeyRing, compress, signingContext)
-	if err != nil {
-		return nil, err
-	}
-	return plainMessageWriter, nil
 }
 
 // EncryptSplitResult is used to wrap the encryption writecloser while storing the key packet.
@@ -188,6 +141,7 @@ func (keyRing *KeyRing) EncryptSplitStream(
 ) (*EncryptSplitResult, error) {
 	return encryptSplitStream(
 		keyRing,
+		nil,
 		dataPacketWriter,
 		plainMessageMetadata,
 		signKeyRing,
@@ -210,6 +164,7 @@ func (keyRing *KeyRing) EncryptSplitStreamWithContext(
 ) (*EncryptSplitResult, error) {
 	return encryptSplitStream(
 		keyRing,
+		nil,
 		dataPacketWriter,
 		plainMessageMetadata,
 		signKeyRing,
@@ -230,6 +185,7 @@ func (keyRing *KeyRing) EncryptSplitStreamWithCompression(
 ) (*EncryptSplitResult, error) {
 	return encryptSplitStream(
 		keyRing,
+		nil,
 		dataPacketWriter,
 		plainMessageMetadata,
 		signKeyRing,
@@ -252,6 +208,7 @@ func (keyRing *KeyRing) EncryptSplitStreamWithContextAndCompression(
 ) (*EncryptSplitResult, error) {
 	return encryptSplitStream(
 		keyRing,
+		nil,
 		dataPacketWriter,
 		plainMessageMetadata,
 		signKeyRing,
@@ -262,6 +219,7 @@ func (keyRing *KeyRing) EncryptSplitStreamWithContextAndCompression(
 
 func encryptSplitStream(
 	encryptionKeyRing *KeyRing,
+	encryptionKeyRingHidden *KeyRing,
 	dataPacketWriter Writer,
 	plainMessageMetadata *PlainMessageMetadata,
 	signKeyRing *KeyRing,
@@ -271,12 +229,14 @@ func encryptSplitStream(
 	var keyPacketBuf bytes.Buffer
 	plainMessageWriter, err := encryptStream(
 		encryptionKeyRing,
+		encryptionKeyRingHidden,
 		&keyPacketBuf,
 		dataPacketWriter,
 		plainMessageMetadata,
 		signKeyRing,
 		compress,
 		signingContext,
+		nil,
 	)
 	if err != nil {
 		return nil, err
@@ -286,52 +246,6 @@ func encryptSplitStream(
 		keyPacketBuf:       &keyPacketBuf,
 		plainMessageWriter: plainMessageWriter,
 	}, nil
-}
-
-// PlainMessageReader is used to wrap the data of the decrypted plain message.
-// It can be used to read the decrypted data and verify the embedded signature.
-type PlainMessageReader struct {
-	details             *openpgp.MessageDetails
-	verifyKeyRing       *KeyRing
-	verifyTime          int64
-	readAll             bool
-	verificationContext *VerificationContext
-}
-
-// GetMetadata returns the metadata of the decrypted message.
-func (msg *PlainMessageReader) GetMetadata() *PlainMessageMetadata {
-	return &PlainMessageMetadata{
-		Filename: msg.details.LiteralData.FileName,
-		IsBinary: msg.details.LiteralData.IsBinary,
-		ModTime:  int64(msg.details.LiteralData.Time),
-	}
-}
-
-// Read is used to access the message decrypted data.
-// Makes PlainMessageReader implement the Reader interface.
-func (msg *PlainMessageReader) Read(b []byte) (n int, err error) {
-	n, err = msg.details.UnverifiedBody.Read(b)
-	if errors.Is(err, io.EOF) {
-		msg.readAll = true
-	}
-	return
-}
-
-// VerifySignature is used to verify that the signature is valid.
-// This method needs to be called once all the data has been read.
-// It will return an error if the signature is invalid
-// or if the message hasn't been read entirely.
-func (msg *PlainMessageReader) VerifySignature() (err error) {
-	if !msg.readAll {
-		return errors.New("gopenpgp: can't verify the signature until the message reader has been read entirely")
-	}
-	if msg.verifyKeyRing != nil {
-		processSignatureExpiration(msg.details, msg.verifyTime)
-		err = verifyDetailsSignature(msg.details, msg.verifyKeyRing, msg.verificationContext)
-	} else {
-		err = errors.New("gopenpgp: no verify keyring was provided before decryption")
-	}
-	return
 }
 
 // DecryptStream is used to decrypt a pgp message as a Reader.
@@ -350,6 +264,7 @@ func (keyRing *KeyRing) DecryptStream(
 		verifyKeyRing,
 		verifyTime,
 		nil,
+		false,
 	)
 }
 
@@ -371,34 +286,8 @@ func (keyRing *KeyRing) DecryptStreamWithContext(
 		verifyKeyRing,
 		verifyTime,
 		verificationContext,
-	)
-}
-
-func decryptStream(
-	decryptionKeyRing *KeyRing,
-	message Reader,
-	verifyKeyRing *KeyRing,
-	verifyTime int64,
-	verificationContext *VerificationContext,
-) (plainMessage *PlainMessageReader, err error) {
-	messageDetails, err := asymmetricDecryptStream(
-		message,
-		decryptionKeyRing,
-		verifyKeyRing,
-		verifyTime,
-		verificationContext,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &PlainMessageReader{
-		messageDetails,
-		verifyKeyRing,
-		verifyTime,
 		false,
-		verificationContext,
-	}, err
+	)
 }
 
 // DecryptSplitStream is used to decrypt a split pgp message as a Reader.
@@ -536,4 +425,44 @@ func (keyRing *KeyRing) VerifyDetachedEncryptedStream(
 	}
 	signature := NewPGPSignature(plainMessage.GetBinary())
 	return keyRing.VerifyDetachedStream(message, signature, verifyTime)
+}
+
+// Core for decryption+verification (non streaming) functions.
+func asymmetricDecrypt(
+	encryptedIO io.Reader,
+	privateKey *KeyRing,
+	verifyKey *KeyRing,
+	verifyTime int64,
+	verificationContext *VerificationContext,
+) (message *PlainMessage, err error) {
+	messageDetails, err := asymmetricDecryptStream(
+		encryptedIO,
+		privateKey,
+		verifyKey,
+		verifyTime,
+		verificationContext,
+		false,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := ioutil.ReadAll(messageDetails.UnverifiedBody)
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: error in reading message body")
+	}
+
+	if verifyKey != nil {
+		processSignatureExpiration(messageDetails, verifyTime)
+		err = verifyDetailsSignature(messageDetails, verifyKey, verificationContext)
+	}
+
+	return &PlainMessage{
+		Data: body,
+		PlainMessageMetadata: PlainMessageMetadata{
+			IsUTF8:   messageDetails.LiteralData.IsUTF8,
+			Filename: messageDetails.LiteralData.FileName,
+			ModTime:  int64(messageDetails.LiteralData.Time),
+		},
+	}, err
 }

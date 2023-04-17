@@ -3,12 +3,8 @@ package crypto
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
-	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
 )
 
@@ -207,12 +203,12 @@ func asymmetricEncrypt(
 	var err error
 
 	hints := &openpgp.FileHints{
-		IsBinary: plainMessage.IsBinary(),
+		IsUTF8:   plainMessage.IsUTF8(),
 		FileName: plainMessage.Filename,
 		ModTime:  plainMessage.getFormattedTime(),
 	}
 
-	encryptWriter, err = asymmetricEncryptStream(hints, &outBuf, &outBuf, publicKey, privateKey, compress, signingContext)
+	encryptWriter, err = asymmetricEncryptStream(hints, &outBuf, &outBuf, publicKey, nil, privateKey, compress, signingContext, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -228,128 +224,4 @@ func asymmetricEncrypt(
 	}
 
 	return &PGPMessage{outBuf.Bytes()}, nil
-}
-
-// Core for encryption+signature (all) functions.
-func asymmetricEncryptStream(
-	hints *openpgp.FileHints,
-	keyPacketWriter io.Writer,
-	dataPacketWriter io.Writer,
-	publicKey, privateKey *KeyRing,
-	compress bool,
-	signingContext *SigningContext,
-) (encryptWriter io.WriteCloser, err error) {
-	config := &packet.Config{
-		DefaultCipher: packet.CipherAES256,
-		Time:          getTimeGenerator(),
-	}
-
-	if compress {
-		config.DefaultCompressionAlgo = constants.DefaultCompression
-		config.CompressionConfig = &packet.CompressionConfig{Level: constants.DefaultCompressionLevel}
-	}
-
-	if signingContext != nil {
-		config.SignatureNotations = append(config.SignatureNotations, signingContext.getNotation())
-	}
-
-	var signEntity *openpgp.Entity
-	if privateKey != nil && len(privateKey.entities) > 0 {
-		var err error
-		signEntity, err = privateKey.getSigningEntity()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if hints.IsBinary {
-		encryptWriter, err = openpgp.EncryptSplit(keyPacketWriter, dataPacketWriter, publicKey.entities, nil, signEntity, hints, config)
-	} else {
-		encryptWriter, err = openpgp.EncryptTextSplit(keyPacketWriter, dataPacketWriter, publicKey.entities, nil, signEntity, hints, config)
-	}
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
-	}
-	return encryptWriter, nil
-}
-
-// Core for decryption+verification (non streaming) functions.
-func asymmetricDecrypt(
-	encryptedIO io.Reader,
-	privateKey *KeyRing,
-	verifyKey *KeyRing,
-	verifyTime int64,
-	verificationContext *VerificationContext,
-) (message *PlainMessage, err error) {
-	messageDetails, err := asymmetricDecryptStream(
-		encryptedIO,
-		privateKey,
-		verifyKey,
-		verifyTime,
-		verificationContext,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := ioutil.ReadAll(messageDetails.UnverifiedBody)
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading message body")
-	}
-
-	if verifyKey != nil {
-		processSignatureExpiration(messageDetails, verifyTime)
-		err = verifyDetailsSignature(messageDetails, verifyKey, verificationContext)
-	}
-
-	return &PlainMessage{
-		Data:     body,
-		TextType: !messageDetails.LiteralData.IsBinary,
-		Filename: messageDetails.LiteralData.FileName,
-		Time:     messageDetails.LiteralData.Time,
-	}, err
-}
-
-// Core for decryption+verification (all) functions.
-func asymmetricDecryptStream(
-	encryptedIO io.Reader,
-	privateKey *KeyRing,
-	verifyKey *KeyRing,
-	verifyTime int64,
-	verificationContext *VerificationContext,
-) (messageDetails *openpgp.MessageDetails, err error) {
-	privKeyEntries := privateKey.entities
-	var additionalEntries openpgp.EntityList
-
-	if verifyKey != nil {
-		additionalEntries = verifyKey.entities
-	}
-
-	if additionalEntries != nil {
-		privKeyEntries = append(privKeyEntries, additionalEntries...)
-	}
-
-	config := &packet.Config{
-		Time: func() time.Time {
-			if verifyTime == 0 {
-				/*
-					We default to current time while decrypting and verifying
-					but the caller will remove signature expiration errors later on.
-					See processSignatureExpiration().
-				*/
-				return getNow()
-			}
-			return time.Unix(verifyTime, 0)
-		},
-	}
-
-	if verificationContext != nil {
-		config.KnownNotations = map[string]bool{constants.SignatureContextName: true}
-	}
-
-	messageDetails, err = openpgp.ReadMessage(encryptedIO, privKeyEntries, nil, config)
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
-	}
-	return messageDetails, err
 }

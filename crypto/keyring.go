@@ -88,10 +88,21 @@ func (keyRing *KeyRing) getSigningEntity() (*openpgp.Entity, error) {
 	return signEntity, nil
 }
 
+// getSigningEntity returns the internal EntityList if the key ring is not nil
+func (keyRing *KeyRing) getEntities() openpgp.EntityList {
+	if keyRing == nil {
+		return nil
+	}
+	return keyRing.entities
+}
+
 // --- Extract info from key
 
 // CountEntities returns the number of entities in the keyring.
 func (keyRing *KeyRing) CountEntities() int {
+	if keyRing == nil {
+		return 0
+	}
 	return len(keyRing.entities)
 }
 

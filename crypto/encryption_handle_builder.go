@@ -1,0 +1,173 @@
+package crypto
+
+type EncryptionHandleBuilder struct {
+	handle       *encryptionHandle
+	defaultClock Clock
+	err          error
+}
+
+func newEncryptionHandleBuilder(profile EncryptionProfile, clock Clock) *EncryptionHandleBuilder {
+	return &EncryptionHandleBuilder{
+		handle:       defaultEncryptionHandle(profile, clock),
+		defaultClock: clock,
+	}
+}
+
+func (epb *EncryptionHandleBuilder) Recipient(key *Key) *EncryptionHandleBuilder {
+	var err error
+	if epb.handle.Recipients == nil {
+		epb.handle.Recipients, err = NewKeyRing(key)
+	} else {
+		err = epb.handle.Recipients.AddKey(key)
+	}
+	epb.err = err
+	return epb
+}
+
+// Recipients sets the public keys to which the message should be encrypted to.
+// Triggers hybrid encryption with public keys of the recipients and hidden recipients.
+// The recipients are included in the intended recipient fingerprint list
+// of the signature, if a signature is present.
+// If not set, set another type of encryption: HiddenRecipients, SessionKey, or Password
+func (epb *EncryptionHandleBuilder) Recipients(recipients *KeyRing) *EncryptionHandleBuilder {
+	epb.handle.Recipients = recipients
+	return epb
+}
+
+func (epb *EncryptionHandleBuilder) HiddenRecipient(key *Key) *EncryptionHandleBuilder {
+	var err error
+	if epb.handle.HiddenRecipients == nil {
+		epb.handle.HiddenRecipients, err = NewKeyRing(key)
+	} else {
+		err = epb.handle.HiddenRecipients.AddKey(key)
+	}
+	epb.err = err
+	return epb
+}
+
+// HiddenRecipients sets the public keys to which the message should be encrypted to.
+// Triggers hybrid encryption with public keys of the recipients and hidden recipients.
+// The hidden recipients are NOT included in the intended recipient fingerprint list
+// of the signature, if a signature is present.
+// If not set, set another type of encryption: Recipients, SessionKey, or Password
+func (epb *EncryptionHandleBuilder) HiddenRecipients(hiddenRecipients *KeyRing) *EncryptionHandleBuilder {
+	epb.handle.HiddenRecipients = hiddenRecipients
+	return epb
+}
+
+func (epb *EncryptionHandleBuilder) SigningKey(key *Key) *EncryptionHandleBuilder {
+	var err error
+	if epb.handle.SignKeyRing == nil {
+		epb.handle.SignKeyRing, err = NewKeyRing(key)
+	} else {
+		err = epb.handle.SignKeyRing.AddKey(key)
+	}
+	epb.err = err
+	return epb
+}
+
+// SigningKeys sets the signing keys that are used to create signature of the message.
+// Triggers that signatures are created for each signing key.
+// If not set, no signature is included.
+func (epb *EncryptionHandleBuilder) SigningKeys(signingKeys *KeyRing) *EncryptionHandleBuilder {
+	epb.handle.SignKeyRing = signingKeys
+	return epb
+}
+
+// SigningContext provides a signing context for the signature in the message.
+// Triggers that each signature includes the sining context.
+// SigningKeys have to be set if a SigningContext is provided.
+func (epb *EncryptionHandleBuilder) SigningContext(siningContext *SigningContext) *EncryptionHandleBuilder {
+	epb.handle.SigningContext = siningContext
+	return epb
+}
+
+// SessionKey sets the session key the message should be encrypted with.
+// Triggers session key encryption with the included session key.
+// If not set, set another the type of encryption: Recipients, HiddenRecipients, or Password
+func (epb *EncryptionHandleBuilder) SessionKey(sessionKey *SessionKey) *EncryptionHandleBuilder {
+	epb.handle.SessionKey = sessionKey
+	return epb
+}
+
+// Password sets a password the message should be encrypted with.
+// Triggers password based encryption with a key derived from the password.
+// If not set, set another the type of encryption: Recipients, HiddenRecipients, or SessionKey
+func (epb *EncryptionHandleBuilder) Password(password []byte) *EncryptionHandleBuilder {
+	epb.handle.Password = password
+	return epb
+}
+
+// Compress indicates if the plaintext should be compressed before encryption.
+func (epb *EncryptionHandleBuilder) Compress() *EncryptionHandleBuilder {
+	epb.handle.Compression = true
+	return epb
+}
+
+// UTF8 indicates if the plaintext should be signed with a text type
+// signature. If set, the plaintext is signed after canonicalising the line endings.
+func (epb *EncryptionHandleBuilder) UTF8() *EncryptionHandleBuilder {
+	epb.handle.IsUTF8 = true
+	return epb
+}
+
+// Armor indicates that the output should be armored.
+// If not set, the output is in binary format.
+func (epb *EncryptionHandleBuilder) Armor() *EncryptionHandleBuilder {
+	epb.handle.Armored = true
+	return epb
+}
+
+// ArmorWithHeader indicates that the output should be armored with the given
+// version and comment as header.
+func (epb *EncryptionHandleBuilder) ArmorWithHeader(version, comment string) *EncryptionHandleBuilder {
+	epb.handle.Armored = true
+	if epb.handle.ArmorHeaders == nil {
+		epb.handle.ArmorHeaders = make(map[string]string)
+	}
+	epb.handle.ArmorHeaders["Version"] = version
+	epb.handle.ArmorHeaders["Comment"] = comment
+	return epb
+}
+
+// WithArmor sets the flag to indicate if the output should be armored.
+// If not set, the output is in binary format.
+func (dpb *EncryptionHandleBuilder) WithArmor(armor bool) *EncryptionHandleBuilder {
+	dpb.handle.Armored = armor
+	return dpb
+}
+
+// DetachedSignature indicates that the message should be signed,
+// but the signature should not be included in the same pgp message as the input data.
+// Instead the detached signature is encrypted in a separate pgp message.
+func (epb *EncryptionHandleBuilder) DetachedSignature() *EncryptionHandleBuilder {
+	epb.handle.DetachedSignature = true
+	return epb
+}
+
+// SignTime sets the internal clock to always return
+// the supplied unix time for signing instead of the system time
+func (ehb *EncryptionHandleBuilder) SignTime(unixTime int64) *EncryptionHandleBuilder {
+	ehb.handle.clock = NewConstantClock(unixTime)
+	return ehb
+}
+
+// New creates an EncryptionHandle and checks that the given
+// combination of parameters is valid. If the parameters are invalid
+// an error is returned
+func (epb *EncryptionHandleBuilder) New() (PGPEncryption, error) {
+	if epb.err != nil {
+		return nil, epb.err
+	}
+	epb.err = epb.handle.validate()
+	if epb.err != nil {
+		return nil, epb.err
+	}
+	params := epb.handle
+	epb.handle = defaultEncryptionHandle(epb.handle.profile, epb.defaultClock)
+	return params, nil
+}
+
+func (epb *EncryptionHandleBuilder) Error() error {
+	return epb.err
+}

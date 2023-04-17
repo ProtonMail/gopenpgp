@@ -240,8 +240,8 @@ func testSessionKey_EncryptStreamCompatible(enc sessionKeyEncryptionFunction, t 
 	if !bytes.Equal(decryptedBytes, messageBytes) {
 		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptedBytes), string(messageBytes))
 	}
-	if testMeta.IsBinary != decryptedMsg.IsBinary() {
-		t.Fatalf("Expected isBinary to be %t got %t", testMeta.IsBinary, decryptedMsg.IsBinary())
+	if testMeta.IsUTF8 != decryptedMsg.IsUTF8() {
+		t.Fatalf("Expected isBinary to be %t got %t", testMeta.IsUTF8, decryptedMsg.IsBinary())
 	}
 	if testMeta.Filename != decryptedMsg.GetFilename() {
 		t.Fatalf("Expected filename to be %s got %s", testMeta.Filename, decryptedMsg.GetFilename())
@@ -255,10 +255,12 @@ func TestSessionKey_DecryptStreamCompatible(t *testing.T) {
 	messageBytes := []byte("Hello World!")
 	dataPacket, err := testSessionKey.EncryptAndSign(
 		&PlainMessage{
-			Data:     messageBytes,
-			TextType: !testMeta.IsBinary,
-			Time:     uint32(testMeta.ModTime),
-			Filename: testMeta.Filename,
+			Data: messageBytes,
+			PlainMessageMetadata: PlainMessageMetadata{
+				IsUTF8:   testMeta.IsUTF8,
+				Filename: testMeta.Filename,
+				ModTime:  testMeta.ModTime,
+			},
 		},
 		keyRingTestPrivate,
 	)
