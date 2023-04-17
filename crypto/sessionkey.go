@@ -5,12 +5,10 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
 
-	"github.com/ProtonMail/go-crypto/openpgp"
 	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 )
@@ -182,15 +180,16 @@ func encryptWithSessionKey(
 
 	encryptWriter, signWriter, err := encryptStreamWithSessionKey(
 		NewPlainMessageMetadata(
-			message.IsBinary(),
+			message.IsUTF8(),
 			message.Filename,
-			int64(message.Time),
+			message.ModTime,
 		),
 		encBuf,
 		sk,
 		signKeyRing,
 		compress,
 		signingContext,
+		nil,
 	)
 	if err != nil {
 		return nil, err
@@ -215,115 +214,6 @@ func encryptWithSessionKey(
 		return nil, errors.Wrap(err, "gopenpgp: error in closing encryption writer")
 	}
 	return encBuf.Bytes(), nil
-}
-
-func encryptStreamWithSessionKey(
-	plainMessageMetadata *PlainMessageMetadata,
-	dataPacketWriter io.Writer,
-	sk *SessionKey,
-	signKeyRing *KeyRing,
-	compress bool,
-	signingContext *SigningContext,
-) (encryptWriter, signWriter io.WriteCloser, err error) {
-	dc, err := sk.GetCipherFunc()
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "gopenpgp: unable to encrypt with session key")
-	}
-
-	config := &packet.Config{
-		Time:          getTimeGenerator(),
-		DefaultCipher: dc,
-	}
-
-	var signEntity *openpgp.Entity
-	if signKeyRing != nil {
-		signEntity, err = signKeyRing.getSigningEntity()
-		if err != nil {
-			return nil, nil, errors.Wrap(err, "gopenpgp: unable to sign")
-		}
-	}
-
-	if compress {
-		config.DefaultCompressionAlgo = constants.DefaultCompression
-		config.CompressionConfig = &packet.CompressionConfig{Level: constants.DefaultCompressionLevel}
-	}
-
-	if signingContext != nil {
-		config.SignatureNotations = append(config.SignatureNotations, signingContext.getNotation())
-	}
-
-	if plainMessageMetadata == nil {
-		// Use sensible default metadata
-		plainMessageMetadata = &PlainMessageMetadata{
-			IsBinary: true,
-			Filename: "",
-			ModTime:  GetUnixTime(),
-		}
-	}
-
-	return encryptStreamWithSessionKeyAndConfig(
-		plainMessageMetadata.IsBinary,
-		plainMessageMetadata.Filename,
-		uint32(plainMessageMetadata.ModTime),
-		dataPacketWriter,
-		sk,
-		signEntity,
-		config,
-	)
-}
-
-func encryptStreamWithSessionKeyAndConfig(
-	isBinary bool,
-	filename string,
-	modTime uint32,
-	dataPacketWriter io.Writer,
-	sk *SessionKey,
-	signEntity *openpgp.Entity,
-	config *packet.Config,
-) (encryptWriter, signWriter io.WriteCloser, err error) {
-	encryptWriter, err = packet.SerializeSymmetricallyEncrypted(
-		dataPacketWriter,
-		config.Cipher(),
-		config.AEAD() != nil,
-		packet.CipherSuite{Cipher: config.Cipher(), Mode: config.AEAD().Mode()},
-		sk.Key,
-		config,
-	)
-
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "gopenpgp: unable to encrypt")
-	}
-
-	if algo := config.Compression(); algo != packet.CompressionNone {
-		encryptWriter, err = packet.SerializeCompressed(encryptWriter, algo, config.CompressionConfig)
-		if err != nil {
-			return nil, nil, errors.Wrap(err, "gopenpgp: error in compression")
-		}
-	}
-
-	if signEntity != nil {
-		hints := &openpgp.FileHints{
-			IsBinary: isBinary,
-			FileName: filename,
-			ModTime:  time.Unix(int64(modTime), 0),
-		}
-
-		signWriter, err = openpgp.Sign(encryptWriter, signEntity, hints, config)
-		if err != nil {
-			return nil, nil, errors.Wrap(err, "gopenpgp: unable to sign")
-		}
-	} else {
-		encryptWriter, err = packet.SerializeLiteral(
-			encryptWriter,
-			isBinary,
-			filename,
-			modTime,
-		)
-		if err != nil {
-			return nil, nil, errors.Wrap(err, "gopenpgp: unable to serialize")
-		}
-	}
-	return encryptWriter, signWriter, nil
 }
 
 // Decrypt decrypts pgp data packets using directly a session key.
@@ -373,7 +263,7 @@ func decryptWithSessionKeyAndContext(
 ) (*PlainMessage, error) {
 	var messageReader = bytes.NewReader(dataPacket)
 
-	md, err := decryptStreamWithSessionKey(sk, messageReader, verifyKeyRing, verificationContext)
+	md, err := decryptStreamWithSessionKey(sk, messageReader, verifyKeyRing, verificationContext, false)
 	if err != nil {
 		return nil, err
 	}
@@ -389,75 +279,13 @@ func decryptWithSessionKeyAndContext(
 	}
 
 	return &PlainMessage{
-		Data:     messageBuf.Bytes(),
-		TextType: !md.LiteralData.IsBinary,
-		Filename: md.LiteralData.FileName,
-		Time:     md.LiteralData.Time,
+		Data: messageBuf.Bytes(),
+		PlainMessageMetadata: PlainMessageMetadata{
+			IsUTF8:   md.LiteralData.IsUTF8,
+			Filename: md.LiteralData.FileName,
+			ModTime:  int64(md.LiteralData.Time),
+		},
 	}, err
-}
-
-func decryptStreamWithSessionKey(
-	sk *SessionKey,
-	messageReader io.Reader,
-	verifyKeyRing *KeyRing,
-	verificationContext *VerificationContext,
-) (*openpgp.MessageDetails, error) {
-	var decrypted io.ReadCloser
-	var keyring openpgp.EntityList
-
-	// Read symmetrically encrypted data packet
-	packets := packet.NewReader(messageReader)
-	p, err := packets.Next()
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to read symmetric packet")
-	}
-
-	// Decrypt data packet
-	switch p := p.(type) {
-	case *packet.SymmetricallyEncrypted, *packet.AEADEncrypted:
-		if symPacket, ok := p.(*packet.SymmetricallyEncrypted); ok {
-			if !symPacket.IntegrityProtected {
-				return nil, errors.New("gopenpgp: message is not authenticated")
-			}
-		}
-		dc, err := sk.GetCipherFunc()
-		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: unable to decrypt with session key")
-		}
-		encryptedDataPacket, isDataPacket := p.(packet.EncryptedDataPacket)
-		if !isDataPacket {
-			return nil, errors.Wrap(err, "gopenpgp: unknown data packet")
-		}
-		decrypted, err = encryptedDataPacket.Decrypt(dc, sk.Key)
-		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: unable to decrypt symmetric packet")
-		}
-	default:
-		return nil, errors.New("gopenpgp: invalid packet type")
-	}
-
-	config := &packet.Config{
-		Time: getTimeGenerator(),
-	}
-
-	if verificationContext != nil {
-		config.KnownNotations = map[string]bool{constants.SignatureContextName: true}
-	}
-
-	// Push decrypted packet as literal packet and use openpgp's reader
-	if verifyKeyRing != nil {
-		keyring = verifyKeyRing.entities
-	} else {
-		keyring = openpgp.EntityList{}
-	}
-
-	md, err := openpgp.ReadMessage(decrypted, keyring, nil, config)
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to decode symmetric packet")
-	}
-
-	md.UnverifiedBody = checkReader{decrypted, md.UnverifiedBody}
-	return md, nil
 }
 
 func (sk *SessionKey) checkSize() error {
