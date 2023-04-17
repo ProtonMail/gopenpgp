@@ -114,7 +114,7 @@ func passwordEncrypt(message *PlainMessage, password []byte) ([]byte, error) {
 	}
 
 	hints := &openpgp.FileHints{
-		IsBinary: message.IsBinary(),
+		IsUTF8:   message.IsUTF8(),
 		FileName: message.Filename,
 		ModTime:  message.getFormattedTime(),
 	}
@@ -172,9 +172,11 @@ func passwordDecrypt(encryptedIO io.Reader, password []byte) (*PlainMessage, err
 	}
 
 	return &PlainMessage{
-		Data:     messageBuf.Bytes(),
-		TextType: !md.LiteralData.IsBinary,
-		Filename: md.LiteralData.FileName,
-		Time:     md.LiteralData.Time,
+		Data: messageBuf.Bytes(),
+		PlainMessageMetadata: PlainMessageMetadata{
+			IsUTF8:   md.LiteralData.IsUTF8,
+			ModTime:  int64(md.LiteralData.Time),
+			Filename: md.LiteralData.FileName,
+		},
 	}, nil
 }
