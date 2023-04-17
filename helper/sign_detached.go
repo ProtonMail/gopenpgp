@@ -19,7 +19,7 @@ func EncryptSignAttachment(
 	var packets *crypto.PGPSplitMessage
 	var signatureObj *crypto.PGPSignature
 
-	var binMessage = crypto.NewPlainMessageFromFile(plainData, filename, uint32(crypto.GetUnixTime()))
+	var binMessage = crypto.NewPlainMessageFromFile(plainData, filename, crypto.GetUnixTime())
 
 	if publicKeyRing, err = createPublicKeyRing(publicKey); err != nil {
 		return nil, nil, nil, err

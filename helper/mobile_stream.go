@@ -184,7 +184,7 @@ func (r *Go2IOSReader) Read(max int) (result *MobileReadResult, err error) {
 // VerifySignatureExplicit calls the reader's VerifySignature()
 // and tries to cast the returned error to a SignatureVerificationError.
 func VerifySignatureExplicit(
-	reader *crypto.PlainMessageReader,
+	reader crypto.PlainMessageReader,
 ) (signatureVerificationError *crypto.SignatureVerificationError, err error) {
 	if reader == nil {
 		return nil, errors.New("gopenppg: the reader can't be nil")
