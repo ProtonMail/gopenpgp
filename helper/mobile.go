@@ -26,6 +26,20 @@ func DecryptExplicitVerify(
 	return newExplicitVerifyMessage(message, err)
 }
 
+// DecryptExplicitVerifyWithContext decrypts a PGP message given a private keyring
+// and a public keyring to verify the embedded signature. Returns the plain
+// data and an error on signature verification failure.
+// The caller can provide a context that will be used to verify the signature.
+func DecryptExplicitVerifyWithContext(
+	pgpMessage *crypto.PGPMessage,
+	privateKeyRing, publicKeyRing *crypto.KeyRing,
+	verifyTime int64,
+	verificationContext *crypto.VerificationContext,
+) (*ExplicitVerifyMessage, error) {
+	message, err := privateKeyRing.DecryptWithContext(pgpMessage, publicKeyRing, verifyTime, verificationContext)
+	return newExplicitVerifyMessage(message, err)
+}
+
 // DecryptSessionKeyExplicitVerify decrypts a PGP data packet given a session key
 // and a public keyring to verify the embedded signature. Returns the plain data and
 // an error on signature verification failure.
@@ -36,6 +50,21 @@ func DecryptSessionKeyExplicitVerify(
 	verifyTime int64,
 ) (*ExplicitVerifyMessage, error) {
 	message, err := sessionKey.DecryptAndVerify(dataPacket, publicKeyRing, verifyTime)
+	return newExplicitVerifyMessage(message, err)
+}
+
+// DecryptSessionKeyExplicitVerifyWithContext decrypts a PGP data packet given a session key
+// and a public keyring to verify the embedded signature. Returns the plain data and
+// an error on signature verification failure.
+// The caller can provide a context that will be used to verify the signature.
+func DecryptSessionKeyExplicitVerifyWithContext(
+	dataPacket []byte,
+	sessionKey *crypto.SessionKey,
+	publicKeyRing *crypto.KeyRing,
+	verifyTime int64,
+	verificationContext *crypto.VerificationContext,
+) (*ExplicitVerifyMessage, error) {
+	message, err := sessionKey.DecryptAndVerifyWithContext(dataPacket, publicKeyRing, verifyTime, verificationContext)
 	return newExplicitVerifyMessage(message, err)
 }
 
