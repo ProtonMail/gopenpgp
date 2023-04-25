@@ -1,10 +1,9 @@
 package crypto
 
 import (
-	"bytes"
 	"crypto"
+	goerrors "errors"
 	"fmt"
-	"io"
 	"math"
 	"time"
 
@@ -13,8 +12,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/pkg/errors"
 
-	"github.com/ProtonMail/gopenpgp/v2/constants"
-	"github.com/ProtonMail/gopenpgp/v2/internal"
+	"github.com/ProtonMail/gopenpgp/v3/constants"
 )
 
 var allowedHashes = []crypto.Hash{
@@ -94,25 +92,38 @@ func newSignatureNoVerifier() SignatureVerificationError {
 	}
 }
 
+// filterSignatureError checks if the input is of type SignatureVerificationError
+// returns the SignatureVerificationError if the type matches else nil
+func filterSignatureError(err error) *SignatureVerificationError {
+	if err != nil {
+		castedErr := &SignatureVerificationError{}
+		isType := goerrors.As(err, castedErr)
+		if !isType {
+			return nil
+		}
+		return castedErr
+	}
+	return nil
+}
+
 // processSignatureExpiration handles signature time verification manually, so
 // we can add a margin to the creationTime check.
-func processSignatureExpiration(md *openpgp.MessageDetails, verifyTime int64) {
-	if !errors.Is(md.SignatureError, pgpErrors.ErrSignatureExpired) {
-		return
+func processSignatureExpiration(sig *packet.Signature, toCheck error, verifyTime int64, disableTimeCheck bool) error {
+	if sig == nil || !errors.Is(toCheck, pgpErrors.ErrSignatureExpired) {
+		return toCheck
 	}
-	if verifyTime == 0 {
-		// verifyTime = 0: time check disabled, everything is okay
-		md.SignatureError = nil
-		return
+	if disableTimeCheck {
+		return nil
 	}
-	created := md.Signature.CreationTime.Unix()
+	created := sig.CreationTime.Unix()
 	expires := int64(math.MaxInt64)
-	if md.Signature.SigLifetimeSecs != nil {
-		expires = int64(*md.Signature.SigLifetimeSecs) + created
+	if sig.SigLifetimeSecs != nil {
+		expires = int64(*sig.SigLifetimeSecs) + created
 	}
-	if created-internal.CreationTimeOffset <= verifyTime && verifyTime <= expires {
-		md.SignatureError = nil
+	if verifyTime <= expires {
+		return nil
 	}
+	return toCheck
 }
 
 // verifyDetailsSignature verifies signature from message details.
@@ -223,110 +234,4 @@ func (context *VerificationContext) verifyContext(sig *packet.Signature) error {
 	}
 
 	return nil
-}
-
-// verifySignature verifies if a signature is valid with the entity list.
-func verifySignature(
-	pubKeyEntries openpgp.EntityList,
-	origText io.Reader,
-	signature []byte,
-	verifyTime int64,
-	verificationContext *VerificationContext,
-) (*packet.Signature, error) {
-	config := &packet.Config{}
-	if verifyTime == 0 {
-		config.Time = func() time.Time {
-			return time.Unix(0, 0)
-		}
-	} else {
-		config.Time = func() time.Time {
-			return time.Unix(verifyTime+internal.CreationTimeOffset, 0)
-		}
-	}
-
-	if verificationContext != nil {
-		config.KnownNotations = map[string]bool{constants.SignatureContextName: true}
-	}
-	signatureReader := bytes.NewReader(signature)
-
-	sig, signer, err := openpgp.VerifyDetachedSignatureAndHash(pubKeyEntries, origText, signatureReader, allowedHashes, config)
-
-	if sig != nil && signer != nil && (errors.Is(err, pgpErrors.ErrSignatureExpired) || errors.Is(err, pgpErrors.ErrKeyExpired)) { //nolint:nestif
-		if verifyTime == 0 { // Expiration check disabled
-			err = nil
-		} else {
-			// Maybe the creation time offset pushed it over the edge
-			// Retry with the actual verification time
-			config.Time = func() time.Time {
-				return time.Unix(verifyTime, 0)
-			}
-
-			seeker, ok := origText.(io.ReadSeeker)
-			if !ok {
-				return nil, errors.Wrap(err, "gopenpgp: message reader do not support seeking, cannot retry signature verification")
-			}
-
-			_, err = seeker.Seek(0, io.SeekStart)
-			if err != nil {
-				return nil, newSignatureFailed(errors.Wrap(err, "gopenpgp: could not rewind the data reader."))
-			}
-
-			_, err = signatureReader.Seek(0, io.SeekStart)
-			if err != nil {
-				return nil, newSignatureFailed(err)
-			}
-
-			sig, signer, err = openpgp.VerifyDetachedSignatureAndHash(pubKeyEntries, seeker, signatureReader, allowedHashes, config)
-		}
-	}
-
-	if err != nil {
-		return nil, newSignatureFailed(err)
-	}
-
-	if sig == nil || signer == nil {
-		return nil, newSignatureFailed(errors.New("gopenpgp: no signer or valid signature"))
-	}
-
-	if verificationContext != nil {
-		err := verificationContext.verifyContext(sig)
-		if err != nil {
-			return nil, newSignatureBadContext(err)
-		}
-	}
-
-	return sig, nil
-}
-
-func signMessageDetached(
-	signKeyRing *KeyRing,
-	messageReader io.Reader,
-	isBinary bool,
-	context *SigningContext,
-) (*PGPSignature, error) {
-	config := &packet.Config{
-		DefaultHash: crypto.SHA512,
-		Time:        getTimeGenerator(),
-	}
-
-	signEntity, err := signKeyRing.getSigningEntity()
-	if err != nil {
-		return nil, err
-	}
-
-	if context != nil {
-		config.SignatureNotations = append(config.SignatureNotations, context.getNotation())
-	}
-
-	var outBuf bytes.Buffer
-	if isBinary {
-		err = openpgp.DetachSign(&outBuf, signEntity, messageReader, config)
-	} else {
-		err = openpgp.DetachSignText(&outBuf, signEntity, messageReader, config)
-	}
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in signing")
-	}
-
-	return NewPGPSignature(outBuf.Bytes()), nil
 }
