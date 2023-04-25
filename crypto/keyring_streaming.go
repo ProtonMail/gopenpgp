@@ -347,7 +347,7 @@ func (keyRing *KeyRing) SignDetachedStreamWithContext(message Reader, context *S
 	return signMessageDetached(
 		keyRing,
 		message,
-		true,
+		false,
 		context,
 	)
 }
