@@ -2,26 +2,24 @@ package crypto
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"io/ioutil"
 	"regexp"
 	"testing"
 
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/ProtonMail/gopenpgp/v2/constants"
+	"github.com/ProtonMail/gopenpgp/v3/armor"
+	"github.com/ProtonMail/gopenpgp/v3/constants"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
-const testMessage = "Hello world!"
-
 const signedPlainText = "Signed message\n"
 
-var textSignature, binSignature *PGPSignature
-var message *PlainMessage
+var textSignature, binSignature []byte
 var signatureTest = regexp.MustCompile("(?s)^-----BEGIN PGP SIGNATURE-----.*-----END PGP SIGNATURE-----$")
 
-func getSignatureType(sig *PGPSignature) (packet.SignatureType, error) {
+func getSignatureType(sig []byte) (packet.SignatureType, error) {
 	sigPacket, err := getSignaturePacket(sig)
 	if err != nil {
 		return 0, err
@@ -29,28 +27,40 @@ func getSignatureType(sig *PGPSignature) (packet.SignatureType, error) {
 	return sigPacket.SigType, nil
 }
 
-func getSignaturePacket(sig *PGPSignature) (*packet.Signature, error) {
-	p, err := packet.Read(bytes.NewReader(sig.Data))
-	if err != nil {
-		return nil, err
-	}
-	sigPacket, ok := p.(*packet.Signature)
-	if !ok {
-		return nil, errors.New("")
-	}
-	return sigPacket, nil
+func testSignerText() PGPSign {
+	signer, _ := testPGP.Sign().
+		SigningKeys(keyRingTestPrivate).
+		UTF8().
+		Detached().
+		New()
+	return signer
+}
+
+func testSigner() PGPSign {
+	signer, _ := testPGP.Sign().
+		SigningKeys(keyRingTestPrivate).
+		Detached().
+		New()
+	return signer
+}
+
+func testVerifier() PGPVerify {
+	verifier, _ := testPGP.Verify().
+		VerifyKeys(keyRingTestPublic).
+		VerifyTime(testTime).
+		New()
+	return verifier
 }
 
 func TestSignTextDetached(t *testing.T) {
 	var err error
 
-	message = NewPlainMessageFromString(signedPlainText)
-	textSignature, err = keyRingTestPrivate.SignDetached(message)
+	textSignature, err = testSignerText().Sign([]byte(signedPlainText), nil)
 	if err != nil {
 		t.Fatal("Cannot generate signature:", err)
 	}
 
-	armoredSignature, err := textSignature.GetArmored()
+	armoredSignature, err := armor.ArmorPGPSignatureBinary(textSignature)
 	if err != nil {
 		t.Fatal("Cannot armor signature:", err)
 	}
@@ -65,14 +75,17 @@ func TestSignTextDetached(t *testing.T) {
 		t.Fatal("Signature type was not text")
 	}
 
-	assert.Regexp(t, signatureTest, armoredSignature)
-}
+	assert.Regexp(t, signatureTest, string(armoredSignature))
 
-func TestVerifyTextDetachedSig(t *testing.T) {
-	verificationError := keyRingTestPublic.VerifyDetached(message, textSignature, testTime)
-	if verificationError != nil {
-		t.Fatal("Cannot verify plaintext signature:", verificationError)
+	verificationError, _ := testVerifier().Verify([]byte(signedPlainText), textSignature)
+	if verificationError.HasSignatureError() {
+		t.Fatal("Cannot verify plaintext signature:", verificationError.SignatureError())
 	}
+
+	fakeMessage := []byte("wrong text")
+	verificationError, _ = testVerifier().Verify(fakeMessage, textSignature)
+
+	checkVerificationError(t, verificationError.SignatureError(), constants.SIGNATURE_FAILED)
 }
 
 func checkVerificationError(t *testing.T, err error, expectedStatus int) {
@@ -82,34 +95,22 @@ func checkVerificationError(t *testing.T, err error, expectedStatus int) {
 	castedErr := &SignatureVerificationError{}
 	isType := errors.As(err, castedErr)
 	if !isType {
-		t.Fatalf("Error was not a verification errror: %v", err)
+		t.Fatalf("Error was not a verification error: %v", err)
 	}
 	if castedErr.Status != expectedStatus {
 		t.Fatalf("Expected status to be %d got %d", expectedStatus, castedErr.Status)
 	}
 }
 
-func TestVerifyTextDetachedSigWrong(t *testing.T) {
-	fakeMessage := NewPlainMessageFromString("wrong text")
-	verificationError := keyRingTestPublic.VerifyDetached(fakeMessage, textSignature, testTime)
-
-	checkVerificationError(t, verificationError, constants.SIGNATURE_FAILED)
-
-	err := &SignatureVerificationError{}
-	_ = errors.As(verificationError, err)
-	assert.Exactly(t, constants.SIGNATURE_FAILED, err.Status)
-}
-
 func TestSignBinDetached(t *testing.T) {
 	var err error
 
-	message = NewPlainMessage([]byte(signedPlainText))
-	binSignature, err = keyRingTestPrivate.SignDetached(message)
+	binSignature, err = testSigner().Sign([]byte(signedPlainText), nil)
 	if err != nil {
 		t.Fatal("Cannot generate signature:", err)
 	}
 
-	armoredSignature, err := binSignature.GetArmored()
+	armoredSignature, err := armor.ArmorPGPSignatureBinary(binSignature)
 	if err != nil {
 		t.Fatal("Cannot armor signature:", err)
 	}
@@ -124,54 +125,37 @@ func TestSignBinDetached(t *testing.T) {
 		t.Fatal("Signature type was not binary")
 	}
 
-	assert.Regexp(t, signatureTest, armoredSignature)
-}
+	assert.Regexp(t, signatureTest, string(armoredSignature))
 
-func TestVerifyBinDetachedSig(t *testing.T) {
-	verificationError := keyRingTestPublic.VerifyDetached(message, binSignature, testTime)
-	if verificationError != nil {
-		t.Fatal("Cannot verify binary signature:", verificationError)
+	verificationError, _ := testVerifier().Verify([]byte(signedPlainText), binSignature)
+	if verificationError.HasSignatureError() {
+		t.Fatal("Cannot verify binary signature:", verificationError.SignatureError())
 	}
 }
 
 func Test_KeyRing_GetVerifiedSignatureTimestampSuccess(t *testing.T) {
-	message := NewPlainMessageFromString(testMessage)
-	var time int64 = 1600000000
-	pgp.latestServerTime = time
-	defer func() {
-		pgp.latestServerTime = testTime
-	}()
-	signature, err := keyRingTestPrivate.SignDetached(message)
+	message := []byte(testMessage)
+	var timeLocal int64 = 1600000000
+	signer, _ := testPGP.Sign().
+		SigningKeys(keyRingTestPrivate).
+		SignTime(timeLocal).
+		Detached().
+		New()
+	signature, err := signer.Sign(message, nil)
 	if err != nil {
 		t.Errorf("Got an error while generating the signature: %v", err)
 	}
-	actualTime, err := keyRingTestPublic.GetVerifiedSignatureTimestamp(message, signature, 0)
+	verifier, _ := testPGP.Verify().
+		VerifyKeys(keyRingTestPublic).
+		VerifyTime(timeLocal).
+		New()
+	verificationResult, _ := verifier.Verify(message, signature)
+	actualTime := verificationResult.SignatureCreationTime()
 	if err != nil {
 		t.Errorf("Got an error while parsing the signature creation time: %v", err)
 	}
-	if time != actualTime {
-		t.Errorf("Expected creation time to be %d, got %d", time, actualTime)
-	}
-}
-
-func Test_KeyRing_GetVerifiedSignatureTimestampWithContext(t *testing.T) {
-	message := NewPlainMessageFromString(testMessage)
-	var time int64 = 1600000000
-	pgp.latestServerTime = time
-	defer func() {
-		pgp.latestServerTime = testTime
-	}()
-	var testContext = "test-context"
-	signature, err := keyRingTestPrivate.SignDetachedWithContext(message, NewSigningContext(testContext, true))
-	if err != nil {
-		t.Errorf("Got an error while generating the signature: %v", err)
-	}
-	actualTime, err := keyRingTestPublic.GetVerifiedSignatureTimestampWithContext(message, signature, 0, NewVerificationContext(testContext, true, 0))
-	if err != nil {
-		t.Errorf("Got an error while parsing the signature creation time: %v", err)
-	}
-	if time != actualTime {
-		t.Errorf("Expected creation time to be %d, got %d", time, actualTime)
+	if timeLocal != actualTime {
+		t.Errorf("Expected creation time to be %d, got %d", timeLocal, actualTime)
 	}
 }
 
@@ -186,12 +170,12 @@ func Test_KeyRing_GetVerifiedSignatureWithTwoKeysTimestampSuccess(t *testing.T) 
 		t.Errorf("Couldn't read the public key file: %v", err)
 	}
 	publicKey2 := parseKey(t, string(publicKey2Armored))
-	message := NewPlainMessageFromString("hello world")
+	message := []byte("hello world")
 	signatureArmored, err := ioutil.ReadFile("testdata/signature/detachedSigSignedTwice")
 	if err != nil {
 		t.Errorf("Couldn't read the signature file: %v", err)
 	}
-	signature, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	signature, err := armor.UnarmorBytes(signatureArmored)
 	if err != nil {
 		t.Errorf("Got an error while parsing the signature: %v", err)
 	}
@@ -205,7 +189,14 @@ func Test_KeyRing_GetVerifiedSignatureWithTwoKeysTimestampSuccess(t *testing.T) 
 	if err != nil {
 		t.Errorf("Got an error while adding key 2 to the key ring: %v", err)
 	}
-	actualTime, err := keyRing.GetVerifiedSignatureTimestamp(message, signature, 0)
+
+	verifier, _ := testPGP.Verify().
+		VerifyKeys(keyRing).
+		DisableVerifyTimeCheck().
+		New()
+
+	verificationResult, _ := verifier.Verify(message, signature)
+	actualTime := verificationResult.SignatureCreationTime()
 	if err != nil {
 		t.Errorf("Got an error while parsing the signature creation time: %v", err)
 	}
@@ -226,8 +217,8 @@ func parseKey(t *testing.T, keyArmored string) *Key {
 	return key
 }
 
-func getTimestampOfIssuer(signature *PGPSignature, keyID uint64) int64 {
-	packets := packet.NewReader(bytes.NewReader(signature.Data))
+func getTimestampOfIssuer(signature []byte, keyID uint64) int64 {
+	packets := packet.NewReader(bytes.NewReader(signature))
 	var err error
 	var p packet.Packet
 	for {
@@ -255,19 +246,24 @@ func getTimestampOfIssuer(signature *PGPSignature, keyID uint64) int64 {
 }
 
 func Test_KeyRing_GetVerifiedSignatureTimestampError(t *testing.T) {
-	message := NewPlainMessageFromString(testMessage)
-	var time int64 = 1600000000
-	pgp.latestServerTime = time
-	defer func() {
-		pgp.latestServerTime = testTime
-	}()
-	signature, err := keyRingTestPrivate.SignDetached(message)
+	message := []byte(testMessage)
+	var timeLocal int64 = 1600000000
+	signer, _ := testPGP.Sign().
+		SignTime(timeLocal).
+		SigningKeys(keyRingTestPrivate).
+		Detached().
+		New()
+	signature, err := signer.Sign(message, nil)
 	if err != nil {
 		t.Errorf("Got an error while generating the signature: %v", err)
 	}
-	messageCorrupted := NewPlainMessageFromString("Ciao world!")
-	_, err = keyRingTestPublic.GetVerifiedSignatureTimestamp(messageCorrupted, signature, 0)
-	if err == nil {
+	messageCorrupted := []byte("Ciao world!")
+	verifier, _ := testPGP.Verify().
+		VerifyKeys(keyRingTestPublic).
+		VerifyTime(timeLocal).
+		New()
+	verificationResult, _ := verifier.Verify(messageCorrupted, signature)
+	if !verificationResult.HasSignatureError() {
 		t.Errorf("Expected an error while parsing the creation time of a wrong signature, got nil")
 	}
 }
@@ -279,16 +275,18 @@ func Test_SignDetachedWithNonCriticalContext(t *testing.T) {
 		"test-context",
 		false,
 	)
+	signer, _ := testPGP.Sign().
+		SigningKeys(keyRingTestPrivate).
+		SigningContext(context).
+		Detached().
+		New()
 	// when
-	signature, err := keyRingTestPrivate.SignDetachedWithContext(
-		NewPlainMessage([]byte(testMessage)),
-		context,
-	)
+	signature, err := signer.Sign([]byte(testMessage), nil)
 	// then
 	if err != nil {
 		t.Fatal(err)
 	}
-	p, err := packet.Read(bytes.NewReader(signature.Data))
+	p, err := packet.Read(bytes.NewReader(signature))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -322,16 +320,18 @@ func Test_SignDetachedWithCriticalContext(t *testing.T) {
 		"test-context",
 		true,
 	)
+	signer, _ := testPGP.Sign().
+		SigningKeys(keyRingTestPrivate).
+		SigningContext(context).
+		Detached().
+		New()
 	// when
-	signature, err := keyRingTestPrivate.SignDetachedWithContext(
-		NewPlainMessage([]byte(testMessage)),
-		context,
-	)
+	signature, err := signer.Sign([]byte(testMessage), nil)
 	// then
 	if err != nil {
 		t.Fatal(err)
 	}
-	p, err := packet.Read(bytes.NewReader(signature.Data))
+	p, err := packet.Read(bytes.NewReader(signature))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -358,59 +358,59 @@ func Test_SignDetachedWithCriticalContext(t *testing.T) {
 	}
 }
 
-func Test_VerifyDetachedWithUnknownCriticalContext(t *testing.T) {
+func Test_VerifyWithUnknownCriticalContext(t *testing.T) {
 	// given
 
 	signatureArmored, err := ioutil.ReadFile("testdata/signature/critical_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
-	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	sig, err := armor.UnarmorBytes(signatureArmored)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// when
-	err = keyRingTestPublic.VerifyDetached(
-		NewPlainMessage([]byte(testMessage)),
-		sig,
-		0,
-	)
+	verifier, _ := testPGP.Verify().
+		VerifyKeys(keyRingTestPublic).
+		DisableVerifyTimeCheck().
+		New()
+	result, _ := verifier.Verify([]byte(testMessage), sig)
 	// then
-	checkVerificationError(t, err, constants.SIGNATURE_FAILED)
+	checkVerificationError(t, result.SignatureError(), constants.SIGNATURE_FAILED)
 }
 
-func Test_VerifyDetachedWithUnKnownNonCriticalContext(t *testing.T) {
+func Test_VerifyWithUnKnownNonCriticalContext(t *testing.T) {
 	// given
 
 	signatureArmored, err := ioutil.ReadFile("testdata/signature/non_critical_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
-	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	sig, err := armor.UnarmorBytes(signatureArmored)
 	if err != nil {
 		t.Fatal(err)
 	}
 	// when
-	err = keyRingTestPublic.VerifyDetached(
-		NewPlainMessage([]byte(testMessage)),
-		sig,
-		0,
-	)
+	verifier, _ := testPGP.Verify().
+		VerifyKeys(keyRingTestPublic).
+		DisableVerifyTimeCheck().
+		New()
+	result, _ := verifier.Verify([]byte(testMessage), sig)
 	// then
-	if err != nil {
+	if result.HasSignatureError() {
 		t.Fatalf("Expected no verification error, got %v", err)
 	}
 }
 
-func Test_VerifyDetachedWithKnownCriticalContext(t *testing.T) {
+func Test_VerifyWithKnownCriticalContext(t *testing.T) {
 	// given
 
 	signatureArmored, err := ioutil.ReadFile("testdata/signature/critical_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
-	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	sig, err := armor.UnarmorBytes(signatureArmored)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -420,26 +420,26 @@ func Test_VerifyDetachedWithKnownCriticalContext(t *testing.T) {
 		0,
 	)
 	// when
-	err = keyRingTestPublic.VerifyDetachedWithContext(
-		NewPlainMessage([]byte(testMessage)),
-		sig,
-		0,
-		verificationContext,
-	)
+	verifier, _ := testPGP.Verify().
+		VerifyKeys(keyRingTestPublic).
+		VerificationContext(verificationContext).
+		DisableVerifyTimeCheck().
+		New()
+	result, _ := verifier.Verify([]byte(testMessage), sig)
 	// then
-	if err != nil {
+	if result.HasSignatureError() {
 		t.Fatalf("Expected no verification error, got %v", err)
 	}
 }
 
-func Test_VerifyDetachedWithWrongContext(t *testing.T) {
+func Test_VerifyWithWrongContext(t *testing.T) {
 	// given
 
 	signatureArmored, err := ioutil.ReadFile("testdata/signature/critical_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
-	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	sig, err := armor.UnarmorBytes(signatureArmored)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -449,24 +449,24 @@ func Test_VerifyDetachedWithWrongContext(t *testing.T) {
 		0,
 	)
 	// when
-	err = keyRingTestPublic.VerifyDetachedWithContext(
-		NewPlainMessage([]byte(testMessage)),
-		sig,
-		0,
-		verificationContext,
-	)
+	verifier, _ := testPGP.Verify().
+		VerifyKeys(keyRingTestPublic).
+		VerificationContext(verificationContext).
+		DisableVerifyTimeCheck().
+		New()
+	result, _ := verifier.Verify([]byte(testMessage), sig)
 	// then
-	checkVerificationError(t, err, constants.SIGNATURE_BAD_CONTEXT)
+	checkVerificationError(t, result.SignatureError(), constants.SIGNATURE_BAD_CONTEXT)
 }
 
-func Test_VerifyDetachedWithMissingNonRequiredContext(t *testing.T) {
+func Test_VerifyWithMissingNonRequiredContext(t *testing.T) {
 	// given
 
 	signatureArmored, err := ioutil.ReadFile("testdata/signature/no_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
-	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	sig, err := armor.UnarmorBytes(signatureArmored)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -476,26 +476,26 @@ func Test_VerifyDetachedWithMissingNonRequiredContext(t *testing.T) {
 		0,
 	)
 	// when
-	err = keyRingTestPublic.VerifyDetachedWithContext(
-		NewPlainMessage([]byte(testMessage)),
-		sig,
-		0,
-		verificationContext,
-	)
+	verifier, _ := testPGP.Verify().
+		VerifyKeys(keyRingTestPublic).
+		VerificationContext(verificationContext).
+		DisableVerifyTimeCheck().
+		New()
+	result, _ := verifier.Verify([]byte(testMessage), sig)
 	// then
-	if err != nil {
+	if result.HasSignatureError() {
 		t.Fatalf("Expected no verification error, got %v", err)
 	}
 }
 
-func Test_VerifyDetachedWithMissingRequiredContext(t *testing.T) {
+func Test_VerifyWithMissingRequiredContext(t *testing.T) {
 	// given
 
 	signatureArmored, err := ioutil.ReadFile("testdata/signature/no_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
-	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	sig, err := armor.UnarmorBytes(signatureArmored)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -505,27 +505,27 @@ func Test_VerifyDetachedWithMissingRequiredContext(t *testing.T) {
 		0,
 	)
 	// when
-	err = keyRingTestPublic.VerifyDetachedWithContext(
-		NewPlainMessage([]byte(testMessage)),
-		sig,
-		0,
-		verificationContext,
-	)
+	verifier, _ := testPGP.Verify().
+		VerifyKeys(keyRingTestPublic).
+		VerificationContext(verificationContext).
+		DisableVerifyTimeCheck().
+		New()
+	result, _ := verifier.Verify([]byte(testMessage), sig)
 	// then
-	checkVerificationError(t, err, constants.SIGNATURE_BAD_CONTEXT)
+	checkVerificationError(t, result.SignatureError(), constants.SIGNATURE_BAD_CONTEXT)
 }
 
-func Test_VerifyDetachedWithMissingRequiredContextBeforeCutoff(t *testing.T) {
+func Test_VerifyWithMissingRequiredContextBeforeCutoff(t *testing.T) {
 	// given
 	signatureArmored, err := ioutil.ReadFile("testdata/signature/no_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
-	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	sig, err := armor.UnarmorBytes(signatureArmored)
 	if err != nil {
 		t.Fatal(err)
 	}
-	p, err := packet.Read(bytes.NewReader(sig.Data))
+	p, err := packet.Read(bytes.NewReader(sig))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -539,29 +539,29 @@ func Test_VerifyDetachedWithMissingRequiredContextBeforeCutoff(t *testing.T) {
 		sigPacket.CreationTime.Unix()+10000,
 	)
 	// when
-	err = keyRingTestPublic.VerifyDetachedWithContext(
-		NewPlainMessage([]byte(testMessage)),
-		sig,
-		0,
-		verificationContext,
-	)
+	verifier, _ := testPGP.Verify().
+		VerifyKeys(keyRingTestPublic).
+		VerificationContext(verificationContext).
+		DisableVerifyTimeCheck().
+		New()
+	result, _ := verifier.Verify([]byte(testMessage), sig)
 	// then
-	if err != nil {
+	if result.HasSignatureError() {
 		t.Fatalf("Expected no verification error, got %v", err)
 	}
 }
 
-func Test_VerifyDetachedWithMissingRequiredContextAfterCutoff(t *testing.T) {
+func Test_VerifyWithMissingRequiredContextAfterCutoff(t *testing.T) {
 	// given
 	signatureArmored, err := ioutil.ReadFile("testdata/signature/no_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
-	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	sig, err := armor.UnarmorBytes(signatureArmored)
 	if err != nil {
 		t.Fatal(err)
 	}
-	p, err := packet.Read(bytes.NewReader(sig.Data))
+	p, err := packet.Read(bytes.NewReader(sig))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -575,23 +575,23 @@ func Test_VerifyDetachedWithMissingRequiredContextAfterCutoff(t *testing.T) {
 		sigPacket.CreationTime.Unix()-10000,
 	)
 	// when
-	err = keyRingTestPublic.VerifyDetachedWithContext(
-		NewPlainMessage([]byte(testMessage)),
-		sig,
-		0,
-		verificationContext,
-	)
+	verifier, _ := testPGP.Verify().
+		VerifyKeys(keyRingTestPublic).
+		VerificationContext(verificationContext).
+		DisableVerifyTimeCheck().
+		New()
+	result, _ := verifier.Verify([]byte(testMessage), sig)
 	// then
-	checkVerificationError(t, err, constants.SIGNATURE_BAD_CONTEXT)
+	checkVerificationError(t, result.SignatureError(), constants.SIGNATURE_BAD_CONTEXT)
 }
 
-func Test_VerifyDetachedWithDoubleContext(t *testing.T) {
+func Test_VerifyWithDoubleContext(t *testing.T) {
 	// given
 	signatureArmored, err := ioutil.ReadFile("testdata/signature/double_critical_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
-	sig, err := NewPGPSignatureFromArmored(string(signatureArmored))
+	sig, err := armor.UnarmorBytes(signatureArmored)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -601,12 +601,12 @@ func Test_VerifyDetachedWithDoubleContext(t *testing.T) {
 		0,
 	)
 	// when
-	err = keyRingTestPublic.VerifyDetachedWithContext(
-		NewPlainMessage([]byte(testMessage)),
-		sig,
-		0,
-		verificationContext,
-	)
+	verifier, _ := testPGP.Verify().
+		VerifyKeys(keyRingTestPublic).
+		VerificationContext(verificationContext).
+		DisableVerifyTimeCheck().
+		New()
+	result, _ := verifier.Verify([]byte(testMessage), sig)
 	// then
-	checkVerificationError(t, err, constants.SIGNATURE_BAD_CONTEXT)
+	checkVerificationError(t, result.SignatureError(), constants.SIGNATURE_BAD_CONTEXT)
 }

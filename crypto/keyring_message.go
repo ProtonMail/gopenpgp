@@ -85,7 +85,7 @@ func (keyRing *KeyRing) SignDetachedWithContext(message *PlainMessage, context *
 	return signMessageDetached(
 		keyRing,
 		message.NewReader(),
-		message.IsBinary(),
+		message.IsUTF8(),
 		context,
 	)
 }
