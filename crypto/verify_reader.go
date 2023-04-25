@@ -62,7 +62,7 @@ func (msg *VerifyDataReader) VerifySignature() (result *VerifyResult, err error)
 			msg.disableTimeCheck,
 		)
 		err = verifyDetailsSignature(msg.details, msg.verifyKeyRing, msg.verificationContext)
-		return newVerifyResult(msg.details.Signature, err)
+		return newVerifyResult(msg.details, err)
 	} else {
 		err = errors.New("gopenpgp: no verify keyring was provided before decryption")
 	}
@@ -129,14 +129,62 @@ func (msg *VerifyDataReader) SessionKey() *SessionKey {
 
 // VerifyResult is a result of a signature verification.
 type VerifyResult struct {
-	signature      *packet.Signature
+	verifyDetails  *openpgp.MessageDetails
 	signatureError *SignatureVerificationError
 }
 
 // SignatureCreationTime returns the creation time of
 // the verified signature
 func (vr *VerifyResult) SignatureCreationTime() int64 {
-	return vr.signature.CreationTime.Unix()
+	if vr.verifyDetails == nil {
+		return 0
+	}
+	return vr.verifyDetails.Signature.CreationTime.Unix()
+}
+
+// SignedWithType returns the type of the signature, if found, else returns 0
+func (vr *VerifyResult) SignedWithType() packet.SignatureType {
+	if vr.verifyDetails == nil {
+		return 0
+	}
+	return vr.verifyDetails.SignedWithType
+}
+
+// SignedByKeyId returns the key id of the key that was used for the signature,
+// if found, else returns 0
+func (vr *VerifyResult) SignedByKeyId() uint64 {
+	if vr.verifyDetails == nil {
+		return 0
+	}
+	return vr.verifyDetails.SignedByKeyId
+}
+
+// SignedByFingerprint returns the key fingerprint of the key that was used for the signature,
+// if found, else returns nil
+func (vr *VerifyResult) SignedByFingerprint() []byte {
+	if vr.verifyDetails == nil {
+		return nil
+	}
+	key := vr.verifyDetails.SignedBy
+	if key == nil {
+		return nil
+	}
+	return key.PublicKey.Fingerprint
+}
+
+// SignedByKey returns the key that was used for the signature,
+// if found, else returns nil
+func (vr *VerifyResult) SignedByKey() *Key {
+	if vr.verifyDetails == nil {
+		return nil
+	}
+	key := vr.verifyDetails.SignedBy
+	if key == nil {
+		return nil
+	}
+	return &Key{
+		entity: key.Entity,
+	}
 }
 
 // HasSignatureError returns true if signature err occurred
