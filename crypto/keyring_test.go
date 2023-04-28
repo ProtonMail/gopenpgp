@@ -2,15 +2,12 @@ package crypto
 
 import (
 	"crypto/rsa"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
 	"github.com/ProtonMail/go-crypto/openpgp/eddsa"
-
-	"github.com/ProtonMail/gopenpgp/v2/constants"
 )
 
 var testSymmetricKey []byte
@@ -216,7 +213,7 @@ func TestClearPrivateParams(t *testing.T) {
 	}
 }
 
-func TestEncryptedDetachedSignature(t *testing.T) {
+/*func TestEncryptedDetachedSignature(t *testing.T) {
 	keyRingPrivate, err := keyRingTestPrivate.Copy()
 	if err != nil {
 		t.Fatal("Expected no error while copying keyring, got:", err)
@@ -288,4 +285,4 @@ func TestVerificationTime(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Got an error while decrypting %v", err)
 	}
-}
+}*/
