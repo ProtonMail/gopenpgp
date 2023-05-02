@@ -467,3 +467,31 @@ func generateKey(
 func keyIDToHex(keyID uint64) string {
 	return fmt.Sprintf("%016v", strconv.FormatUint(keyID, 16))
 }
+
+func createPublicKeyFromArmored(publicKey string) (*Key, error) {
+	publicKeyObj, err := NewKeyFromArmored(publicKey)
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: unable to parse public key")
+	}
+
+	if publicKeyObj.IsPrivate() {
+		publicKeyObj, err = publicKeyObj.ToPublic()
+		if err != nil {
+			return nil, errors.Wrap(err, "gopenpgp: unable to extract public key from private key")
+		}
+	}
+	return publicKeyObj, nil
+}
+
+func createPrivateKeyFromArmored(privateKey string, password []byte) (*Key, error) {
+	privateKeyObj, err := NewKeyFromArmored(privateKey)
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: unable to parse the private key")
+	}
+
+	privateKeyUnlocked, err := privateKeyObj.Unlock(password)
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: unable to unlock key")
+	}
+	return privateKeyUnlocked, nil
+}
