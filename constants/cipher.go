@@ -18,7 +18,16 @@ const (
 	SIGNATURE_BAD_CONTEXT int = 4
 )
 
-const DefaultCompression = 2      // ZLIB
-const DefaultCompressionLevel = 6 // Corresponds to default -1 for ZLIB
+type SecurityLevel uint8
 
-const EnableV6 = false
+const (
+	Standard SecurityLevel = 0
+	High     SecurityLevel = 1
+)
+
+type KeyAlgorithm uint8
+
+const (
+	RSA      KeyAlgorithm = 0
+	ELLIPTIC KeyAlgorithm = 1
+)
