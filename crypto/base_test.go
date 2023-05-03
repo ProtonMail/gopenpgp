@@ -9,11 +9,16 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
 	"github.com/ProtonMail/go-crypto/openpgp/eddsa"
+	"github.com/ProtonMail/gopenpgp/v2/profile"
 
 	"github.com/stretchr/testify/assert"
 )
 
 const testTime = 1557754627 // 2019-05-13T13:37:07+00:00
+const testMessage = "Hello world!"
+
+var testPGP *PGPHandle
+var testProfiles []*profile.Custom
 
 func readTestFile(name string, trimNewlines bool) string {
 	data, err := ioutil.ReadFile("testdata/" + name) //nolint
@@ -27,8 +32,12 @@ func readTestFile(name string, trimNewlines bool) string {
 }
 
 func init() {
-	UpdateTime(testTime) // 2019-05-13T13:37:07+00:00
+	testPGP = PGP()
+	testPGP.defaultTime = NewConstantClock(testTime) // 2019-05-13T13:37:07+00:00
+	testPGP.localTime = NewConstantClock(testTime)   // 2019-05-13T13:37:07+00:00
+	testProfiles = []*profile.Custom{profile.RFC4880(), profile.Koch(), profile.CryptoRefresh()}
 
+	initEncDecTest()
 	initGenerateKeys()
 	initArmoredKeys()
 	initKeyRings()
