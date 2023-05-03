@@ -62,7 +62,7 @@ func (p *PGPHandle) Verify() *VerifyHandleBuilder {
 
 // LockKey encrypts the private parts of a copy of the input key with the given passphrase.
 func (p *PGPHandle) LockKey(key *Key, passphrase []byte) (*Key, error) {
-	return key.lock(passphrase, p.profile.KeyEncryptionConfig())
+	return key.lock(passphrase, p.profile)
 }
 
 // GenerateKey generates key according to the current profile.
@@ -84,5 +84,3 @@ func (p *PGPHandle) GenerateSessionKey() (*SessionKey, error) {
 func (p *PGPHandle) SetKeyGenTime(unixTime int64) {
 	p.localTime = NewConstantClock(unixTime)
 }
-
-// ARMOR operations
