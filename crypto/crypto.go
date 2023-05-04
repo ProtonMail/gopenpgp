@@ -1,18 +1,29 @@
 package crypto
 
+import (
+	"github.com/ProtonMail/gopenpgp/v3/constants"
+	"github.com/ProtonMail/gopenpgp/v3/profile"
+)
+
 type PGPHandle struct {
-	profile Profile
+	profile profile.Profile
 }
 
 // PGP creates a PGPHandle to interact with the API.
 // Uses the default profile for configuration.
 func PGP() *PGPHandle {
-	return PGPWithProfile(ProfileDefault())
+	return PGPWithProfile(profile.Default())
+}
+
+// PGPCryptoRefresh creates a PGPHandle to interact with the API.
+// Uses the the new crypto refresh profile.
+func PGPCryptoRefresh() *PGPHandle {
+	return PGPWithProfile(profile.CryptoRefresh())
 }
 
 // PGPWithProfile creates a PGPHandle to interact with the API.
 // Uses the provided profile for configuration.
-func PGPWithProfile(profile Profile) *PGPHandle {
+func PGPWithProfile(profile profile.Profile) *PGPHandle {
 	return &PGPHandle{
 		profile: profile,
 	}
@@ -21,7 +32,7 @@ func PGPWithProfile(profile Profile) *PGPHandle {
 // Decryption returns a builder to create a DecryptionHandle
 // for decrypting pgp messages.
 func (p *PGPHandle) Decryption() DecryptionHandleBuilder {
-	return newDecryptionParamsBuilder()
+	return newDecryptionHandleBuilder()
 }
 
 // Encryption returns a builder to create an EncryptionHandle
@@ -30,31 +41,28 @@ func (p *PGPHandle) Encryption() EncryptionHandleBuilder {
 	return newEncryptionHandleBuilder(p.profile)
 }
 
+// Sign returns a builder to create a SignHandle
+// for signing messages.
+func (p *PGPHandle) Sign() SignatureHandleBuilder {
+	return newSignatureHandleBuilder(p.profile)
+}
+
+// Verify returns a builder to create an VerifyHandle
+// for verifying signatures.
+func (p *PGPHandle) Verify() VerifyHandleBuilder {
+	return newVerifyHandleBuilder()
+}
+
 // LockKey encrypts the private parts of a copy of the input key with the given passphrase.
 func (p *PGPHandle) LockKey(key *Key, passphrase []byte) (*Key, error) {
 	return key.lock(passphrase, p.profile.KeyEncryptionConfig())
 }
 
-// GenerateRSAKeyWithPrimes generates a RSA key using the given primes.
-func (p *PGPHandle) GenerateRSAKeyWithPrimes(
-	name, email string,
-	bits int,
-	primeone, primetwo, primethree, primefour []byte,
-) (*Key, error) {
-	return generateRSAKeyWithPrimes(name, email, bits, primeone, primetwo, primethree, primefour, p.profile.KeyGenerationConfig())
-}
-
-// GenerateKey generates a key of the given keyType ("rsa", "x25519", "x25519R", "x448R").
-// If keyType is "rsa", bits is the RSA bitsize of the key.
-// For other key types bits is unused.
-// If keyType is "" the method uses the default algorithm in this profile.
-func (p *PGPHandle) GenerateKey(name, email string, keyType string, bits int) (*Key, error) {
-	return generateKey(name, email, keyType, bits, p.profile.KeyGenerationConfig())
-}
-
-// GenerateProfileKey generates key according to the current PGPHandle.
-func (p *PGPHandle) GenerateProfileKey(name, email string) (*Key, error) {
-	return generateKey(name, email, "", 0, p.profile.KeyGenerationConfig())
+// GenerateKey generates key according to the current profile.
+// The argument level allows to set the security level, either standard or high.
+// The profile defines the algorithms and parameters that are used for each security level.
+func (p *PGPHandle) GenerateKey(name, email string, level constants.SecurityLevel) (*Key, error) {
+	return generateKey(name, email, p.localTime, p.profile, level)
 }
 
 // GenerateSessionKey generates a random key for the default cipher.
