@@ -18,10 +18,23 @@ func ArmorKey(input []byte) (string, error) {
 	return ArmorWithType(input, constants.PublicKeyHeader)
 }
 
-// ArmorWithTypeBuffered returns a io.WriteCloser which, when written to, writes
+// ArmorWriterWithType returns a io.WriteCloser which, when written to, writes
 // armored data to w with the given armorType.
-func ArmorWithTypeBuffered(w io.Writer, armorType string) (io.WriteCloser, error) {
-	return armor.Encode(w, armorType, nil)
+func ArmorWriterWithType(w io.Writer, armorType string) (io.WriteCloser, error) {
+	return armor.Encode(w, armorType, internal.ArmorHeaders)
+}
+
+// ArmorWriterWithTypeAndCustomHeaders returns a io.WriteCloser,
+// which armors input with the given armorType and headers.
+func ArmorWriterWithTypeAndCustomHeaders(w io.Writer, armorType, version, comment string) (io.WriteCloser, error) {
+	headers := make(map[string]string)
+	if version != "" {
+		headers["Version"] = version
+	}
+	if comment != "" {
+		headers["Comment"] = comment
+	}
+	return armor.Encode(w, armorType, headers)
 }
 
 // ArmorWithType armors input with the given armorType.
@@ -40,6 +53,16 @@ func ArmorWithTypeAndCustomHeaders(input []byte, armorType, version, comment str
 		headers["Comment"] = comment
 	}
 	return armorWithTypeAndHeaders(input, armorType, headers)
+}
+
+// ArmorReader returns a io.Reader which, when read, reads
+// unarmored data from in.
+func ArmorReader(in io.Reader) (io.Reader, error) {
+	block, err := armor.Decode(in)
+	if err != nil {
+		return nil, err
+	}
+	return block.Body, nil
 }
 
 // Unarmor unarmors an armored input into a byte array.
