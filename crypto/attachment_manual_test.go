@@ -2,10 +2,9 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"testing"
-
-	"github.com/pkg/errors"
 )
 
 func TestManualAttachmentProcessor(t *testing.T) {

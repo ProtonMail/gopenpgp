@@ -2,6 +2,8 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"time"
@@ -9,7 +11,6 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/ProtonMail/gopenpgp/v2/constants"
-	"github.com/pkg/errors"
 )
 
 // Encrypt encrypts a PlainMessage, outputs a PGPMessage.
@@ -219,12 +220,12 @@ func asymmetricEncrypt(
 
 	_, err = encryptWriter.Write(plainMessage.GetBinary())
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in writing to message")
+		return nil, fmt.Errorf("gopenpgp: error in writing to message: %w", err)
 	}
 
 	err = encryptWriter.Close()
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in closing message")
+		return nil, fmt.Errorf("gopenpgp: error in closing message: %w", err)
 	}
 
 	return &PGPMessage{outBuf.Bytes()}, nil
@@ -268,7 +269,7 @@ func asymmetricEncryptStream(
 		encryptWriter, err = openpgp.EncryptTextSplit(keyPacketWriter, dataPacketWriter, publicKey.entities, signEntity, hints, config)
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
+		return nil, fmt.Errorf("gopenpgp: error in encrypting asymmetrically: %w", err)
 	}
 	return encryptWriter, nil
 }
@@ -294,7 +295,7 @@ func asymmetricDecrypt(
 
 	body, err := ioutil.ReadAll(messageDetails.UnverifiedBody)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading message body")
+		return nil, fmt.Errorf("gopenpgp: error in reading message body: %w", err)
 	}
 
 	if verifyKey != nil {
@@ -349,7 +350,7 @@ func asymmetricDecryptStream(
 
 	messageDetails, err = openpgp.ReadMessage(encryptedIO, privKeyEntries, nil, config)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
+		return nil, fmt.Errorf("gopenpgp: error in reading message: %w", err)
 	}
 	return messageDetails, err
 }

@@ -1,6 +1,8 @@
 package crypto
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"runtime"
@@ -10,7 +12,6 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/pkg/errors"
 )
 
 // ManualAttachmentProcessor keeps track of the progress of encrypting an attachment
@@ -42,7 +43,10 @@ func (ap *ManualAttachmentProcessor) GetDataLength() int {
 func (ap *ManualAttachmentProcessor) Process(plainData []byte) error {
 	defer runtime.GC()
 	_, err := ap.plaintextWriter.Write(plainData)
-	return errors.Wrap(err, "gopenpgp: couldn't write attachment data")
+	if err != nil {
+		err = fmt.Errorf("gopenpgp: couldn't write attachment data: %w", err)
+	}
+	return err
 }
 
 // Finish tells the processor to finalize encryption.
@@ -52,10 +56,10 @@ func (ap *ManualAttachmentProcessor) Finish() error {
 		return ap.err
 	}
 	if err := ap.plaintextWriter.Close(); err != nil {
-		return errors.Wrap(err, "gopengpp: unable to close the plaintext writer")
+		return fmt.Errorf("gopengpp: unable to close the plaintext writer: %w", err)
 	}
 	if err := ap.ciphertextWriter.Close(); err != nil {
-		return errors.Wrap(err, "gopengpp: unable to close the dataPacket writer")
+		return fmt.Errorf("gopengpp: unable to close the dataPacket writer: %w", err)
 	}
 	ap.done.Wait()
 	if ap.err != nil {
@@ -130,7 +134,7 @@ func (keyRing *KeyRing) NewManualAttachmentProcessor(
 	var encryptErr error
 	ew, encryptErr = openpgp.EncryptSplit(keyWriter, dataWriter, keyRing.entities, nil, hints, config)
 	if encryptErr != nil {
-		return nil, errors.Wrap(encryptErr, "gopengpp: unable to encrypt attachment")
+		return nil, fmt.Errorf("gopengpp: unable to encrypt attachment: %w", encryptErr)
 	}
 
 	attachmentProc.plaintextWriter = ew
@@ -138,7 +142,7 @@ func (keyRing *KeyRing) NewManualAttachmentProcessor(
 
 	// The key packet should have been already written, so we can close
 	if err := keyWriter.Close(); err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: couldn't close the keyPacket writer")
+		return nil, fmt.Errorf("gopenpgp: couldn't close the keyPacket writer: %w", err)
 	}
 
 	// Check if the goroutines encountered errors
@@ -171,7 +175,7 @@ func readAll(buffer []byte, reader io.Reader) (int, error) {
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			return 0, errors.Wrap(err, "gopenpgp: couldn't read data from the encrypted reader")
+			return 0, fmt.Errorf("gopenpgp: couldn't read data from the encrypted reader: %w", err)
 		}
 		if offset == bufferLen {
 			// Here we've reached the end of the buffer

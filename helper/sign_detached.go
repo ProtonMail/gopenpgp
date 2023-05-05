@@ -4,8 +4,9 @@
 package helper
 
 import (
+	"fmt"
+
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
-	"github.com/pkg/errors"
 )
 
 // EncryptSignAttachment encrypts an attachment using a detached signature, given a publicKey, a privateKey
@@ -26,24 +27,24 @@ func EncryptSignAttachment(
 	}
 
 	if privateKeyObj, err = crypto.NewKeyFromArmored(privateKey); err != nil {
-		return nil, nil, nil, errors.Wrap(err, "gopenpgp: unable to parse private key")
+		return nil, nil, nil, fmt.Errorf("gopenpgp: unable to parse private key: %w", err)
 	}
 
 	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
-		return nil, nil, nil, errors.Wrap(err, "gopenpgp: unable to unlock key")
+		return nil, nil, nil, fmt.Errorf("gopenpgp: unable to unlock key: %w", err)
 	}
 	defer unlockedKeyObj.ClearPrivateParams()
 
 	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
-		return nil, nil, nil, errors.Wrap(err, "gopenpgp: unable to create private keyring")
+		return nil, nil, nil, fmt.Errorf("gopenpgp: unable to create private keyring: %w", err)
 	}
 
 	if packets, err = publicKeyRing.EncryptAttachment(binMessage, ""); err != nil {
-		return nil, nil, nil, errors.Wrap(err, "gopenpgp: unable to encrypt attachment")
+		return nil, nil, nil, fmt.Errorf("gopenpgp: unable to encrypt attachment: %w", err)
 	}
 
 	if signatureObj, err = privateKeyRing.SignDetached(binMessage); err != nil {
-		return nil, nil, nil, errors.Wrap(err, "gopenpgp: unable to sign attachment")
+		return nil, nil, nil, fmt.Errorf("gopenpgp: unable to sign attachment: %w", err)
 	}
 
 	return packets.GetBinaryKeyPacket(), packets.GetBinaryDataPacket(), signatureObj.GetBinary(), nil

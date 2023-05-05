@@ -2,11 +2,12 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/pkg/errors"
 )
 
 // KeyRing contains multiple private and public keys.
@@ -220,14 +221,14 @@ func (keyRing *KeyRing) Copy() (*KeyRing, error) {
 		}
 
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: unable to copy key: error in serializing entity")
+			return nil, fmt.Errorf("gopenpgp: unable to copy key: error in serializing entity: %w", err)
 		}
 
 		bt := buffer.Bytes()
 		entities[id], err = openpgp.ReadEntity(packet.NewReader(bytes.NewReader(bt)))
 
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: unable to copy key: error in reading entity")
+			return nil, fmt.Errorf("gopenpgp: unable to copy key: error in reading entity: %w", err)
 		}
 	}
 	newKeyRing.entities = entities

@@ -2,12 +2,13 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/pkg/errors"
 )
 
 // EncryptMessageWithPassword encrypts a PlainMessage to PGPMessage with a
@@ -62,7 +63,7 @@ func DecryptSessionKeyWithPassword(keyPacket, password []byte) (*SessionKey, err
 				}
 
 				if err = sk.checkSize(); err != nil {
-					return nil, errors.Wrap(err, "gopenpgp: unable to decrypt session key with password")
+					return nil, fmt.Errorf("gopenpgp: unable to decrypt session key with password: %w", err)
 				}
 
 				return sk, nil
@@ -80,7 +81,7 @@ func EncryptSessionKeyWithPassword(sk *SessionKey, password []byte) ([]byte, err
 
 	cf, err := sk.GetCipherFunc()
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt session key with password")
+		return nil, fmt.Errorf("gopenpgp: unable to encrypt session key with password: %w", err)
 	}
 
 	if len(password) == 0 {
@@ -88,7 +89,7 @@ func EncryptSessionKeyWithPassword(sk *SessionKey, password []byte) ([]byte, err
 	}
 
 	if err = sk.checkSize(); err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt session key with password")
+		return nil, fmt.Errorf("gopenpgp: unable to encrypt session key with password: %w", err)
 	}
 
 	config := &packet.Config{
@@ -97,7 +98,7 @@ func EncryptSessionKeyWithPassword(sk *SessionKey, password []byte) ([]byte, err
 
 	err = packet.SerializeSymmetricKeyEncryptedReuseKey(outbuf, sk.Key, password, config)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt session key with password")
+		return nil, fmt.Errorf("gopenpgp: unable to encrypt session key with password: %w", err)
 	}
 	return outbuf.Bytes(), nil
 }
@@ -120,16 +121,16 @@ func passwordEncrypt(message *PlainMessage, password []byte) ([]byte, error) {
 
 	encryptWriter, err := openpgp.SymmetricallyEncrypt(&outBuf, password, hints, config)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in encrypting message symmetrically")
+		return nil, fmt.Errorf("gopenpgp: error in encrypting message symmetrically: %w", err)
 	}
 	_, err = encryptWriter.Write(message.GetBinary())
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in writing data to message")
+		return nil, fmt.Errorf("gopenpgp: error in writing data to message: %w", err)
 	}
 
 	err = encryptWriter.Close()
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in closing writer")
+		return nil, fmt.Errorf("gopenpgp: error in closing writer: %w", err)
 	}
 
 	return outBuf.Bytes(), nil

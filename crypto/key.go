@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"math/big"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/ProtonMail/gopenpgp/v2/armor"
 	"github.com/ProtonMail/gopenpgp/v2/constants"
-	"github.com/pkg/errors"
 
 	openpgp "github.com/ProtonMail/go-crypto/openpgp"
 	packet "github.com/ProtonMail/go-crypto/openpgp/packet"
@@ -117,14 +117,14 @@ func (key *Key) Lock(passphrase []byte) (*Key, error) {
 	if lockedKey.entity.PrivateKey != nil && !lockedKey.entity.PrivateKey.Dummy() {
 		err = lockedKey.entity.PrivateKey.Encrypt(passphrase)
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: error in locking key")
+			return nil, fmt.Errorf("gopenpgp: error in locking key: %w", err)
 		}
 	}
 
 	for _, sub := range lockedKey.entity.Subkeys {
 		if sub.PrivateKey != nil && !sub.PrivateKey.Dummy() {
 			if err := sub.PrivateKey.Encrypt(passphrase); err != nil {
-				return nil, errors.Wrap(err, "gopenpgp: error in locking sub key")
+				return nil, fmt.Errorf("gopenpgp: error in locking sub key: %w", err)
 			}
 		}
 	}
@@ -162,14 +162,14 @@ func (key *Key) Unlock(passphrase []byte) (*Key, error) {
 	if unlockedKey.entity.PrivateKey != nil && !unlockedKey.entity.PrivateKey.Dummy() {
 		err = unlockedKey.entity.PrivateKey.Decrypt(passphrase)
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: error in unlocking key")
+			return nil, fmt.Errorf("gopenpgp: error in unlocking key: %w", err)
 		}
 	}
 
 	for _, sub := range unlockedKey.entity.Subkeys {
 		if sub.PrivateKey != nil && !sub.PrivateKey.Dummy() {
 			if err := sub.PrivateKey.Decrypt(passphrase); err != nil {
-				return nil, errors.Wrap(err, "gopenpgp: error in unlocking sub key")
+				return nil, fmt.Errorf("gopenpgp: error in unlocking sub key: %w", err)
 			}
 		}
 	}
@@ -198,7 +198,7 @@ func (key *Key) Serialize() ([]byte, error) {
 	}
 
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in serializing key")
+		return nil, fmt.Errorf("gopenpgp: error in serializing key: %w", err)
 	}
 
 	return buffer.Bytes(), nil
@@ -254,7 +254,7 @@ func (key *Key) GetArmoredPublicKeyWithCustomHeaders(comment, version string) (s
 func (key *Key) GetPublicKey() (b []byte, err error) {
 	var outBuf bytes.Buffer
 	if err = key.entity.Serialize(&outBuf); err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in serializing public key")
+		return nil, fmt.Errorf("gopenpgp: error in serializing public key: %w", err)
 	}
 
 	return outBuf.Bytes(), nil
@@ -417,7 +417,7 @@ func (key *Key) readFrom(r io.Reader, armored bool) error {
 		entities, err = openpgp.ReadKeyRing(r)
 	}
 	if err != nil {
-		return errors.Wrap(err, "gopenpgp: error in reading key ring")
+		return fmt.Errorf("gopenpgp: error in reading key ring: %w", err)
 	}
 
 	if len(entities) > 1 {
@@ -439,7 +439,7 @@ func generateKey(
 	prime1, prime2, prime3, prime4 []byte,
 ) (*Key, error) {
 	if len(email) == 0 && len(name) == 0 {
-		return nil, errors.New("gopenpgp: neither name nor email set.")
+		return nil, errors.New("gopenpgp: neither name nor email set")
 	}
 
 	comments := ""
@@ -473,7 +473,7 @@ func generateKey(
 
 	newEntity, err := openpgp.NewEntity(name, comments, email, cfg)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopengpp: error in encoding new entity")
+		return nil, fmt.Errorf("gopengpp: error in encoding new entity: %w", err)
 	}
 
 	if newEntity.PrivateKey == nil {

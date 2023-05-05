@@ -2,11 +2,11 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/pkg/errors"
 )
 
 type Reader interface {
