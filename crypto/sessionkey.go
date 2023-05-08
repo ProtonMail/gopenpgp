@@ -71,7 +71,10 @@ func (sk *SessionKey) GetBase64Key() string {
 
 // RandomToken generates a random token with the specified key size.
 func RandomToken(size int) ([]byte, error) {
-	config := &packet.Config{DefaultCipher: packet.CipherAES256}
+	config := &packet.Config{
+		DefaultCipher: packet.CipherAES256,
+		Time:          GetTime,
+	}
 	symKey := make([]byte, size)
 	if _, err := io.ReadFull(config.Random(), symKey); err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in generating random token")
@@ -225,7 +228,7 @@ func encryptStreamWithSessionKey(
 	}
 
 	config := &packet.Config{
-		Time:          getTimeGenerator(),
+		Time:          GetTime,
 		DefaultCipher: dc,
 	}
 
@@ -426,7 +429,7 @@ func decryptStreamWithSessionKey(
 	}
 
 	config := &packet.Config{
-		Time: getTimeGenerator(),
+		Time: GetTime,
 	}
 
 	if verificationContext != nil {

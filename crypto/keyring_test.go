@@ -236,11 +236,10 @@ func TestKeyringCapabilities(t *testing.T) {
 }
 
 func TestVerificationTime(t *testing.T) {
+	defer setFixedTime(testTime)
+	setFixedTime(1632312383)
 	message := NewPlainMessageFromString("Hello")
-	pgp.latestServerTime = 1632312383
-	defer func() {
-		pgp.latestServerTime = testTime
-	}()
+
 	enc, err := keyRingTestPublic.Encrypt(
 		message,
 		keyRingTestPrivate,

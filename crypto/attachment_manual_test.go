@@ -9,8 +9,9 @@ import (
 )
 
 func TestManualAttachmentProcessor(t *testing.T) {
-	pgp.latestServerTime = 1615394034
-	defer func() { pgp.latestServerTime = testTime }()
+	defer setFixedTime(testTime)
+	setFixedTime(1615394034)
+
 	passphrase := []byte("wUMuF/lkDPYWH/0ZqqY8kJKw7YJg6kS")
 	pk, err := NewKeyFromArmored(readTestFile("att_key", false))
 	if err != nil {
@@ -86,8 +87,8 @@ func TestManualAttachmentProcessor(t *testing.T) {
 }
 
 func TestManualAttachmentProcessorNotEnoughBuffer(t *testing.T) {
-	pgp.latestServerTime = 1615394034
-	defer func() { pgp.latestServerTime = testTime }()
+	defer setFixedTime(testTime)
+	setFixedTime(1615394034)
 	passphrase := []byte("wUMuF/lkDPYWH/0ZqqY8kJKw7YJg6kS")
 	pk, err := NewKeyFromArmored(readTestFile("att_key", false))
 	if err != nil {
@@ -141,8 +142,9 @@ func TestManualAttachmentProcessorNotEnoughBuffer(t *testing.T) {
 }
 
 func TestManualAttachmentProcessorEmptyBuffer(t *testing.T) {
-	pgp.latestServerTime = 1615394034
-	defer func() { pgp.latestServerTime = testTime }()
+	defer setFixedTime(testTime)
+	setFixedTime(1615394034)
+
 	passphrase := []byte("wUMuF/lkDPYWH/0ZqqY8kJKw7YJg6kS")
 	pk, err := NewKeyFromArmored(readTestFile("att_key", false))
 	if err != nil {

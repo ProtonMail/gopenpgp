@@ -27,7 +27,7 @@ func readTestFile(name string, trimNewlines bool) string {
 }
 
 func init() {
-	UpdateTime(testTime) // 2019-05-13T13:37:07+00:00
+	setFixedTime(testTime) // 2019-05-13T13:37:07+00:00
 
 	initGenerateKeys()
 	initArmoredKeys()

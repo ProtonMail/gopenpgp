@@ -86,7 +86,10 @@ func parseMIME(
 	if err != nil {
 		return nil, nil, nil, errors.Wrap(err, "gopenpgp: error in reading message")
 	}
-	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
+	config := &packet.Config{
+		DefaultCipher: packet.CipherAES256,
+		Time:          GetTime,
+	}
 
 	h := textproto.MIMEHeader(mm.Header)
 	mmBodyData, err := ioutil.ReadAll(mm.Body)
