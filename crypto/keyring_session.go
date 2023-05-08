@@ -2,9 +2,9 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"strconv"
-
-	"github.com/pkg/errors"
 
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 )
@@ -55,11 +55,11 @@ Loop:
 	}
 
 	if !hasPacket {
-		return nil, errors.Wrap(err, "gopenpgp: couldn't find a session key packet")
+		return nil, fmt.Errorf("gopenpgp: couldn't find a session key packet: %w", err)
 	}
 
 	if decryptErr != nil {
-		return nil, errors.Wrap(decryptErr, "gopenpgp: error in decrypting")
+		return nil, fmt.Errorf("gopenpgp: error in decrypting: %w", decryptErr)
 	}
 
 	if ek == nil || ek.Key == nil {
@@ -75,7 +75,7 @@ func (keyRing *KeyRing) EncryptSessionKey(sk *SessionKey) ([]byte, error) {
 	outbuf := &bytes.Buffer{}
 	cf, err := sk.GetCipherFunc()
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt session key")
+		return nil, fmt.Errorf("gopenpgp: unable to encrypt session key: %w", err)
 	}
 
 	pubKeys := make([]*packet.PublicKey, 0, len(keyRing.entities))
@@ -92,7 +92,7 @@ func (keyRing *KeyRing) EncryptSessionKey(sk *SessionKey) ([]byte, error) {
 
 	for _, pub := range pubKeys {
 		if err := packet.SerializeEncryptedKey(outbuf, pub, cf, sk.Key, nil); err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: cannot set key")
+			return nil, fmt.Errorf("gopenpgp: cannot set key: %w", err)
 		}
 	}
 	return outbuf.Bytes(), nil

@@ -1,9 +1,10 @@
 package helper
 
 import (
+	"fmt"
+
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/ProtonMail/gopenpgp/v2/internal"
-	"github.com/pkg/errors"
 )
 
 // SignCleartextMessageArmored signs text given a private key and its
@@ -12,18 +13,18 @@ import (
 func SignCleartextMessageArmored(privateKey string, passphrase []byte, text string) (string, error) {
 	signingKey, err := crypto.NewKeyFromArmored(privateKey)
 	if err != nil {
-		return "", errors.Wrap(err, "gopenpgp: error in creating key object")
+		return "", fmt.Errorf("gopenpgp: error in creating key object: %w", err)
 	}
 
 	unlockedKey, err := signingKey.Unlock(passphrase)
 	if err != nil {
-		return "", errors.Wrap(err, "gopenpgp: error in unlocking key")
+		return "", fmt.Errorf("gopenpgp: error in unlocking key: %w", err)
 	}
 	defer unlockedKey.ClearPrivateParams()
 
 	keyRing, err := crypto.NewKeyRing(unlockedKey)
 	if err != nil {
-		return "", errors.Wrap(err, "gopenpgp: error in creating keyring")
+		return "", fmt.Errorf("gopenpgp: error in creating keyring: %w", err)
 	}
 
 	return SignCleartextMessage(keyRing, text)
@@ -35,12 +36,12 @@ func SignCleartextMessageArmored(privateKey string, passphrase []byte, text stri
 func VerifyCleartextMessageArmored(publicKey, armored string, verifyTime int64) (string, error) {
 	signingKey, err := crypto.NewKeyFromArmored(publicKey)
 	if err != nil {
-		return "", errors.Wrap(err, "gopenpgp: error in creating key object")
+		return "", fmt.Errorf("gopenpgp: error in creating key object: %w", err)
 	}
 
 	verifyKeyRing, err := crypto.NewKeyRing(signingKey)
 	if err != nil {
-		return "", errors.Wrap(err, "gopenpgp: error in creating key ring")
+		return "", fmt.Errorf("gopenpgp: error in creating key ring: %w", err)
 	}
 
 	return VerifyCleartextMessage(verifyKeyRing, armored, verifyTime)
@@ -53,7 +54,7 @@ func SignCleartextMessage(keyRing *crypto.KeyRing, text string) (string, error) 
 
 	signature, err := keyRing.SignDetached(message)
 	if err != nil {
-		return "", errors.Wrap(err, "gopenpgp: error in signing cleartext message")
+		return "", fmt.Errorf("gopenpgp: error in signing cleartext message: %w", err)
 	}
 
 	return crypto.NewClearTextMessage(message.GetBinary(), signature.GetBinary()).GetArmored()
@@ -65,14 +66,14 @@ func SignCleartextMessage(keyRing *crypto.KeyRing, text string) (string, error) 
 func VerifyCleartextMessage(keyRing *crypto.KeyRing, armored string, verifyTime int64) (string, error) {
 	clearTextMessage, err := crypto.NewClearTextMessageFromArmored(armored)
 	if err != nil {
-		return "", errors.Wrap(err, "gopengpp: unable to unarmor cleartext message")
+		return "", fmt.Errorf("gopengpp: unable to unarmor cleartext message: %w", err)
 	}
 
 	message := crypto.NewPlainMessageFromString(internal.TrimEachLine(clearTextMessage.GetString()))
 	signature := crypto.NewPGPSignature(clearTextMessage.GetBinarySignature())
 	err = keyRing.VerifyDetached(message, signature, verifyTime)
 	if err != nil {
-		return "", errors.Wrap(err, "gopengpp: unable to verify cleartext message")
+		return "", fmt.Errorf("gopengpp: unable to verify cleartext message: %w", err)
 	}
 
 	return message.GetString(), nil

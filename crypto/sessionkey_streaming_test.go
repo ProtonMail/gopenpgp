@@ -2,12 +2,11 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"io/ioutil"
 	"reflect"
 	"testing"
-
-	"github.com/pkg/errors"
 )
 
 func TestSessionKey_EncryptDecryptStream(t *testing.T) {

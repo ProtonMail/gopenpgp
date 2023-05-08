@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"crypto"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -11,7 +12,6 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/pkg/errors"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/ProtonMail/gopenpgp/v2/internal"
@@ -263,12 +263,12 @@ func verifySignature(
 
 			seeker, ok := origText.(io.ReadSeeker)
 			if !ok {
-				return nil, errors.Wrap(err, "gopenpgp: message reader do not support seeking, cannot retry signature verification")
+				return nil, fmt.Errorf("gopenpgp: message reader do not support seeking, cannot retry signature verification: %w", err)
 			}
 
 			_, err = seeker.Seek(0, io.SeekStart)
 			if err != nil {
-				return nil, newSignatureFailed(errors.Wrap(err, "gopenpgp: could not rewind the data reader."))
+				return nil, newSignatureFailed(fmt.Errorf("gopenpgp: could not rewind the data reader.: %w", err))
 			}
 
 			_, err = signatureReader.Seek(0, io.SeekStart)
@@ -325,7 +325,7 @@ func signMessageDetached(
 		err = openpgp.DetachSignText(&outBuf, signEntity, messageReader, config)
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in signing")
+		return nil, fmt.Errorf("gopenpgp: error in signing: %w", err)
 	}
 
 	return NewPGPSignature(outBuf.Bytes()), nil

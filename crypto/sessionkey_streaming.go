@@ -1,8 +1,6 @@
 package crypto
 
-import (
-	"github.com/pkg/errors"
-)
+import "fmt"
 
 type signAndEncryptWriteCloser struct {
 	signWriter    WriteCloser
@@ -176,7 +174,7 @@ func decryptStreamWithSessionKeyAndContext(
 		verificationContext,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
+		return nil, fmt.Errorf("gopenpgp: error in reading message: %w", err)
 	}
 
 	return &PlainMessageReader{

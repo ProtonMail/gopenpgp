@@ -2,6 +2,8 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/mail"
 	"net/textproto"
@@ -11,7 +13,6 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	gomime "github.com/ProtonMail/go-mime"
 	"github.com/ProtonMail/gopenpgp/v2/constants"
-	"github.com/pkg/errors"
 )
 
 // MIMECallbacks defines callback methods to process a MIME message.
@@ -84,14 +85,14 @@ func parseMIME(
 ) (*gomime.BodyCollector, []string, []string, error) {
 	mm, err := mail.ReadMessage(strings.NewReader(mimeBody))
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "gopenpgp: error in reading message")
+		return nil, nil, nil, fmt.Errorf("gopenpgp: error in reading message: %w", err)
 	}
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 
 	h := textproto.MIMEHeader(mm.Header)
 	mmBodyData, err := ioutil.ReadAll(mm.Body)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "gopenpgp: error in reading message body data")
+		return nil, nil, nil, fmt.Errorf("gopenpgp: error in reading message body data: %w", err)
 	}
 
 	printAccepter := gomime.NewMIMEPrinter()

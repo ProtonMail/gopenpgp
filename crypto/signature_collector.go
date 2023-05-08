@@ -2,6 +2,8 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"mime"
@@ -13,7 +15,6 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	gomime "github.com/ProtonMail/go-mime"
-	"github.com/pkg/errors"
 )
 
 // SignatureCollector structure.
@@ -62,7 +63,7 @@ func (sc *SignatureCollector) Accept(
 		sc.verified = newSignatureNotSigned()
 		// Invalid multipart/signed format just pass along
 		if _, err = ioutil.ReadAll(rawBody); err != nil {
-			return errors.Wrap(err, "gopenpgp: error in reading raw message body")
+			return fmt.Errorf("gopenpgp: error in reading raw message body: %w", err)
 		}
 
 		for i, p := range multiparts {
@@ -76,12 +77,12 @@ func (sc *SignatureCollector) Accept(
 	// actual multipart/signed format
 	err = sc.target.Accept(multiparts[0], multipartHeaders[0], hasPlainChild, true, true)
 	if err != nil {
-		return errors.Wrap(err, "gopenpgp: error in parsing body")
+		return fmt.Errorf("gopenpgp: error in parsing body: %w", err)
 	}
 
 	partData, err := ioutil.ReadAll(multiparts[1])
 	if err != nil {
-		return errors.Wrap(err, "gopenpgp: error in ready part data")
+		return fmt.Errorf("gopenpgp: error in ready part data: %w", err)
 	}
 
 	decodedPart := gomime.DecodeContentEncoding(
@@ -90,12 +91,12 @@ func (sc *SignatureCollector) Accept(
 
 	buffer, err := ioutil.ReadAll(decodedPart)
 	if err != nil {
-		return errors.Wrap(err, "gopenpgp: error in reading decoded data")
+		return fmt.Errorf("gopenpgp: error in reading decoded data: %w", err)
 	}
 	mediaType, _, _ := mime.ParseMediaType(header.Get("Content-Type"))
 	buffer, err = gomime.DecodeCharset(buffer, mediaType, params)
 	if err != nil {
-		return errors.Wrap(err, "gopenpgp: error in decoding charset")
+		return fmt.Errorf("gopenpgp: error in decoding charset: %w", err)
 	}
 	sc.signature = string(buffer)
 	str, _ := ioutil.ReadAll(rawBody)

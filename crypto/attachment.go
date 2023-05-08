@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"runtime"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/pkg/errors"
 )
 
 // AttachmentProcessor keeps track of the progress of encrypting an attachment
@@ -41,7 +41,7 @@ func (ap *AttachmentProcessor) Finish() (*PGPSplitMessage, error) {
 	}
 
 	if err := (*ap.w).Close(); err != nil {
-		return nil, errors.Wrap(err, "gopengpp: unable to close writer")
+		return nil, fmt.Errorf("gopengpp: unable to close writer: %w", err)
 	}
 
 	if ap.garbageCollector > 0 {
@@ -50,7 +50,7 @@ func (ap *AttachmentProcessor) Finish() (*PGPSplitMessage, error) {
 	}
 
 	if err := (*ap.pipe).Close(); err != nil {
-		return nil, errors.Wrap(err, "gopengpp: unable to close pipe")
+		return nil, fmt.Errorf("gopengpp: unable to close pipe: %w", err)
 	}
 
 	ap.done.Wait()
@@ -107,7 +107,7 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 	var encryptErr error
 	ew, encryptErr = openpgp.Encrypt(writer, keyRing.entities, nil, hints, config)
 	if encryptErr != nil {
-		return nil, errors.Wrap(encryptErr, "gopengpp: unable to encrypt attachment")
+		return nil, fmt.Errorf("gopengpp: unable to encrypt attachment: %w", encryptErr)
 	}
 	attachmentProc.w = &ew
 	attachmentProc.pipe = writer
@@ -167,13 +167,13 @@ func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*PlainMessa
 
 	md, err := openpgp.ReadMessage(encryptedReader, privKeyEntries, nil, config)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopengpp: unable to read attachment")
+		return nil, fmt.Errorf("gopengpp: unable to read attachment: %w", err)
 	}
 
 	decrypted := md.UnverifiedBody
 	b, err := ioutil.ReadAll(decrypted)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopengpp: unable to read attachment body")
+		return nil, fmt.Errorf("gopengpp: unable to read attachment body: %w", err)
 	}
 
 	return &PlainMessage{

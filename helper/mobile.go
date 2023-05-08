@@ -2,11 +2,11 @@ package helper
 
 import (
 	"encoding/json"
-	goerrors "errors"
+	"errors"
+	"fmt"
 	"runtime/debug"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
-	"github.com/pkg/errors"
 )
 
 type ExplicitVerifyMessage struct {
@@ -72,9 +72,9 @@ func newExplicitVerifyMessage(message *crypto.PlainMessage, err error) (*Explici
 	var explicitVerify *ExplicitVerifyMessage
 	if err != nil {
 		castedErr := &crypto.SignatureVerificationError{}
-		isType := goerrors.As(err, castedErr)
+		isType := errors.As(err, castedErr)
 		if !isType {
-			return nil, errors.Wrap(err, "gopenpgp: unable to decrypt message")
+			return nil, fmt.Errorf("gopenpgp: unable to decrypt message: %w", err)
 		}
 
 		explicitVerify = &ExplicitVerifyMessage{
@@ -99,7 +99,7 @@ func DecryptAttachment(keyPacket []byte, dataPacket []byte, keyRing *crypto.KeyR
 
 	decrypted, err := keyRing.DecryptAttachment(splitMessage)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to decrypt attachment")
+		return nil, fmt.Errorf("gopenpgp: unable to decrypt attachment: %w", err)
 	}
 	return decrypted, nil
 }
@@ -112,7 +112,7 @@ func EncryptAttachment(plainData []byte, filename string, keyRing *crypto.KeyRin
 	plainMessage := crypto.NewPlainMessageFromFile(plainData, filename, uint32(crypto.GetUnixTime()))
 	decrypted, err := keyRing.EncryptAttachment(plainMessage, "")
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to encrypt attachment")
+		return nil, fmt.Errorf("gopenpgp: unable to encrypt attachment: %w", err)
 	}
 	return decrypted, nil
 }
@@ -122,7 +122,7 @@ func EncryptAttachment(plainData []byte, filename string, keyRing *crypto.KeyRin
 func GetJsonSHA256Fingerprints(publicKey string) ([]byte, error) {
 	key, err := crypto.NewKeyFromArmored(publicKey)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to parse key")
+		return nil, fmt.Errorf("gopenpgp: unable to parse key: %w", err)
 	}
 
 	return json.Marshal(key.GetSHA256Fingerprints())
