@@ -39,7 +39,20 @@ func ArmorWriterWithTypeAndCustomHeaders(w io.Writer, armorType, version, commen
 
 // ArmorWithType armors input with the given armorType.
 func ArmorWithType(input []byte, armorType string) (string, error) {
-	return armorWithTypeAndHeaders(input, armorType, internal.ArmorHeaders)
+	buffer, err := armorWithTypeAndHeaders(input, armorType, internal.ArmorHeaders)
+	if err != nil {
+		return "", err
+	}
+	return buffer.String(), err
+}
+
+// ArmorWithTypeBytes armors input with the given armorType.
+func ArmorWithTypeBytes(input []byte, armorType string) ([]byte, error) {
+	buffer, err := armorWithTypeAndHeaders(input, armorType, internal.ArmorHeaders)
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), err
 }
 
 // ArmorWithTypeAndCustomHeaders armors input with the given armorType and
@@ -52,7 +65,28 @@ func ArmorWithTypeAndCustomHeaders(input []byte, armorType, version, comment str
 	if comment != "" {
 		headers["Comment"] = comment
 	}
-	return armorWithTypeAndHeaders(input, armorType, headers)
+	buffer, err := armorWithTypeAndHeaders(input, armorType, headers)
+	if err != nil {
+		return "", err
+	}
+	return buffer.String(), err
+}
+
+// ArmorWithTypeAndCustomHeaders armors input with the given armorType and
+// headers.
+func ArmorWithTypeAndCustomHeadersBytes(input []byte, armorType, version, comment string) ([]byte, error) {
+	headers := make(map[string]string)
+	if version != "" {
+		headers["Version"] = version
+	}
+	if comment != "" {
+		headers["Comment"] = comment
+	}
+	buffer, err := armorWithTypeAndHeaders(input, armorType, headers)
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), err
 }
 
 // ArmorReader returns a io.Reader which, when read, reads
@@ -74,19 +108,44 @@ func Unarmor(input string) ([]byte, error) {
 	return ioutil.ReadAll(b.Body)
 }
 
-func armorWithTypeAndHeaders(input []byte, armorType string, headers map[string]string) (string, error) {
+// Unarmor unarmors an armored input into a byte array.
+func UnarmorBytes(input []byte) ([]byte, error) {
+	b, err := internal.UnarmorBytes(input)
+	if err != nil {
+		return nil, errors.Wrap(err, "gopengp: unable to unarmor")
+	}
+	return ioutil.ReadAll(b.Body)
+}
+
+func ArmorPGPSignatureBinary(signature []byte) ([]byte, error) {
+	return ArmorWithTypeBytes(signature, constants.PGPSignatureHeader)
+}
+
+func ArmorPGPSignature(signature []byte) (string, error) {
+	return ArmorWithType(signature, constants.PGPSignatureHeader)
+}
+
+func ArmorPGPMessageBytes(signature []byte) ([]byte, error) {
+	return ArmorWithTypeBytes(signature, constants.PGPMessageHeader)
+}
+
+func ArmorPGPMessage(signature []byte) (string, error) {
+	return ArmorWithType(signature, constants.PGPMessageHeader)
+}
+
+func armorWithTypeAndHeaders(input []byte, armorType string, headers map[string]string) (*bytes.Buffer, error) {
 	var b bytes.Buffer
 
 	w, err := armor.Encode(&b, armorType, headers)
 
 	if err != nil {
-		return "", errors.Wrap(err, "gopengp: unable to encode armoring")
+		return nil, errors.Wrap(err, "gopengp: unable to encode armoring")
 	}
 	if _, err = w.Write(input); err != nil {
-		return "", errors.Wrap(err, "gopengp: unable to write armored to buffer")
+		return nil, errors.Wrap(err, "gopengp: unable to write armored to buffer")
 	}
 	if err := w.Close(); err != nil {
-		return "", errors.Wrap(err, "gopengp: unable to close armor buffer")
+		return nil, errors.Wrap(err, "gopengp: unable to close armor buffer")
 	}
-	return b.String(), nil
+	return &b, nil
 }
