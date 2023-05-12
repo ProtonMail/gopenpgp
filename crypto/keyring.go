@@ -126,10 +126,10 @@ func (keyRing *KeyRing) GetIdentities() []*Identity {
 }
 
 // CanVerify returns true if any of the keys in the keyring can be used for verification.
-func (keyRing *KeyRing) CanVerify() bool {
+func (keyRing *KeyRing) CanVerify(unixTime int64) bool {
 	keys := keyRing.GetKeys()
 	for _, key := range keys {
-		if key.CanVerify() {
+		if key.CanVerify(unixTime) {
 			return true
 		}
 	}
@@ -137,10 +137,10 @@ func (keyRing *KeyRing) CanVerify() bool {
 }
 
 // CanEncrypt returns true if any of the keys in the keyring can be used for encryption.
-func (keyRing *KeyRing) CanEncrypt() bool {
+func (keyRing *KeyRing) CanEncrypt(unixTime int64) bool {
 	keys := keyRing.GetKeys()
 	for _, key := range keys {
-		if key.CanEncrypt() {
+		if key.CanEncrypt(unixTime) {
 			return true
 		}
 	}
