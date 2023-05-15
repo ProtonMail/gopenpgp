@@ -1,4 +1,4 @@
-package crypto
+package internal
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 )
 
 func expectedOutput(in string) string {
-	return sanitizeString(strings.ReplaceAll(in, "\r\n", "\n"))
+	return SanitizeString(strings.ReplaceAll(in, "\r\n", "\n"))
 }
 
 func testStringSanitizeReader(t *testing.T, test string) {
