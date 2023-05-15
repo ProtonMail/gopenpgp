@@ -2,13 +2,21 @@
 package internal
 
 import (
+	"bytes"
 	"strings"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 )
 
+var nl []byte = []byte("\n")
+var rnl []byte = []byte("\r\n")
+
 func Canonicalize(text string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\n", "\r\n")
+}
+
+func CanonicalizeBytes(text []byte) []byte {
+	return bytes.ReplaceAll(bytes.ReplaceAll(text, rnl, nl), nl, rnl)
 }
 
 func TrimEachLine(text string) string {
@@ -21,9 +29,15 @@ func TrimEachLine(text string) string {
 	return strings.Join(lines, "\n")
 }
 
-// CreationTimeOffset stores the amount of seconds that a signature may be
-// created in the future, to compensate for clock skew.
-const CreationTimeOffset = int64(60 * 60 * 24 * 2)
+func TrimEachLineBytes(text []byte) []byte {
+	lines := bytes.Split(text, nl)
+
+	for i := range lines {
+		lines[i] = bytes.TrimRight(lines[i], " \t\r")
+	}
+
+	return bytes.Join(lines, nl)
+}
 
 // ArmorHeaders is a map of default armor headers.
 var ArmorHeaders = map[string]string{
