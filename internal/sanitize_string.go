@@ -1,4 +1,4 @@
-package crypto
+package internal
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 
 var escape = []byte{0xEF, 0xBF, 0xBD}
 
-func sanitizeString(input string) string {
+func SanitizeString(input string) string {
 	return strings.ToValidUTF8(input, "\ufffd")
 }
 
