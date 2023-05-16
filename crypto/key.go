@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ProtonMail/gopenpgp/v2/armor"
-	"github.com/ProtonMail/gopenpgp/v2/constants"
+	"github.com/ProtonMail/gopenpgp/v3/armor"
+	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/pkg/errors"
 
 	openpgp "github.com/ProtonMail/go-crypto/openpgp"

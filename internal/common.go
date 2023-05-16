@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/ProtonMail/gopenpgp/v2/constants"
+	"github.com/ProtonMail/gopenpgp/v3/constants"
 )
 
 var nl []byte = []byte("\n")
