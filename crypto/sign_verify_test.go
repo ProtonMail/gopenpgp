@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/ProtonMail/gopenpgp/v2/internal"
+	"github.com/ProtonMail/gopenpgp/v3/internal"
 	"github.com/stretchr/testify/assert"
 )
 

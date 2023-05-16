@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/ProtonMail/gopenpgp/v2/constants"
+	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/pkg/errors"
 
 	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
