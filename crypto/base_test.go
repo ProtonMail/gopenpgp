@@ -9,7 +9,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
 	"github.com/ProtonMail/go-crypto/openpgp/eddsa"
-	"github.com/ProtonMail/gopenpgp/v2/profile"
+	"github.com/ProtonMail/gopenpgp/v3/profile"
 
 	"github.com/stretchr/testify/assert"
 )

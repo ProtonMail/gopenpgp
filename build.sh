@@ -96,12 +96,12 @@ BUILD_NAME="gopenpgp"
 # ==== Packages to included =====
 PACKAGES=""
 ## crypto must be the first one, and the framework name better same with the first package name
-import github.com/ProtonMail/gopenpgp/v2/crypto
-import github.com/ProtonMail/gopenpgp/v2/armor
-import github.com/ProtonMail/gopenpgp/v2/constants
-import github.com/ProtonMail/gopenpgp/v2/models
-import github.com/ProtonMail/gopenpgp/v2/subtle
-import github.com/ProtonMail/gopenpgp/v2/helper
+import github.com/ProtonMail/gopenpgp/v3/crypto
+import github.com/ProtonMail/gopenpgp/v3/armor
+import github.com/ProtonMail/gopenpgp/v3/constants
+import github.com/ProtonMail/gopenpgp/v3/mime
+import github.com/ProtonMail/gopenpgp/v3/mobile
+import github.com/ProtonMail/gopenpgp/v3/profile
 
 ######## ======== Main ===========
 

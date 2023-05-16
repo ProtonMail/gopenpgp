@@ -1,5 +1,4 @@
 # GopenPGP V3
-[![Build Status](https://travis-ci.org/ProtonMail/gopenpgp.svg?branch=master)](https://travis-ci.org/ProtonMail/gopenpgp)
 
 GopenPGP V3 is a high-level OpenPGP library built on top of [a fork of the golang
 crypto library](https://github.com/lubux/go-crypto/tree/version-2).
