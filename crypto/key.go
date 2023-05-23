@@ -27,6 +27,9 @@ type Key struct {
 
 type KeyGenerationProfile interface {
 	KeyGenerationConfig(level constants.SecurityLevel) *packet.Config
+}
+
+type KeyEncryptionProfile interface {
 	KeyEncryptionConfig() *packet.Config
 }
 
@@ -97,9 +100,10 @@ func NewKeyFromEntity(entity *openpgp.Entity) (*Key, error) {
 // If keyType is "rsa", bits is the RSA bitsize of the key.
 // For other key types bits is unused.
 // If keyType is "" the method uses the default algorithm from config
-func generateKey(name, email string, clock Clock, profile KeyGenerationProfile, level constants.SecurityLevel) (*Key, error) {
+func generateKey(name, email string, clock Clock, profile KeyGenerationProfile, level constants.SecurityLevel, lifeTimeSec uint32) (*Key, error) {
 	config := profile.KeyGenerationConfig(level)
 	config.Time = NewConstantClock(clock().Unix())
+	config.KeyLifetimeSecs = lifeTimeSec
 	return generateKeyWithConfig(name, email, "", config)
 }
 
@@ -116,7 +120,7 @@ func (key *Key) Copy() (*Key, error) {
 }
 
 // Lock locks a copy of the key.
-func (key *Key) lock(passphrase []byte, profile KeyGenerationProfile) (*Key, error) {
+func (key *Key) lock(passphrase []byte, profile KeyEncryptionProfile) (*Key, error) {
 	unlocked, err := key.IsUnlocked()
 	if err != nil {
 		return nil, err
