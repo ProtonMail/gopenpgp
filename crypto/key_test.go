@@ -35,7 +35,8 @@ func initGenerateKeys() {
 		keyTestDomain,
 		clock,
 		profile.RFC4880(),
-		constants.Standard,
+		constants.StandardLevel,
+		0,
 	)
 	if err != nil {
 		panic("Cannot generate RSA key:" + err.Error())
@@ -45,7 +46,8 @@ func initGenerateKeys() {
 		keyTestDomain,
 		clock,
 		profile.Koch(),
-		constants.Standard,
+		constants.StandardLevel,
+		0,
 	)
 	if err != nil {
 		panic("Cannot generate EC key:" + err.Error())
