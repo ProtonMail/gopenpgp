@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	"github.com/ProtonMail/go-crypto/v2/openpgp"
+	"github.com/ProtonMail/go-crypto/v2/openpgp/packet"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/internal"
 	"github.com/pkg/errors"
