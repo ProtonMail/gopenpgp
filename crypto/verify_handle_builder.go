@@ -52,14 +52,6 @@ func (dpb *VerifyHandleBuilder) DisableVerifyTimeCheck() *VerifyHandleBuilder {
 	return dpb
 }
 
-// Armored indicates if the signature input to the verify function is armored or not.
-// In the default case, it assumes that the signature is not armored.
-// Does not have an effect on (VerifyHandle).VerifyCleartext.
-func (vhb *VerifyHandleBuilder) Armored() *VerifyHandleBuilder {
-	vhb.handle.Armored = true
-	return vhb
-}
-
 // New creates a VerifyHandle and checks that the given
 // combination of parameters is valid. If the parameters are invalid,
 // an error is returned.

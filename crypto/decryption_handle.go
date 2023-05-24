@@ -4,6 +4,8 @@ import (
 	"bytes"
 
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
+	armorHelper "github.com/ProtonMail/gopenpgp/v3/armor"
+
 	"github.com/pkg/errors"
 )
 
@@ -32,12 +34,9 @@ type decryptionHandle struct {
 	// the decryption key matches the intended recipients of the message.
 	// If disabled, the decryption throws no error in a non-matching case.
 	DisableIntendedRecipients bool
-	// Armored indicates if the pgp message input to the decryption function is armored or not.
-	// In the default case, it assumes that the message is not armored.
-	Armored                bool
-	DisableVerifyTimeCheck bool
-	RetrieveSessionKey     bool
-	clock                  Clock
+	DisableVerifyTimeCheck    bool
+	RetrieveSessionKey        bool
+	clock                     Clock
 }
 
 // --- Default decryption handle to build from
@@ -102,10 +101,6 @@ func (dh *decryptionHandle) DecryptSessionKey(keyPackets []byte) (*SessionKey, e
 	}
 }
 
-func (dh *decryptionHandle) ArmoredInput() bool {
-	return dh.Armored
-}
-
 func (dh *decryptionHandle) ClearPrivateParams() {
 	if dh.DecryptionKeyRing != nil {
 		dh.DecryptionKeyRing.ClearPrivateParams()
@@ -143,8 +138,10 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 	if err != nil {
 		return
 	}
+	var armored bool
+	encryptedMessage, armored = armorHelper.IsPGPArmored(encryptedMessage)
 	var armoredBlock *armor.Block
-	if dh.Armored {
+	if armored {
 		// Wrap encryptedMessage with decode armor reader.
 		armoredBlock, err = armor.Decode(encryptedMessage)
 		if err != nil {
@@ -153,14 +150,17 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 		}
 		encryptedMessage = armoredBlock.Body
 	}
-	if dh.Armored && encryptedSignature != nil {
-		// Wrap encryptedSignature with decode armor reader.
-		armoredBlock, err = armor.Decode(encryptedSignature)
-		if err != nil {
-			err = errors.Wrap(err, "gopenpgp: unarmor failed for pgp encrypted signature message")
-			return
+	if encryptedSignature != nil {
+		encryptedSignature, armored = armorHelper.IsPGPArmored(encryptedSignature)
+		if armored {
+			// Wrap encryptedSignature with decode armor reader.
+			armoredBlock, err = armor.Decode(encryptedSignature)
+			if err != nil {
+				err = errors.Wrap(err, "gopenpgp: unarmor failed for pgp encrypted signature message")
+				return
+			}
+			encryptedSignature = armoredBlock.Body
 		}
-		encryptedSignature = armoredBlock.Body
 	}
 
 	if dh.SessionKey != nil {
