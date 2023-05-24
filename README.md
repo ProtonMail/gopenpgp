@@ -34,7 +34,7 @@ pgpMessage, err := encHandle.Encrypt([]byte("my message"), nil)
 armored, err := pgpMessage.GetArmored()
 
 // Decrypt data with password
-decHandle, err := pgp.Decryption().Password(password).Armored().New()
+decHandle, err := pgp.Decryption().Password(password).New()
 decrypted, err := decHandle.Decrypt([]byte(armored))
 myMessage := decrypted.Result()
 ```
@@ -84,7 +84,7 @@ pgpMessage, err := encHandle.Encrypt([]byte("my message"), nil)
 armored, err := pgpMessage.GetArmored()
 
 // Decrypt armored encrypted message using the private key and obtain the plaintext
-decHandle, err := pgp.Decryption().DecryptionKey(privateKey).Armored().New()
+decHandle, err := pgp.Decryption().DecryptionKey(privateKey).New()
 decrypted, err := decHandle.Decrypt([]byte(armored))
 myMessage := decrypted.Result()
 
@@ -112,7 +112,6 @@ armored, err := pgpMessage.GetArmored()
 decHandle, err := pgp.Decryption().
   DecryptionKey(bobKeyPriv).
   VerifyKey(aliceKeyPub).
-  Armored().
   New()
 decrypted, err := decHandle.Decrypt([]byte(armored))
 if decrypted.HasSignatureError() {
@@ -198,7 +197,6 @@ defer ctFileRead.Close()
 decHandle, err := pgp.Decryption().
   DecryptionKey(bobKeyPriv).
   VerifyKey(aliceKeyPub).
-  Armored().
   New()
 ptReader, err := decHandle.DecryptingReader(ctFileRead)
 decResult, err := ptReader.ReadAllAndVerifySignature()
