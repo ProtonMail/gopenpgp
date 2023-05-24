@@ -26,7 +26,7 @@ func generateTestKeyMaterial(profile *profile.Custom) *testMaterial {
 		panic("Cannot generate session key:" + err.Error())
 	}
 
-	keyTest, err := handle.GenerateKey("test", "test@test.test", constants.Standard)
+	keyTest, err := handle.GenerateKey("test", "test@test.test", constants.StandardLevel)
 	if err != nil {
 		panic("Cannot generate key:" + err.Error())
 	}
@@ -946,9 +946,9 @@ func testEncryptDecryptStream(
 }
 
 func splitWriter(w1 Writer, w2 Writer, w3 Writer) PGPSplitWriter {
-	return NewPGPMessageWriterSplit(w1, w2)
+	return NewPGPSplitWriterKeyAndData(w1, w2)
 }
 
 func splitWriterDetachedSignature(w1 Writer, w2 Writer, w3 Writer) PGPSplitWriter {
-	return NewPGPMessageWriter(w1, w2, w3)
+	return NewPGPSplitWriter(w1, w2, w3)
 }

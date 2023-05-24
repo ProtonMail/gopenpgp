@@ -52,7 +52,7 @@ func RFC4880() *Custom {
 func Koch() *Custom {
 	return &Custom{
 		Name:                           "draft-koch-openpgp",
-		KeyAlgorithm:                   constants.ELLIPTIC,
+		KeyAlgorithm:                   constants.Elliptic,
 		Hash:                           crypto.SHA256,
 		HashSign:                       crypto.SHA512,
 		CipherEncryption:               packet.CipherAES256,
@@ -70,7 +70,7 @@ func Koch() *Custom {
 func CryptoRefresh() *Custom {
 	return &Custom{
 		Name:                           "draft-ietf-openpgp-crypto-refresh",
-		KeyAlgorithm:                   constants.ELLIPTIC,
+		KeyAlgorithm:                   constants.Elliptic,
 		Hash:                           crypto.SHA256,
 		HashSign:                       crypto.SHA512,
 		CipherEncryption:               packet.CipherAES256,

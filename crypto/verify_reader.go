@@ -220,7 +220,7 @@ type VerifiedDataResult struct {
 	cachedSessionKey *SessionKey
 }
 
-// GetMetadata returns the associated metadata of the data.
+// GetMetadata returns the associated literal metadata of the data.
 func (r *VerifiedDataResult) GetMetadata() *LiteralMetadata {
 	return r.metadata
 }

@@ -44,8 +44,7 @@ func (shb *SignHandleBuilder) Detached() *SignHandleBuilder {
 	return shb
 }
 
-// Armor indicates that the produced signature should be armored.
-// Note that this option only affects the method SignHandle.SigningWriter.
+// Armor indicates that the produced output should be armored.
 func (shb *SignHandleBuilder) Armor() *SignHandleBuilder {
 	shb.handle.Armored = true
 	return shb
