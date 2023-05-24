@@ -5,7 +5,7 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	"github.com/ProtonMail/go-crypto/v2/openpgp/packet"
 	"github.com/pkg/errors"
 )
 

@@ -23,11 +23,11 @@ type MIMECallbacks interface {
 	OnError(err error)
 }
 
-// DecryptMIMEMessage decrypts and verifies a MIME message.
+// Decrypt decrypts and verifies a MIME message.
 // The decryptionHandle is used to decrypt and verify the message, while
 // the verifyHandle is used to verify the signature contained in the decrypted mime message.
 // The verifyHandle can be nil.
-func DecryptMIMEMessage(
+func Decrypt(
 	message []byte,
 	decryptionHandle crypto.PGPDecryption,
 	verifyHandle crypto.PGPVerify,
