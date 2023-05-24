@@ -25,7 +25,4 @@ type PGPVerify interface {
 	// and allows access the contained message
 	// Note that an error is only returned if it is not a signature error.
 	VerifyCleartext(cleartext []byte) (*VerifyCleartextResult, error)
-	// ArmoredInput returns true if the input signature message
-	// to VerifyDetached or VerifyDetachedReader must be armored.
-	ArmoredInput() bool
 }

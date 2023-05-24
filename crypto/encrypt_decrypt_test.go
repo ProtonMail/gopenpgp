@@ -294,7 +294,6 @@ func TestEncryptDecryptStreamArmored(t *testing.T) {
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
 				VerifyKeys(material.keyRingTestPublic).
-				Armored().
 				New()
 			testEncryptDecryptStream(
 				t,
