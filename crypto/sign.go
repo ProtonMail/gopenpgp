@@ -6,7 +6,7 @@ type SignProfile interface {
 	SignConfig() *packet.Config
 }
 
-// PGPSign is an interface for detached signing with GopenPGP.
+// PGPSign is an interface for creating signature messages with GopenPGP.
 type PGPSign interface {
 	// SigningWriter returns a wrapper around underlying output Writer,
 	// such that any write-operation via the wrapper results in a write to a detached or inline signature message.

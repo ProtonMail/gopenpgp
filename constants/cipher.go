@@ -21,13 +21,13 @@ const (
 type SecurityLevel uint8
 
 const (
-	Standard SecurityLevel = 0
-	High     SecurityLevel = 1
+	StandardLevel SecurityLevel = 0
+	HighLevel     SecurityLevel = 1
 )
 
 type KeyAlgorithm uint8
 
 const (
 	RSA      KeyAlgorithm = 0
-	ELLIPTIC KeyAlgorithm = 1
+	Elliptic KeyAlgorithm = 1
 )

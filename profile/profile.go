@@ -8,6 +8,9 @@ import (
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 )
 
+// Custom type represents a profile setting algorithm
+// parameters for generating keys, encrypting data, and
+// signing data.
 type Custom struct {
 	Name         string
 	KeyAlgorithm constants.KeyAlgorithm
@@ -28,6 +31,7 @@ type Custom struct {
 	V6       bool
 }
 
+// WithName returns the custom profile with the given name.
 func WithName(name string) *Custom {
 	profileFunction, ok := nameToProfile[name]
 	if !ok {
@@ -40,7 +44,8 @@ func (p *Custom) GetName() string {
 	return p.Name
 }
 
-// Custom implements the interfaces KeyGenerationProfile, EncryptionProfile, and SignProfile
+// Custom implements the profile interfaces:
+// KeyGenerationProfile, KeyEncryptionProfile, EncryptionProfile, and SignProfile
 
 func (p *Custom) KeyGenerationConfig(level constants.SecurityLevel) *packet.Config {
 	cfg := &packet.Config{
@@ -54,13 +59,13 @@ func (p *Custom) KeyGenerationConfig(level constants.SecurityLevel) *packet.Conf
 	switch p.KeyAlgorithm {
 	case constants.RSA:
 		cfg.Algorithm = packet.PubKeyAlgoRSA
-		if level == constants.High {
+		if level == constants.HighLevel {
 			cfg.RSABits = 4096
 		} else {
 			cfg.RSABits = 3072
 		}
-	case constants.ELLIPTIC:
-		if level == constants.High {
+	case constants.Elliptic:
+		if level == constants.HighLevel {
 			if cfg.V6() {
 				cfg.Algorithm = packet.PubKeyAlgoEd448
 			} else {
