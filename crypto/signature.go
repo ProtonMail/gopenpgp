@@ -22,12 +22,105 @@ var allowedHashes = []crypto.Hash{
 	crypto.SHA512,
 }
 
+type VerifiedSignature struct {
+	Signature      *packet.Signature
+	SignedBy       *Key
+	SignatureError *SignatureVerificationError
+}
+
 // SignatureVerificationError is returned from Decrypt and VerifyDetached
 // functions when signature verification fails.
 type SignatureVerificationError struct {
 	Status  int
 	Message string
 	Cause   error
+}
+
+// VerifyResult is a result of a signature verification.
+type VerifyResult struct {
+	Signatures        []*VerifiedSignature
+	selectedSignature *VerifiedSignature
+	signatureError    *SignatureVerificationError
+}
+
+// SignatureCreationTime returns the creation time of
+// the selected verified signature if found, else returns 0
+func (vr *VerifyResult) SignatureCreationTime() int64 {
+	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
+		return 0
+	}
+	return vr.selectedSignature.Signature.CreationTime.Unix()
+}
+
+// SignedWithType returns the type of the signature if found, else returns 0
+func (vr *VerifyResult) SignedWithType() packet.SignatureType {
+	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
+		return 0
+	}
+	return vr.selectedSignature.Signature.SigType
+}
+
+// SignedByKeyId returns the key id of the key that was used for the signature,
+// if found, else returns 0
+func (vr *VerifyResult) SignedByKeyId() uint64 {
+	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
+		return 0
+	}
+	return *vr.selectedSignature.Signature.IssuerKeyId
+}
+
+// SignedByFingerprint returns the key fingerprint of the key that was used for the signature,
+// if found, else returns nil
+func (vr *VerifyResult) SignedByFingerprint() []byte {
+	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
+		return nil
+	}
+	if vr.selectedSignature.Signature.IssuerFingerprint != nil {
+		return vr.selectedSignature.Signature.IssuerFingerprint
+	}
+	if vr.selectedSignature.SignedBy != nil {
+		return vr.selectedSignature.SignedBy.GetFingerprintBytes()
+	}
+	return nil
+}
+
+// SignedByKey returns the key that was used for the signature,
+// if found, else returns nil
+func (vr *VerifyResult) SignedByKey() *Key {
+	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
+		return nil
+	}
+	key := vr.selectedSignature.SignedBy
+	if key == nil {
+		return nil
+	}
+	return &Key{
+		entity: key.entity,
+	}
+}
+
+// HasSignatureError returns true if signature err occurred
+// else false
+func (vr *VerifyResult) HasSignatureError() bool {
+	if vr == nil {
+		return false
+	}
+	return vr.signatureError != nil
+}
+
+// SignatureError returns nil if no signature err occurred else
+// the signature error.
+func (vr *VerifyResult) SignatureError() error {
+	if vr == nil || vr.signatureError == nil {
+		return nil
+	}
+	return *vr.signatureError
+}
+
+// SignatureErrorExplicit returns nil if no signature err occurred else
+// the explicit signature error.
+func (vr *VerifyResult) SignatureErrorExplicit() *SignatureVerificationError {
+	return vr.signatureError
 }
 
 // Error is the base method for all errors.
@@ -126,32 +219,74 @@ func processSignatureExpiration(sig *packet.Signature, toCheck error, verifyTime
 	return toCheck
 }
 
-// verifyDetailsSignature verifies signature from message details.
-func verifyDetailsSignature(md *openpgp.MessageDetails, verifierKey *KeyRing, verificationContext *VerificationContext) error {
+func createVerifyResult(
+	md *openpgp.MessageDetails,
+	verifierKey *KeyRing,
+	verificationContext *VerificationContext,
+	verifyTime int64,
+	disableTimeCheck bool,
+) (*VerifyResult, error) {
+	var verifiedSignatures []*VerifiedSignature
+	var signatureError SignatureVerificationError
 	if !md.IsSigned {
-		return newSignatureNotSigned()
+		signatureError = newSignatureNotSigned()
+		return &VerifyResult{
+			signatureError: &signatureError,
+		}, nil
 	}
-	if md.SignedBy == nil ||
-		len(verifierKey.entities) == 0 ||
-		len(verifierKey.entities.KeysById(md.SignedByKeyId)) == 0 {
-		return newSignatureNoVerifier()
+
+	for _, signature := range md.SignatureCandidates {
+		var singedBy *Key
+		if signature.SignedBy != nil {
+			singedBy = &Key{
+				entity: signature.SignedBy.Entity,
+			}
+		}
+		verifiedSignature := &VerifiedSignature{
+			Signature: signature.CorrespondingSig,
+			SignedBy:  singedBy,
+		}
+		signature.SignatureError = processSignatureExpiration(
+			signature.CorrespondingSig,
+			signature.SignatureError,
+			verifyTime,
+			disableTimeCheck,
+		)
+		if len(verifierKey.entities) == 0 || md.SignatureError == pgpErrors.ErrUnknownIssuer {
+			signatureError = newSignatureNoVerifier()
+		} else if signature.SignatureError != nil {
+			signatureError = newSignatureFailed(signature.SignatureError)
+		} else if signature.CorrespondingSig == nil ||
+			signature.CorrespondingSig.Hash < allowedHashes[0] ||
+			signature.CorrespondingSig.Hash > allowedHashes[len(allowedHashes)-1] {
+			signatureError = newSignatureInsecure()
+		} else if verificationContext != nil {
+			err := verificationContext.verifyContext(signature.CorrespondingSig)
+			if err != nil {
+				signatureError = newSignatureBadContext(err)
+			}
+		}
+		if signatureError.Status != constants.SIGNATURE_OK {
+			verifiedSignature.SignatureError = &signatureError
+		}
+		verifiedSignatures = append(verifiedSignatures, verifiedSignature)
 	}
-	if md.SignatureError != nil {
-		return newSignatureFailed(md.SignatureError)
+
+	verifyResult := &VerifyResult{
+		Signatures: verifiedSignatures,
 	}
-	if md.Signature == nil ||
-		md.Signature.Hash < allowedHashes[0] ||
-		md.Signature.Hash > allowedHashes[len(allowedHashes)-1] {
-		return newSignatureInsecure()
-	}
-	if verificationContext != nil {
-		err := verificationContext.verifyContext(md.Signature)
-		if err != nil {
-			return newSignatureBadContext(err)
+
+	// Is select the signature to show in the result
+	// Order of priority: irst successfully verified, Last signature with an error
+	for _, signature := range verifiedSignatures {
+		verifyResult.selectedSignature = signature
+		verifyResult.signatureError = signature.SignatureError
+		if signature.SignatureError == nil {
+			break
 		}
 	}
 
-	return nil
+	return verifyResult, nil
 }
 
 // SigningContext gives the context that will be
