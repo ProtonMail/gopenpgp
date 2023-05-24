@@ -7,9 +7,9 @@ import (
 	"math"
 	"time"
 
-	"github.com/ProtonMail/go-crypto/openpgp"
-	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
-	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	"github.com/ProtonMail/go-crypto/v2/openpgp"
+	pgpErrors "github.com/ProtonMail/go-crypto/v2/openpgp/errors"
+	"github.com/ProtonMail/go-crypto/v2/openpgp/packet"
 	"github.com/pkg/errors"
 
 	"github.com/ProtonMail/gopenpgp/v3/constants"
