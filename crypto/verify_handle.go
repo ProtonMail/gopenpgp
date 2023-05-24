@@ -118,21 +118,6 @@ func (vh *verifyHandle) validate() error {
 	return nil
 }
 
-func newVerifyResult(md *openpgp.MessageDetails, err error) (*VerifyResult, error) {
-	var castedError *SignatureVerificationError
-	result := &VerifyResult{
-		verifyDetails: md,
-	}
-	if err != nil {
-		castedError = filterSignatureError(err)
-		if castedError == nil {
-			return nil, errors.Wrap(err, "gopenpgp: verification failed with non-signature error")
-		}
-		result.signatureError = castedError
-	}
-	return result, nil
-}
-
 // verifySignature verifies if a signature is valid with the entity list.
 func (vh *verifyHandle) verifyDetachedSignature(
 	origText io.Reader,
@@ -260,7 +245,8 @@ func verifyingDetachedReader(
 		return nil, errors.Wrap(err, "gopenpgp: verify signature reader failed")
 	}
 	internalReader := md.UnverifiedBody
-	if md.SignedWithType == packet.SigTypeText {
+	if len(md.SignatureCandidates) > 0 &&
+		md.SignatureCandidates[0].SigType == packet.SigTypeText {
 		internalReader = internal.NewSanitizeReader(internalReader)
 	}
 	return &VerifyDataReader{

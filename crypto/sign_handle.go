@@ -149,7 +149,7 @@ func (sh *signatureHandle) signingWriter(messageWriter Writer, literalData *Lite
 	if sh.SignContext != nil {
 		config.SignatureNotations = append(config.SignatureNotations, sh.SignContext.getNotation())
 	}
-	return openpgp.SignWithParams(messageWriter, signEntity, &openpgp.SignParams{
+	return openpgp.SignWithParams(messageWriter, []*openpgp.Entity{signEntity}, &openpgp.SignParams{
 		Hints:   hints,
 		TextSig: sh.IsUTF8,
 		Config:  config,
@@ -175,7 +175,7 @@ func signMessageDetachedWriter(
 		config.SignatureNotations = append(config.SignatureNotations, context.getNotation())
 	}
 
-	ptWriter, err = openpgp.DetachSignWriter(outputWriter, signEntity, isUTF8, config)
+	ptWriter, err = openpgp.DetachSignWriter(outputWriter, []*openpgp.Entity{signEntity}, isUTF8, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in signing")
 	}

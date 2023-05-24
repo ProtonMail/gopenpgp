@@ -134,6 +134,7 @@ func ArmorPGPMessage(signature []byte) (string, error) {
 }
 
 const armorPrefix = "-----BEGIN PGP"
+const maxGarbageBytes = 128
 
 // IsPGPArmored reads a prefix from the reader and checks
 // if it is equal to a pgp armored message prefix.
@@ -141,13 +142,10 @@ const armorPrefix = "-----BEGIN PGP"
 // and a bool that indicates if there is a match.
 // If reading from the reader fails, the returned bool is set to false.
 func IsPGPArmored(in io.Reader) (io.Reader, bool) {
-	buffer := make([]byte, len(armorPrefix))
-	n, err := io.ReadFull(in, buffer)
+	buffer := make([]byte, len(armorPrefix)+maxGarbageBytes)
+	n, _ := io.ReadFull(in, buffer)
 	outReader := io.MultiReader(bytes.NewReader(buffer[:n]), in)
-	if err != nil {
-		return outReader, false
-	}
-	if bytes.Equal(buffer, []byte(armorPrefix)) {
+	if bytes.Contains(buffer[:n], []byte(armorPrefix)) {
 		return outReader, true
 	}
 	return outReader, false
