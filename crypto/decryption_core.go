@@ -72,7 +72,11 @@ func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage
 
 	// Add utf8 sanitizer if signature has type packet.SigTypeText
 	internalReader := messageDetails.UnverifiedBody
-	if messageDetails.IsSigned && messageDetails.SignedWithType == packet.SigTypeText {
+	if messageDetails.IsSigned &&
+		len(messageDetails.SignatureCandidates) > 0 &&
+		messageDetails.SignatureCandidates[len(messageDetails.SignatureCandidates)-1].SigType == packet.SigTypeText {
+		// TODO: This currently assumes that only one type of signature
+		// can be present.
 		internalReader = internal.NewSanitizeReader(internalReader)
 	}
 	return &VerifyDataReader{
@@ -94,7 +98,11 @@ func (dh *decryptionHandle) decryptStreamWithSession(dataPacketReader Reader) (p
 
 	// Add utf8 sanitizer if signature has type packet.SigTypeText
 	internalReader := messageDetails.UnverifiedBody
-	if messageDetails.IsSigned && messageDetails.SignedWithType == packet.SigTypeText {
+	if messageDetails.IsSigned &&
+		len(messageDetails.SignatureCandidates) > 0 &&
+		messageDetails.SignatureCandidates[len(messageDetails.SignatureCandidates)-1].SigType == packet.SigTypeText {
+		// TODO: This currently assumes that only one type of signature
+		// can be present.
 		internalReader = internal.NewSanitizeReader(internalReader)
 	}
 	return &VerifyDataReader{
