@@ -35,21 +35,10 @@ type KeyEncryptionProfile interface {
 
 // --- Create Key object
 
-// NewKeyFromArmoredReader reads an armored data into a key.
-func NewKeyFromArmoredReader(r io.Reader) (key *Key, err error) {
-	key = &Key{}
-	err = key.readFrom(r, true)
-	if err != nil {
-		return nil, err
-	}
-
-	return key, nil
-}
-
-// NewKeyFromReader reads binary data into a Key object.
+// NewKeyFromReader reads binary or armored data into a Key object.
 func NewKeyFromReader(r io.Reader) (key *Key, err error) {
 	key = &Key{}
-	err = key.readFrom(r, false)
+	err = key.readFrom(r)
 	if err != nil {
 		return nil, err
 	}
@@ -57,14 +46,14 @@ func NewKeyFromReader(r io.Reader) (key *Key, err error) {
 	return key, nil
 }
 
-// NewKey creates a new key from the first key in the unarmored binary data.
+// NewKey creates a new key from the first key in the unarmored or armored binary data.
 func NewKey(binKeys []byte) (key *Key, err error) {
 	return NewKeyFromReader(bytes.NewReader(clone(binKeys)))
 }
 
 // NewKeyFromArmored creates a new key from the first key in an armored string.
 func NewKeyFromArmored(armored string) (key *Key, err error) {
-	return NewKeyFromArmoredReader(strings.NewReader(armored))
+	return NewKeyFromReader(strings.NewReader(armored))
 }
 
 // NewPrivateKeyFromArmored creates a new secret key from the first key in an armored string
@@ -426,9 +415,10 @@ func getSHA256FingerprintBytes(pk *packet.PublicKey) []byte {
 }
 
 // readFrom reads unarmored and armored keys from r and adds them to the keyring.
-func (key *Key) readFrom(r io.Reader, armored bool) error {
+func (key *Key) readFrom(r io.Reader) error {
 	var err error
 	var entities openpgp.EntityList
+	r, armored := armor.IsPGPArmored(r)
 	if armored {
 		entities, err = openpgp.ReadArmoredKeyRing(r)
 	} else {
