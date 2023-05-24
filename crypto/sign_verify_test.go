@@ -50,7 +50,6 @@ func TestSignVerifyStreamArmor(t *testing.T) {
 				New()
 			verifier, _ := material.pgp.Verify().
 				VerifyKeys(material.keyRingTestPublic).
-				Armored().
 				New()
 			testSignVerifyStream(t, signer, verifier)
 		})
@@ -127,7 +126,6 @@ func TestSignVerifyStreamDetachedArmor(t *testing.T) {
 				New()
 			verifier, _ := material.pgp.Verify().
 				VerifyKeys(material.keyRingTestPublic).
-				Armored().
 				New()
 			testSignVerifyDetachedStream(t, signer, verifier)
 		})

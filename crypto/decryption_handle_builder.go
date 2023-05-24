@@ -100,20 +100,6 @@ func (dpb *DecryptionHandleBuilder) DisableIntendedRecipients() *DecryptionHandl
 	return dpb
 }
 
-// Armored indicates if the pgp message input to the decryption function is armored or not.
-// In the default case, it assumes that the message is not armored.
-func (dpb *DecryptionHandleBuilder) Armored() *DecryptionHandleBuilder {
-	dpb.handle.Armored = true
-	return dpb
-}
-
-// WithArmor sets the flag to indicate if the pgp message input to the decryption function is armored or not.
-// In the default case, it assumes that the message is not armored.
-func (dpb *DecryptionHandleBuilder) WithArmor(armor bool) *DecryptionHandleBuilder {
-	dpb.handle.Armored = armor
-	return dpb
-}
-
 // RetrieveSessionKey sets the flag to indicate if the session key used for decryption
 // should be returned to the caller of the decryption function.
 func (dpb *DecryptionHandleBuilder) RetrieveSessionKey() *DecryptionHandleBuilder {
