@@ -109,14 +109,17 @@ func (eh *encryptionHandle) encryptStream(
 	if err != nil {
 		return
 	}
-
+	var signers []*openpgp.Entity
+	if signEntity != nil {
+		signers = []*openpgp.Entity{signEntity}
+	}
 	plainMessageWriter, err = openpgp.EncryptWithParams(
 		dataPacketWriter,
 		eh.Recipients.getEntities(),
 		eh.HiddenRecipients.getEntities(),
 		&openpgp.EncryptParams{
 			KeyWriter:  keyPacketWriter,
-			Signed:     signEntity,
+			Signers:    signers,
 			Hints:      hints,
 			SessionKey: sessionKeyBytes,
 			Config:     config,
@@ -143,12 +146,16 @@ func (eh *encryptionHandle) encryptStreamWithPassword(
 		return
 	}
 
+	var signers []*openpgp.Entity
+	if signEntity != nil {
+		signers = []*openpgp.Entity{signEntity}
+	}
 	plainMessageWriter, err = openpgp.SymmetricallyEncryptWithParams(
 		eh.Password,
 		dataPacketWriter,
 		&openpgp.EncryptParams{
 			KeyWriter:  keyPacketWriter,
-			Signed:     signEntity,
+			Signers:    signers,
 			Hints:      hints,
 			SessionKey: sessionKeyBytes,
 			Config:     config,
@@ -218,7 +225,7 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 	}
 
 	if signEntity != nil {
-		signWriter, err = openpgp.SignWithParams(encryptWriter, signEntity, &openpgp.SignParams{
+		signWriter, err = openpgp.SignWithParams(encryptWriter, []*openpgp.Entity{signEntity}, &openpgp.SignParams{
 			Hints:   hints,
 			TextSig: eh.IsUTF8,
 			Config:  config,

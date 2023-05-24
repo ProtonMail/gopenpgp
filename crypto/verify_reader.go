@@ -54,15 +54,18 @@ func (msg *VerifyDataReader) VerifySignature() (result *VerifyResult, err error)
 	if !msg.readAll {
 		return nil, errors.New("gopenpgp: can't verify the signature until the message reader has been read entirely")
 	}
+	var verifiedSig *packet.Signature
+	if msg.details.Signature != nil {
+		verifiedSig = msg.details.Signature
+	}
 	if msg.verifyKeyRing != nil {
 		msg.details.SignatureError = processSignatureExpiration(
-			msg.details.Signature,
+			verifiedSig,
 			msg.details.SignatureError,
 			msg.verifyTime,
 			msg.disableTimeCheck,
 		)
-		err = verifyDetailsSignature(msg.details, msg.verifyKeyRing, msg.verificationContext)
-		return newVerifyResult(msg.details, err)
+		return createVerifyResult(msg.details, msg.verifyKeyRing, msg.verificationContext, msg.verifyTime, msg.disableTimeCheck)
 	} else {
 		err = errors.New("gopenpgp: no verify keyring was provided before decryption")
 	}
@@ -125,90 +128,6 @@ func (msg *VerifyDataReader) SessionKey() *SessionKey {
 	}
 	alg := getAlgo(msg.details.DecryptedWithAlgorithm)
 	return NewSessionKeyFromToken(msg.details.SessionKey, alg)
-}
-
-// VerifyResult is a result of a signature verification.
-type VerifyResult struct {
-	verifyDetails  *openpgp.MessageDetails
-	signatureError *SignatureVerificationError
-}
-
-// SignatureCreationTime returns the creation time of
-// the verified signature
-func (vr *VerifyResult) SignatureCreationTime() int64 {
-	if vr.verifyDetails == nil {
-		return 0
-	}
-	return vr.verifyDetails.Signature.CreationTime.Unix()
-}
-
-// SignedWithType returns the type of the signature, if found, else returns 0
-func (vr *VerifyResult) SignedWithType() packet.SignatureType {
-	if vr.verifyDetails == nil {
-		return 0
-	}
-	return vr.verifyDetails.SignedWithType
-}
-
-// SignedByKeyId returns the key id of the key that was used for the signature,
-// if found, else returns 0
-func (vr *VerifyResult) SignedByKeyId() uint64 {
-	if vr.verifyDetails == nil {
-		return 0
-	}
-	return vr.verifyDetails.SignedByKeyId
-}
-
-// SignedByFingerprint returns the key fingerprint of the key that was used for the signature,
-// if found, else returns nil
-func (vr *VerifyResult) SignedByFingerprint() []byte {
-	if vr.verifyDetails == nil {
-		return nil
-	}
-	key := vr.verifyDetails.SignedBy
-	if key == nil {
-		return nil
-	}
-	return key.PublicKey.Fingerprint
-}
-
-// SignedByKey returns the key that was used for the signature,
-// if found, else returns nil
-func (vr *VerifyResult) SignedByKey() *Key {
-	if vr.verifyDetails == nil {
-		return nil
-	}
-	key := vr.verifyDetails.SignedBy
-	if key == nil {
-		return nil
-	}
-	return &Key{
-		entity: key.Entity,
-	}
-}
-
-// HasSignatureError returns true if signature err occurred
-// else false
-func (vr *VerifyResult) HasSignatureError() bool {
-	if vr == nil {
-		return false
-	}
-	return vr.signatureError != nil
-}
-
-// SignatureError returns nil if no signature err occurred else
-// the signature error.
-func (vr *VerifyResult) SignatureError() error {
-	if vr == nil || vr.signatureError == nil {
-		return nil
-	}
-	return *vr.signatureError
-}
-
-// SignatureErrorExplicit returns nil if no signature err occurred else
-// the explicit signature error.
-func (vr *VerifyResult) SignatureErrorExplicit() *SignatureVerificationError {
-	return vr.signatureError
 }
 
 // VerifiedDataResult is a result that contains data and
