@@ -23,8 +23,6 @@ type PGPDecryption interface {
 	// DecryptSessionKey decrypts an encrypted session key.
 	// To decrypted a session key, the decryption handle must contain either a decryption key or a password.
 	DecryptSessionKey(keyPackets []byte) (*SessionKey, error)
-	// ArmoredInput returns true if the input pgp message to Decrypt or DecryptingReader should be armored.
-	ArmoredInput() bool
 	// ClearPrivateParams clears all private key material contained in EncryptionHandle from memory,
 	ClearPrivateParams()
 }

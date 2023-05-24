@@ -45,13 +45,11 @@ func NewDecryption(
 	pgp *crypto.PGPHandle,
 	decryptionKeys *crypto.KeyRing,
 	verifyKey *crypto.KeyRing,
-	armored bool,
 	verifyTime int64,
 ) (*decryption, error) {
 	decryptHandle, err := pgp.Decryption().
 		DecryptionKeys(decryptionKeys).
 		VerifyKeys(verifyKey).
-		WithArmor(armored).
 		VerifyTime(verifyTime).New()
 	if err != nil {
 		return nil, err
@@ -61,7 +59,7 @@ func NewDecryption(
 		verifyHandle, err = pgp.Verify().
 			VerifyKeys(verifyKey).
 			VerifyTime(verifyTime).
-			Armored().New()
+			New()
 		if err != nil {
 			return nil, err
 		}

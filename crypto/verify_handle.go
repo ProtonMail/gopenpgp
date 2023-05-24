@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
+	armorHelper "github.com/ProtonMail/gopenpgp/v3/armor"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
@@ -19,7 +20,6 @@ import (
 type verifyHandle struct {
 	VerifyKeyRing          *KeyRing
 	VerificationContext    *VerificationContext
-	Armored                bool
 	DisableVerifyTimeCheck bool
 	clock                  Clock
 }
@@ -43,7 +43,9 @@ func defaultVerifyHandle(clock Clock) *verifyHandle {
 // If detachedData is not nil, signatureMessage must contain a detached signature,
 // which is verified against the detachedData.
 func (vh *verifyHandle) VerifyingReader(detachedData, signatureMessage Reader) (*VerifyDataReader, error) {
-	if vh.Armored {
+	var armored bool
+	signatureMessage, armored = armorHelper.IsPGPArmored(signatureMessage)
+	if armored {
 		// Wrap with decode armor reader.
 		armoredBlock, err := armor.Decode(signatureMessage)
 		if err != nil {
@@ -105,12 +107,6 @@ func (vh *verifyHandle) Verify(detachedData, signatureMessage []byte) (verifyRes
 // Note that an error is only returned if it is not a signature error.
 func (vh *verifyHandle) VerifyCleartext(cleartext []byte) (*VerifyCleartextResult, error) {
 	return vh.verifyCleartext(cleartext)
-}
-
-// ArmoredInput returns true if the input signature message
-// to VerifyDetached or VerifyDetachedReader must be armored.
-func (vh *verifyHandle) ArmoredInput() bool {
-	return vh.Armored
 }
 
 // --- Private logic functions

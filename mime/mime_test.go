@@ -59,7 +59,7 @@ func TestDecrypt(t *testing.T) {
 
 	message := readTestFileBytes("mime_pgpMessage")
 	pgp := crypto.PGP()
-	mimeHandle, err := NewDecryption(pgp, privateKeyRing, nil, true, 1557754627)
+	mimeHandle, err := NewDecryption(pgp, privateKeyRing, nil, 1557754627)
 	if err != nil {
 		t.Fatal("Cannot create mime handle:", err)
 	}
@@ -169,7 +169,7 @@ func runScenario(t *testing.T, messageFile string) *testMIMECallbacks {
 	}
 	callbacks := &testMIMECallbacks{}
 	pgp := crypto.PGP()
-	mimeHandle, err := NewDecryption(pgp, decryptionKeyRing, verificationKeyRing, true, 1557754627)
+	mimeHandle, err := NewDecryption(pgp, decryptionKeyRing, verificationKeyRing, 1557754627)
 	if err != nil {
 		t.Errorf("Failed to load message %v", err)
 	}

@@ -8,7 +8,6 @@ import (
 	"net/textproto"
 
 	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
-	"github.com/ProtonMail/gopenpgp/v3/armor"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/crypto"
 	"github.com/ProtonMail/gopenpgp/v3/internal"
@@ -100,12 +99,6 @@ func (sc *signatureCollector) Accept(
 	str, _ := ioutil.ReadAll(rawBody)
 	canonicalizedBody := internal.CanonicalizeBytes(internal.TrimEachLineBytes(str))
 	if sc.verifyHandle != nil {
-		if !sc.verifyHandle.ArmoredInput() {
-			buffer, err = armor.UnarmorBytes(buffer)
-			if err != nil {
-				return errors.Wrap(err, "gopenpgp: error in drarmoring signature")
-			}
-		}
 		verifyResult, err := sc.verifyHandle.Verify(canonicalizedBody, buffer)
 		if errors.Is(err, pgpErrors.ErrUnknownIssuer) {
 			return newSignatureNoVerifier()
