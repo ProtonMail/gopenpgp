@@ -9,42 +9,44 @@ import (
 	"github.com/pkg/errors"
 )
 
-type pgpMessageWriter struct {
+type pgpSplitWriter struct {
 	keyPackets        Writer
 	ciphertext        Writer
 	detachedSignature Writer
 }
 
-func (mw *pgpMessageWriter) Keys() Writer {
+//  pgpSplitWriter implements the PGPSplitWriter interface
+
+func (mw *pgpSplitWriter) Keys() Writer {
 	return mw.keyPackets
 }
 
-func (mw *pgpMessageWriter) Write(b []byte) (int, error) {
+func (mw *pgpSplitWriter) Write(b []byte) (int, error) {
 	return mw.ciphertext.Write(b)
 }
 
-func (mw *pgpMessageWriter) Signature() Writer {
+func (mw *pgpSplitWriter) Signature() Writer {
 	return mw.detachedSignature
 }
 
-func NewPGPMessageWriter(keyPackets Writer, encPackets Writer, encSigPacket Writer) PGPSplitWriter {
-	return &pgpMessageWriter{
+func NewPGPSplitWriter(keyPackets Writer, encPackets Writer, encSigPacket Writer) PGPSplitWriter {
+	return &pgpSplitWriter{
 		keyPackets:        keyPackets,
 		ciphertext:        encPackets,
 		detachedSignature: encSigPacket,
 	}
 }
 
-func NewPGPMessageWriterSplit(keyPackets Writer, encPackets Writer) PGPSplitWriter {
-	return NewPGPMessageWriter(keyPackets, encPackets, nil)
+func NewPGPSplitWriterKeyAndData(keyPackets Writer, encPackets Writer) PGPSplitWriter {
+	return NewPGPSplitWriter(keyPackets, encPackets, nil)
 }
 
-func NewPGPMessageWriterDetachedSignature(encMessage Writer, encSigMessage Writer) PGPSplitWriter {
-	return NewPGPMessageWriter(nil, encMessage, encSigMessage)
+func NewPGPSplitWriterDetachedSignature(encMessage Writer, encSigMessage Writer) PGPSplitWriter {
+	return NewPGPSplitWriter(nil, encMessage, encSigMessage)
 }
 
-func NewPGPMessageWriterFromWriter(writer Writer) PGPSplitWriter {
-	return NewPGPMessageWriter(writer, writer, nil)
+func NewPGPSplitWriterFromWriter(writer Writer) PGPSplitWriter {
+	return NewPGPSplitWriter(writer, writer, nil)
 }
 
 type signAndEncryptWriteCloser struct {

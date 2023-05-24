@@ -188,7 +188,7 @@ func TestMobile2GoReader(t *testing.T) {
 
 func setUpTestKeyRing() (*crypto.PGPHandle, *crypto.KeyRing, *crypto.KeyRing, error) {
 	pgpHandle := crypto.PGPWithProfile(profile.Koch())
-	testKey, err := pgpHandle.GenerateKey("test", "test@protonmail.com", constants.Standard)
+	testKey, err := pgpHandle.GenerateKey("test", "test@protonmail.com", constants.StandardLevel)
 	if err != nil {
 		return nil, nil, nil, err
 	}

@@ -86,7 +86,7 @@ func (vh *verifyHandle) Verify(detachedData, signatureMessage []byte) (verifyRes
 		data, err = ptReader.ReadAll()
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: verifying signature failed")
+		return nil, errors.Wrap(err, "gopenpgp: reading data to verify signature failed")
 	}
 	sigVerifyResult, err := ptReader.VerifySignature()
 	if err != nil {

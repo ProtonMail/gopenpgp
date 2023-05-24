@@ -99,6 +99,9 @@ func (epb *EncryptionHandleBuilder) Password(password []byte) *EncryptionHandleB
 }
 
 // Compress indicates if the plaintext should be compressed before encryption.
+// Compression affects security and opens the door for side-channel attacks, which
+// might allow to extract the plaintext data without a decryption key.
+// The openpgp crypto refresh recommends to not use compression.
 func (epb *EncryptionHandleBuilder) Compress() *EncryptionHandleBuilder {
 	epb.handle.Compression = true
 	return epb
