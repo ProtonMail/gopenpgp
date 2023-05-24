@@ -45,7 +45,7 @@ func (vhb *VerifyHandleBuilder) VerifyTime(unixTime int64) *VerifyHandleBuilder 
 	return vhb
 }
 
-// DisableVerifyTimeCheck disables the check for comparing the signature creation time
+// DisableVerifyTimeCheck disables the check for comparing the signature expiration time
 // against the verification time.
 func (dpb *VerifyHandleBuilder) DisableVerifyTimeCheck() *VerifyHandleBuilder {
 	dpb.handle.DisableVerifyTimeCheck = true
@@ -54,7 +54,7 @@ func (dpb *VerifyHandleBuilder) DisableVerifyTimeCheck() *VerifyHandleBuilder {
 
 // Armored indicates if the signature input to the verify function is armored or not.
 // In the default case, it assumes that the signature is not armored.
-// Does not have an effect on VerifyHandle.VerifyCleartext.
+// Does not have an effect on (VerifyHandle).VerifyCleartext.
 func (vhb *VerifyHandleBuilder) Armored() *VerifyHandleBuilder {
 	vhb.handle.Armored = true
 	return vhb

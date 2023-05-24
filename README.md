@@ -79,14 +79,12 @@ privateKey, err := crypto.NewPrivateKeyFromArmored(privkey, passphrase)
 
 pgp := crypto.PGP() // For v6 crypto.PGPCryptoRefresh()
 // Encrypt plaintext message using a public key
-encHandle, err := pgp.Encryption().Recipient(publicKey).
-New()
+encHandle, err := pgp.Encryption().Recipient(publicKey).New()
 pgpMessage, err := encHandle.Encrypt([]byte("my message"), nil)
 armored, err := pgpMessage.GetArmored()
 
 // Decrypt armored encrypted message using the private key and obtain the plaintext
-decHandle, err := pgp.Decryption().DecryptionKey(privateKey).Armored().
-New()
+decHandle, err := pgp.Decryption().DecryptionKey(privateKey).Armored().New()
 decrypted, err := decHandle.Decrypt([]byte(armored))
 myMessage := decrypted.Result()
 
@@ -96,10 +94,10 @@ decHandle.ClearPrivateParams()
 With signatures:
 ```go
 pgp := crypto.PGP() // crypto.PGPCryptoRefresh()
-aliceKeyPriv, err := pgp.GenerateKey("alice", "alice@alice.com", constants.Standard)
+aliceKeyPriv, err := pgp.GenerateKey("alice", "alice@alice.com", constants.StandardLevel)
 aliceKeyPub, err := aliceKeyPriv.ToPublic()
 
-bobKeyPriv, err := pgp.GenerateKey("bob", "bob@bob.com", constants.Standard)
+bobKeyPriv, err := pgp.GenerateKey("bob", "bob@bob.com", constants.StandardLevel)
 bobKeyPub, err := bobKeyPriv.ToPublic()
 
 // Encrypt plaintext message from alice to bob
@@ -226,17 +224,17 @@ pgpCryptoRefresh := crypto.PGPWithProfile(profile.CryptoRefresh())
 // draft-ietf-openpgp-crypto-refresh
 
 // Generates rsa keys with 3072 bits
-rsaKey, err := pgp.GenerateKey(name, email, constants.Standard)
+rsaKey, err := pgp.GenerateKey(name, email, constants.StandardLevel)
 // Generates rsa keys with 4092 bits
 rsaKeyHigh, err := pgp.GenerateKey(name, email, constants.High)
 
 // Generates curve25519 keys with draft-koch-openpgp-2015-rfc4880bis-01
-ecKey, err := pgpKoch.GenerateKey(name, email, constants.Standard)
+ecKey, err := pgpKoch.GenerateKey(name, email, constants.StandardLevel)
 // Generates curve448 keys with draft-koch-openpgp-2015-rfc4880bis-01
 ecKeyHigh, err := pgpKoch.GenerateKey(name, email, constants.High)
 
 // Generates curve25519 keys with draft-ietf-openpgp-crypto-refresh
-ecKey, err := pgpCryptoRefresh.GenerateKey(name, email, constants.Standard)
+ecKey, err := pgpCryptoRefresh.GenerateKey(name, email, constants.StandardLevel)
 // Generates curve448 keys with draft-ietf-openpgp-crypto-refresh
 ecKeyHigh, err := pgpCryptoRefresh.GenerateKey(name, email, constants.High)
 ```
@@ -246,7 +244,7 @@ Encrypt (lock) and decrypt (unlock) a secret key:
 password := []byte("password")
 
 pgp := crypto.PGP() // crypto.PGPCryptoRefresh()
-aliceKeyPriv, err := pgp.GenerateKey("alice", "alice@alice.com", constants.Standard)
+aliceKeyPriv, err := pgp.GenerateKey("alice", "alice@alice.com", constants.StandardLevel)
 
 // Encrypt key with password
 lockedKey, err := pgp.LockKey(aliceKeyPriv, password)
@@ -264,12 +262,10 @@ pgp := crypto.PGP() // crypto.PGPCryptoRefresh()
 
 signingMessage := []byte("message to sign")
 
-signer, err := pgp.Sign().SigningKey(aliceKeyPriv).Detached().
-New()
+signer, err := pgp.Sign().SigningKey(aliceKeyPriv).Detached().New()
 signature, err := signer.Sign(signingMessage, nil)
 
-verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).
-New()
+verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
 verifyResult, err := verifier.Verify(signingMessage, signature)
 if verifyResult.HasSignatureError() {
   // Handle verifyResult.SignatureError()
@@ -287,12 +283,10 @@ pgp := crypto.PGP() // crypto.PGPCryptoRefresh()
 
 signingMessage := []byte("message to sign")
 
-signer, err := pgp.Sign().SigningKey(aliceKeyPriv).
-New()
+signer, err := pgp.Sign().SigningKey(aliceKeyPriv).New()
 signatureMessage, err := signer.Sign(signingMessage, nil)
 
-verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).
-New()
+verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
 verifyResult, err := verifier.Verify(nil, signatureMessage)
 if verifyResult.HasSignatureError() {
   // Handle verifyResult.SignatureError()
@@ -310,8 +304,7 @@ pgp := crypto.PGP() // For the crypto refresh crypto.PGPCryptoRefresh()
 
 signingMessage := []byte("message to sign")
 
-signer, err := pgp.Sign().SigningKey(aliceKeyPriv).
-New()
+signer, err := pgp.Sign().SigningKey(aliceKeyPriv).New()
 cleartextArmored, err := signer.SignCleartext(signingMessage)
 // CleartextArmored has the form:
 // -----BEGIN PGP SIGNED MESSAGE-----
@@ -320,8 +313,7 @@ cleartextArmored, err := signer.SignCleartext(signingMessage)
 // ...
 // -----END PGP SIGNATURE-----
 
-verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).
-New()
+verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
 verifyResult, err := verifier.VerifyCleartext(cleartextArmored)
 if verifyResult.HasSignatureError() {
   // Handle verifyResult.SignatureError()
@@ -342,7 +334,7 @@ dataPackets := pgpMessage.GetBinaryDataPacket()
 // Streaming 
 var keyPackets bytes.Buffer
 var dataPackets bytes.Buffer
-splitWriter := crypto.NewPGPMessageWriterSplit(&keyPackets, &dataPackets)
+splitWriter := crypto.NewPGPMessageWriterKeyAndData(&keyPackets, &dataPackets)
 ptWriter, _ := encHandle.EncryptingWriter(splitWriter, nil)
 // ...
 // Key packets are written to keyPackets while data packets are written to dataPackets
@@ -367,7 +359,7 @@ pgpMessageEncSig, err := pgpMessage.GetEncryptedDetachedSignature()
 // Streaming 
 // ...
 var encSigDataPackets bytes.Buffer
-splitWriter := crypto.NewPGPMessageWriter(&keyPackets, &dataPackets, &encSigDataPackets)
+splitWriter := crypto.NewPGPSplitWriter(&keyPackets, &dataPackets, &encSigDataPackets)
 ptWriter, err := encHandle.EncryptingWriter(splitWriter, nil)
 // ...
 // Key packets are written to keyPackets, data packets are written to dataPackets ,and

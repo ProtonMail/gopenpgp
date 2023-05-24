@@ -76,7 +76,7 @@ func (eh *encryptionHandle) EncryptingWriter(outputWriter Writer, meta *LiteralM
 		return eh.encryptingWriters(pgpMessageWriter.Keys(), pgpMessageWriter, pgpMessageWriter.Signature(), meta)
 	}
 	if eh.DetachedSignature {
-		return nil, errors.New("gopenpgp: no pgp message writer provided for the detached signature")
+		return nil, errors.New("gopenpgp: no pgp split writer provided for the detached signature")
 	}
 	return eh.encryptingWriters(nil, outputWriter, nil, meta)
 }
@@ -214,7 +214,7 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 			}
 		}
 		if keys != nil {
-			err = errors.New("gopenpgp: armor is not allowed if key packets are be written separately")
+			err = errors.New("gopenpgp: armor is not allowed if key packets are written separately")
 			return
 		}
 	}
