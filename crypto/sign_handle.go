@@ -118,11 +118,13 @@ func (sh *signatureHandle) signCleartext(message []byte) ([]byte, error) {
 	config := sh.profile.SignConfig()
 	config.Time = NewConstantClock(sh.clock().Unix())
 	var buffer bytes.Buffer
-	signEntity, err := sh.SignKeyRing.getSigningEntity()
-	if err != nil {
-		return nil, err
+	var privateKeys []*packet.PrivateKey
+	for _, entity := range sh.SignKeyRing.entities {
+		if entity.PrivateKey != nil && !entity.PrivateKey.Encrypted {
+			privateKeys = append(privateKeys, entity.PrivateKey)
+		}
 	}
-	writer, err := clearsign.Encode(&buffer, signEntity.PrivateKey, config, sh.ArmorHeaders)
+	writer, err := clearsign.EncodeMulti(&buffer, privateKeys, config, sh.ArmorHeaders)
 	if err != nil {
 		return nil, err
 	}
