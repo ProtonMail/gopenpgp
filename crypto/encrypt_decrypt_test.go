@@ -43,7 +43,7 @@ func generateTestKeyMaterial(profile *profile.Custom) *testMaterial {
 		panic("Cannot create keyring:" + err.Error())
 	}
 	return &testMaterial{
-		profileName:        profile.GetName(),
+		profileName:        profile.Name,
 		pgp:                handle,
 		keyRingTestPublic:  keyRingTestPublic,
 		keyRingTestPrivate: keyRingTestPrivate,
@@ -310,8 +310,8 @@ func TestEncryptDecryptStreamArmored(t *testing.T) {
 func TestEncryptDecryptUTF8Stream(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		metadata := &LiteralMetadata{
-			IsUTF8:   true,
-			Filename: "utf8.txt",
+			isUTF8:   true,
+			filename: "utf8.txt",
 			ModTime:  material.pgp.defaultTime().Unix(),
 		}
 		t.Run(material.profileName, func(t *testing.T) {
@@ -695,8 +695,8 @@ func TestEncryptDecrypt(t *testing.T) {
 func TestEncryptDecryptUTF8(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		metadata := &LiteralMetadata{
-			IsUTF8:   true,
-			Filename: "utf8.txt",
+			isUTF8:   true,
+			filename: "utf8.txt",
 			ModTime:  material.pgp.defaultTime().Unix(),
 		}
 		t.Run(material.profileName, func(t *testing.T) {
@@ -791,8 +791,8 @@ func testEncryptDecrypt(
 	decryptedMeta := decryptionResult.GetMetadata()
 	if expectedMetadata == nil {
 		expectedMetadata = &LiteralMetadata{
-			Filename: metadata.GetFilename(),
-			IsUTF8:   metadata.GetIsUtf8(),
+			filename: metadata.GetFilename(),
+			isUTF8:   metadata.GetIsUtf8(),
 			ModTime:  metadata.GetTime(),
 		}
 	}
@@ -871,8 +871,8 @@ func testEncryptSplitDecryptStream(
 	decryptedMeta := decryptedReader.GetMetadata()
 	if expectedMetadata == nil {
 		expectedMetadata = &LiteralMetadata{
-			Filename: metadata.GetFilename(),
-			IsUTF8:   metadata.GetIsUtf8(),
+			filename: metadata.GetFilename(),
+			isUTF8:   metadata.GetIsUtf8(),
 			ModTime:  metadata.GetTime(),
 		}
 	}
@@ -934,8 +934,8 @@ func testEncryptDecryptStream(
 	decryptedMeta := decryptedReader.GetMetadata()
 	if expectedMetadata == nil {
 		expectedMetadata = &LiteralMetadata{
-			Filename: metadata.GetFilename(),
-			IsUTF8:   metadata.GetIsUtf8(),
+			filename: metadata.GetFilename(),
+			isUTF8:   metadata.GetIsUtf8(),
 			ModTime:  metadata.GetTime(),
 		}
 	}

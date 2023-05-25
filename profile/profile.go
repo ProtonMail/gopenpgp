@@ -40,10 +40,6 @@ func WithName(name string) *Custom {
 	return profileFunction()
 }
 
-func (p *Custom) GetName() string {
-	return p.Name
-}
-
 // Custom implements the profile interfaces:
 // KeyGenerationProfile, KeyEncryptionProfile, EncryptionProfile, and SignProfile
 
