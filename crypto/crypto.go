@@ -76,9 +76,9 @@ func (p *PGPHandle) GenerateKey(name, email string, level constants.SecurityLeve
 // The argument level allows to set the security level, either standard or high.
 // The profile defines the algorithms and parameters that are used for each security level.
 // The lifetimeSeconds argument allows to set the lifetime of the generated key, which defaults
-// to zero i.e., infinite lifetime
-func (p *PGPHandle) GenerateKeyWithLifetime(name, email string, level constants.SecurityLevel, lifetimeSeconds uint32) (*Key, error) {
-	return generateKey(name, email, p.localTime, p.profile, level, lifetimeSeconds)
+// to zero i.e., infinite lifetime.
+func (p *PGPHandle) GenerateKeyWithLifetime(name, email string, level constants.SecurityLevel, lifetimeSeconds int32) (*Key, error) {
+	return generateKey(name, email, p.localTime, p.profile, level, uint32(lifetimeSeconds))
 }
 
 // GenerateSessionKey generates a random session key for the profile.
