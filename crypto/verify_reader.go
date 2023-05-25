@@ -30,8 +30,8 @@ func (msg *VerifyDataReader) GetMetadata() *LiteralMetadata {
 		return nil
 	}
 	return &LiteralMetadata{
-		Filename: msg.details.LiteralData.FileName,
-		IsUTF8:   msg.details.LiteralData.IsUTF8,
+		filename: msg.details.LiteralData.FileName,
+		isUTF8:   msg.details.LiteralData.IsUTF8,
 		ModTime:  int64(msg.details.LiteralData.Time),
 	}
 }
