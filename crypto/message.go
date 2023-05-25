@@ -18,9 +18,9 @@ import (
 
 type LiteralMetadata struct {
 	// If the content is text or binary
-	IsUTF8 bool
+	isUTF8 bool
 	// The encrypted message's filename
-	Filename string
+	filename string
 	// The file's latest modification time
 	ModTime int64
 }
@@ -45,11 +45,11 @@ type PGPMessageBuffer struct {
 // ---- GENERATORS -----
 
 func NewFileMetadata(isUTF8 bool, filename string, modTime int64) *LiteralMetadata {
-	return &LiteralMetadata{IsUTF8: isUTF8, Filename: filename, ModTime: modTime}
+	return &LiteralMetadata{isUTF8: isUTF8, filename: filename, ModTime: modTime}
 }
 
 func NewMetadata(isUTF8 bool) *LiteralMetadata {
-	return &LiteralMetadata{IsUTF8: isUTF8}
+	return &LiteralMetadata{isUTF8: isUTF8}
 }
 
 // NewPGPMessage generates a new PGPMessage from the unarmored binary data.
@@ -284,14 +284,14 @@ func (msg *LiteralMetadata) GetFilename() string {
 	if msg == nil {
 		return ""
 	}
-	return msg.Filename
+	return msg.filename
 }
 
 func (msg *LiteralMetadata) GetIsUtf8() bool {
 	if msg == nil {
 		return false
 	}
-	return msg.IsUTF8
+	return msg.isUTF8
 }
 
 func (msg *LiteralMetadata) GetTime() int64 {
