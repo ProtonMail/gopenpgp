@@ -40,12 +40,15 @@ func defaultSignatureHandle(profile SignProfile, clock Clock) *signatureHandle {
 func (sh *signatureHandle) SigningWriter(outputWriter Writer, meta *LiteralMetadata) (messageWriter WriteCloser, err error) {
 	var armorWriter WriteCloser
 	if sh.Armored {
+		var err error
 		header := constants.PGPMessageHeader
 		if sh.Detached {
 			header = constants.PGPSignatureHeader
+			// Append checksum for GnuPG detached signature compatibility
+			armorWriter, err = armor.EncodeWithChecksumOption(outputWriter, header, sh.ArmorHeaders, true)
+		} else {
+			armorWriter, err = armor.Encode(outputWriter, header, sh.ArmorHeaders)
 		}
-		var err error
-		armorWriter, err = armor.Encode(outputWriter, header, sh.ArmorHeaders)
 		outputWriter = armorWriter
 		if err != nil {
 			return nil, err
