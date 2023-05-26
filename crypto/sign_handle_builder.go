@@ -32,8 +32,8 @@ func (shb *SignHandleBuilder) SigningKeys(signingKeys *KeyRing) *SignHandleBuild
 
 // SigningContext provides a signing context for the signature in the message.
 // Triggers that each signature includes the sining context.
-func (shb *SignHandleBuilder) SigningContext(siningContext *SigningContext) *SignHandleBuilder {
-	shb.handle.SignContext = siningContext
+func (shb *SignHandleBuilder) SigningContext(signingContext *SigningContext) *SignHandleBuilder {
+	shb.handle.SignContext = signingContext
 	return shb
 }
 
