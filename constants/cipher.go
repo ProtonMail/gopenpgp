@@ -18,14 +18,14 @@ const (
 	SIGNATURE_BAD_CONTEXT int = 4
 )
 
-type SecurityLevel int8
+type SecurityLevel = int8
 
 const (
 	StandardLevel SecurityLevel = 0
 	HighLevel     SecurityLevel = 1
 )
 
-type KeyAlgorithm int8
+type KeyAlgorithm = int8
 
 const (
 	RSA      KeyAlgorithm = 0
