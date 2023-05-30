@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"bytes"
-	"crypto"
 	"io"
 	"io/ioutil"
 
@@ -54,7 +53,7 @@ func (vh *verifyHandle) VerifyingReader(detachedData, signatureMessage Reader) (
 		signatureMessage = armoredBlock.Body
 	}
 	if detachedData != nil {
-		return vh.verifyingDetachedReader(detachedData, signatureMessage, nil, nil)
+		return vh.verifyingDetachedReader(detachedData, signatureMessage)
 	} else {
 		return vh.verifyingReader(signatureMessage)
 	}
@@ -122,11 +121,9 @@ func (vh *verifyHandle) validate() error {
 func (vh *verifyHandle) verifyDetachedSignature(
 	origText io.Reader,
 	signature []byte,
-	checkHashes []crypto.Hash,
-	checkAllowedSalts []*packet.SaltedHashSpecifier,
 ) (result *VerifyResult, err error) {
 	signatureReader := bytes.NewReader(signature)
-	ptReader, err := vh.verifyingDetachedReader(origText, signatureReader, checkHashes, checkAllowedSalts)
+	ptReader, err := vh.verifyingDetachedReader(origText, signatureReader)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: verify signature failed")
 	}
@@ -169,14 +166,10 @@ func (vh *verifyHandle) verifyingReader(
 func (vh *verifyHandle) verifyingDetachedReader(
 	data Reader,
 	signature Reader,
-	checkHashes []crypto.Hash,
-	checkAllowedSalts []*packet.SaltedHashSpecifier,
 ) (*VerifyDataReader, error) {
 	return verifyingDetachedReader(
 		data,
 		signature,
-		checkHashes,
-		checkAllowedSalts,
 		vh.VerifyKeyRing,
 		vh.VerificationContext,
 		vh.DisableVerifyTimeCheck,
@@ -194,7 +187,6 @@ func (vh *verifyHandle) verifyCleartext(cleartext []byte) (*VerifyCleartextResul
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: signature not parsable in cleartext")
 	}
-	expectedHashes, expectedSalts, err := block.ExpectedHashesAndSaltedHashes()
 	if err != nil {
 		return nil, errors.New("gopenpgp: cleartext header not parsable")
 	}
@@ -202,8 +194,6 @@ func (vh *verifyHandle) verifyCleartext(cleartext []byte) (*VerifyCleartextResul
 	result, err := vh.verifyDetachedSignature(
 		reader,
 		signature,
-		expectedHashes,
-		expectedSalts,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: cleartext verify failed with non-signature error")
@@ -217,8 +207,6 @@ func (vh *verifyHandle) verifyCleartext(cleartext []byte) (*VerifyCleartextResul
 func verifyingDetachedReader(
 	data Reader,
 	signature Reader,
-	checkHashes []crypto.Hash,
-	checkAllowedSalts []*packet.SaltedHashSpecifier,
 	verifyKeyRing *KeyRing,
 	verificationContext *VerificationContext,
 	disableVerifyTimeCheck bool,
@@ -237,8 +225,6 @@ func verifyingDetachedReader(
 		verifyKeyRing.getEntities(),
 		data,
 		signature,
-		checkHashes,
-		checkAllowedSalts,
 		config,
 	)
 	if err != nil {
