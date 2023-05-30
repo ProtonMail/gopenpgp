@@ -89,7 +89,7 @@ func TestArmorKeys(t *testing.T) {
 		t.Fatal("Cannot armor unprotected EC key:" + err.Error())
 	}
 
-	rTest := regexp.MustCompile(`(?s)^-----BEGIN PGP PRIVATE KEY BLOCK-----.*Version: GopenPGP [0-9]+\.[0-9]+\.[0-9]+.*-----END PGP PRIVATE KEY BLOCK-----$`)
+	rTest := regexp.MustCompile(`(?s)^-----BEGIN PGP PRIVATE KEY BLOCK-----.*-----END PGP PRIVATE KEY BLOCK-----$`)
 	assert.Regexp(t, rTest, noPasswordRSA)
 	assert.Regexp(t, rTest, noPasswordEC)
 	assert.Regexp(t, rTest, keyTestArmoredRSA)
@@ -302,7 +302,6 @@ func TestGetArmoredPublicKey(t *testing.T) {
 
 	assert.False(t, decodedKey.IsPrivate())
 	assert.True(t, keyTestRSA.IsPrivate())
-	assert.Contains(t, publicKey, "Version: GopenPGP")
 
 	privateFingerprint := keyTestRSA.GetFingerprint()
 	publicFingerprint := decodedKey.GetFingerprint()

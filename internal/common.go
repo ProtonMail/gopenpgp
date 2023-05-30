@@ -40,7 +40,13 @@ func TrimEachLineBytes(text []byte) []byte {
 }
 
 // ArmorHeaders is a map of default armor headers.
-var ArmorHeaders = map[string]string{
-	"Version": constants.ArmorHeaderVersion,
-	"Comment": constants.ArmorHeaderComment,
+var ArmorHeaders = map[string]string{}
+
+func init() {
+	if constants.ArmorHeaderEnabled {
+		ArmorHeaders = map[string]string{
+			"Version": constants.ArmorHeaderVersion,
+			"Comment": constants.ArmorHeaderComment,
+		}
+	}
 }
