@@ -241,8 +241,6 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 	sigVerifyReader, err := verifyingDetachedReader(
 		mdData.UnverifiedBody,
 		signature,
-		nil,
-		nil,
 		dh.VerifyKeyRing,
 		dh.VerificationContext,
 		dh.DisableVerifyTimeCheck,
