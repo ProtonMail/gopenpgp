@@ -264,7 +264,7 @@ signer, err := pgp.Sign().SigningKey(aliceKeyPriv).Detached().New()
 signature, err := signer.Sign(signingMessage, nil)
 
 verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
-verifyResult, err := verifier.Verify(signingMessage, signature)
+verifyResult, err := verifier.VerifyDetached(signingMessage, signature)
 if verifyResult.HasSignatureError() {
   // Handle verifyResult.SignatureError()
 }
@@ -285,7 +285,7 @@ signer, err := pgp.Sign().SigningKey(aliceKeyPriv).New()
 signatureMessage, err := signer.Sign(signingMessage, nil)
 
 verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
-verifyResult, err := verifier.Verify(nil, signatureMessage)
+verifyResult, err := verifier.VerifyInline(signatureMessage)
 if verifyResult.HasSignatureError() {
   // Handle verifyResult.SignatureError()
 }
