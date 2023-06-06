@@ -59,45 +59,49 @@ func (vh *verifyHandle) VerifyingReader(detachedData, signatureMessage Reader) (
 	}
 }
 
-// Verify verifies either a inline signature message or a detached signature
+// VerifyDetached verifies a detached signature pgp message
 // and returns a VerifyResult. The VerifyResult can be checked for failure
-// and allows access to information about the signature.
+// and allows access to information about the signatures.
 // Note that an error is only returned if it is not a signature error.
-// If detachedData is nil, signatureMessage is treated as an inline signature message.
-// Thus, it is expected that signatureMessage contains the data to be verified.
-// If detachedData is not nil, signatureMessage must contain a detached signature,
-// which is verified against the detachedData.
-func (vh *verifyHandle) Verify(detachedData, signatureMessage []byte) (verifyResult *VerifiedDataResult, err error) {
-	var ptReader *VerifyDataReader
-	signatureMessageReader := bytes.NewReader(signatureMessage)
-	if detachedData != nil {
-		detachedDataReader := bytes.NewReader(detachedData)
-		ptReader, err = vh.VerifyingReader(detachedDataReader, signatureMessageReader)
-	} else {
-		ptReader, err = vh.VerifyingReader(nil, signatureMessageReader)
-	}
-
+func (vh *verifyHandle) VerifyDetached(data, signature []byte) (verifyResult *VerifyResult, err error) {
+	signatureMessageReader := bytes.NewReader(signature)
+	detachedDataReader := bytes.NewReader(data)
+	ptReader, err := vh.VerifyingReader(detachedDataReader, signatureMessageReader)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: verifying signature failed")
 	}
-	var data []byte
-	if detachedData != nil {
-		_, err = io.Copy(ioutil.Discard, ptReader)
-	} else {
-		data, err = ptReader.ReadAll()
-	}
+	_, err = io.Copy(ioutil.Discard, ptReader)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: reading data to verify signature failed")
 	}
-	sigVerifyResult, err := ptReader.VerifySignature()
+	return ptReader.VerifySignature()
+}
+
+// VerifyInline verifies an inline signed pgp message
+// and returns a VerifiedDataResult. The VerifiedDataResult can be checked for failure,
+// allows access to information about the signatures, and includes the plain message.
+// Note that an error is only returned if it is not a signature error.
+func (vh *verifyHandle) VerifyInline(message []byte) (verifyDataResult *VerifiedDataResult, err error) {
+	var ptReader *VerifyDataReader
+	messageReader := bytes.NewReader(message)
+	ptReader, err = vh.VerifyingReader(nil, messageReader)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: verifying signature failed")
 	}
-	return &VerifiedDataResult{
+	data, err := ptReader.ReadAll()
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: reading data to verify signature failed")
+	}
+	verifyResult, err := ptReader.VerifySignature()
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: verifying signature failed")
+	}
+	verifyDataResult = &VerifiedDataResult{
 		data:         data,
 		metadata:     ptReader.GetMetadata(),
-		VerifyResult: *sigVerifyResult,
-	}, nil
+		VerifyResult: *verifyResult,
+	}
+	return
 }
 
 // VerifyCleartext verifies an armored cleartext message
