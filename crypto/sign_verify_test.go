@@ -152,11 +152,18 @@ func testSignVerify(t *testing.T, signer PGPSign, verifier PGPVerify, detached b
 	if err != nil {
 		t.Fatal("Expected no error while signing the message, got:", err)
 	}
-	var verifyResult *VerifiedDataResult
+	var verifyResult *VerifyResult
 	if detached {
-		verifyResult, err = verifier.Verify(messageBytes, signature)
+		verifyResult, err = verifier.VerifyDetached(messageBytes, signature)
 	} else {
-		verifyResult, err = verifier.Verify(nil, signature)
+		verifyDataResult, err := verifier.VerifyInline(signature)
+		if err != nil {
+			t.Fatal("Expected no error while verifying the message, got:", err)
+		}
+		if !bytes.Equal(messageBytes, verifyDataResult.Result()) {
+			t.Fatal("Expected read message in verification to be equal to the input message")
+		}
+		verifyResult = &verifyDataResult.VerifyResult
 	}
 	if err != nil {
 		t.Fatal("Expected no error while verifying the message, got:", err)
@@ -164,9 +171,7 @@ func testSignVerify(t *testing.T, signer PGPSign, verifier PGPVerify, detached b
 	if verifyResult.HasSignatureError() {
 		t.Fatal("Expected no error while verifying the detached signature, got:", verifyResult.SignatureError())
 	}
-	if !detached && !bytes.Equal(messageBytes, verifyResult.Result()) {
-		t.Fatal("Expected read message in verification to be equal to the input message")
-	}
+
 }
 
 func testSignVerifyStream(t *testing.T, signer PGPSign, verifier PGPVerify) {
