@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"crypto"
-	goerrors "errors"
 	"fmt"
 	"math"
 	"time"
@@ -130,6 +129,22 @@ func (vr *VerifyResult) SignatureErrorExplicit() *SignatureVerificationError {
 	return vr.signatureError
 }
 
+// ConstrainToTimeRange updates the signature result to only consider
+// signatures with a creation time within the given time frame.
+func (vr *VerifyResult) ConstrainToTimeRange(unixFrom int64, unixTo int64) {
+	for _, signature := range vr.Signatures {
+		if signature.Signature != nil && signature.SignatureError == nil {
+			sigUnixTime := signature.Signature.CreationTime.Unix()
+			if sigUnixTime < unixFrom || sigUnixTime > unixTo {
+				sigError := newSignatureFailed(errors.New("signature creation time is out of range"))
+				signature.SignatureError = &sigError
+			}
+		}
+	}
+	// Reselect
+	vr.selectSignature()
+}
+
 // Error is the base method for all errors.
 func (e SignatureVerificationError) Error() string {
 	if e.Cause != nil {
@@ -146,6 +161,18 @@ func (e SignatureVerificationError) Unwrap() error {
 // ------------------
 // Internal functions
 // ------------------
+
+// selectSignature selects the main signature to show in the result
+// Select policy: first successfully verified or last signature with an error
+func (vr *VerifyResult) selectSignature() {
+	for _, signature := range vr.Signatures {
+		vr.selectedSignature = signature
+		vr.signatureError = signature.SignatureError
+		if signature.SignatureError == nil {
+			break
+		}
+	}
+}
 
 // newSignatureFailed creates a new SignatureVerificationError, type
 // SignatureFailed.
@@ -190,20 +217,6 @@ func newSignatureNoVerifier() SignatureVerificationError {
 		Status:  constants.SIGNATURE_NO_VERIFIER,
 		Message: "No matching signature",
 	}
-}
-
-// filterSignatureError checks if the input is of type SignatureVerificationError
-// returns the SignatureVerificationError if the type matches else nil
-func filterSignatureError(err error) *SignatureVerificationError {
-	if err != nil {
-		castedErr := &SignatureVerificationError{}
-		isType := goerrors.As(err, castedErr)
-		if !isType {
-			return nil
-		}
-		return castedErr
-	}
-	return nil
 }
 
 // processSignatureExpiration handles signature time verification manually, so
@@ -283,16 +296,8 @@ func createVerifyResult(
 		Signatures: verifiedSignatures,
 	}
 
-	// Is select the signature to show in the result
-	// Order of priority: irst successfully verified, Last signature with an error
-	for _, signature := range verifiedSignatures {
-		verifyResult.selectedSignature = signature
-		verifyResult.signatureError = signature.SignatureError
-		if signature.SignatureError == nil {
-			break
-		}
-	}
-
+	// Select the signature to show in the result
+	verifyResult.selectSignature()
 	return verifyResult, nil
 }
 
