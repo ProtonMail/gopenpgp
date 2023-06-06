@@ -22,6 +22,7 @@ var allowedHashes = []crypto.Hash{
 	crypto.SHA512,
 }
 
+// VerifiedSignature is a result of a signature verification.
 type VerifiedSignature struct {
 	Signature      *packet.Signature
 	SignedBy       *Key
@@ -36,11 +37,17 @@ type SignatureVerificationError struct {
 	Cause   error
 }
 
-// VerifyResult is a result of a signature verification.
+// VerifyResult is a result of a pgp message signature verification.
 type VerifyResult struct {
-	Signatures        []*VerifiedSignature
+	// All signatures found in the message.
+	Signatures []*VerifiedSignature
+	// The selected signature for the result.
+	// i.e., the first successfully verified signature in Signatures
+	// or the last signature Signatures[len(Signatures)-1].
 	selectedSignature *VerifiedSignature
-	signatureError    *SignatureVerificationError
+	// The signature error of the selected signature.
+	// Is nil for a successful verification.
+	signatureError *SignatureVerificationError
 }
 
 // SignatureCreationTime returns the creation time of
@@ -60,7 +67,7 @@ func (vr *VerifyResult) SignedWithType() packet.SignatureType {
 	return vr.selectedSignature.Signature.SigType
 }
 
-// SignedByKeyId returns the key id of the key that was used for the signature,
+// SignedByKeyId returns the key id of the key that was used to verify the selected signature,
 // if found, else returns 0
 func (vr *VerifyResult) SignedByKeyId() uint64 {
 	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
@@ -69,7 +76,7 @@ func (vr *VerifyResult) SignedByKeyId() uint64 {
 	return *vr.selectedSignature.Signature.IssuerKeyId
 }
 
-// SignedByFingerprint returns the key fingerprint of the key that was used for the signature,
+// SignedByFingerprint returns the key fingerprint of the key that was used to verify the selected signature,
 // if found, else returns nil
 func (vr *VerifyResult) SignedByFingerprint() []byte {
 	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
@@ -84,7 +91,7 @@ func (vr *VerifyResult) SignedByFingerprint() []byte {
 	return nil
 }
 
-// SignedByKey returns the key that was used for the signature,
+// SignedByKey returns the key that was used to verify the selected signature,
 // if found, else returns nil
 func (vr *VerifyResult) SignedByKey() *Key {
 	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
