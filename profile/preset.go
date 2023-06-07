@@ -35,13 +35,13 @@ func Default() *Custom {
 // that conforms with the algorithms in rfc 4880.
 func RFC4880() *Custom {
 	return &Custom{
-		Name:                           "rfc4880",
-		KeyAlgorithm:                   constants.RSA,
-		Hash:                           crypto.SHA256,
-		HashSign:                       crypto.SHA512,
-		CipherEncryption:               packet.CipherAES256,
-		CompressionAlgorithmEncryption: packet.CompressionZLIB,
-		CompressionConfigEncryption: &packet.CompressionConfig{
+		Name:                 "rfc4880",
+		KeyAlgorithm:         constants.RSA,
+		Hash:                 crypto.SHA256,
+		HashSign:             crypto.SHA512,
+		CipherEncryption:     packet.CipherAES256,
+		CompressionAlgorithm: packet.CompressionZLIB,
+		CompressionConfiguration: &packet.CompressionConfig{
 			Level: 6,
 		},
 	}
@@ -51,15 +51,15 @@ func RFC4880() *Custom {
 // that conforms with the algorithms in draft-koch-openpgp.
 func Koch() *Custom {
 	return &Custom{
-		Name:                           "draft-koch-openpgp",
-		KeyAlgorithm:                   constants.Elliptic,
-		Hash:                           crypto.SHA256,
-		HashSign:                       crypto.SHA512,
-		CipherEncryption:               packet.CipherAES256,
-		CompressionAlgorithmEncryption: packet.CompressionZLIB,
-		AeadKeyEncryption:              &packet.AEADConfig{},
-		AeadEncryption:                 &packet.AEADConfig{},
-		CompressionConfigEncryption: &packet.CompressionConfig{
+		Name:                 "draft-koch-openpgp",
+		KeyAlgorithm:         constants.Elliptic,
+		Hash:                 crypto.SHA256,
+		HashSign:             crypto.SHA512,
+		CipherEncryption:     packet.CipherAES256,
+		CompressionAlgorithm: packet.CompressionZLIB,
+		AeadKeyEncryption:    &packet.AEADConfig{},
+		AeadEncryption:       &packet.AEADConfig{},
+		CompressionConfiguration: &packet.CompressionConfig{
 			Level: 6,
 		},
 	}
@@ -69,14 +69,14 @@ func Koch() *Custom {
 // that conforms with the algorithms in draft-ietf-openpgp-crypto-refresh.
 func CryptoRefresh() *Custom {
 	return &Custom{
-		Name:                           "draft-ietf-openpgp-crypto-refresh",
-		KeyAlgorithm:                   constants.Elliptic,
-		Hash:                           crypto.SHA256,
-		HashSign:                       crypto.SHA512,
-		CipherEncryption:               packet.CipherAES256,
-		CompressionAlgorithmEncryption: packet.CompressionZLIB,
-		AeadKeyEncryption:              &packet.AEADConfig{},
-		AeadEncryption:                 &packet.AEADConfig{},
+		Name:                 "draft-ietf-openpgp-crypto-refresh",
+		KeyAlgorithm:         constants.Elliptic,
+		Hash:                 crypto.SHA256,
+		HashSign:             crypto.SHA512,
+		CipherEncryption:     packet.CipherAES256,
+		CompressionAlgorithm: packet.CompressionZLIB,
+		AeadKeyEncryption:    &packet.AEADConfig{},
+		AeadEncryption:       &packet.AEADConfig{},
 		S2kKeyEncryption: &s2k.Config{
 			S2KMode:      s2k.Argon2S2K,
 			Argon2Config: &s2k.Argon2Config{},
