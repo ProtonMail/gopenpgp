@@ -131,6 +131,7 @@ func (vr *VerifyResult) SignatureErrorExplicit() *SignatureVerificationError {
 
 // ConstrainToTimeRange updates the signature result to only consider
 // signatures with a creation time within the given time frame.
+// unixFrom and unixTo are in unix time and are inclusive.
 func (vr *VerifyResult) ConstrainToTimeRange(unixFrom int64, unixTo int64) {
 	for _, signature := range vr.Signatures {
 		if signature.Signature != nil && signature.SignatureError == nil {
@@ -253,6 +254,9 @@ func createVerifyResult(
 		return &VerifyResult{
 			signatureError: &signatureError,
 		}, nil
+	}
+	if !md.IsVerified {
+		return nil, errors.New("gopenpgp: message has not been verified")
 	}
 
 	for _, signature := range md.SignatureCandidates {
