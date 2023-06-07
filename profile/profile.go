@@ -21,11 +21,11 @@ type Custom struct {
 	AeadKeyEncryption   *packet.AEADConfig
 	S2kKeyEncryption    *s2k.Config
 
-	CipherEncryption               packet.CipherFunction
-	AeadEncryption                 *packet.AEADConfig
-	S2kEncryption                  *s2k.Config
-	CompressionAlgorithmEncryption packet.CompressionAlgo
-	CompressionConfigEncryption    *packet.CompressionConfig
+	CipherEncryption         packet.CipherFunction
+	AeadEncryption           *packet.AEADConfig
+	S2kEncryption            *s2k.Config
+	CompressionAlgorithm     packet.CompressionAlgo
+	CompressionConfiguration *packet.CompressionConfig
 
 	HashSign crypto.Hash
 	V6       bool
@@ -48,8 +48,8 @@ func (p *Custom) KeyGenerationConfig(level constants.SecurityLevel) *packet.Conf
 		DefaultHash:            p.Hash,
 		DefaultCipher:          p.CipherEncryption,
 		AEADConfig:             p.AeadEncryption,
-		DefaultCompressionAlgo: p.CompressionAlgorithmEncryption,
-		CompressionConfig:      p.CompressionConfigEncryption,
+		DefaultCompressionAlgo: p.CompressionAlgorithm,
+		CompressionConfig:      p.CompressionConfiguration,
 		V6Keys:                 p.V6,
 	}
 	switch p.KeyAlgorithm {
@@ -105,7 +105,7 @@ func (p *Custom) SignConfig() *packet.Config {
 
 func (p *Custom) CompressionConfig() *packet.Config {
 	return &packet.Config{
-		CompressionConfig:      p.CompressionConfigEncryption,
-		DefaultCompressionAlgo: p.CompressionAlgorithmEncryption,
+		CompressionConfig:      p.CompressionConfiguration,
+		DefaultCompressionAlgo: p.CompressionAlgorithm,
 	}
 }
