@@ -15,12 +15,10 @@ type PGPEncryption interface {
 	// If the output Writer is of type PGPSplitWriter, the output can be split to multiple writers
 	// for different parts of the message. For example to write key packets and encrypted data packets
 	// to different writers or to write a detached signature separately.
-	// Metadata contains additional metadata about the plaintext, if nil defaults are used.
 	// The returned pgp message WriteCloser must be closed after the plaintext has been written.
-	EncryptingWriter(output Writer, meta *LiteralMetadata) (WriteCloser, error)
+	EncryptingWriter(output Writer) (WriteCloser, error)
 	// Encrypt encrypts a plaintext message.
-	// Metadata contains additional metadata about the plaintext, if nil defaults are used.
-	Encrypt(message []byte, meta *LiteralMetadata) (*PGPMessage, error)
+	Encrypt(message []byte) (*PGPMessage, error)
 	// EncryptSessionKey encrypts a session key with the encryption handle.
 	// To encrypt a session key, the handle must contain either recipients or a password.
 	EncryptSessionKey(sessionKey *SessionKey) ([]byte, error)

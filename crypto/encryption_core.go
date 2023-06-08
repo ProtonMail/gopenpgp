@@ -70,7 +70,7 @@ func (eh *encryptionHandle) prepareEncryptAndSign(
 ) (hints *openpgp.FileHints, config *packet.Config, signEntity *openpgp.Entity, err error) {
 	hints = &openpgp.FileHints{
 		FileName: plainMessageMetadata.GetFilename(),
-		IsUTF8:   plainMessageMetadata.GetIsUtf8(),
+		IsUTF8:   eh.IsUTF8,
 		ModTime:  time.Unix(plainMessageMetadata.GetTime(), 0),
 	}
 

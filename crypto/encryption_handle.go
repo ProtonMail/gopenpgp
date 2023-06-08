@@ -70,24 +70,24 @@ func defaultEncryptionHandle(profile EncryptionProfile, clock Clock) *encryption
 // EncryptingWriter returns a wrapper around underlying outputWriter io.Writer, such that any write-operation
 // via the wrapper results in a write to an encrypted PGP message.
 // The returned PGP message WriteCloser must be closed after the plaintext has been written.
-func (eh *encryptionHandle) EncryptingWriter(outputWriter Writer, meta *LiteralMetadata) (messageWriter WriteCloser, err error) {
+func (eh *encryptionHandle) EncryptingWriter(outputWriter Writer) (messageWriter WriteCloser, err error) {
 	pgpMessageWriter := isPGPMessageWriter(outputWriter)
 	if pgpMessageWriter != nil {
-		return eh.encryptingWriters(pgpMessageWriter.Keys(), pgpMessageWriter, pgpMessageWriter.Signature(), meta)
+		return eh.encryptingWriters(pgpMessageWriter.Keys(), pgpMessageWriter, pgpMessageWriter.Signature(), nil)
 	}
 	if eh.DetachedSignature {
 		return nil, errors.New("gopenpgp: no pgp split writer provided for the detached signature")
 	}
-	return eh.encryptingWriters(nil, outputWriter, nil, meta)
+	return eh.encryptingWriters(nil, outputWriter, nil, nil)
 }
 
 // Encrypt encrypts a binary message, and outputs a PGPMessage.
-func (eh *encryptionHandle) Encrypt(message []byte, meta *LiteralMetadata) (*PGPMessage, error) {
+func (eh *encryptionHandle) Encrypt(message []byte) (*PGPMessage, error) {
 	pgpMessageBuffer := NewPGPMessageBuffer()
 	// Enforce that for a PGPMessage struct the output should not be armored.
 	armoredSave := eh.Armored
 	eh.Armored = false
-	encryptingWriter, err := eh.EncryptingWriter(pgpMessageBuffer, meta)
+	encryptingWriter, err := eh.EncryptingWriter(pgpMessageBuffer)
 	eh.Armored = armoredSave
 	if err != nil {
 		return nil, err

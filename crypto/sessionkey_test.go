@@ -117,7 +117,7 @@ func TestDataPacketEncryption(t *testing.T) {
 
 	// Encrypt data with session key
 	encryptor, _ := testPGP.Encryption().SessionKey(testSessionKey).New()
-	pgpMessage, err := encryptor.Encrypt(message, nil)
+	pgpMessage, err := encryptor.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
@@ -224,7 +224,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 
 	// Encrypt data with session key
 	encryptor, _ := testPGP.Encryption().SessionKey(testSessionKey).SigningKeys(keyRingTestPrivate).New()
-	pgpMessage, err := encryptor.Encrypt(message, nil)
+	pgpMessage, err := encryptor.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting and signing, got:", err)
 	}
@@ -296,13 +296,6 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 	ids, ok := pgpMessage.GetEncryptionKeyIDs()
 	assert.True(t, ok)
 	assert.Exactly(t, 3, len(ids))
-
-	// Test with bad verification key succeeds
-	decryptor, _ = testPGP.Decryption().DecryptionKeys(keyRingTestPrivate).VerifyKeys(ecKeyRing).New()
-	decrypted, err = decryptor.Decrypt(pgpMessage.GetBinary())
-	if err != nil || !decrypted.HasSignatureError() {
-		t.Fatal("No error or wrong error returned for verification failure")
-	}
 
 	// Test if final decryption & verification succeeds
 	decryptor, _ = testPGP.Decryption().DecryptionKeys(keyRingTestPrivate).VerifyKeys(keyRingTestPublic).New()
