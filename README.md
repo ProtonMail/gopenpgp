@@ -30,7 +30,7 @@ password := []byte("hunter2")
 pgp := crypto.PGP()
 // Encrypt data with password
 encHandle, err := pgp.Encryption().Password(password).New()
-pgpMessage, err := encHandle.Encrypt([]byte("my message"), nil)
+pgpMessage, err := encHandle.Encrypt([]byte("my message"))
 armored, err := pgpMessage.GetArmored()
 
 // Decrypt data with password
@@ -80,7 +80,7 @@ privateKey, err := crypto.NewPrivateKeyFromArmored(privkey, passphrase)
 pgp := crypto.PGP() // For v6 crypto.PGPCryptoRefresh()
 // Encrypt plaintext message using a public key
 encHandle, err := pgp.Encryption().Recipient(publicKey).New()
-pgpMessage, err := encHandle.Encrypt([]byte("my message"), nil)
+pgpMessage, err := encHandle.Encrypt([]byte("my message"))
 armored, err := pgpMessage.GetArmored()
 
 // Decrypt armored encrypted message using the private key and obtain the plaintext
@@ -105,7 +105,7 @@ encHandle, err := pgp.Encryption().
   Recipient(bobKeyPub).
   SigningKey(aliceKeyPriv).
   New()
-pgpMessage, err := encHandle.Encrypt([]byte("my message"), nil)
+pgpMessage, err := encHandle.Encrypt([]byte("my message"))
 armored, err := pgpMessage.GetArmored()
 
 // Decrypt armored encrypted message using the private key and obtain plain text
@@ -131,7 +131,7 @@ encHandle, err := pgp.Encryption().
   Recipients(recipients).
   SigningKey(aliceKeyPriv).
   New()
-pgpMessage, err := encHandle.Encrypt([]byte("my message"), nil)
+pgpMessage, err := encHandle.Encrypt([]byte("my message"))
 armored, err := pgpMessage.GetArmored()
 
 encHandle.ClearPrivateParams()
@@ -149,7 +149,7 @@ encHandle, _ := pgp.Encryption().
   HiddenRecipient(carolKeyPub).
   SigningKey(aliceKeyPriv).
   New()
-pgpMessage, _ := encHandle.Encrypt([]byte("my message"), nil)
+pgpMessage, _ := encHandle.Encrypt([]byte("my message"))
 
 // Decrypt checks if bobs key fingerprint is in the intended recipient list
 // of alice's signature in the message.
@@ -185,7 +185,7 @@ encHandle, err := pgp.Encryption().
 messageReader, err := os.Open("msg.txt")
 ciphertextWriter, err := os.Create("out.pgp")
 
-ptWriter, err := encHandle.EncryptingWriter(ciphertextWriter, nil)
+ptWriter, err := encHandle.EncryptingWriter(ciphertextWriter)
 _, err = io.Copy(ptWriter, messageReader)
 err = ptWriter.Close()
 err = messageReader.Close()
@@ -261,7 +261,7 @@ pgp := crypto.PGP() // crypto.PGPCryptoRefresh()
 signingMessage := []byte("message to sign")
 
 signer, err := pgp.Sign().SigningKey(aliceKeyPriv).Detached().New()
-signature, err := signer.Sign(signingMessage, nil)
+signature, err := signer.Sign(signingMessage)
 
 verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
 verifyResult, err := verifier.VerifyDetached(signingMessage, signature)
@@ -282,7 +282,7 @@ pgp := crypto.PGP() // crypto.PGPCryptoRefresh()
 signingMessage := []byte("message to sign")
 
 signer, err := pgp.Sign().SigningKey(aliceKeyPriv).New()
-signatureMessage, err := signer.Sign(signingMessage, nil)
+signatureMessage, err := signer.Sign(signingMessage)
 
 verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
 verifyResult, err := verifier.VerifyInline(signatureMessage)
@@ -333,7 +333,7 @@ dataPackets := pgpMessage.GetBinaryDataPacket()
 var keyPackets bytes.Buffer
 var dataPackets bytes.Buffer
 splitWriter := crypto.NewPGPMessageWriterKeyAndData(&keyPackets, &dataPackets)
-ptWriter, _ := encHandle.EncryptingWriter(splitWriter, nil)
+ptWriter, _ := encHandle.EncryptingWriter(splitWriter)
 // ...
 // Key packets are written to keyPackets while data packets are written to dataPackets
 ```
@@ -358,7 +358,7 @@ pgpMessageEncSig, err := pgpMessage.GetEncryptedDetachedSignature()
 // ...
 var encSigDataPackets bytes.Buffer
 splitWriter := crypto.NewPGPSplitWriter(&keyPackets, &dataPackets, &encSigDataPackets)
-ptWriter, err := encHandle.EncryptingWriter(splitWriter, nil)
+ptWriter, err := encHandle.EncryptingWriter(splitWriter)
 // ...
 // Key packets are written to keyPackets, data packets are written to dataPackets ,and
 // Data packets of the encrypted signature to encSigDataPackets

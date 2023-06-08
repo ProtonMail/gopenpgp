@@ -215,7 +215,7 @@ func TestExplicitVerifyAllGoesWell(t *testing.T) {
 	}
 	defer privKR.ClearPrivateParams()
 	encHandle, _ := pgpHandle.Encryption().Recipients(pubKR).SigningKeys(privKR).New()
-	ciphertext, err := encHandle.Encrypt(data, nil)
+	ciphertext, err := encHandle.Encrypt(data)
 	if err != nil {
 		t.Fatalf("Got an error while encrypting test data: %v", err)
 	}
@@ -245,7 +245,7 @@ func TestExplicitVerifyTooEarly(t *testing.T) {
 	}
 	defer privKR.ClearPrivateParams()
 	encHandle, _ := pgp.Encryption().Recipients(pubKR).SigningKeys(privKR).New()
-	ciphertext, err := encHandle.Encrypt(data, nil)
+	ciphertext, err := encHandle.Encrypt(data)
 	if err != nil {
 		t.Fatalf("Got an error while encrypting test data: %v", err)
 	}
@@ -276,7 +276,7 @@ func TestExplicitVerifyNoSig(t *testing.T) {
 	}
 	defer privKR.ClearPrivateParams()
 	encHandle, _ := pgp.Encryption().Recipients(pubKR).New()
-	ciphertext, err := encHandle.Encrypt(data, nil)
+	ciphertext, err := encHandle.Encrypt(data)
 	if err != nil {
 		t.Fatalf("Got an error while encrypting test data: %v", err)
 	}
@@ -314,7 +314,7 @@ func TestExplicitVerifyWrongVerifier(t *testing.T) {
 	}
 	defer privKR2.ClearPrivateParams()
 	encHandle, _ := pgp.Encryption().Recipients(pubKR).SigningKeys(privKR2).New()
-	ciphertext, err := encHandle.Encrypt(data, nil)
+	ciphertext, err := encHandle.Encrypt(data)
 	if err != nil {
 		t.Fatalf("Got an error while encrypting test data: %v", err)
 	}

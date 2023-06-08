@@ -178,7 +178,7 @@ func TestEncryptDecryptCachedSessionOnDecrypt(t *testing.T) {
 				VerifyKeys(material.keyRingTestPublic).
 				RetrieveSessionKey().
 				New()
-			pgpMessage, err := encHandle.Encrypt([]byte(testMessageString), nil)
+			pgpMessage, err := encHandle.Encrypt([]byte(testMessageString))
 			if err != nil {
 				t.Fatal("Expected no error in encryption, got:", err)
 			}
@@ -310,9 +310,7 @@ func TestEncryptDecryptStreamArmored(t *testing.T) {
 func TestEncryptDecryptUTF8Stream(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		metadata := &LiteralMetadata{
-			isUTF8:   true,
-			filename: "utf8.txt",
-			ModTime:  material.pgp.defaultTime().Unix(),
+			isUTF8: true,
 		}
 		t.Run(material.profileName, func(t *testing.T) {
 			encHandle, _ := material.pgp.Encryption().
@@ -695,9 +693,7 @@ func TestEncryptDecrypt(t *testing.T) {
 func TestEncryptDecryptUTF8(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		metadata := &LiteralMetadata{
-			isUTF8:   true,
-			filename: "utf8.txt",
-			ModTime:  material.pgp.defaultTime().Unix(),
+			isUTF8: true,
 		}
 		t.Run(material.profileName, func(t *testing.T) {
 			encHandle, _ := material.pgp.Encryption().
@@ -773,7 +769,7 @@ func testEncryptDecrypt(
 	decHandle PGPDecryption,
 ) {
 	expectedMetadata := metadata
-	pgpMessage, err := encHandle.Encrypt(messageBytes, metadata)
+	pgpMessage, err := encHandle.Encrypt(messageBytes)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting with key ring, got:", err)
 	}
@@ -816,7 +812,7 @@ func testEncryptSplitDecryptStream(
 	var detachedSignature bytes.Buffer
 	expectedMetadata := metadata
 	splitOutput := multiWriterCreator(&keyPackets, &ciphertextBuf, &detachedSignature)
-	messageWriter, err := encHandle.EncryptingWriter(splitOutput, metadata)
+	messageWriter, err := encHandle.EncryptingWriter(splitOutput)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting stream with key ring, got:", err)
 	}
@@ -892,7 +888,7 @@ func testEncryptDecryptStream(
 	messageReader := bytes.NewReader(messageBytes)
 	var ciphertextBuf bytes.Buffer
 	expectedMetadata := metadata
-	messageWriter, err := encHandle.EncryptingWriter(&ciphertextBuf, metadata)
+	messageWriter, err := encHandle.EncryptingWriter(&ciphertextBuf)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting stream with key ring, got:", err)
 	}

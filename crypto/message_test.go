@@ -18,7 +18,7 @@ func TestTextMessageEncryptionWithPassword(t *testing.T) {
 
 	// Encrypt data with password
 	encryptor, _ := testPGP.Encryption().Password(testSymmetricKey).New()
-	encrypted, err := encryptor.Encrypt(message, nil)
+	encrypted, err := encryptor.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
@@ -60,7 +60,7 @@ func TestBinaryMessageEncryptionWithPassword(t *testing.T) {
 
 	// Encrypt data with password
 	encryptor, _ := testPGP.Encryption().Password(testSymmetricKey).New()
-	encrypted, err := encryptor.Encrypt(message, nil)
+	encrypted, err := encryptor.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
@@ -104,7 +104,7 @@ func TestTextMessageEncryption(t *testing.T) {
 		"The secret code is... 1, 2, 3, 4, 5. I repeat: the secret code is... 1, 2, 3, 4, 5",
 	)
 	encryptor, _ := testPGP.Encryption().Recipients(keyRingTestPublic).New()
-	ciphertext, err := encryptor.Encrypt(message, nil)
+	ciphertext, err := encryptor.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
@@ -124,7 +124,7 @@ func TestTextMessageEncryptionWithTrailingSpaces(t *testing.T) {
 	var message = []byte(original)
 
 	encryptor, _ := testPGP.Encryption().Recipients(keyRingTestPublic).New()
-	ciphertext, err := encryptor.Encrypt(message, NewMetadata(true))
+	ciphertext, err := encryptor.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
@@ -142,7 +142,7 @@ func TestTextMessageEncryptionWithNonCanonicalLinebreak(t *testing.T) {
 	var message = []byte(original)
 
 	encryptor, _ := testPGP.Encryption().Recipients(keyRingTestPublic).New()
-	ciphertext, err := encryptor.Encrypt(message, NewMetadata(true))
+	ciphertext, err := encryptor.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
@@ -229,7 +229,7 @@ func TestDummy(t *testing.T) {
 	)
 
 	encryptor, _ := testPGP.Encryption().SignTime(1636644417).Recipients(dummyKeyRing).New()
-	ciphertext, err := encryptor.Encrypt(message, nil)
+	ciphertext, err := encryptor.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
@@ -305,7 +305,7 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
 
 	encryptor, _ := testPGP.Encryption().Recipients(keyRingTestMultiple).SigningKeys(keyRingTestPrivate).New()
-	ciphertext, err := encryptor.Encrypt(message, nil)
+	ciphertext, err := encryptor.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
@@ -349,7 +349,7 @@ func TestMessageGetEncryptionKeyIDs(t *testing.T) {
 	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
 
 	encryptor, _ := testPGP.Encryption().Recipients(keyRingTestMultiple).SigningKeys(keyRingTestPrivate).New()
-	ciphertext, err := encryptor.Encrypt(message, nil)
+	ciphertext, err := encryptor.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
@@ -379,7 +379,7 @@ func TestMessageGetSignatureKeyIDs(t *testing.T) {
 	var message = []byte("plain text")
 
 	signer, _ := testPGP.Sign().SigningKeys(keyRingTestPrivate).Detached().New()
-	signature, err := signer.Sign(message, nil)
+	signature, err := signer.Sign(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
@@ -410,7 +410,7 @@ func TestMessageGetArmoredWithCustomHeaders(t *testing.T) {
 	var message = []byte("plain text")
 
 	encryptor, _ := testPGP.Encryption().Recipients(keyRingTestPublic).SigningKeys(keyRingTestPrivate).New()
-	ciphertext, err := encryptor.Encrypt(message, nil)
+	ciphertext, err := encryptor.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
@@ -429,7 +429,7 @@ func TestMessageGetArmoredWithEmptyHeaders(t *testing.T) {
 	var message = []byte("plain text")
 
 	encryptor, _ := testPGP.Encryption().Recipients(keyRingTestPublic).SigningKeys(keyRingTestPrivate).New()
-	ciphertext, err := encryptor.Encrypt(message, nil)
+	ciphertext, err := encryptor.Encrypt(message)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
