@@ -148,7 +148,7 @@ func TestSignVerifyCleartext(t *testing.T) {
 
 func testSignVerify(t *testing.T, signer PGPSign, verifier PGPVerify, detached bool) {
 	messageBytes := []byte(messageToSign)
-	signature, err := signer.Sign(messageBytes, nil)
+	signature, err := signer.Sign(messageBytes)
 	if err != nil {
 		t.Fatal("Expected no error while signing the message, got:", err)
 	}
@@ -177,7 +177,7 @@ func testSignVerify(t *testing.T, signer PGPSign, verifier PGPVerify, detached b
 func testSignVerifyStream(t *testing.T, signer PGPSign, verifier PGPVerify) {
 	messageBytes := []byte(messageToSign)
 	var messageBuffer bytes.Buffer
-	signingWriter, err := signer.SigningWriter(&messageBuffer, nil)
+	signingWriter, err := signer.SigningWriter(&messageBuffer)
 	if err != nil {
 		t.Fatal("Expected no error while signing the message, got:", err)
 	}
@@ -213,7 +213,7 @@ func testSignVerifyStream(t *testing.T, signer PGPSign, verifier PGPVerify) {
 func testSignVerifyDetachedStream(t *testing.T, signer PGPSign, verifier PGPVerify) {
 	messageBytes := []byte(messageToSign)
 	var signatureBuffer bytes.Buffer
-	signingWriter, err := signer.SigningWriter(&signatureBuffer, nil)
+	signingWriter, err := signer.SigningWriter(&signatureBuffer)
 	if err != nil {
 		t.Fatal("Expected no error while signing the message, got:", err)
 	}
