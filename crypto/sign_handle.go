@@ -37,7 +37,7 @@ func defaultSignatureHandle(profile SignProfile, clock Clock) *signatureHandle {
 
 // --- Implements the signature handle methods
 
-func (sh *signatureHandle) SigningWriter(outputWriter Writer, meta *LiteralMetadata) (messageWriter WriteCloser, err error) {
+func (sh *signatureHandle) SigningWriter(outputWriter Writer) (messageWriter WriteCloser, err error) {
 	var armorWriter WriteCloser
 	if sh.Armored {
 		var err error
@@ -66,7 +66,7 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer, meta *LiteralMetad
 		)
 	} else {
 		// Inline signature
-		messageWriter, err = sh.signingWriter(outputWriter, meta)
+		messageWriter, err = sh.signingWriter(outputWriter, nil)
 	}
 	if sh.Armored {
 		// Ensure that close is called on the armor writer for the armor suffix
@@ -78,9 +78,9 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer, meta *LiteralMetad
 	return
 }
 
-func (sh *signatureHandle) Sign(message []byte, meta *LiteralMetadata) ([]byte, error) {
+func (sh *signatureHandle) Sign(message []byte) ([]byte, error) {
 	var writer bytes.Buffer
-	ptWriter, err := sh.SigningWriter(&writer, meta)
+	ptWriter, err := sh.SigningWriter(&writer)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func (sh *signatureHandle) signingWriter(messageWriter Writer, literalData *Lite
 	}
 	hints := &openpgp.FileHints{
 		FileName: literalData.GetFilename(),
-		IsUTF8:   literalData.GetIsUtf8(),
+		IsUTF8:   sh.IsUTF8,
 		ModTime:  time.Unix(literalData.GetTime(), 0),
 	}
 	if sh.SignContext != nil {
