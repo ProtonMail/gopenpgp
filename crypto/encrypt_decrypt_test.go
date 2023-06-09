@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/profile"
 	"github.com/stretchr/testify/assert"
 )
@@ -26,7 +25,10 @@ func generateTestKeyMaterial(profile *profile.Custom) *testMaterial {
 		panic("Cannot generate session key:" + err.Error())
 	}
 
-	keyTest, err := handle.GenerateKey("test", "test@test.test", constants.StandardLevel)
+	keyTest, err := handle.KeyGeneration().
+		AddUserId("test", "test@test.test").
+		New().
+		GenerateKey()
 	if err != nil {
 		panic("Cannot generate key:" + err.Error())
 	}
