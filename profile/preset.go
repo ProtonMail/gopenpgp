@@ -5,7 +5,6 @@ import (
 
 	"github.com/ProtonMail/go-crypto/v2/openpgp/packet"
 	"github.com/ProtonMail/go-crypto/v2/openpgp/s2k"
-	"github.com/ProtonMail/gopenpgp/v3/constants"
 )
 
 var nameToProfile = map[string]func() *Custom{
@@ -36,7 +35,7 @@ func Default() *Custom {
 func RFC4880() *Custom {
 	return &Custom{
 		Name:                 "rfc4880",
-		KeyAlgorithm:         constants.RSA,
+		KeyAlgorithm:         RSA,
 		Hash:                 crypto.SHA256,
 		HashSign:             crypto.SHA512,
 		CipherEncryption:     packet.CipherAES256,
@@ -52,7 +51,7 @@ func RFC4880() *Custom {
 func Koch() *Custom {
 	return &Custom{
 		Name:                 "draft-koch-openpgp",
-		KeyAlgorithm:         constants.Elliptic,
+		KeyAlgorithm:         Elliptic,
 		Hash:                 crypto.SHA256,
 		HashSign:             crypto.SHA512,
 		CipherEncryption:     packet.CipherAES256,
@@ -70,7 +69,7 @@ func Koch() *Custom {
 func CryptoRefresh() *Custom {
 	return &Custom{
 		Name:                 "draft-ietf-openpgp-crypto-refresh",
-		KeyAlgorithm:         constants.Elliptic,
+		KeyAlgorithm:         Elliptic,
 		Hash:                 crypto.SHA256,
 		HashSign:             crypto.SHA512,
 		CipherEncryption:     packet.CipherAES256,

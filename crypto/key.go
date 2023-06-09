@@ -25,10 +25,6 @@ type Key struct {
 	entity *openpgp.Entity
 }
 
-type KeyGenerationProfile interface {
-	KeyGenerationConfig(level constants.SecurityLevel) *packet.Config
-}
-
 type KeyEncryptionProfile interface {
 	KeyEncryptionConfig() *packet.Config
 }
