@@ -94,10 +94,16 @@ decHandle.ClearPrivateParams()
 With signatures:
 ```go
 pgp := crypto.PGP() // crypto.PGPCryptoRefresh()
-aliceKeyPriv, err := pgp.GenerateKey("alice", "alice@alice.com", constants.StandardLevel)
+aliceKeyPriv, err := pgp.KeyGeneration().
+  UserId("alice", "alice@alice.com").
+  New().
+  GenerateKey()
 aliceKeyPub, err := aliceKeyPriv.ToPublic()
 
-bobKeyPriv, err := pgp.GenerateKey("bob", "bob@bob.com", constants.StandardLevel)
+bobKeyPriv, err := pgp.KeyGeneration().
+  UserId("bob", "bob@bob.com").
+  New().
+  GenerateKey()
 bobKeyPub, err := bobKeyPriv.ToPublic()
 
 // Encrypt plaintext message from alice to bob
@@ -221,20 +227,23 @@ pgpCryptoRefresh := crypto.PGPWithProfile(profile.CryptoRefresh())
 // Note that RSA keys should not be generated anymore according to
 // draft-ietf-openpgp-crypto-refresh
 
+keyGenHandle := pgp4880.KeyGeneration().UserId(name, email).New()
 // Generates rsa keys with 3072 bits
-rsaKey, err := pgp.GenerateKey(name, email, constants.StandardLevel)
+rsaKey, err := keyGenHandle.GenerateKey(constants.StandardSecurity)
 // Generates rsa keys with 4092 bits
-rsaKeyHigh, err := pgp.GenerateKey(name, email, constants.High)
+rsaKeyHigh, err := keyGenHandle.GenerateKey(constants.HighSecurity)
 
+keyGenHandle = pgpKoch.KeyGeneration().UserId(name, email).New()
 // Generates curve25519 keys with draft-koch-openpgp-2015-rfc4880bis-01
-ecKey, err := pgpKoch.GenerateKey(name, email, constants.StandardLevel)
+ecKey, err := keyGenHandle.GenerateKey(constants.StandardSecurity)
 // Generates curve448 keys with draft-koch-openpgp-2015-rfc4880bis-01
-ecKeyHigh, err := pgpKoch.GenerateKey(name, email, constants.High)
+ecKeyHigh, err := keyGenHandle.GenerateKey(constants.HighSecurity)
 
+keyGenHandle = pgpCryptoRefresh.KeyGeneration().UserId(name, email).New()
 // Generates curve25519 keys with draft-ietf-openpgp-crypto-refresh
-ecKey, err := pgpCryptoRefresh.GenerateKey(name, email, constants.StandardLevel)
+ecKey, err := keyGenHandle.GenerateKey(constants.StandardLevel)
 // Generates curve448 keys with draft-ietf-openpgp-crypto-refresh
-ecKeyHigh, err := pgpCryptoRefresh.GenerateKey(name, email, constants.High)
+ecKeyHigh, err := keyGenHandle.GenerateKey(constants.HighSecurity)
 ```
 
 Encrypt (lock) and decrypt (unlock) a secret key:

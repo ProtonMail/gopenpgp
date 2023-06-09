@@ -21,13 +21,6 @@ const (
 type SecurityLevel = int8
 
 const (
-	StandardLevel SecurityLevel = 0
-	HighLevel     SecurityLevel = 1
-)
-
-type KeyAlgorithm = int8
-
-const (
-	RSA      KeyAlgorithm = 0
-	Elliptic KeyAlgorithm = 1
+	StandardSecurity SecurityLevel = 0
+	HighSecurity     SecurityLevel = 1
 )
