@@ -35,7 +35,7 @@ func initGenerateKeys() {
 		keyTestDomain,
 		clock,
 		profile.RFC4880(),
-		constants.StandardLevel,
+		constants.StandardSecurity,
 		0,
 	)
 	if err != nil {
@@ -46,7 +46,7 @@ func initGenerateKeys() {
 		keyTestDomain,
 		clock,
 		profile.Koch(),
-		constants.StandardLevel,
+		constants.StandardSecurity,
 		0,
 	)
 	if err != nil {

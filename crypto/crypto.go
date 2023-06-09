@@ -3,7 +3,6 @@ package crypto
 import (
 	"time"
 
-	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/profile"
 )
 
@@ -60,31 +59,18 @@ func (p *PGPHandle) Verify() *VerifyHandleBuilder {
 	return newVerifyHandleBuilder(p.defaultTime)
 }
 
+func (p *PGPHandle) KeyGeneration() *KeyGenerationBuilder {
+	return newKeyGenerationBuilder(p.profile, p.defaultTime)
+}
+
 // LockKey encrypts the private parts of a copy of the input key with the given passphrase.
 func (p *PGPHandle) LockKey(key *Key, passphrase []byte) (*Key, error) {
 	return key.lock(passphrase, p.profile)
 }
 
-// GenerateKey generates key according to the current profile.
-// The argument level allows to set the security level, either standard or high.
-// The profile defines the algorithms and parameters that are used for each security level.
-func (p *PGPHandle) GenerateKey(name, email string, level constants.SecurityLevel) (*Key, error) {
-	return generateKey(name, email, p.localTime, p.profile, level, 0)
-}
-
-// GenerateKeyWithLifetime generates key according to the current profile.
-// The argument level allows to set the security level, either standard or high.
-// The profile defines the algorithms and parameters that are used for each security level.
-// The lifetimeSeconds argument allows to set the lifetime of the generated key, which defaults
-// to zero i.e., infinite lifetime.
-func (p *PGPHandle) GenerateKeyWithLifetime(name, email string, level constants.SecurityLevel, lifetimeSeconds int32) (*Key, error) {
-	return generateKey(name, email, p.localTime, p.profile, level, uint32(lifetimeSeconds))
-}
-
 // GenerateSessionKey generates a random session key for the profile.
 func (p *PGPHandle) GenerateSessionKey() (*SessionKey, error) {
 	config := p.profile.EncryptionConfig()
-	config.Time = NewConstantClock(p.localTime().Unix())
 	return generateSessionKey(config)
 }
 
