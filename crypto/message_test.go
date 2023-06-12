@@ -190,7 +190,7 @@ func TestIssue11(t *testing.T) {
 	}
 	decryptor, _ := testPGP.Decryption().
 		DecryptionKeys(issue11Keyring).
-		VerifyKeys(senderKeyring).
+		VerificationKeys(senderKeyring).
 		VerifyTime(1559655272).New()
 	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinary())
 	if err != nil {
@@ -266,7 +266,7 @@ func TestSHA256SignedMessageDecryption(t *testing.T) {
 
 	decryptor, _ := testPGP.Decryption().
 		DecryptionKeys(keyRingTestPrivate).
-		VerifyKeys(keyRingTestPrivate).
+		VerificationKeys(keyRingTestPrivate).
 		DisableVerifyTimeCheck().
 		New()
 	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinary())
@@ -287,7 +287,7 @@ func TestSHA1SignedMessageDecryption(t *testing.T) {
 
 	decryptor, _ := testPGP.Decryption().
 		DecryptionKeys(keyRingTestPrivate).
-		VerifyKeys(keyRingTestPrivate).
+		VerificationKeys(keyRingTestPrivate).
 		DisableVerifyTimeCheck().
 		New()
 	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinary())
@@ -332,7 +332,7 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 	// Decrypt message and verify correctness
 	decryptor, _ := testPGP.Decryption().
 		DecryptionKeys(keyRingTestPrivate).
-		VerifyKeys(keyRingTestPublic).
+		VerificationKeys(keyRingTestPublic).
 		New()
 	decrypted, err := decryptor.Decrypt(ciphertext.GetBinary())
 	if err != nil {
