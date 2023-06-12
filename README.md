@@ -55,8 +55,8 @@ Use custom or preset profile:
 ```go
 // RFC4880 profile
 pgp4880 := crypto.PGPWithProfile(profile.RFC4880()) 
-// Draft-koch profile
-pgpKoch := crypto.PGPWithProfile(profile.Koch())
+// GnuPG profile
+gnuPG := crypto.PGPWithProfile(profile.GnuPG())
 // Crypto refresh profile
 pgpCryptoRefresh := crypto.PGPWithProfile(profile.CryptoRefresh())
 ```
@@ -77,7 +77,7 @@ const passphrase = []byte(`the passphrase of the private key`) // Passphrase of 
 publicKey, err := crypto.NewKeyFromArmored(pubkey)
 privateKey, err := crypto.NewPrivateKeyFromArmored(privkey, passphrase)
 
-pgp := crypto.PGP() // For v6 crypto.PGPCryptoRefresh()
+pgp := crypto.PGP()
 // Encrypt plaintext message using a public key
 encHandle, err := pgp.Encryption().Recipient(publicKey).New()
 pgpMessage, err := encHandle.Encrypt([]byte("my message"))
@@ -93,7 +93,7 @@ decHandle.ClearPrivateParams()
 
 With signatures:
 ```go
-pgp := crypto.PGP() // crypto.PGPCryptoRefresh()
+pgp := crypto.PGP()
 aliceKeyPriv, err := pgp.KeyGeneration().
   UserId("alice", "alice@alice.com").
   New().
@@ -179,7 +179,7 @@ decryptedCarol, _ := decHandleCarol.Decrypt(pgpMessage.GetBinary())
 
 Encrypt and decrypt large messages with the streaming API:
 ```go
-pgp := crypto.PGP() // For the crypto refresh crypto.PGPCryptoRefresh()
+pgp := crypto.PGP()
 // ... See key generation above
 
 // Encrypt plain text stream and write the output to a file
@@ -221,7 +221,7 @@ const (
 )
 
 pgp4880 := crypto.PGPWithProfile(profile.RFC4880())
-pgpKoch := crypto.PGPWithProfile(profile.Koch())
+gnuPG := crypto.PGPWithProfile(profile.GnuPG())
 pgpCryptoRefresh := crypto.PGPWithProfile(profile.CryptoRefresh())
 
 // Note that RSA keys should not be generated anymore according to
@@ -229,21 +229,21 @@ pgpCryptoRefresh := crypto.PGPWithProfile(profile.CryptoRefresh())
 
 keyGenHandle := pgp4880.KeyGeneration().UserId(name, email).New()
 // Generates rsa keys with 3072 bits
-rsaKey, err := keyGenHandle.GenerateKey(constants.StandardSecurity)
+rsaKey, err := keyGenHandle.GenerateKey()
 // Generates rsa keys with 4092 bits
-rsaKeyHigh, err := keyGenHandle.GenerateKey(constants.HighSecurity)
+rsaKeyHigh, err := keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
 
-keyGenHandle = pgpKoch.KeyGeneration().UserId(name, email).New()
-// Generates curve25519 keys with draft-koch-openpgp-2015-rfc4880bis-01
-ecKey, err := keyGenHandle.GenerateKey(constants.StandardSecurity)
-// Generates curve448 keys with draft-koch-openpgp-2015-rfc4880bis-01
-ecKeyHigh, err := keyGenHandle.GenerateKey(constants.HighSecurity)
+keyGenHandle = gnuPG.KeyGeneration().UserId(name, email).New()
+// Generates curve25519 keys with GnuPG compatibility
+ecKey, err := keyGenHandle.GenerateKey()
+// Generates curve448 keys with GnuPG compatibility
+ecKeyHigh, err := keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
 
 keyGenHandle = pgpCryptoRefresh.KeyGeneration().UserId(name, email).New()
 // Generates curve25519 keys with draft-ietf-openpgp-crypto-refresh
-ecKey, err := keyGenHandle.GenerateKey(constants.StandardLevel)
+ecKey, err = keyGenHandle.GenerateKey()
 // Generates curve448 keys with draft-ietf-openpgp-crypto-refresh
-ecKeyHigh, err := keyGenHandle.GenerateKey(constants.HighSecurity)
+ecKeyHigh, err = keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
 ```
 
 Encrypt (lock) and decrypt (unlock) a secret key:
@@ -264,7 +264,7 @@ unlockedKey, err := lockedKey.Unlock(password)
 Sign a plaintext with a private key and verify it with its public key using detached signatures: 
 
 ```go
-pgp := crypto.PGP() // crypto.PGPCryptoRefresh()
+pgp := crypto.PGP()
 // ... See generating keys 
 
 signingMessage := []byte("message to sign")
@@ -285,7 +285,7 @@ signer.ClearPrivateParams()
 Sign a plaintext with a private key and verify it with its public key using inline signatures: 
 
 ```go
-pgp := crypto.PGP() // crypto.PGPCryptoRefresh()
+pgp := crypto.PGP()
 // ... See generating keys 
 
 signingMessage := []byte("message to sign")
@@ -306,7 +306,7 @@ signer.ClearPrivateParams()
 
 ### Cleartext signed messages
 ```go
-pgp := crypto.PGP() // For the crypto refresh crypto.PGPCryptoRefresh()
+pgp := crypto.PGP()
 // ... See generating keys 
 
 signingMessage := []byte("message to sign")

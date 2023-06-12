@@ -8,19 +8,13 @@ import (
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 )
 
-type KeyAlgorithm = int8
-
-const (
-	RSA      KeyAlgorithm = 0
-	Elliptic KeyAlgorithm = 1
-)
-
 // Custom type represents a profile setting algorithm
 // parameters for generating keys, encrypting data, and
 // signing data.
 type Custom struct {
-	Name         string
-	KeyAlgorithm KeyAlgorithm
+	Name string
+
+	SetKeyAlgorithm func(*packet.Config, constants.SecurityLevel)
 
 	Hash crypto.Hash
 
@@ -59,30 +53,7 @@ func (p *Custom) KeyGenerationConfig(level constants.SecurityLevel) *packet.Conf
 		CompressionConfig:      p.CompressionConfiguration,
 		V6Keys:                 p.V6,
 	}
-	switch p.KeyAlgorithm {
-	case RSA:
-		cfg.Algorithm = packet.PubKeyAlgoRSA
-		if level == constants.HighSecurity {
-			cfg.RSABits = 4096
-		} else {
-			cfg.RSABits = 3072
-		}
-	case Elliptic:
-		if level == constants.HighSecurity {
-			if cfg.V6() {
-				cfg.Algorithm = packet.PubKeyAlgoEd448
-			} else {
-				cfg.Algorithm = packet.PubKeyAlgoEdDSA
-				cfg.Curve = packet.Curve448
-			}
-		} else {
-			if cfg.V6() {
-				cfg.Algorithm = packet.PubKeyAlgoEd25519
-			} else {
-				cfg.Algorithm = packet.PubKeyAlgoEdDSA
-			}
-		}
-	}
+	p.SetKeyAlgorithm(cfg, level)
 	return cfg
 }
 
