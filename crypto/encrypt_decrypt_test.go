@@ -780,8 +780,8 @@ func testEncryptDecrypt(
 	if err != nil {
 		t.Fatal("Expected no error while calling decrypt with key ring, got:", err)
 	}
-	if decryptionResult.HasSignatureError() {
-		t.Fatal("Expected no signature verification error, got:", decryptionResult.SignatureError())
+	if err = decryptionResult.SignatureError(); err != nil {
+		t.Fatal("Expected no signature verification error, got:", err)
 	}
 	if !bytes.Equal(decryptionResult.Result(), messageBytes) {
 		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptionResult.Result()), string(messageBytes))
@@ -862,8 +862,8 @@ func testEncryptSplitDecryptStream(
 		if err != nil {
 			t.Fatal("Expected no error, got:", err)
 		}
-		if verifyResult.HasSignatureError() {
-			t.Fatal("Expected no error while verifying the signature, got:", verifyResult.SignatureError())
+		if err = verifyResult.SignatureError(); err != nil {
+			t.Fatal("Expected no error while verifying the signature, got:", err)
 		}
 	}
 	decryptedMeta := decryptedReader.GetMetadata()
@@ -925,8 +925,8 @@ func testEncryptDecryptStream(
 		if err != nil {
 			t.Fatal("Expected no error while verifying the signature, got:", err)
 		}
-		if verifyResult.HasSignatureError() {
-			t.Fatal("Expected no signature error while verifying the signature, got:", verifyResult.SignatureError())
+		if err = verifyResult.SignatureError(); err != nil {
+			t.Fatal("Expected no signature error while verifying the signature, got:", err)
 		}
 	}
 	decryptedMeta := decryptedReader.GetMetadata()

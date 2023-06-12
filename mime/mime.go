@@ -48,7 +48,7 @@ func Decrypt(
 		return
 	}
 	// We only consider the signature to be failed if both embedded and mime verification failed
-	if decResult.HasSignatureError() && mimeSigError != nil {
+	if embeddedSigError != nil && mimeSigError != nil {
 		callbacks.OnError(embeddedSigError)
 		callbacks.OnError(mimeSigError)
 		callbacks.OnVerified(prioritizeSignatureErrors(embeddedSigError, mimeSigError))

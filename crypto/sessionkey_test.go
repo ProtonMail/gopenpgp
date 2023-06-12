@@ -257,7 +257,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 	if err != nil {
 		t.Fatal("Wrong error returned for verification failure", err)
 	}
-	if !decrypted.HasSignatureError() {
+	if err = decrypted.SignatureError(); err == nil {
 		t.Fatal("No error returned for verification failure", err)
 	}
 
@@ -267,8 +267,8 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error when decrypting & verifying, got:", err)
 	}
-	if decrypted.HasSignatureError() {
-		t.Fatal("Expected no error when decrypting & verifying, got:", decrypted.SignatureError())
+	if err = decrypted.SignatureError(); err != nil {
+		t.Fatal("Expected no error when decrypting & verifying, got:", err)
 	}
 	assert.Exactly(t, message, decrypted.Result())
 
@@ -303,8 +303,8 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 	if err != nil {
 		t.Fatal("Unable to decrypt and verify joined keypacket and datapacket, got:", err)
 	}
-	if finalMessage.HasSignatureError() {
-		t.Fatal("Unable to decrypt and verify joined keypacket and datapacket, got:", finalMessage.SignatureError())
+	if err = finalMessage.SignatureError(); err != nil {
+		t.Fatal("Unable to decrypt and verify joined keypacket and datapacket, got:", err)
 	}
 
 	assert.Exactly(t, message, finalMessage.Result())
