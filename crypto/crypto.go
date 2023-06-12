@@ -18,12 +18,6 @@ func PGP() *PGPHandle {
 	return PGPWithProfile(profile.Default())
 }
 
-// PGPCryptoRefresh creates a PGPHandle to interact with the API.
-// Uses the the new crypto refresh profile.
-func PGPCryptoRefresh() *PGPHandle {
-	return PGPWithProfile(profile.CryptoRefresh())
-}
-
 // PGPWithProfile creates a PGPHandle to interact with the API.
 // Uses the provided profile for configuration.
 func PGPWithProfile(profile *profile.Custom) *PGPHandle {

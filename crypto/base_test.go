@@ -35,7 +35,7 @@ func init() {
 	testPGP = PGP()
 	testPGP.defaultTime = NewConstantClock(testTime) // 2019-05-13T13:37:07+00:00
 	testPGP.localTime = NewConstantClock(testTime)   // 2019-05-13T13:37:07+00:00
-	testProfiles = []*profile.Custom{profile.RFC4880(), profile.Koch(), profile.CryptoRefresh()}
+	testProfiles = []*profile.Custom{profile.RFC4880(), profile.GnuPG(), profile.CryptoRefresh()}
 
 	initEncDecTest()
 	initGenerateKeys()
