@@ -9,7 +9,7 @@ crypto library](https://github.com/lubux/go-crypto/tree/version-2).
 
 - [GopenPGP V3](#gopenpgp-v3)
   - [Examples](#examples)
-    - [Encrypt / Decrypt with password](#encrypt--decrypt-with-password)
+    - [Encrypt / Decrypt with a password](#encrypt--decrypt-with-a-password)
     - [Encrypt / Decrypt with PGP keys](#encrypt--decrypt-with-pgp-keys)
     - [Generate key](#generate-key)
     - [Detached and inline signatures](#detached-and-inline-signatures)
@@ -20,7 +20,7 @@ crypto library](https://github.com/lubux/go-crypto/tree/version-2).
 
 ## Examples
 
-### Encrypt / Decrypt with password
+### Encrypt / Decrypt with a password
 
 ```go
 import "github.com/ProtonMail/gopenpgp/v3/crypto"
@@ -28,12 +28,12 @@ import "github.com/ProtonMail/gopenpgp/v3/crypto"
 password := []byte("hunter2")
 
 pgp := crypto.PGP()
-// Encrypt data with password
+// Encrypt data with a password
 encHandle, err := pgp.Encryption().Password(password).New()
 pgpMessage, err := encHandle.Encrypt([]byte("my message"))
 armored, err := pgpMessage.GetArmored()
 
-// Decrypt data with password
+// Decrypt data with a password
 decHandle, err := pgp.Decryption().Password(password).New()
 decrypted, err := decHandle.Decrypt([]byte(armored))
 myMessage := decrypted.Result()
@@ -42,7 +42,7 @@ myMessage := decrypted.Result()
 To encrypt with the new algorithms from the crypto refresh:
 ```go
 // Use the default crypto refresh profile
-pgp := crypto.PGPWithProfile(profile.CryptoRefresh()) // or crypto.PGPCryptoRefresh()
+pgp := crypto.PGPWithProfile(profile.CryptoRefresh())
 // The default crypto refresh profile uses Argon2 for deriving
 // session keys and uses an AEAD for encryption (AES-256, OCB mode).
 // Encrypt data with password
@@ -51,7 +51,7 @@ pgp := crypto.PGPWithProfile(profile.CryptoRefresh()) // or crypto.PGPCryptoRefr
 ...
 ```
 
-Use custom or preset profile:
+Use a custom or preset profile:
 ```go
 // RFC4880 profile
 pgp4880 := crypto.PGPWithProfile(profile.RFC4880()) 
@@ -120,8 +120,8 @@ decHandle, err := pgp.Decryption().
   VerifyKey(aliceKeyPub).
   New()
 decrypted, err := decHandle.Decrypt([]byte(armored))
-if decrypted.HasSignatureError() {
-  // Signature verification failed with decrypted.SignatureError()
+if sigErr := decrypted.SignatureError(); sigErr != nil {
+  // Signature verification failed with sigErr
 }
 myMessage := decrypted.Result()
 
@@ -206,14 +206,16 @@ decHandle, err := pgp.Decryption().
   New()
 ptReader, err := decHandle.DecryptingReader(ctFileRead)
 decResult, err := ptReader.ReadAllAndVerifySignature()
-if decResult.HasSignatureError() {
-  // Handle decResult.SignatureError() error
+if sigErr := decResult.SignatureError(); sigErr != nil {
+  // Handle sigErr
 }
 // Access decrypted message with decResult.Result()
 ```
 ### Generate key
 Keys are generated with the `GenerateKey` function on the pgp handle.
 ```go
+import "github.com/ProtonMail/gopenpgp/v3/constants"
+
 const (
   name = "Max Mustermann"
   email = "max.mustermann@example.com"
@@ -274,8 +276,8 @@ signature, err := signer.Sign(signingMessage)
 
 verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
 verifyResult, err := verifier.VerifyDetached(signingMessage, signature)
-if verifyResult.HasSignatureError() {
-  // Handle verifyResult.SignatureError()
+if sigErr := verifyResult.SignatureError(); sigErr != nil {
+  // Handle sigErr
 }
 
 signer.ClearPrivateParams()
@@ -295,8 +297,8 @@ signatureMessage, err := signer.Sign(signingMessage)
 
 verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
 verifyResult, err := verifier.VerifyInline(signatureMessage)
-if verifyResult.HasSignatureError() {
-  // Handle verifyResult.SignatureError()
+if sigErr := verifyResult.SignatureError(); sigErr != nil {
+  // Handle sigErr
 }
 
 signer.ClearPrivateParams()
@@ -322,8 +324,8 @@ cleartextArmored, err := signer.SignCleartext(signingMessage)
 
 verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
 verifyResult, err := verifier.VerifyCleartext(cleartextArmored)
-if verifyResult.HasSignatureError() {
-  // Handle verifyResult.SignatureError()
+if sigErr := verifyResult.SignatureError(); sigErr != nil {
+  // Handle sigErr
 }
 
 signer.ClearPrivateParams()

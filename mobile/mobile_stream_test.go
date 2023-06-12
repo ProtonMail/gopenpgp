@@ -232,8 +232,11 @@ func TestExplicitVerifyAllGoesWell(t *testing.T) {
 		t.Fatalf("Got an error while reading decrypted data: %v", err)
 	}
 	sigErr, err := reader.VerifySignature()
-	if sigErr.HasSignatureError() {
-		t.Fatalf("Got a signature error while verifying embedded sig: %v", sigErr.SignatureError())
+	if err != nil {
+		t.Fatalf("Got an error while decrypting: %v", err)
+	}
+	if err = sigErr.SignatureError(); err != nil {
+		t.Fatalf("Got a signature error while verifying embedded sig: %v", err)
 	}
 	if err != nil {
 		t.Fatalf("Got an error while verifying embedded sig: %v", err)
@@ -266,7 +269,7 @@ func TestExplicitVerifyTooEarly(t *testing.T) {
 	if err == nil {
 		t.Fatalf("Got no error while verifying a reader before reading it entirely")
 	}
-	if sigErr.HasSignatureError() {
+	if err = sigErr.SignatureError(); err != nil {
 		t.Fatalf("Got a signature error while verifying embedded sig: %v", sigErr.SignatureError())
 	}
 }
@@ -296,7 +299,7 @@ func TestExplicitVerifyNoSig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Got an error while verifying embedded sig: %v", err)
 	}
-	if !sigErr.HasSignatureError() {
+	if err = sigErr.SignatureError(); err == nil {
 		t.Fatal("Got no signature error while verifying unsigned data")
 	}
 	if sigErr.SignatureErrorExplicit().Status != constants.SIGNATURE_NOT_SIGNED {
@@ -334,7 +337,7 @@ func TestExplicitVerifyWrongVerifier(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Got an error while verifying embedded sig: %v", err)
 	}
-	if !sigErr.HasSignatureError() {
+	if err = sigErr.SignatureError(); err == nil {
 		t.Fatal("Got no signature error while verifying with wrong key")
 	}
 	if sigErr.SignatureErrorExplicit().Status != constants.SIGNATURE_NO_VERIFIER {
