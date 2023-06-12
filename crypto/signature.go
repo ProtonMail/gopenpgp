@@ -105,15 +105,6 @@ func (vr *VerifyResult) SignedByKey() *Key {
 	}
 }
 
-// HasSignatureError returns true if signature err occurred
-// else false
-func (vr *VerifyResult) HasSignatureError() bool {
-	if vr == nil {
-		return false
-	}
-	return vr.signatureError != nil
-}
-
 // SignatureError returns nil if no signature err occurred else
 // the signature error.
 func (vr *VerifyResult) SignatureError() error {
