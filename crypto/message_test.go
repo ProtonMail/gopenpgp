@@ -196,8 +196,8 @@ func TestIssue11(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while decrypting/verifying, got:", err)
 	}
-	if decrypted.HasSignatureError() {
-		t.Fatal("Expected no error while decrypting/verifying, got:", decrypted.SignatureError())
+	if err = decrypted.SignatureError(); err != nil {
+		t.Fatal("Expected no error while decrypting/verifying, got:", err)
 	}
 
 	assert.Exactly(t, "message from sender", string(decrypted.Result()))
@@ -273,8 +273,8 @@ func TestSHA256SignedMessageDecryption(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
-	if decrypted.HasSignatureError() {
-		t.Fatal("Expected no signature error when decrypting, got:", decrypted.SignatureError())
+	if err = decrypted.SignatureError(); err != nil {
+		t.Fatal("Expected no signature error when decrypting, got:", err)
 	}
 	assert.Exactly(t, readTestFile("message_plaintext", true), string(decrypted.Result()))
 }
@@ -291,11 +291,11 @@ func TestSHA1SignedMessageDecryption(t *testing.T) {
 		DisableVerifyTimeCheck().
 		New()
 	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinary())
-	if !decrypted.HasSignatureError() {
+	if err = decrypted.SignatureError(); err == nil {
 		t.Fatal("Expected verification error when decrypting")
 	}
-	if decrypted.SignatureError().Error() != "Signature Verification Error: Insecure signature" {
-		t.Fatal("Expected verification error when decrypting, got:", err)
+	if errStr := decrypted.SignatureError().Error(); errStr != "Signature Verification Error: Insecure signature" {
+		t.Fatal("Expected verification error when decrypting, got:", errStr)
 	}
 	assert.Exactly(t, readTestFile("message_plaintext", true), string(decrypted.Result()))
 }
@@ -338,8 +338,8 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
-	if decrypted.HasSignatureError() {
-		t.Fatal("Expected no signature error when decrypting, got:", decrypted.SignatureError())
+	if err = decrypted.SignatureError(); err != nil {
+		t.Fatal("Expected no signature error when decrypting, got:", err)
 	}
 	assert.Exactly(t, message, decrypted.Result())
 }

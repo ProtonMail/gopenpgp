@@ -168,8 +168,8 @@ func testSignVerify(t *testing.T, signer PGPSign, verifier PGPVerify, detached b
 	if err != nil {
 		t.Fatal("Expected no error while verifying the message, got:", err)
 	}
-	if verifyResult.HasSignatureError() {
-		t.Fatal("Expected no error while verifying the detached signature, got:", verifyResult.SignatureError())
+	if err = verifyResult.SignatureError(); err != nil {
+		t.Fatal("Expected no error while verifying the detached signature, got:", err)
 	}
 
 }
@@ -202,8 +202,8 @@ func testSignVerifyStream(t *testing.T, signer PGPSign, verifier PGPVerify) {
 	if err != nil {
 		t.Fatal("Expected no error while verifying the message, got:", err)
 	}
-	if result.HasSignatureError() {
-		t.Fatal("Expected no error while verifying the detached signature, got:", result.SignatureError())
+	if err = result.SignatureError(); err != nil {
+		t.Fatal("Expected no error while verifying the detached signature, got:", err)
 	}
 	if !bytes.Equal(messageOut, messageBytes) {
 		t.Fatal("Expected read message in verification to be equal to the input message")
@@ -231,8 +231,8 @@ func testSignVerifyDetachedStream(t *testing.T, signer PGPSign, verifier PGPVeri
 	if err != nil {
 		t.Fatal("Expected no error while verifying the message, got:", err)
 	}
-	if result.HasSignatureError() {
-		t.Fatal("Expected no error while verifying the detached signature, got:", result.SignatureError())
+	if err = result.SignatureError(); err != nil {
+		t.Fatal("Expected no error while verifying the detached signature, got:", err)
 	}
 }
 
@@ -246,8 +246,8 @@ func testSignVerifyCleartext(t *testing.T, signer PGPSign, verifier PGPVerify) {
 	if err != nil {
 		t.Fatal("Expected no error while verifying the message, got:", err)
 	}
-	if result.HasSignatureError() {
-		t.Fatal("Expected no signature error while verifying the detached signature, got:", result.SignatureError())
+	if err = result.SignatureError(); err != nil {
+		t.Fatal("Expected no signature error while verifying the detached signature, got:", err)
 	}
 	assert.Exactly(t, internal.Canonicalize(internal.TrimEachLine(messageCleartext)), string(result.Cleartext()))
 }
