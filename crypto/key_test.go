@@ -45,7 +45,7 @@ func initGenerateKeys() {
 		keyTestName,
 		keyTestDomain,
 		clock,
-		profile.Koch(),
+		profile.GnuPG(),
 		constants.StandardSecurity,
 		0,
 	)
