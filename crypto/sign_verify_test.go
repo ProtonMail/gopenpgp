@@ -18,7 +18,7 @@ func TestSignVerifyStream(t *testing.T) {
 				SigningKeys(material.keyRingTestPrivate).
 				New()
 			verifier, _ := material.pgp.Verify().
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testSignVerifyStream(t, signer, verifier)
 		})
@@ -33,7 +33,7 @@ func TestSignVerifyStreamContext(t *testing.T) {
 				SigningContext(NewSigningContext(testContext, true)).
 				New()
 			verifier, _ := material.pgp.Verify().
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				VerificationContext(NewVerificationContext(testContext, true, 0)).
 				New()
 			testSignVerifyStream(t, signer, verifier)
@@ -49,7 +49,7 @@ func TestSignVerifyStreamArmor(t *testing.T) {
 				Armor().
 				New()
 			verifier, _ := material.pgp.Verify().
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testSignVerifyStream(t, signer, verifier)
 		})
@@ -63,7 +63,7 @@ func TestSignVerify(t *testing.T) {
 				SigningKeys(material.keyRingTestPrivate).
 				New()
 			verifier, _ := material.pgp.Verify().
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testSignVerify(t, signer, verifier, false)
 		})
@@ -78,7 +78,7 @@ func TestSignVerifyDetached(t *testing.T) {
 				Detached().
 				New()
 			verifier, _ := material.pgp.Verify().
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testSignVerify(t, signer, verifier, true)
 		})
@@ -92,7 +92,7 @@ func TestSignVerifyStreamDetached(t *testing.T) {
 				Detached().
 				New()
 			verifier, _ := material.pgp.Verify().
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testSignVerifyDetachedStream(t, signer, verifier)
 		})
@@ -108,7 +108,7 @@ func TestSignVerifyStreamDetachedContext(t *testing.T) {
 				SigningContext(NewSigningContext(testContext, true)).
 				New()
 			verifier, _ := material.pgp.Verify().
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				VerificationContext(NewVerificationContext(testContext, true, 0)).
 				New()
 			testSignVerifyDetachedStream(t, signer, verifier)
@@ -125,7 +125,7 @@ func TestSignVerifyStreamDetachedArmor(t *testing.T) {
 				Armor().
 				New()
 			verifier, _ := material.pgp.Verify().
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testSignVerifyDetachedStream(t, signer, verifier)
 		})
@@ -139,7 +139,7 @@ func TestSignVerifyCleartext(t *testing.T) {
 				SigningKeys(material.keyRingTestPrivate).
 				New()
 			verifier, _ := material.pgp.Verify().
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testSignVerifyCleartext(t, signer, verifier)
 		})

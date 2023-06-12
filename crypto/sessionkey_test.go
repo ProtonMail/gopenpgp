@@ -252,7 +252,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 		t.Fatal("Unable to generate EC keyring, got:", err)
 	}
 
-	decryptor, _ = testPGP.Decryption().SessionKey(testSessionKey).VerifyKeys(ecKeyRing).New()
+	decryptor, _ = testPGP.Decryption().SessionKey(testSessionKey).VerificationKeys(ecKeyRing).New()
 	decrypted, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket())
 	if err != nil {
 		t.Fatal("Wrong error returned for verification failure", err)
@@ -262,7 +262,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 	}
 
 	// Decrypt & verify data with the good session key and keyring
-	decryptor, _ = testPGP.Decryption().SessionKey(testSessionKey).VerifyKeys(keyRingTestPublic).New()
+	decryptor, _ = testPGP.Decryption().SessionKey(testSessionKey).VerificationKeys(keyRingTestPublic).New()
 	decrypted, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket())
 	if err != nil {
 		t.Fatal("Expected no error when decrypting & verifying, got:", err)
@@ -298,7 +298,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 	assert.Exactly(t, 3, len(ids))
 
 	// Test if final decryption & verification succeeds
-	decryptor, _ = testPGP.Decryption().DecryptionKeys(keyRingTestPrivate).VerifyKeys(keyRingTestPublic).New()
+	decryptor, _ = testPGP.Decryption().DecryptionKeys(keyRingTestPrivate).VerificationKeys(keyRingTestPublic).New()
 	finalMessage, err := decryptor.Decrypt(pgpMessage.GetBinary())
 	if err != nil {
 		t.Fatal("Unable to decrypt and verify joined keypacket and datapacket, got:", err)

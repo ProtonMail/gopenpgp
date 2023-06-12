@@ -14,13 +14,13 @@ func newVerifyHandleBuilder(clock Clock) *VerifyHandleBuilder {
 	}
 }
 
-// VerifyKeys sets the public keys for verifying the signatures.
-func (vhb *VerifyHandleBuilder) VerifyKeys(verifyKeys *KeyRing) *VerifyHandleBuilder {
-	vhb.handle.VerifyKeyRing = verifyKeys
+// VerificationKeys sets the public keys for verifying the signatures.
+func (vhb *VerifyHandleBuilder) VerificationKeys(keys *KeyRing) *VerifyHandleBuilder {
+	vhb.handle.VerifyKeyRing = keys
 	return vhb
 }
 
-func (vhb *VerifyHandleBuilder) VerifyKey(key *Key) *VerifyHandleBuilder {
+func (vhb *VerifyHandleBuilder) VerificationKey(key *Key) *VerifyHandleBuilder {
 	var err error
 	if vhb.handle.VerifyKeyRing == nil {
 		vhb.handle.VerifyKeyRing, err = NewKeyRing(key)
