@@ -222,7 +222,7 @@ func TestExplicitVerifyAllGoesWell(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Got an error while encrypting test data: %v", err)
 	}
-	decHandle, _ := pgpHandle.Decryption().DecryptionKeys(privKR).VerifyKeys(pubKR).New()
+	decHandle, _ := pgpHandle.Decryption().DecryptionKeys(privKR).VerificationKeys(pubKR).New()
 	reader, err := decHandle.DecryptingReader(bytes.NewReader(ciphertext.GetBinary()))
 	if err != nil {
 		t.Fatalf("Got an error while decrypting stream data: %v", err)
@@ -255,7 +255,7 @@ func TestExplicitVerifyTooEarly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Got an error while encrypting test data: %v", err)
 	}
-	decHandle, _ := pgp.Decryption().DecryptionKeys(privKR).VerifyKeys(pubKR).New()
+	decHandle, _ := pgp.Decryption().DecryptionKeys(privKR).VerificationKeys(pubKR).New()
 	reader, err := decHandle.DecryptingReader(bytes.NewReader(ciphertext.GetBinary()))
 	if err != nil {
 		t.Fatalf("Got an error while decrypting stream data: %v", err)
@@ -286,7 +286,7 @@ func TestExplicitVerifyNoSig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Got an error while encrypting test data: %v", err)
 	}
-	decHandle, _ := pgp.Decryption().DecryptionKeys(privKR).VerifyKeys(pubKR).New()
+	decHandle, _ := pgp.Decryption().DecryptionKeys(privKR).VerificationKeys(pubKR).New()
 	reader, err := decHandle.DecryptingReader(bytes.NewReader(ciphertext.GetBinary()))
 	if err != nil {
 		t.Fatalf("Got an error while decrypting stream data: %v", err)
@@ -324,7 +324,7 @@ func TestExplicitVerifyWrongVerifier(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Got an error while encrypting test data: %v", err)
 	}
-	decHandle, _ := pgp.Decryption().DecryptionKeys(privKR).VerifyKeys(pubKR).New()
+	decHandle, _ := pgp.Decryption().DecryptionKeys(privKR).VerificationKeys(pubKR).New()
 	reader, err := decHandle.DecryptingReader(bytes.NewReader(ciphertext.GetBinary()))
 	if err != nil {
 		t.Fatalf("Got an error while decrypting stream data: %v", err)

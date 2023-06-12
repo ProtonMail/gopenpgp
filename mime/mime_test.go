@@ -167,11 +167,11 @@ func runScenario(t *testing.T, messageFile string) *testMIMECallbacks {
 	pgp := crypto.PGP()
 	decHandle, _ := pgp.Decryption().
 		DecryptionKeys(decryptionKeyRing).
-		VerifyKeys(verificationKeyRing).
+		VerificationKeys(verificationKeyRing).
 		VerifyTime(1557754627).
 		New()
 	verifyHandle, _ := pgp.Verify().
-		VerifyKeys(verificationKeyRing).
+		VerificationKeys(verificationKeyRing).
 		VerifyTime(1557754627).
 		New()
 	Decrypt(message, decHandle, verifyHandle, callbacks)

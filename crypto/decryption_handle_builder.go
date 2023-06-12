@@ -53,14 +53,14 @@ func (dpb *DecryptionHandleBuilder) Password(password []byte) *DecryptionHandleB
 	return dpb
 }
 
-// VerifyKeys sets the public keys for verifying the signatures of the pgp message, if any.
+// VerificationKeys sets the public keys for verifying the signatures of the pgp message, if any.
 // If not set, the signatures cannot be verified.
-func (dpb *DecryptionHandleBuilder) VerifyKeys(verifyKeys *KeyRing) *DecryptionHandleBuilder {
-	dpb.handle.VerifyKeyRing = verifyKeys
+func (dpb *DecryptionHandleBuilder) VerificationKeys(keys *KeyRing) *DecryptionHandleBuilder {
+	dpb.handle.VerifyKeyRing = keys
 	return dpb
 }
 
-func (dpb *DecryptionHandleBuilder) VerifyKey(key *Key) *DecryptionHandleBuilder {
+func (dpb *DecryptionHandleBuilder) VerificationKey(key *Key) *DecryptionHandleBuilder {
 	var err error
 	if dpb.handle.VerifyKeyRing == nil {
 		dpb.handle.VerifyKeyRing, err = NewKeyRing(key)
