@@ -77,7 +77,7 @@ func TestEncryptDecryptStream(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptDecryptStream(
 				t,
@@ -101,7 +101,7 @@ func TestEncryptDecryptStreamWithContext(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				VerificationContext(NewVerificationContext(testContext, true, 0)).
 				New()
 			testEncryptDecryptStream(
@@ -127,7 +127,7 @@ func TestEncryptDecryptStreamWithContextAndCompression(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				VerificationContext(NewVerificationContext(testContext, true, 0)).
 				New()
 			testEncryptDecryptStream(
@@ -152,7 +152,7 @@ func TestEncryptDecryptStreamWithCachedSession(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				SessionKey(material.testSessionKey).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				DisableIntendedRecipients().
 				New()
 			testEncryptDecryptStream(
@@ -177,7 +177,7 @@ func TestEncryptDecryptCachedSessionOnDecrypt(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				RetrieveSessionKey().
 				New()
 			pgpMessage, err := encHandle.Encrypt([]byte(testMessageString))
@@ -196,7 +196,7 @@ func TestEncryptDecryptCachedSessionOnDecrypt(t *testing.T) {
 			}
 			decHandle, _ = material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			decResult, err = decHandle.Decrypt(pgpMessage.GetBinary())
 			if err != nil {
@@ -218,7 +218,7 @@ func TestSessionEncryptDecryptStream(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				SessionKey(material.testSessionKey).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptDecryptStream(
 				t,
@@ -242,7 +242,7 @@ func TestSessionEncryptDecryptStreamWithContext(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				SessionKey(material.testSessionKey).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				VerificationContext(NewVerificationContext(testContext, true, 0)).
 				New()
 			testEncryptDecryptStream(
@@ -269,7 +269,7 @@ func TestSessionEncryptDecryptStreamWithContextAndCompression(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				SessionKey(material.testSessionKey).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				VerificationContext(NewVerificationContext(testContext, true, 0)).
 				New()
 			testEncryptDecryptStream(
@@ -295,7 +295,7 @@ func TestEncryptDecryptStreamArmored(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptDecryptStream(
 				t,
@@ -322,7 +322,7 @@ func TestEncryptDecryptUTF8Stream(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptDecryptStream(
 				t,
@@ -378,7 +378,7 @@ func TestEncryptDecryptSplitStream(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptSplitDecryptStream(
 				t,
@@ -403,7 +403,7 @@ func TestEncryptDecryptSplitStreamWithContext(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				VerificationContext(NewVerificationContext(testContext, true, 0)).
 				New()
 			testEncryptSplitDecryptStream(
@@ -430,7 +430,7 @@ func TestEncryptDecryptSplitStreamWithContextAndCompression(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				VerificationContext(NewVerificationContext(testContext, true, 0)).
 				New()
 			testEncryptSplitDecryptStream(
@@ -455,7 +455,7 @@ func TestSessionEncryptDecryptSplitStream(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				SessionKey(material.testSessionKey).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptSplitDecryptStream(
 				t,
@@ -480,7 +480,7 @@ func TestSessionEncryptDecryptSplitStreamWithContext(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				SessionKey(material.testSessionKey).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				VerificationContext(NewVerificationContext(testContext, true, 0)).
 				New()
 			testEncryptSplitDecryptStream(
@@ -507,7 +507,7 @@ func TestSessionEncryptDecryptSplitStreamWithContextAndCompression(t *testing.T)
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				SessionKey(material.testSessionKey).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				VerificationContext(NewVerificationContext(testContext, true, 0)).
 				New()
 			testEncryptSplitDecryptStream(
@@ -533,7 +533,7 @@ func TestEncryptDecryptDetached(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptSplitDecryptStream(
 				t,
@@ -559,7 +559,7 @@ func TestPasswordEncryptDecryptDetached(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				Password(password).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptSplitDecryptStream(
 				t,
@@ -584,7 +584,7 @@ func TestSessionKeyEncryptDecryptDetached(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				SessionKey(material.testSessionKey).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptSplitDecryptStream(
 				t,
@@ -631,7 +631,7 @@ func TestPasswordEncryptSignDecryptStream(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				Password([]byte(password)).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptDecryptStream(
 				t,
@@ -656,7 +656,7 @@ func TestPasswordEncryptSignDecryptStreamWithCachedSession(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				SessionKey(material.testSessionKey).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptDecryptStream(
 				t,
@@ -679,7 +679,7 @@ func TestEncryptDecrypt(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptDecrypt(
 				t,
@@ -705,7 +705,7 @@ func TestEncryptDecryptUTF8(t *testing.T) {
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
-				VerifyKeys(material.keyRingTestPublic).
+				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptDecrypt(
 				t,
