@@ -187,7 +187,7 @@ func TestMobile2GoReader(t *testing.T) {
 }
 
 func setUpTestKeyRing() (*crypto.PGPHandle, *crypto.KeyRing, *crypto.KeyRing, error) {
-	pgpHandle := crypto.PGPWithProfile(profile.Koch())
+	pgpHandle := crypto.PGPWithProfile(profile.GnuPG())
 	testKey, err := pgpHandle.KeyGeneration().
 		AddUserId("test", "test@protonmail.com").
 		New().

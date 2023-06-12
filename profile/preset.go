@@ -5,12 +5,13 @@ import (
 
 	"github.com/ProtonMail/go-crypto/v2/openpgp/packet"
 	"github.com/ProtonMail/go-crypto/v2/openpgp/s2k"
+	"github.com/ProtonMail/gopenpgp/v3/constants"
 )
 
 var nameToProfile = map[string]func() *Custom{
 	"default":                           Default,
 	"rfc4880":                           RFC4880,
-	"draft-koch-openpgp":                Koch,
+	"draft-koch-openpgp":                GnuPG,
 	"draft-ietf-openpgp-crypto-refresh": CryptoRefresh,
 }
 
@@ -18,24 +19,26 @@ var nameToProfile = map[string]func() *Custom{
 func PresetProfiles() []string {
 	var profiles []string
 	for profile := range nameToProfile {
-		if profile != "default" {
-			profiles = append(profiles, profile)
-		}
+		profiles = append(profiles, profile)
 	}
 	return profiles
 }
 
-// Default returns the custom profile of this library.
+// Default returns a custom profile that support features
+// that are widely implemented.
 func Default() *Custom {
-	return RFC4880()
-}
-
-// RFC4880 returns a custom profile for this library
-// that conforms with the algorithms in rfc 4880.
-func RFC4880() *Custom {
+	setKeyAlgorithm := func(cfg *packet.Config, level constants.SecurityLevel) {
+		cfg.Algorithm = packet.PubKeyAlgoEdDSA
+		switch level {
+		case constants.HighSecurity:
+			cfg.Curve = packet.Curve25519
+		default:
+			cfg.Curve = packet.Curve25519
+		}
+	}
 	return &Custom{
-		Name:                 "rfc4880",
-		KeyAlgorithm:         RSA,
+		Name:                 "default",
+		SetKeyAlgorithm:      setKeyAlgorithm,
 		Hash:                 crypto.SHA256,
 		HashSign:             crypto.SHA512,
 		CipherEncryption:     packet.CipherAES256,
@@ -46,30 +49,67 @@ func RFC4880() *Custom {
 	}
 }
 
-// Koch returns a custom profile for this library
-// that conforms with the algorithms in draft-koch-openpgp.
-func Koch() *Custom {
+// RFC4880 returns a custom profile for this library
+// that conforms with the algorithms in rfc 4880.
+func RFC4880() *Custom {
+	setKeyAlgorithm := func(cfg *packet.Config, level constants.SecurityLevel) {
+		cfg.Algorithm = packet.PubKeyAlgoRSA
+		switch level {
+		case constants.HighSecurity:
+			cfg.RSABits = 4096
+		default:
+			cfg.RSABits = 3072
+		}
+	}
+	return &Custom{
+		Name:                 "rfc4880",
+		SetKeyAlgorithm:      setKeyAlgorithm,
+		Hash:                 crypto.SHA256,
+		HashSign:             crypto.SHA512,
+		CipherEncryption:     packet.CipherAES256,
+		CompressionAlgorithm: packet.CompressionZLIB,
+	}
+}
+
+// GnuPG returns a custom profile for this library
+// that conforms with the algorithms in GnuPG.
+// Use this profile for modern algorithms and GnuPG interoperability.
+func GnuPG() *Custom {
+	setKeyAlgorithm := func(cfg *packet.Config, level constants.SecurityLevel) {
+		cfg.Algorithm = packet.PubKeyAlgoEdDSA
+		switch level {
+		case constants.HighSecurity:
+			cfg.Curve = packet.Curve448
+		default:
+			cfg.Curve = packet.Curve25519
+		}
+	}
 	return &Custom{
 		Name:                 "draft-koch-openpgp",
-		KeyAlgorithm:         Elliptic,
+		SetKeyAlgorithm:      setKeyAlgorithm,
 		Hash:                 crypto.SHA256,
 		HashSign:             crypto.SHA512,
 		CipherEncryption:     packet.CipherAES256,
 		CompressionAlgorithm: packet.CompressionZLIB,
 		AeadKeyEncryption:    &packet.AEADConfig{},
 		AeadEncryption:       &packet.AEADConfig{},
-		CompressionConfiguration: &packet.CompressionConfig{
-			Level: 6,
-		},
 	}
 }
 
 // CryptoRefresh returns a custom profile for this library
 // that conforms with the algorithms in draft-ietf-openpgp-crypto-refresh.
 func CryptoRefresh() *Custom {
+	setKeyAlgorithm := func(cfg *packet.Config, level constants.SecurityLevel) {
+		switch level {
+		case constants.HighSecurity:
+			cfg.Algorithm = packet.PubKeyAlgoEd448
+		default:
+			cfg.Algorithm = packet.PubKeyAlgoEd25519
+		}
+	}
 	return &Custom{
 		Name:                 "draft-ietf-openpgp-crypto-refresh",
-		KeyAlgorithm:         Elliptic,
+		SetKeyAlgorithm:      setKeyAlgorithm,
 		Hash:                 crypto.SHA256,
 		HashSign:             crypto.SHA512,
 		CipherEncryption:     packet.CipherAES256,
