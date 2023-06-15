@@ -239,9 +239,8 @@ func createVerifyResult(
 	disableTimeCheck bool,
 ) (*VerifyResult, error) {
 	var verifiedSignatures []*VerifiedSignature
-	var signatureError SignatureVerificationError
 	if !md.IsSigned {
-		signatureError = newSignatureNotSigned()
+		signatureError := newSignatureNotSigned()
 		return &VerifyResult{
 			signatureError: &signatureError,
 		}, nil
@@ -267,6 +266,7 @@ func createVerifyResult(
 			verifyTime,
 			disableTimeCheck,
 		)
+		var signatureError SignatureVerificationError
 		if len(verifierKey.entities) == 0 || md.SignatureError == pgpErrors.ErrUnknownIssuer {
 			signatureError = newSignatureNoVerifier()
 		} else if signature.SignatureError != nil {
