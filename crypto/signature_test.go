@@ -200,14 +200,16 @@ func Test_KeyRing_GetVerifiedSignatureWithTwoKeysTimestampSuccess(t *testing.T) 
 
 	verificationResult, _ := verifier.VerifyDetached(message, signature)
 	actualTime := verificationResult.SignatureCreationTime()
+	otherTime := verificationResult.Signatures[1].Signature.CreationTime.Unix()
 	if err != nil {
 		t.Errorf("Got an error while parsing the signature creation time: %v", err)
 	}
-	if time2 != actualTime {
-		t.Errorf("Expected creation time to be %d, got %d", time1, actualTime)
+
+	if time2 != otherTime {
+		t.Errorf("Expected creation time to be %d, got %d", otherTime, time2)
 	}
-	if time1 == actualTime {
-		t.Errorf("Expected creation time to be different from %d", time1)
+	if time1 != actualTime {
+		t.Errorf("Expected creation time to be %d, got %d", actualTime, time1)
 	}
 }
 
