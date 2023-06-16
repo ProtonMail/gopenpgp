@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/ProtonMail/gopenpgp/v3/internal"
 	"github.com/stretchr/testify/assert"
 )
 
 const messageToSign = "Hello World!"
 const messageCleartext = "  Signed message\n  \n  "
+
+// An implementation SHOULD add a line break after the cleartext,
+// but MAY omit it if the cleartext ends with a line break. This is for visual clarity.
+const expectedMessageCleartext = "  Signed message\n\n\n"
 
 func TestSignVerifyStream(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
@@ -249,5 +252,5 @@ func testSignVerifyCleartext(t *testing.T, signer PGPSign, verifier PGPVerify) {
 	if err = result.SignatureError(); err != nil {
 		t.Fatal("Expected no signature error while verifying the detached signature, got:", err)
 	}
-	assert.Exactly(t, internal.Canonicalize(internal.TrimEachLine(messageCleartext)), string(result.Cleartext()))
+	assert.Exactly(t, expectedMessageCleartext, string(result.Cleartext()))
 }
