@@ -41,10 +41,6 @@ type encryptionHandle struct {
 	// DetachedSignature indicates if a separate encrypted detached signature
 	// should be created
 	DetachedSignature bool
-	// Armored indicates if the output should be armored.
-	// If set true, the output is in armored format.
-	// If set to false, the output is in binary format.
-	Armored bool
 	// ArmorHeaders provides armor headers if the message is armored.
 	// Only considered if Armored is set to true.
 	ArmorHeaders map[string]string
@@ -70,25 +66,22 @@ func defaultEncryptionHandle(profile EncryptionProfile, clock Clock) *encryption
 // EncryptingWriter returns a wrapper around underlying outputWriter io.Writer, such that any write-operation
 // via the wrapper results in a write to an encrypted PGP message.
 // The returned PGP message WriteCloser must be closed after the plaintext has been written.
-func (eh *encryptionHandle) EncryptingWriter(outputWriter Writer) (messageWriter WriteCloser, err error) {
+func (eh *encryptionHandle) EncryptingWriter(outputWriter Writer, encoding PGPEncoding) (messageWriter WriteCloser, err error) {
 	pgpMessageWriter := isPGPMessageWriter(outputWriter)
 	if pgpMessageWriter != nil {
-		return eh.encryptingWriters(pgpMessageWriter.Keys(), pgpMessageWriter, pgpMessageWriter.Signature(), nil)
+		return eh.encryptingWriters(pgpMessageWriter.Keys(), pgpMessageWriter, pgpMessageWriter.Signature(), nil, encoding.armorOutput())
 	}
 	if eh.DetachedSignature {
 		return nil, errors.New("gopenpgp: no pgp split writer provided for the detached signature")
 	}
-	return eh.encryptingWriters(nil, outputWriter, nil, nil)
+	return eh.encryptingWriters(nil, outputWriter, nil, nil, encoding.armorOutput())
 }
 
 // Encrypt encrypts a binary message, and outputs a PGPMessage.
 func (eh *encryptionHandle) Encrypt(message []byte) (*PGPMessage, error) {
 	pgpMessageBuffer := NewPGPMessageBuffer()
 	// Enforce that for a PGPMessage struct the output should not be armored.
-	armoredSave := eh.Armored
-	eh.Armored = false
-	encryptingWriter, err := eh.EncryptingWriter(pgpMessageBuffer)
-	eh.Armored = armoredSave
+	encryptingWriter, err := eh.EncryptingWriter(pgpMessageBuffer, Bytes)
 	if err != nil {
 		return nil, err
 	}
@@ -142,10 +135,6 @@ func (dp *encryptionHandle) validate() error {
 	if dp.SignKeyRing == nil && dp.DetachedSignature {
 		return errors.New("gopenpgp: no signing key provided for detached signature")
 	}
-
-	if dp.Armored && dp.SessionKey != nil {
-		return errors.New("gopenpgp: armor is not allowed for encryption with session key")
-	}
 	return nil
 }
 
@@ -183,7 +172,7 @@ func (eh *encryptionHandle) ClearPrivateParams() {
 	}
 }
 
-func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writer, meta *LiteralMetadata) (messageWriter WriteCloser, err error) {
+func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writer, meta *LiteralMetadata, armorOutput bool) (messageWriter WriteCloser, err error) {
 	var armorWriter WriteCloser
 	var armorSigWriter WriteCloser
 	err = eh.validate()
@@ -196,7 +185,7 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 		return
 	}
 
-	if eh.Armored {
+	if armorOutput {
 		// Wrap armored writer
 		if eh.ArmorHeaders == nil {
 			eh.ArmorHeaders = internal.ArmorHeaders
@@ -252,7 +241,7 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 		err = errors.New("gopenpgp: no encryption key ring, session key, or password provided")
 	}
 
-	if eh.Armored {
+	if armorOutput {
 		// Wrap armored writer
 		messageWriter = &armoredWriteCloser{
 			armorWriter:    armorWriter,
