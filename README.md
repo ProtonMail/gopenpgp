@@ -35,7 +35,7 @@ armored, err := pgpMessage.GetArmored()
 
 // Decrypt data with a password
 decHandle, err := pgp.Decryption().Password(password).New()
-decrypted, err := decHandle.Decrypt([]byte(armored))
+decrypted, err := decHandle.Decrypt([]byte(armored), crypto.Armor)
 myMessage := decrypted.Result()
 ```
 
@@ -85,7 +85,7 @@ armored, err := pgpMessage.GetArmored()
 
 // Decrypt armored encrypted message using the private key and obtain the plaintext
 decHandle, err := pgp.Decryption().DecryptionKey(privateKey).New()
-decrypted, err := decHandle.Decrypt([]byte(armored))
+decrypted, err := decHandle.Decrypt([]byte(armored), crypto.Armor)
 myMessage := decrypted.Result()
 
 decHandle.ClearPrivateParams()
@@ -119,7 +119,7 @@ decHandle, err := pgp.Decryption().
   DecryptionKey(bobKeyPriv).
   VerifyKey(aliceKeyPub).
   New()
-decrypted, err := decHandle.Decrypt([]byte(armored))
+decrypted, err := decHandle.Decrypt([]byte(armored), crypto.Armor)
 if sigErr := decrypted.SignatureError(); sigErr != nil {
   // Signature verification failed with sigErr
 }
@@ -272,10 +272,10 @@ pgp := crypto.PGP()
 signingMessage := []byte("message to sign")
 
 signer, err := pgp.Sign().SigningKey(aliceKeyPriv).Detached().New()
-signature, err := signer.Sign(signingMessage)
+signature, err := signer.Sign(signingMessage, crypto.Armor)
 
 verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
-verifyResult, err := verifier.VerifyDetached(signingMessage, signature)
+verifyResult, err := verifier.VerifyDetached(signingMessage, signature, crypto.Armor)
 if sigErr := verifyResult.SignatureError(); sigErr != nil {
   // Handle sigErr
 }
@@ -293,10 +293,10 @@ pgp := crypto.PGP()
 signingMessage := []byte("message to sign")
 
 signer, err := pgp.Sign().SigningKey(aliceKeyPriv).New()
-signatureMessage, err := signer.Sign(signingMessage)
+signatureMessage, err := signer.Sign(signingMessage, crypto.Armor)
 
 verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
-verifyResult, err := verifier.VerifyInline(signatureMessage)
+verifyResult, err := verifier.VerifyInline(signatureMessage, crypto.Armor)
 if sigErr := verifyResult.SignatureError(); sigErr != nil {
   // Handle sigErr
 }
@@ -369,7 +369,7 @@ pgpMessageEncSig, err := pgpMessage.GetEncryptedDetachedSignature()
 // ...
 var encSigDataPackets bytes.Buffer
 splitWriter := crypto.NewPGPSplitWriter(&keyPackets, &dataPackets, &encSigDataPackets)
-ptWriter, err := encHandle.EncryptingWriter(splitWriter)
+ptWriter, err := encHandle.EncryptingWriter(splitWriter, crypto.Bytes)
 // ...
 // Key packets are written to keyPackets, data packets are written to dataPackets ,and
 // Data packets of the encrypted signature to encSigDataPackets

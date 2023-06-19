@@ -7,19 +7,24 @@ type PGPDecryption interface {
 	// such that any read-operation via the wrapper results in a read from the decrypted pgp message.
 	// The returned VerifyDataReader has to be fully read before any potential signatures can be verified.
 	// Either read the message fully end then call VerifySignature or use the helper method ReadAllAndVerifySignature.
+	// The encoding indicates if the input message should be unarmored or not, i.e., Bytes/Armor/Auto
+	// where Auto tries to detect automatically.
 	// If encryptedMessage is of type PGPSplitReader, the method tries to verify an encrypted detached signature that is read from
 	// from the separate reader.
-	DecryptingReader(encryptedMessage Reader) (*VerifyDataReader, error)
+	DecryptingReader(encryptedMessage Reader, encoding PGPEncoding) (*VerifyDataReader, error)
 	// Decrypt decrypts an encrypted pgp message.
 	// Returns a VerifiedDataResult, which can be queried for potential signature verification errors,
 	// and the plaintext data. Note that on a signature error, the method does not return an error.
 	// Instead, the signature error is stored within the VerifiedDataResult.
-	Decrypt(pgpMessage []byte) (*VerifiedDataResult, error)
+	// The encoding indicates if the input message should be unarmored or not, i.e., Bytes/Armor/Auto
+	// where Auto tries to detect automatically.
+	Decrypt(pgpMessage []byte, encoding PGPEncoding) (*VerifiedDataResult, error)
 	// DecryptDetached provides the same functionality as Decrypt but allows
 	// to supply an encrypted detached signature that should be decrypted and verified
 	// against the data in the pgp message. If encDetachedSignature is nil, the behavior is similar
-	// to Decrypt.
-	DecryptDetached(pgpMessage []byte, encDetachedSignature []byte) (*VerifiedDataResult, error)
+	// to Decrypt. The encoding indicates if the input message should be unarmored or not,
+	// i.e., Bytes/Armor/Auto where Auto tries to detect automatically.
+	DecryptDetached(pgpMessage []byte, encDetachedSignature []byte, encoding PGPEncoding) (*VerifiedDataResult, error)
 	// DecryptSessionKey decrypts an encrypted session key.
 	// To decrypted a session key, the decryption handle must contain either a decryption key or a password.
 	DecryptSessionKey(keyPackets []byte) (*SessionKey, error)

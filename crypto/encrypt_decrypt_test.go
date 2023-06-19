@@ -86,6 +86,7 @@ func TestEncryptDecryptStream(t *testing.T) {
 				encHandle,
 				decHandle,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -111,6 +112,7 @@ func TestEncryptDecryptStreamWithContext(t *testing.T) {
 				encHandle,
 				decHandle,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -137,6 +139,7 @@ func TestEncryptDecryptStreamWithContextAndCompression(t *testing.T) {
 				encHandle,
 				decHandle,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -162,6 +165,7 @@ func TestEncryptDecryptStreamWithCachedSession(t *testing.T) {
 				encHandle,
 				decHandle,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -184,7 +188,7 @@ func TestEncryptDecryptCachedSessionOnDecrypt(t *testing.T) {
 			if err != nil {
 				t.Fatal("Expected no error in encryption, got:", err)
 			}
-			decResult, err := decHandle.Decrypt(pgpMessage.GetBinary())
+			decResult, err := decHandle.Decrypt(pgpMessage.GetBinary(), Bytes)
 			if err != nil {
 				t.Fatal("Expected no error in decryption, got:", decResult)
 			}
@@ -198,7 +202,7 @@ func TestEncryptDecryptCachedSessionOnDecrypt(t *testing.T) {
 				DecryptionKeys(material.keyRingTestPrivate).
 				VerificationKeys(material.keyRingTestPublic).
 				New()
-			decResult, err = decHandle.Decrypt(pgpMessage.GetBinary())
+			decResult, err = decHandle.Decrypt(pgpMessage.GetBinary(), Bytes)
 			if err != nil {
 				t.Fatal("Expected no error in decryption, got:", decResult)
 			}
@@ -227,6 +231,7 @@ func TestSessionEncryptDecryptStream(t *testing.T) {
 				encHandle,
 				decHandle,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -252,6 +257,7 @@ func TestSessionEncryptDecryptStreamWithContext(t *testing.T) {
 				encHandle,
 				decHandle,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -279,6 +285,7 @@ func TestSessionEncryptDecryptStreamWithContextAndCompression(t *testing.T) {
 				encHandle,
 				decHandle,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -291,7 +298,6 @@ func TestEncryptDecryptStreamArmored(t *testing.T) {
 			encHandle, _ := material.pgp.Encryption().
 				Recipients(material.keyRingTestPublic).
 				SigningKeys(material.keyRingTestPrivate).
-				Armor().
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
@@ -304,6 +310,7 @@ func TestEncryptDecryptStreamArmored(t *testing.T) {
 				encHandle,
 				decHandle,
 				true,
+				Armor,
 			)
 		})
 	}
@@ -331,6 +338,7 @@ func TestEncryptDecryptUTF8Stream(t *testing.T) {
 				encHandle,
 				decHandle,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -357,7 +365,7 @@ func TestAEADDecryptionStream(t *testing.T) {
 	defer kR.ClearPrivateParams()
 
 	decHandle, _ := PGP().Decryption().DecryptionKeys(kR).New()
-	messageReader, err := decHandle.DecryptingReader(pgpMessageDataReader)
+	messageReader, err := decHandle.DecryptingReader(pgpMessageDataReader, Auto)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
@@ -388,6 +396,7 @@ func TestEncryptDecryptSplitStream(t *testing.T) {
 				decHandle,
 				splitWriter,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -414,6 +423,7 @@ func TestEncryptDecryptSplitStreamWithContext(t *testing.T) {
 				decHandle,
 				splitWriter,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -441,6 +451,7 @@ func TestEncryptDecryptSplitStreamWithContextAndCompression(t *testing.T) {
 				decHandle,
 				splitWriter,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -465,6 +476,7 @@ func TestSessionEncryptDecryptSplitStream(t *testing.T) {
 				decHandle,
 				splitWriter,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -491,6 +503,7 @@ func TestSessionEncryptDecryptSplitStreamWithContext(t *testing.T) {
 				decHandle,
 				splitWriter,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -518,6 +531,7 @@ func TestSessionEncryptDecryptSplitStreamWithContextAndCompression(t *testing.T)
 				decHandle,
 				splitWriter,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -543,6 +557,7 @@ func TestEncryptDecryptDetached(t *testing.T) {
 				decHandle,
 				splitWriterDetachedSignature,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -569,6 +584,7 @@ func TestPasswordEncryptDecryptDetached(t *testing.T) {
 				decHandle,
 				splitWriterDetachedSignature,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -594,6 +610,7 @@ func TestSessionKeyEncryptDecryptDetached(t *testing.T) {
 				decHandle,
 				splitWriterDetachedSignature,
 				true,
+				Bytes,
 			)
 		})
 	}
@@ -616,6 +633,7 @@ func TestPasswordEncryptDecryptStream(t *testing.T) {
 				encHandle,
 				decHandle,
 				false,
+				Bytes,
 			)
 		})
 	}
@@ -640,6 +658,7 @@ func TestPasswordEncryptSignDecryptStream(t *testing.T) {
 				encHandle,
 				decHandle,
 				false,
+				Bytes,
 			)
 		})
 	}
@@ -665,6 +684,7 @@ func TestPasswordEncryptSignDecryptStreamWithCachedSession(t *testing.T) {
 				encHandle,
 				decHandle,
 				false,
+				Bytes,
 			)
 		})
 	}
@@ -776,7 +796,7 @@ func testEncryptDecrypt(
 		t.Fatal("Expected no error while encrypting with key ring, got:", err)
 	}
 	ciphertextBytes := pgpMessage.GetBinary()
-	decryptionResult, err := decHandle.Decrypt(ciphertextBytes)
+	decryptionResult, err := decHandle.Decrypt(ciphertextBytes, Bytes)
 	if err != nil {
 		t.Fatal("Expected no error while calling decrypt with key ring, got:", err)
 	}
@@ -807,6 +827,7 @@ func testEncryptSplitDecryptStream(
 	decHandle PGPDecryption,
 	multiWriterCreator func(Writer, Writer, Writer) PGPSplitWriter,
 	checkSig bool,
+	encoding PGPEncoding,
 ) {
 	messageReader := bytes.NewReader(messageBytes)
 	var keyPackets bytes.Buffer
@@ -814,7 +835,7 @@ func testEncryptSplitDecryptStream(
 	var detachedSignature bytes.Buffer
 	expectedMetadata := metadata
 	splitOutput := multiWriterCreator(&keyPackets, &ciphertextBuf, &detachedSignature)
-	messageWriter, err := encHandle.EncryptingWriter(splitOutput)
+	messageWriter, err := encHandle.EncryptingWriter(splitOutput, encoding)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting stream with key ring, got:", err)
 	}
@@ -842,7 +863,7 @@ func testEncryptSplitDecryptStream(
 		)
 		pgpMessageReader = NewPGPSplitReader(pgpMessageReader, detachedSignatureReader)
 	}
-	decryptedReader, err := decHandle.DecryptingReader(pgpMessageReader)
+	decryptedReader, err := decHandle.DecryptingReader(pgpMessageReader, encoding)
 	if err != nil {
 		t.Fatal("Expected no error while calling decrypting stream with key ring, got:", err)
 	}
@@ -886,11 +907,12 @@ func testEncryptDecryptStream(
 	encHandle PGPEncryption,
 	decHandle PGPDecryption,
 	checkSig bool,
+	encoding PGPEncoding,
 ) {
 	messageReader := bytes.NewReader(messageBytes)
 	var ciphertextBuf bytes.Buffer
 	expectedMetadata := metadata
-	messageWriter, err := encHandle.EncryptingWriter(&ciphertextBuf)
+	messageWriter, err := encHandle.EncryptingWriter(&ciphertextBuf, encoding)
 	if err != nil {
 		t.Fatal("Expected no error while encrypting stream with key ring, got:", err)
 	}
@@ -905,7 +927,7 @@ func testEncryptDecryptStream(
 		t.Fatal("Expected no error while closing plaintext writer, got:", err)
 	}
 	ciphertextBytes := ciphertextBuf.Bytes()
-	decryptedReader, err := decHandle.DecryptingReader(bytes.NewReader(ciphertextBytes))
+	decryptedReader, err := decHandle.DecryptingReader(bytes.NewReader(ciphertextBytes), encoding)
 	if err != nil {
 		t.Fatal("Expected no error while calling decrypting stream with key ring, got:", err)
 	}
