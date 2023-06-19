@@ -22,7 +22,7 @@ func TestTextMessageEncryptionWithPassword(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
-	packets := packet.NewReader(bytes.NewReader(encrypted.GetBinary()))
+	packets := packet.NewReader(bytes.NewReader(encrypted.Bytes()))
 	var foundSk bool
 	for {
 		var p packet.Packet
@@ -42,16 +42,16 @@ func TestTextMessageEncryptionWithPassword(t *testing.T) {
 	}
 	// Decrypt data with wrong password
 	decryptorWrong, _ := testPGP.Decryption().Password([]byte("Wrong password")).New()
-	_, err = decryptorWrong.Decrypt(encrypted.GetBinary(), Bytes)
+	_, err = decryptorWrong.Decrypt(encrypted.Bytes(), Bytes)
 	assert.NotNil(t, err)
 
 	// Decrypt data with the good password
 	decryptor, _ := testPGP.Decryption().Password(testSymmetricKey).New()
-	decrypted, err := decryptor.Decrypt(encrypted.GetBinary(), Bytes)
+	decrypted, err := decryptor.Decrypt(encrypted.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
-	assert.Exactly(t, string(message), string(decrypted.Result()))
+	assert.Exactly(t, string(message), string(decrypted.Bytes()))
 }
 
 func TestBinaryMessageEncryptionWithPassword(t *testing.T) {
@@ -66,16 +66,16 @@ func TestBinaryMessageEncryptionWithPassword(t *testing.T) {
 	}
 	// Decrypt data with wrong password
 	decryptorWrong, _ := testPGP.Decryption().Password([]byte("Wrong password")).New()
-	_, err = decryptorWrong.Decrypt(encrypted.GetBinary(), Bytes)
+	_, err = decryptorWrong.Decrypt(encrypted.Bytes(), Bytes)
 	assert.NotNil(t, err)
 
 	// Decrypt data with the good password
 	decryptor, _ := testPGP.Decryption().Password(testSymmetricKey).New()
-	decrypted, err := decryptor.Decrypt(encrypted.GetBinary(), Bytes)
+	decrypted, err := decryptor.Decrypt(encrypted.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
-	assert.Exactly(t, message, decrypted.Result())
+	assert.Exactly(t, message, decrypted.Bytes())
 }
 
 func TestTextMixedMessageDecryptionWithPassword(t *testing.T) {
@@ -86,7 +86,7 @@ func TestTextMixedMessageDecryptionWithPassword(t *testing.T) {
 
 	// Decrypt data with the good password
 	decryptor, _ := testPGP.Decryption().Password([]byte("pinata")).New()
-	decrypted, err := decryptor.Decrypt(encrypted.GetBinary(), Bytes)
+	decrypted, err := decryptor.Decrypt(encrypted.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
@@ -96,7 +96,7 @@ func TestTextMixedMessageDecryptionWithPassword(t *testing.T) {
 		panic(err)
 	}
 
-	assert.Exactly(t, expected, decrypted.Result())
+	assert.Exactly(t, expected, decrypted.Bytes())
 }
 
 func TestTextMessageEncryption(t *testing.T) {
@@ -109,14 +109,14 @@ func TestTextMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	assert.Len(t, ciphertext.GetBinaryDataPacket(), 133) // Assert uncompressed encrypted body length
+	assert.Len(t, ciphertext.BinaryDataPacket(), 133) // Assert uncompressed encrypted body length
 
 	decryptor, _ := testPGP.Decryption().DecryptionKeys(keyRingTestPrivate).New()
-	decrypted, err := decryptor.Decrypt(ciphertext.GetBinary(), Bytes)
+	decrypted, err := decryptor.Decrypt(ciphertext.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
-	assert.Exactly(t, message, decrypted.Result())
+	assert.Exactly(t, message, decrypted.Bytes())
 }
 
 func TestTextMessageEncryptionWithTrailingSpaces(t *testing.T) {
@@ -130,11 +130,11 @@ func TestTextMessageEncryptionWithTrailingSpaces(t *testing.T) {
 	}
 
 	decryptor, _ := testPGP.Decryption().DecryptionKeys(keyRingTestPrivate).New()
-	decrypted, err := decryptor.Decrypt(ciphertext.GetBinary(), Bytes)
+	decrypted, err := decryptor.Decrypt(ciphertext.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
-	assert.Exactly(t, message, decrypted.Result())
+	assert.Exactly(t, message, decrypted.Bytes())
 }
 
 func TestTextMessageEncryptionWithNonCanonicalLinebreak(t *testing.T) {
@@ -148,11 +148,11 @@ func TestTextMessageEncryptionWithNonCanonicalLinebreak(t *testing.T) {
 	}
 
 	decryptor, _ := testPGP.Decryption().DecryptionKeys(keyRingTestPrivate).New()
-	decrypted, err := decryptor.Decrypt(ciphertext.GetBinary(), Bytes)
+	decrypted, err := decryptor.Decrypt(ciphertext.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
-	assert.Exactly(t, message, decrypted.Result())
+	assert.Exactly(t, message, decrypted.Bytes())
 }
 
 func TestIssue11(t *testing.T) {
@@ -192,7 +192,7 @@ func TestIssue11(t *testing.T) {
 		DecryptionKeys(issue11Keyring).
 		VerificationKeys(senderKeyring).
 		VerifyTime(1559655272).New()
-	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinary(), Bytes)
+	decrypted, err := decryptor.Decrypt(pgpMessage.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting/verifying, got:", err)
 	}
@@ -200,7 +200,7 @@ func TestIssue11(t *testing.T) {
 		t.Fatal("Expected no error while decrypting/verifying, got:", err)
 	}
 
-	assert.Exactly(t, "message from sender", string(decrypted.Result()))
+	assert.Exactly(t, "message from sender", string(decrypted.Bytes()))
 }
 
 func TestDummy(t *testing.T) {
@@ -234,14 +234,14 @@ func TestDummy(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	assert.Len(t, ciphertext.GetBinaryDataPacket(), 133) // Assert uncompressed encrypted body length
+	assert.Len(t, ciphertext.BinaryDataPacket(), 133) // Assert uncompressed encrypted body length
 
 	decryptor, _ := testPGP.Decryption().DecryptionKeys(dummyKeyRing).New()
-	decrypted, err := decryptor.Decrypt(ciphertext.GetBinary(), Bytes)
+	decrypted, err := decryptor.Decrypt(ciphertext.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
-	assert.Exactly(t, message, decrypted.Result())
+	assert.Exactly(t, message, decrypted.Bytes())
 }
 
 func TestSignedMessageDecryption(t *testing.T) {
@@ -251,11 +251,11 @@ func TestSignedMessageDecryption(t *testing.T) {
 	}
 
 	decryptor, _ := testPGP.Decryption().DecryptionKeys(keyRingTestPrivate).New()
-	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinary(), Bytes)
+	decrypted, err := decryptor.Decrypt(pgpMessage.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
-	assert.Exactly(t, readTestFile("message_plaintext", true), string(decrypted.Result()))
+	assert.Exactly(t, readTestFile("message_plaintext", true), string(decrypted.Bytes()))
 }
 
 func TestSHA256SignedMessageDecryption(t *testing.T) {
@@ -269,14 +269,14 @@ func TestSHA256SignedMessageDecryption(t *testing.T) {
 		VerificationKeys(keyRingTestPrivate).
 		DisableVerifyTimeCheck().
 		New()
-	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinary(), Bytes)
+	decrypted, err := decryptor.Decrypt(pgpMessage.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 	if err = decrypted.SignatureError(); err != nil {
 		t.Fatal("Expected no signature error when decrypting, got:", err)
 	}
-	assert.Exactly(t, readTestFile("message_plaintext", true), string(decrypted.Result()))
+	assert.Exactly(t, readTestFile("message_plaintext", true), string(decrypted.Bytes()))
 }
 
 func TestSHA1SignedMessageDecryption(t *testing.T) {
@@ -290,14 +290,14 @@ func TestSHA1SignedMessageDecryption(t *testing.T) {
 		VerificationKeys(keyRingTestPrivate).
 		DisableVerifyTimeCheck().
 		New()
-	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinary(), Bytes)
+	decrypted, err := decryptor.Decrypt(pgpMessage.Bytes(), Bytes)
 	if err = decrypted.SignatureError(); err == nil {
 		t.Fatal("Expected verification error when decrypting")
 	}
 	if errStr := decrypted.SignatureError().Error(); errStr != "Signature Verification Error: Insecure signature" {
 		t.Fatal("Expected verification error when decrypting, got:", errStr)
 	}
-	assert.Exactly(t, readTestFile("message_plaintext", true), string(decrypted.Result()))
+	assert.Exactly(t, readTestFile("message_plaintext", true), string(decrypted.Bytes()))
 }
 
 func TestMultipleKeyMessageEncryption(t *testing.T) {
@@ -313,7 +313,7 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 	// Test that ciphertext data contains three Encrypted Key Packets (tag 1)
 	// followed by a single symmetrically encrypted data packet (tag 18)
 	var p packet.Packet
-	packets := packet.NewReader(bytes.NewReader(ciphertext.GetBinary()))
+	packets := packet.NewReader(bytes.NewReader(ciphertext.Bytes()))
 	for i := 0; i < 3; i++ {
 		if p, err = packets.Next(); err != nil {
 			t.Fatal(err.Error())
@@ -334,14 +334,14 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 		DecryptionKeys(keyRingTestPrivate).
 		VerificationKeys(keyRingTestPublic).
 		New()
-	decrypted, err := decryptor.Decrypt(ciphertext.GetBinary(), Bytes)
+	decrypted, err := decryptor.Decrypt(ciphertext.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 	if err = decrypted.SignatureError(); err != nil {
 		t.Fatal("Expected no signature error when decrypting, got:", err)
 	}
-	assert.Exactly(t, message, decrypted.Result())
+	assert.Exactly(t, message, decrypted.Bytes())
 }
 
 func TestMessageGetEncryptionKeyIDs(t *testing.T) {
@@ -353,7 +353,7 @@ func TestMessageGetEncryptionKeyIDs(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
-	ids, ok := ciphertext.GetEncryptionKeyIDs()
+	ids, ok := ciphertext.EncryptionKeyIDs()
 	assert.Exactly(t, 3, len(ids))
 	assert.True(t, ok)
 	encKey, ok := keyRingTestMultiple.entities[0].EncryptionKey(time.Now())
@@ -367,7 +367,7 @@ func TestMessageGetHexGetEncryptionKeyIDs(t *testing.T) {
 		t.Fatal("Expected no error when reading message, got:", err)
 	}
 
-	ids, ok := ciphertext.GetHexEncryptionKeyIDs()
+	ids, ok := ciphertext.HexEncryptionKeyIDs()
 	assert.Exactly(t, 2, len(ids))
 	assert.True(t, ok)
 
@@ -398,7 +398,7 @@ func TestMessageGetHexSignatureKeyIDs(t *testing.T) {
 		t.Fatal("Expected no error when reading message, got:", err)
 	}
 
-	ids, ok := ciphertext.GetHexSignatureKeyIDs()
+	ids, ok := ciphertext.HexSignatureKeyIDs()
 	assert.Exactly(t, 2, len(ids))
 	assert.True(t, ok)
 
@@ -416,7 +416,7 @@ func TestMessageGetArmoredWithCustomHeaders(t *testing.T) {
 	}
 	comment := "User-defined comment"
 	version := "User-defined version"
-	armored, err := ciphertext.GetArmoredWithCustomHeaders(comment, version)
+	armored, err := ciphertext.ArmorWithCustomHeaders(comment, version)
 	if err != nil {
 		t.Fatal("Could not armor the ciphertext:", err)
 	}
@@ -435,7 +435,7 @@ func TestMessageGetArmoredWithEmptyHeaders(t *testing.T) {
 	}
 	comment := ""
 	version := ""
-	armored, err := ciphertext.GetArmoredWithCustomHeaders(comment, version)
+	armored, err := ciphertext.ArmorWithCustomHeaders(comment, version)
 	if err != nil {
 		t.Fatal("Could not armor the ciphertext:", err)
 	}

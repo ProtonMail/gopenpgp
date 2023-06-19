@@ -69,9 +69,9 @@ func (eh *encryptionHandle) prepareEncryptAndSign(
 	plainMessageMetadata *LiteralMetadata,
 ) (hints *openpgp.FileHints, config *packet.Config, signEntity *openpgp.Entity, err error) {
 	hints = &openpgp.FileHints{
-		FileName: plainMessageMetadata.GetFilename(),
+		FileName: plainMessageMetadata.Filename(),
 		IsUTF8:   eh.IsUTF8,
-		ModTime:  time.Unix(plainMessageMetadata.GetTime(), 0),
+		ModTime:  time.Unix(plainMessageMetadata.Time(), 0),
 	}
 
 	config = eh.profile.EncryptionConfig()
@@ -236,9 +236,9 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 	} else {
 		encryptWriter, err = packet.SerializeLiteral(
 			encryptWriter,
-			plainMessageMetadata.GetIsUtf8(),
-			plainMessageMetadata.GetFilename(),
-			uint32(plainMessageMetadata.GetTime()),
+			plainMessageMetadata.IsUtf8(),
+			plainMessageMetadata.Filename(),
+			uint32(plainMessageMetadata.Time()),
 		)
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "gopenpgp: unable to serialize")

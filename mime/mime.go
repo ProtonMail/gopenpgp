@@ -39,7 +39,7 @@ func Decrypt(
 		callbacks.OnError(err)
 		return
 	}
-	decryptedMessage := decResult.Result()
+	decryptedMessage := decResult.Bytes()
 	embeddedSigError, _ := separateSigError(decResult.SignatureError())
 
 	body, attachments, attachmentHeaders, err := parseMIME(decryptedMessage, verifyHandle)
