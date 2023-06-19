@@ -139,13 +139,13 @@ type VerifiedDataResult struct {
 	cachedSessionKey *SessionKey
 }
 
-// GetMetadata returns the associated literal metadata of the data.
-func (r *VerifiedDataResult) GetMetadata() *LiteralMetadata {
+// Metadata returns the associated literal metadata of the data.
+func (r *VerifiedDataResult) Metadata() *LiteralMetadata {
 	return r.metadata
 }
 
-// Result returns the result data.
-func (r *VerifiedDataResult) Result() []byte {
+// Bytes returns the result data as bytes.
+func (r *VerifiedDataResult) Bytes() []byte {
 	return r.data
 }
 

@@ -166,7 +166,7 @@ func testSignVerify(
 		if err != nil {
 			t.Fatal("Expected no error while verifying the message, got:", err)
 		}
-		if !bytes.Equal(messageBytes, verifyDataResult.Result()) {
+		if !bytes.Equal(messageBytes, verifyDataResult.Bytes()) {
 			t.Fatal("Expected read message in verification to be equal to the input message")
 		}
 		verifyResult = &verifyDataResult.VerifyResult
