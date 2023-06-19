@@ -29,11 +29,12 @@ type MIMECallbacks interface {
 // The verifyHandle can be nil.
 func Decrypt(
 	message []byte,
+	messageEncoding crypto.PGPEncoding,
 	decryptionHandle crypto.PGPDecryption,
 	verifyHandle crypto.PGPVerify,
 	callbacks MIMECallbacks,
 ) {
-	decResult, err := decryptionHandle.Decrypt(message)
+	decResult, err := decryptionHandle.Decrypt(message, messageEncoding)
 	if err != nil {
 		callbacks.OnError(err)
 		return

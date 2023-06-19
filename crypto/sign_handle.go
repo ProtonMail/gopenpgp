@@ -18,7 +18,6 @@ type signatureHandle struct {
 	SignKeyRing  *KeyRing
 	SignContext  *SigningContext
 	IsUTF8       bool
-	Armored      bool
 	Detached     bool
 	ArmorHeaders map[string]string
 	profile      SignProfile
@@ -37,9 +36,10 @@ func defaultSignatureHandle(profile SignProfile, clock Clock) *signatureHandle {
 
 // --- Implements the signature handle methods
 
-func (sh *signatureHandle) SigningWriter(outputWriter Writer) (messageWriter WriteCloser, err error) {
+func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding PGPEncoding) (messageWriter WriteCloser, err error) {
 	var armorWriter WriteCloser
-	if sh.Armored {
+	armorOutput := encoding.armorOutput()
+	if armorOutput {
 		var err error
 		header := constants.PGPMessageHeader
 		if sh.Detached {
@@ -68,7 +68,7 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer) (messageWriter Wri
 		// Inline signature
 		messageWriter, err = sh.signingWriter(outputWriter, nil)
 	}
-	if sh.Armored {
+	if armorOutput {
 		// Ensure that close is called on the armor writer for the armor suffix
 		messageWriter = &armoredWriteCloser{
 			armorWriter:   armorWriter,
@@ -78,9 +78,9 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer) (messageWriter Wri
 	return
 }
 
-func (sh *signatureHandle) Sign(message []byte) ([]byte, error) {
+func (sh *signatureHandle) Sign(message []byte, encoding PGPEncoding) ([]byte, error) {
 	var writer bytes.Buffer
-	ptWriter, err := sh.SigningWriter(&writer)
+	ptWriter, err := sh.SigningWriter(&writer, encoding)
 	if err != nil {
 		return nil, err
 	}

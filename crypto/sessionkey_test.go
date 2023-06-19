@@ -130,12 +130,12 @@ func TestDataPacketEncryption(t *testing.T) {
 		Algo: constants.AES256,
 	}
 	decryptor, _ := testPGP.Decryption().SessionKey(wrongKey).New()
-	_, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket())
+	_, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
 	assert.NotNil(t, err)
 
 	// Decrypt data with the good session key
 	decryptor, _ = testPGP.Decryption().SessionKey(testSessionKey).New()
-	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinaryDataPacket())
+	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
@@ -168,7 +168,7 @@ func TestDataPacketEncryption(t *testing.T) {
 
 	// Test if final decryption succeeds
 	decryptor, _ = testPGP.Decryption().DecryptionKeys(keyRingTestPrivate).New()
-	finalMessageResult, err := decryptor.Decrypt(pgpMessage.GetBinary())
+	finalMessageResult, err := decryptor.Decrypt(pgpMessage.GetBinary(), Bytes)
 	if err != nil {
 		t.Fatal("Unable to decrypt joined keypacket and datapacket, got:", err)
 	}
@@ -209,7 +209,7 @@ func TestAEADDataPacketDecryption(t *testing.T) {
 	}
 
 	decryptor, _ = testPGP.Decryption().SessionKey(sessionKey).New()
-	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinaryDataPacket())
+	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
@@ -235,12 +235,12 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 		Algo: constants.AES256,
 	}
 	decryptor, _ := testPGP.Decryption().SessionKey(wrongKey).New()
-	_, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket())
+	_, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
 	assert.NotNil(t, err)
 
 	// Decrypt data with the good session key
 	decryptor, _ = testPGP.Decryption().SessionKey(testSessionKey).New()
-	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinaryDataPacket())
+	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
@@ -253,7 +253,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 	}
 
 	decryptor, _ = testPGP.Decryption().SessionKey(testSessionKey).VerificationKeys(ecKeyRing).New()
-	decrypted, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket())
+	decrypted, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
 	if err != nil {
 		t.Fatal("Wrong error returned for verification failure", err)
 	}
@@ -263,7 +263,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 
 	// Decrypt & verify data with the good session key and keyring
 	decryptor, _ = testPGP.Decryption().SessionKey(testSessionKey).VerificationKeys(keyRingTestPublic).New()
-	decrypted, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket())
+	decrypted, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting & verifying, got:", err)
 	}
@@ -299,7 +299,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 
 	// Test if final decryption & verification succeeds
 	decryptor, _ = testPGP.Decryption().DecryptionKeys(keyRingTestPrivate).VerificationKeys(keyRingTestPublic).New()
-	finalMessage, err := decryptor.Decrypt(pgpMessage.GetBinary())
+	finalMessage, err := decryptor.Decrypt(pgpMessage.GetBinary(), Bytes)
 	if err != nil {
 		t.Fatal("Unable to decrypt and verify joined keypacket and datapacket, got:", err)
 	}
@@ -322,7 +322,7 @@ func TestDataPacketDecryption(t *testing.T) {
 	}
 
 	decryptor, _ = testPGP.Decryption().SessionKey(sessionKey).New()
-	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinaryDataPacket())
+	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
@@ -341,7 +341,7 @@ func TestMDCFailDecryption(t *testing.T) {
 	sessionKey := NewSessionKeyFromToken(sk, "aes256")
 
 	decryptor, _ := testPGP.Decryption().SessionKey(sessionKey).New()
-	_, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket())
+	_, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
 	assert.NotNil(t, err)
 }
 

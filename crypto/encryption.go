@@ -15,8 +15,9 @@ type PGPEncryption interface {
 	// If the output Writer is of type PGPSplitWriter, the output can be split to multiple writers
 	// for different parts of the message. For example to write key packets and encrypted data packets
 	// to different writers or to write a detached signature separately.
+	// The encoding argument defines the output encoding, i.e., Bytes or Armored
 	// The returned pgp message WriteCloser must be closed after the plaintext has been written.
-	EncryptingWriter(output Writer) (WriteCloser, error)
+	EncryptingWriter(output Writer, encoding PGPEncoding) (WriteCloser, error)
 	// Encrypt encrypts a plaintext message.
 	Encrypt(message []byte) (*PGPMessage, error)
 	// EncryptSessionKey encrypts a session key with the encryption handle.
