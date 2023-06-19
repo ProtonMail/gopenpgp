@@ -60,7 +60,7 @@ func TestDecrypt(t *testing.T) {
 	message := readTestFileBytes("mime_pgpMessage")
 	pgp := crypto.PGP()
 	decHandle, _ := pgp.Decryption().DecryptionKeys(privateKeyRing).New()
-	Decrypt(message, decHandle, nil, &callbacks)
+	Decrypt(message, crypto.Armor, decHandle, nil, &callbacks)
 }
 
 type testMIMECallbacks struct {
@@ -174,7 +174,7 @@ func runScenario(t *testing.T, messageFile string) *testMIMECallbacks {
 		VerificationKeys(verificationKeyRing).
 		VerifyTime(1557754627).
 		New()
-	Decrypt(message, decHandle, verifyHandle, callbacks)
+	Decrypt(message, crypto.Armor, decHandle, verifyHandle, callbacks)
 	return callbacks
 }
 

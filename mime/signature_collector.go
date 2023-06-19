@@ -99,7 +99,7 @@ func (sc *signatureCollector) Accept(
 	str, _ := ioutil.ReadAll(rawBody)
 	canonicalizedBody := internal.CanonicalizeBytes(internal.TrimEachLineBytes(str))
 	if sc.verifyHandle != nil {
-		verifyResult, err := sc.verifyHandle.VerifyDetached(canonicalizedBody, buffer)
+		verifyResult, err := sc.verifyHandle.VerifyDetached(canonicalizedBody, buffer, crypto.Armor)
 		if errors.Is(err, pgpErrors.ErrUnknownIssuer) {
 			return newSignatureNoVerifier()
 		}

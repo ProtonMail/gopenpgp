@@ -114,32 +114,6 @@ func (epb *EncryptionHandleBuilder) UTF8() *EncryptionHandleBuilder {
 	return epb
 }
 
-// Armor indicates that the output should be armored.
-// If not set, the output is in binary format.
-func (epb *EncryptionHandleBuilder) Armor() *EncryptionHandleBuilder {
-	epb.handle.Armored = true
-	return epb
-}
-
-// ArmorWithHeader indicates that the output should be armored with the given
-// version and comment as header.
-func (epb *EncryptionHandleBuilder) ArmorWithHeader(version, comment string) *EncryptionHandleBuilder {
-	epb.handle.Armored = true
-	if epb.handle.ArmorHeaders == nil {
-		epb.handle.ArmorHeaders = make(map[string]string)
-	}
-	epb.handle.ArmorHeaders["Version"] = version
-	epb.handle.ArmorHeaders["Comment"] = comment
-	return epb
-}
-
-// WithArmor sets the flag to indicate if the output should be armored.
-// If not set, the output is in binary format.
-func (dpb *EncryptionHandleBuilder) WithArmor(armor bool) *EncryptionHandleBuilder {
-	dpb.handle.Armored = armor
-	return dpb
-}
-
 // DetachedSignature indicates that the message should be signed,
 // but the signature should not be included in the same pgp message as the input data.
 // Instead the detached signature is encrypted in a separate pgp message.

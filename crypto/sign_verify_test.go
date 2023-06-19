@@ -23,7 +23,7 @@ func TestSignVerifyStream(t *testing.T) {
 			verifier, _ := material.pgp.Verify().
 				VerificationKeys(material.keyRingTestPublic).
 				New()
-			testSignVerifyStream(t, signer, verifier)
+			testSignVerifyStream(t, signer, verifier, Bytes)
 		})
 	}
 }
@@ -39,7 +39,7 @@ func TestSignVerifyStreamContext(t *testing.T) {
 				VerificationKeys(material.keyRingTestPublic).
 				VerificationContext(NewVerificationContext(testContext, true, 0)).
 				New()
-			testSignVerifyStream(t, signer, verifier)
+			testSignVerifyStream(t, signer, verifier, Bytes)
 		})
 	}
 }
@@ -49,12 +49,11 @@ func TestSignVerifyStreamArmor(t *testing.T) {
 		t.Run(material.profileName, func(t *testing.T) {
 			signer, _ := material.pgp.Sign().
 				SigningKeys(material.keyRingTestPrivate).
-				Armor().
 				New()
 			verifier, _ := material.pgp.Verify().
 				VerificationKeys(material.keyRingTestPublic).
 				New()
-			testSignVerifyStream(t, signer, verifier)
+			testSignVerifyStream(t, signer, verifier, Armor)
 		})
 	}
 }
@@ -68,7 +67,7 @@ func TestSignVerify(t *testing.T) {
 			verifier, _ := material.pgp.Verify().
 				VerificationKeys(material.keyRingTestPublic).
 				New()
-			testSignVerify(t, signer, verifier, false)
+			testSignVerify(t, signer, verifier, false, Bytes)
 		})
 	}
 }
@@ -83,7 +82,7 @@ func TestSignVerifyDetached(t *testing.T) {
 			verifier, _ := material.pgp.Verify().
 				VerificationKeys(material.keyRingTestPublic).
 				New()
-			testSignVerify(t, signer, verifier, true)
+			testSignVerify(t, signer, verifier, true, Bytes)
 		})
 	}
 }
@@ -97,7 +96,7 @@ func TestSignVerifyStreamDetached(t *testing.T) {
 			verifier, _ := material.pgp.Verify().
 				VerificationKeys(material.keyRingTestPublic).
 				New()
-			testSignVerifyDetachedStream(t, signer, verifier)
+			testSignVerifyDetachedStream(t, signer, verifier, Bytes)
 		})
 	}
 }
@@ -114,7 +113,7 @@ func TestSignVerifyStreamDetachedContext(t *testing.T) {
 				VerificationKeys(material.keyRingTestPublic).
 				VerificationContext(NewVerificationContext(testContext, true, 0)).
 				New()
-			testSignVerifyDetachedStream(t, signer, verifier)
+			testSignVerifyDetachedStream(t, signer, verifier, Bytes)
 		})
 	}
 }
@@ -125,12 +124,11 @@ func TestSignVerifyStreamDetachedArmor(t *testing.T) {
 			signer, _ := material.pgp.Sign().
 				SigningKeys(material.keyRingTestPrivate).
 				Detached().
-				Armor().
 				New()
 			verifier, _ := material.pgp.Verify().
 				VerificationKeys(material.keyRingTestPublic).
 				New()
-			testSignVerifyDetachedStream(t, signer, verifier)
+			testSignVerifyDetachedStream(t, signer, verifier, Armor)
 		})
 	}
 }
@@ -149,17 +147,22 @@ func TestSignVerifyCleartext(t *testing.T) {
 	}
 }
 
-func testSignVerify(t *testing.T, signer PGPSign, verifier PGPVerify, detached bool) {
+func testSignVerify(
+	t *testing.T,
+	signer PGPSign,
+	verifier PGPVerify,
+	detached bool,
+	encoding PGPEncoding) {
 	messageBytes := []byte(messageToSign)
-	signature, err := signer.Sign(messageBytes)
+	signature, err := signer.Sign(messageBytes, encoding)
 	if err != nil {
 		t.Fatal("Expected no error while signing the message, got:", err)
 	}
 	var verifyResult *VerifyResult
 	if detached {
-		verifyResult, err = verifier.VerifyDetached(messageBytes, signature)
+		verifyResult, err = verifier.VerifyDetached(messageBytes, signature, encoding)
 	} else {
-		verifyDataResult, err := verifier.VerifyInline(signature)
+		verifyDataResult, err := verifier.VerifyInline(signature, encoding)
 		if err != nil {
 			t.Fatal("Expected no error while verifying the message, got:", err)
 		}
@@ -177,10 +180,14 @@ func testSignVerify(t *testing.T, signer PGPSign, verifier PGPVerify, detached b
 
 }
 
-func testSignVerifyStream(t *testing.T, signer PGPSign, verifier PGPVerify) {
+func testSignVerifyStream(
+	t *testing.T,
+	signer PGPSign,
+	verifier PGPVerify,
+	encoding PGPEncoding) {
 	messageBytes := []byte(messageToSign)
 	var messageBuffer bytes.Buffer
-	signingWriter, err := signer.SigningWriter(&messageBuffer)
+	signingWriter, err := signer.SigningWriter(&messageBuffer, encoding)
 	if err != nil {
 		t.Fatal("Expected no error while signing the message, got:", err)
 	}
@@ -193,7 +200,7 @@ func testSignVerifyStream(t *testing.T, signer PGPSign, verifier PGPVerify) {
 		t.Fatal("Expected no error while sining message, got:", err)
 	}
 
-	verifyingReader, err := verifier.VerifyingReader(nil, &messageBuffer)
+	verifyingReader, err := verifier.VerifyingReader(nil, &messageBuffer, encoding)
 	if err != nil {
 		t.Fatal("Expected no error while verifying the message, got:", err)
 	}
@@ -213,10 +220,15 @@ func testSignVerifyStream(t *testing.T, signer PGPSign, verifier PGPVerify) {
 	}
 }
 
-func testSignVerifyDetachedStream(t *testing.T, signer PGPSign, verifier PGPVerify) {
+func testSignVerifyDetachedStream(
+	t *testing.T,
+	signer PGPSign,
+	verifier PGPVerify,
+	encoding PGPEncoding,
+) {
 	messageBytes := []byte(messageToSign)
 	var signatureBuffer bytes.Buffer
-	signingWriter, err := signer.SigningWriter(&signatureBuffer)
+	signingWriter, err := signer.SigningWriter(&signatureBuffer, encoding)
 	if err != nil {
 		t.Fatal("Expected no error while signing the message, got:", err)
 	}
@@ -229,7 +241,7 @@ func testSignVerifyDetachedStream(t *testing.T, signer PGPSign, verifier PGPVeri
 		t.Fatal("Expected no error while sining message, got:", err)
 	}
 
-	verifyingReader, _ := verifier.VerifyingReader(bytes.NewReader(messageBytes), &signatureBuffer)
+	verifyingReader, _ := verifier.VerifyingReader(bytes.NewReader(messageBytes), &signatureBuffer, encoding)
 	result, err := verifyingReader.DiscardAllAndVerifySignature()
 	if err != nil {
 		t.Fatal("Expected no error while verifying the message, got:", err)

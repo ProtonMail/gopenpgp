@@ -44,18 +44,11 @@ func (shb *SignHandleBuilder) Detached() *SignHandleBuilder {
 	return shb
 }
 
-// Armor indicates that the produced output should be armored.
-func (shb *SignHandleBuilder) Armor() *SignHandleBuilder {
-	shb.handle.Armored = true
-	return shb
-}
-
-// ArmorWithHeader indicates that the produced signature should be armored
+// ArmorHeader indicates that the produced signature should be armored
 // with the given version and comment as header.
 // Note that this option only affects the method SignHandle.SigningWriter
 // and the headers in SignHandle.SignCleartext
-func (shb *SignHandleBuilder) ArmorWithHeader(version, comment string) *SignHandleBuilder {
-	shb.handle.Armored = true
+func (shb *SignHandleBuilder) ArmorHeader(version, comment string) *SignHandleBuilder {
 	if shb.handle.ArmorHeaders == nil {
 		shb.handle.ArmorHeaders = make(map[string]string)
 	}
