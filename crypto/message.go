@@ -101,41 +101,41 @@ func NewPGPMessageBuffer() *PGPMessageBuffer {
 
 // ---- MODEL METHODS -----
 
-// GetBinary returns the unarmored binary content of the message as a []byte.
-func (msg *PGPMessage) GetBinary() []byte {
+// Bytes returns the unarmored binary content of the message as a []byte.
+func (msg *PGPMessage) Bytes() []byte {
 	return append(msg.KeyPacket, msg.DataPacket...)
 }
 
 // NewReader returns a New io.Reader for the unarmored binary data of the
 // message.
 func (msg *PGPMessage) NewReader() io.Reader {
-	return bytes.NewReader(msg.GetBinary())
+	return bytes.NewReader(msg.Bytes())
 }
 
-// GetArmored returns the armored message as a string.
-func (msg *PGPMessage) GetArmored() (string, error) {
+// Armor returns the armored message as a string.
+func (msg *PGPMessage) Armor() (string, error) {
 	if msg.KeyPacket == nil {
 		return "", errors.New("gopenpgp: missing key packets in pgp message")
 	}
-	return armor.ArmorPGPMessage(msg.GetBinary())
+	return armor.ArmorPGPMessage(msg.Bytes())
 }
 
-// GetArmored returns the armored message as a string.
-func (msg *PGPMessage) GetArmoredBytes() ([]byte, error) {
+// ArmorBytes returns the armored message as a string.
+func (msg *PGPMessage) ArmorBytes() ([]byte, error) {
 	if msg.KeyPacket == nil {
 		return nil, errors.New("gopenpgp: missing key packets in pgp message")
 	}
-	return armor.ArmorPGPMessageBytes(msg.GetBinary())
+	return armor.ArmorPGPMessageBytes(msg.Bytes())
 }
 
-// GetArmoredWithCustomHeaders returns the armored message as a string, with
+// ArmorWithCustomHeaders returns the armored message as a string, with
 // the given headers. Empty parameters are omitted from the headers.
-func (msg *PGPMessage) GetArmoredWithCustomHeaders(comment, version string) (string, error) {
-	return armor.ArmorWithTypeAndCustomHeaders(msg.GetBinary(), constants.PGPMessageHeader, version, comment)
+func (msg *PGPMessage) ArmorWithCustomHeaders(comment, version string) (string, error) {
+	return armor.ArmorWithTypeAndCustomHeaders(msg.Bytes(), constants.PGPMessageHeader, version, comment)
 }
 
-// GetEncryptionKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
-func (msg *PGPMessage) GetEncryptionKeyIDs() ([]uint64, bool) {
+// EncryptionKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
+func (msg *PGPMessage) EncryptionKeyIDs() ([]uint64, bool) {
 	packets := packet.NewReader(bytes.NewReader(msg.KeyPacket))
 	var err error
 	var ids []uint64
@@ -163,35 +163,35 @@ Loop:
 	return ids, false
 }
 
-// GetHexEncryptionKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
-func (msg *PGPMessage) GetHexEncryptionKeyIDs() ([]string, bool) {
-	return getHexKeyIDs(msg.GetEncryptionKeyIDs())
+// HexEncryptionKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
+func (msg *PGPMessage) HexEncryptionKeyIDs() ([]string, bool) {
+	return hexKeyIDs(msg.EncryptionKeyIDs())
 }
 
-// GetSignatureKeyIDs Returns the key IDs of the keys to which the (readable) signature packets are encrypted to.
-func (msg *PGPMessage) GetSignatureKeyIDs() ([]uint64, bool) {
+// SignatureKeyIDs Returns the key IDs of the keys to which the (readable) signature packets are encrypted to.
+func (msg *PGPMessage) SignatureKeyIDs() ([]uint64, bool) {
 	return SignatureKeyIDs(msg.DataPacket)
 }
 
-// GetHexSignatureKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
-func (msg *PGPMessage) GetHexSignatureKeyIDs() ([]string, bool) {
-	return getHexKeyIDs(msg.GetSignatureKeyIDs())
+// HexSignatureKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
+func (msg *PGPMessage) HexSignatureKeyIDs() ([]string, bool) {
+	return hexKeyIDs(msg.SignatureKeyIDs())
 }
 
-// GetBinaryDataPacket returns the unarmored binary datapacket as a []byte.
-func (msg *PGPMessage) GetBinaryDataPacket() []byte {
+// BinaryDataPacket returns the unarmored binary datapacket as a []byte.
+func (msg *PGPMessage) BinaryDataPacket() []byte {
 	return msg.DataPacket
 }
 
-// GetBinaryKeyPacket returns the unarmored binary keypacket as a []byte.
-func (msg *PGPMessage) GetBinaryKeyPacket() []byte {
+// BinaryKeyPacket returns the unarmored binary keypacket as a []byte.
+func (msg *PGPMessage) BinaryKeyPacket() []byte {
 	return msg.KeyPacket
 }
 
-// GetEncryptedDetachedSignature returns the encrypted detached signature of this message
+// EncryptedDetachedSignature returns the encrypted detached signature of this message
 // as a PGPMessage where the data is the encrypted signature.
 // If no detached signature is present in this message, it returns nil.
-func (msg *PGPMessage) GetEncryptedDetachedSignature() *PGPMessage {
+func (msg *PGPMessage) EncryptedDetachedSignature() *PGPMessage {
 	if msg.DetachedSignature == nil {
 		return nil
 	}
@@ -230,21 +230,21 @@ Loop:
 	}, nil
 }
 
-func (msg *LiteralMetadata) GetFilename() string {
+func (msg *LiteralMetadata) Filename() string {
 	if msg == nil {
 		return ""
 	}
 	return msg.filename
 }
 
-func (msg *LiteralMetadata) GetIsUtf8() bool {
+func (msg *LiteralMetadata) IsUtf8() bool {
 	if msg == nil {
 		return false
 	}
 	return msg.isUTF8
 }
 
-func (msg *LiteralMetadata) GetTime() int64 {
+func (msg *LiteralMetadata) Time() int64 {
 	if msg == nil {
 		return 0
 	}
@@ -327,10 +327,10 @@ Loop:
 }
 
 func SignatureHexKeyIDs(signature []byte) ([]string, bool) {
-	return getHexKeyIDs(SignatureKeyIDs(signature))
+	return hexKeyIDs(SignatureKeyIDs(signature))
 }
 
-func getHexKeyIDs(keyIDs []uint64, ok bool) ([]string, bool) {
+func hexKeyIDs(keyIDs []uint64, ok bool) ([]string, bool) {
 	hexIDs := make([]string, len(keyIDs))
 
 	for i, id := range keyIDs {

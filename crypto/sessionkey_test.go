@@ -122,7 +122,7 @@ func TestDataPacketEncryption(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	assert.Len(t, pgpMessage.GetBinary(), 133) // Assert uncompressed encrypted body length
+	assert.Len(t, pgpMessage.Bytes(), 133) // Assert uncompressed encrypted body length
 
 	// Decrypt data with wrong session key
 	wrongKey := &SessionKey{
@@ -130,16 +130,16 @@ func TestDataPacketEncryption(t *testing.T) {
 		Algo: constants.AES256,
 	}
 	decryptor, _ := testPGP.Decryption().SessionKey(wrongKey).New()
-	_, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
+	_, err = decryptor.Decrypt(pgpMessage.BinaryDataPacket(), Bytes)
 	assert.NotNil(t, err)
 
 	// Decrypt data with the good session key
 	decryptor, _ = testPGP.Decryption().SessionKey(testSessionKey).New()
-	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
+	decrypted, err := decryptor.Decrypt(pgpMessage.BinaryDataPacket(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
-	assert.Exactly(t, message, decrypted.Result())
+	assert.Exactly(t, message, decrypted.Bytes())
 
 	// Encrypt session key
 	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
@@ -153,7 +153,7 @@ func TestDataPacketEncryption(t *testing.T) {
 	pgpMessage.KeyPacket = keyPackets
 
 	// Armor and un-armor message. In alternative it can also be done with NewPgpMessage(splitMessage.GetBinary())
-	armored, err := pgpMessage.GetArmored()
+	armored, err := pgpMessage.Armor()
 	if err != nil {
 		t.Fatal("Unable to armor split message, got:", err)
 	}
@@ -162,18 +162,18 @@ func TestDataPacketEncryption(t *testing.T) {
 	if err != nil {
 		t.Fatal("Unable to unarmor pgp message, got:", err)
 	}
-	ids, ok := pgpMessage.GetEncryptionKeyIDs()
+	ids, ok := pgpMessage.EncryptionKeyIDs()
 	assert.True(t, ok)
 	assert.Exactly(t, 3, len(ids))
 
 	// Test if final decryption succeeds
 	decryptor, _ = testPGP.Decryption().DecryptionKeys(keyRingTestPrivate).New()
-	finalMessageResult, err := decryptor.Decrypt(pgpMessage.GetBinary(), Bytes)
+	finalMessageResult, err := decryptor.Decrypt(pgpMessage.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Unable to decrypt joined keypacket and datapacket, got:", err)
 	}
 
-	assert.Exactly(t, message, finalMessageResult.Result())
+	assert.Exactly(t, message, finalMessageResult.Bytes())
 }
 
 func TestSessionKeyClear(t *testing.T) {
@@ -203,18 +203,18 @@ func TestAEADDataPacketDecryption(t *testing.T) {
 	}
 	defer kR.ClearPrivateParams()
 	decryptor, _ := testPGP.Decryption().DecryptionKeys(kR).New()
-	sessionKey, err := decryptor.DecryptSessionKey(pgpMessage.GetBinaryKeyPacket())
+	sessionKey, err := decryptor.DecryptSessionKey(pgpMessage.BinaryKeyPacket())
 	if err != nil {
 		t.Fatal("Expected no error when decrypting session key, got:", err)
 	}
 
 	decryptor, _ = testPGP.Decryption().SessionKey(sessionKey).New()
-	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
+	decrypted, err := decryptor.Decrypt(pgpMessage.BinaryDataPacket(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 
-	assert.Exactly(t, "hello world\n", string(decrypted.Result()))
+	assert.Exactly(t, "hello world\n", string(decrypted.Bytes()))
 }
 
 func TestDataPacketEncryptionAndSignature(t *testing.T) {
@@ -235,16 +235,16 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 		Algo: constants.AES256,
 	}
 	decryptor, _ := testPGP.Decryption().SessionKey(wrongKey).New()
-	_, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
+	_, err = decryptor.Decrypt(pgpMessage.BinaryDataPacket(), Bytes)
 	assert.NotNil(t, err)
 
 	// Decrypt data with the good session key
 	decryptor, _ = testPGP.Decryption().SessionKey(testSessionKey).New()
-	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
+	decrypted, err := decryptor.Decrypt(pgpMessage.BinaryDataPacket(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
-	assert.Exactly(t, message, decrypted.Result())
+	assert.Exactly(t, message, decrypted.Bytes())
 
 	// Decrypt & verify data with the good session key but bad keyring
 	ecKeyRing, err := NewKeyRing(keyTestEC)
@@ -253,7 +253,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 	}
 
 	decryptor, _ = testPGP.Decryption().SessionKey(testSessionKey).VerificationKeys(ecKeyRing).New()
-	decrypted, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
+	decrypted, err = decryptor.Decrypt(pgpMessage.BinaryDataPacket(), Bytes)
 	if err != nil {
 		t.Fatal("Wrong error returned for verification failure", err)
 	}
@@ -263,14 +263,14 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 
 	// Decrypt & verify data with the good session key and keyring
 	decryptor, _ = testPGP.Decryption().SessionKey(testSessionKey).VerificationKeys(keyRingTestPublic).New()
-	decrypted, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
+	decrypted, err = decryptor.Decrypt(pgpMessage.BinaryDataPacket(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting & verifying, got:", err)
 	}
 	if err = decrypted.SignatureError(); err != nil {
 		t.Fatal("Expected no error when decrypting & verifying, got:", err)
 	}
-	assert.Exactly(t, message, decrypted.Result())
+	assert.Exactly(t, message, decrypted.Bytes())
 
 	// Encrypt session key
 	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
@@ -284,7 +284,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 	pgpMessage.KeyPacket = keyPacket
 
 	// Armor and un-armor message. In alternative it can also be done with NewPgpMessage(splitMessage.GetBinary())
-	armored, err := pgpMessage.GetArmored()
+	armored, err := pgpMessage.Armor()
 	if err != nil {
 		t.Fatal("Unable to armor split message, got:", err)
 	}
@@ -293,13 +293,13 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 	if err != nil {
 		t.Fatal("Unable to unarmor pgp message, got:", err)
 	}
-	ids, ok := pgpMessage.GetEncryptionKeyIDs()
+	ids, ok := pgpMessage.EncryptionKeyIDs()
 	assert.True(t, ok)
 	assert.Exactly(t, 3, len(ids))
 
 	// Test if final decryption & verification succeeds
 	decryptor, _ = testPGP.Decryption().DecryptionKeys(keyRingTestPrivate).VerificationKeys(keyRingTestPublic).New()
-	finalMessage, err := decryptor.Decrypt(pgpMessage.GetBinary(), Bytes)
+	finalMessage, err := decryptor.Decrypt(pgpMessage.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Unable to decrypt and verify joined keypacket and datapacket, got:", err)
 	}
@@ -307,7 +307,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 		t.Fatal("Unable to decrypt and verify joined keypacket and datapacket, got:", err)
 	}
 
-	assert.Exactly(t, message, finalMessage.Result())
+	assert.Exactly(t, message, finalMessage.Bytes())
 }
 
 func TestDataPacketDecryption(t *testing.T) {
@@ -316,18 +316,18 @@ func TestDataPacketDecryption(t *testing.T) {
 		t.Fatal("Expected no error when unarmoring, got:", err)
 	}
 	decryptor, _ := testPGP.Decryption().DecryptionKeys(keyRingTestPrivate).New()
-	sessionKey, err := decryptor.DecryptSessionKey(pgpMessage.GetBinaryKeyPacket())
+	sessionKey, err := decryptor.DecryptSessionKey(pgpMessage.BinaryKeyPacket())
 	if err != nil {
 		t.Fatal("Expected no error when decrypting session key, got:", err)
 	}
 
 	decryptor, _ = testPGP.Decryption().SessionKey(sessionKey).New()
-	decrypted, err := decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
+	decrypted, err := decryptor.Decrypt(pgpMessage.BinaryDataPacket(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 
-	assert.Exactly(t, readTestFile("message_plaintext", true), string(decrypted.Result()))
+	assert.Exactly(t, readTestFile("message_plaintext", true), string(decrypted.Bytes()))
 }
 
 func TestMDCFailDecryption(t *testing.T) {
@@ -341,7 +341,7 @@ func TestMDCFailDecryption(t *testing.T) {
 	sessionKey := NewSessionKeyFromToken(sk, "aes256")
 
 	decryptor, _ := testPGP.Decryption().SessionKey(sessionKey).New()
-	_, err = decryptor.Decrypt(pgpMessage.GetBinaryDataPacket(), Bytes)
+	_, err = decryptor.Decrypt(pgpMessage.BinaryDataPacket(), Bytes)
 	assert.NotNil(t, err)
 }
 

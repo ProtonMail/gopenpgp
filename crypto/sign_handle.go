@@ -147,9 +147,9 @@ func (sh *signatureHandle) signingWriter(messageWriter Writer, literalData *Lite
 		return nil, err
 	}
 	hints := &openpgp.FileHints{
-		FileName: literalData.GetFilename(),
+		FileName: literalData.Filename(),
 		IsUTF8:   sh.IsUTF8,
-		ModTime:  time.Unix(literalData.GetTime(), 0),
+		ModTime:  time.Unix(literalData.Time(), 0),
 	}
 	if sh.SignContext != nil {
 		config.SignatureNotations = append(config.SignatureNotations, sh.SignContext.getNotation())

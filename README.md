@@ -31,12 +31,12 @@ pgp := crypto.PGP()
 // Encrypt data with a password
 encHandle, err := pgp.Encryption().Password(password).New()
 pgpMessage, err := encHandle.Encrypt([]byte("my message"))
-armored, err := pgpMessage.GetArmored()
+armored, err := pgpMessage.ArmorBytes()
 
 // Decrypt data with a password
 decHandle, err := pgp.Decryption().Password(password).New()
-decrypted, err := decHandle.Decrypt([]byte(armored), crypto.Armor)
-myMessage := decrypted.Result()
+decrypted, err := decHandle.Decrypt(armored, crypto.Armor)
+myMessage := decrypted.Bytes()
 ```
 
 To encrypt with the new algorithms from the crypto refresh:
@@ -81,12 +81,12 @@ pgp := crypto.PGP()
 // Encrypt plaintext message using a public key
 encHandle, err := pgp.Encryption().Recipient(publicKey).New()
 pgpMessage, err := encHandle.Encrypt([]byte("my message"))
-armored, err := pgpMessage.GetArmored()
+armored, err := pgpMessage.ArmorBytes()
 
 // Decrypt armored encrypted message using the private key and obtain the plaintext
 decHandle, err := pgp.Decryption().DecryptionKey(privateKey).New()
-decrypted, err := decHandle.Decrypt([]byte(armored), crypto.Armor)
-myMessage := decrypted.Result()
+decrypted, err := decHandle.Decrypt(armored, crypto.Armor)
+myMessage := decrypted.Bytes()
 
 decHandle.ClearPrivateParams()
 ```
@@ -112,18 +112,18 @@ encHandle, err := pgp.Encryption().
   SigningKey(aliceKeyPriv).
   New()
 pgpMessage, err := encHandle.Encrypt([]byte("my message"))
-armored, err := pgpMessage.GetArmored()
+armored, err := pgpMessage.ArmorBytes()
 
 // Decrypt armored encrypted message using the private key and obtain plain text
 decHandle, err := pgp.Decryption().
   DecryptionKey(bobKeyPriv).
   VerifyKey(aliceKeyPub).
   New()
-decrypted, err := decHandle.Decrypt([]byte(armored), crypto.Armor)
+decrypted, err := decHandle.Decrypt(armored, crypto.Armor)
 if sigErr := decrypted.SignatureError(); sigErr != nil {
   // Signature verification failed with sigErr
 }
-myMessage := decrypted.Result()
+myMessage := decrypted.Bytes()
 
 encHandle.ClearPrivateParams()
 decHandle.ClearPrivateParams()
@@ -132,13 +132,13 @@ Encrypt towards multiple recipients:
 ```go
 recipients, err := crypto.NewKeyRing(bobKeyPub)
 err = recipients.AddKey(carolKeyPub)
-// encrypt plain text message using public key
+// encrypt plain text message using a public key
 encHandle, err := pgp.Encryption().
   Recipients(recipients).
   SigningKey(aliceKeyPriv).
   New()
 pgpMessage, err := encHandle.Encrypt([]byte("my message"))
-armored, err := pgpMessage.GetArmored()
+armored, err := pgpMessage.ArmorBytes()
 
 encHandle.ClearPrivateParams()
 ```
@@ -163,8 +163,8 @@ decHandleBob, _ := pgp.Decryption().
   DecryptionKey(bobKeyPriv).
   VerifyKey(aliceKeyPub).
   New()
-decryptedBob, _ := decHandleBob.Decrypt(pgpMessage.GetBinary())
-fmt.Println(string(decryptedBob.Result()))
+decryptedBob, _ := decHandleBob.Decrypt(pgpMessage.Bytes(), crypto.Bytes)
+fmt.Println(string(decryptedBob.Bytes()))
 
 // Disable intended recipient check, there is no info about carols key in the message.
 // The decryption function tries all supplied keys for decrypting the "anonymous" key packet.
@@ -174,7 +174,7 @@ decHandleCarol, _ := pgp.Decryption().
   VerifyKey(aliceKeyPub).
   DisableIntendedRecipients().
   New()
-decryptedCarol, _ := decHandleCarol.Decrypt(pgpMessage.GetBinary())
+decryptedCarol, _ := decHandleCarol.Decrypt(pgpMessage.Bytes(), crypto.Bytes)
 ```
 
 Encrypt and decrypt large messages with the streaming API:
@@ -186,12 +186,11 @@ pgp := crypto.PGP()
 encHandle, err := pgp.Encryption().
   Recipient(bobKeyPub).
   SigningKey(aliceKeyPriv).
-  Armor().
   New()
 messageReader, err := os.Open("msg.txt")
 ciphertextWriter, err := os.Create("out.pgp")
 
-ptWriter, err := encHandle.EncryptingWriter(ciphertextWriter)
+ptWriter, err := encHandle.EncryptingWriter(ciphertextWriter, crypto.Armor)
 _, err = io.Copy(ptWriter, messageReader)
 err = ptWriter.Close()
 err = messageReader.Close()
@@ -204,12 +203,12 @@ decHandle, err := pgp.Decryption().
   DecryptionKey(bobKeyPriv).
   VerifyKey(aliceKeyPub).
   New()
-ptReader, err := decHandle.DecryptingReader(ctFileRead)
+ptReader, err := decHandle.DecryptingReader(ctFileRead, crypto.Armor)
 decResult, err := ptReader.ReadAllAndVerifySignature()
 if sigErr := decResult.SignatureError(); sigErr != nil {
   // Handle sigErr
 }
-// Access decrypted message with decResult.Result()
+// Access decrypted message with decResult.Bytes()
 ```
 ### Generate key
 Keys are generated with the `GenerateKey` function on the pgp handle.
@@ -252,9 +251,7 @@ Encrypt (lock) and decrypt (unlock) a secret key:
 ```go
 password := []byte("password")
 
-pgp := crypto.PGP() // crypto.PGPCryptoRefresh()
-aliceKeyPriv, err := pgp.GenerateKey("alice", "alice@alice.com", constants.StandardLevel)
-
+pgp := crypto.PGP()
 // Encrypt key with password
 lockedKey, err := pgp.LockKey(aliceKeyPriv, password)
 // Decrypt key with password
@@ -300,7 +297,7 @@ verifyResult, err := verifier.VerifyInline(signatureMessage, crypto.Armor)
 if sigErr := verifyResult.SignatureError(); sigErr != nil {
   // Handle sigErr
 }
-
+// Access signed data with verifyResult.Bytes()
 signer.ClearPrivateParams()
 ```
 
@@ -337,14 +334,14 @@ Split encrypted message into key packets and data packets
 ```go
 // Non-streaming
 pgpMessage, err := encHandle.Encrypt(...)
-keyPackets := pgpMessage.GetBinaryKeyPacket()
-dataPackets := pgpMessage.GetBinaryDataPacket()
+keyPackets := pgpMessage.BinaryKeyPacket()
+dataPackets := pgpMessage.BinaryDataPacket()
 
 // Streaming 
 var keyPackets bytes.Buffer
 var dataPackets bytes.Buffer
 splitWriter := crypto.NewPGPMessageWriterKeyAndData(&keyPackets, &dataPackets)
-ptWriter, _ := encHandle.EncryptingWriter(splitWriter)
+ptWriter, _ := encHandle.EncryptingWriter(splitWriter, crypto.Bytes)
 // ...
 // Key packets are written to keyPackets while data packets are written to dataPackets
 ```
@@ -358,9 +355,9 @@ encHandle, err := pgp.Encryption().
   DetachedSignature().
   New() // Enable the detached signature option
 pgpMessage, err := encHandle.Encrypt(...)
-pgpMessageEncSig, err := pgpMessage.GetEncryptedDetachedSignature()
-// pgpMessage.GetBinary() encrypted message without an embedded signature
-// pgpMessageEncSig.GetBinary() encrypted signature message
+pgpMessageEncSig, err := pgpMessage.EncryptedDetachedSignature()
+// pgpMessage.Bytes() encrypted message without an embedded signature
+// pgpMessageEncSig.Bytes() encrypted signature message
 // pgpMessage:        key packets|enc data packets
 // pgpMessageEncSig:  key packets|enc signature packet
 

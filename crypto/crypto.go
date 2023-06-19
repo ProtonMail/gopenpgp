@@ -67,9 +67,3 @@ func (p *PGPHandle) GenerateSessionKey() (*SessionKey, error) {
 	config := p.profile.EncryptionConfig()
 	return generateSessionKey(config)
 }
-
-// SetTime sets the pgp handle time for key generation to the
-// provided unix timestamp instead of using the local device time.
-func (p *PGPHandle) SetKeyGenTime(unixTime int64) {
-	p.localTime = NewConstantClock(unixTime)
-}
