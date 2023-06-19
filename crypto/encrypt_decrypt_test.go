@@ -188,7 +188,7 @@ func TestEncryptDecryptCachedSessionOnDecrypt(t *testing.T) {
 			if err != nil {
 				t.Fatal("Expected no error in encryption, got:", err)
 			}
-			decResult, err := decHandle.Decrypt(pgpMessage.GetBinary(), Bytes)
+			decResult, err := decHandle.Decrypt(pgpMessage.Bytes(), Bytes)
 			if err != nil {
 				t.Fatal("Expected no error in decryption, got:", decResult)
 			}
@@ -202,7 +202,7 @@ func TestEncryptDecryptCachedSessionOnDecrypt(t *testing.T) {
 				DecryptionKeys(material.keyRingTestPrivate).
 				VerificationKeys(material.keyRingTestPublic).
 				New()
-			decResult, err = decHandle.Decrypt(pgpMessage.GetBinary(), Bytes)
+			decResult, err = decHandle.Decrypt(pgpMessage.Bytes(), Bytes)
 			if err != nil {
 				t.Fatal("Expected no error in decryption, got:", decResult)
 			}
@@ -795,7 +795,7 @@ func testEncryptDecrypt(
 	if err != nil {
 		t.Fatal("Expected no error while encrypting with key ring, got:", err)
 	}
-	ciphertextBytes := pgpMessage.GetBinary()
+	ciphertextBytes := pgpMessage.Bytes()
 	decryptionResult, err := decHandle.Decrypt(ciphertextBytes, Bytes)
 	if err != nil {
 		t.Fatal("Expected no error while calling decrypt with key ring, got:", err)
@@ -803,15 +803,15 @@ func testEncryptDecrypt(
 	if err = decryptionResult.SignatureError(); err != nil {
 		t.Fatal("Expected no signature verification error, got:", err)
 	}
-	if !bytes.Equal(decryptionResult.Result(), messageBytes) {
-		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptionResult.Result()), string(messageBytes))
+	if !bytes.Equal(decryptionResult.Bytes(), messageBytes) {
+		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptionResult.Bytes()), string(messageBytes))
 	}
-	decryptedMeta := decryptionResult.GetMetadata()
+	decryptedMeta := decryptionResult.Metadata()
 	if expectedMetadata == nil {
 		expectedMetadata = &LiteralMetadata{
-			filename: metadata.GetFilename(),
-			isUTF8:   metadata.GetIsUtf8(),
-			ModTime:  metadata.GetTime(),
+			filename: metadata.Filename(),
+			isUTF8:   metadata.IsUtf8(),
+			ModTime:  metadata.Time(),
 		}
 	}
 	if !reflect.DeepEqual(expectedMetadata, decryptedMeta) {
@@ -890,9 +890,9 @@ func testEncryptSplitDecryptStream(
 	decryptedMeta := decryptedReader.GetMetadata()
 	if expectedMetadata == nil {
 		expectedMetadata = &LiteralMetadata{
-			filename: metadata.GetFilename(),
-			isUTF8:   metadata.GetIsUtf8(),
-			ModTime:  metadata.GetTime(),
+			filename: metadata.Filename(),
+			isUTF8:   metadata.IsUtf8(),
+			ModTime:  metadata.Time(),
 		}
 	}
 	if !reflect.DeepEqual(expectedMetadata, decryptedMeta) {
@@ -954,9 +954,9 @@ func testEncryptDecryptStream(
 	decryptedMeta := decryptedReader.GetMetadata()
 	if expectedMetadata == nil {
 		expectedMetadata = &LiteralMetadata{
-			filename: metadata.GetFilename(),
-			isUTF8:   metadata.GetIsUtf8(),
-			ModTime:  metadata.GetTime(),
+			filename: metadata.Filename(),
+			isUTF8:   metadata.IsUtf8(),
+			ModTime:  metadata.Time(),
 		}
 	}
 	if !reflect.DeepEqual(expectedMetadata, decryptedMeta) {
