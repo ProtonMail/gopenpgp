@@ -110,7 +110,7 @@ func DecryptVerifyMessageArmored(
 
 // DecryptVerifyBinaryMessageArmored decrypts an armored PGP binary given a private
 // key and its passphrase and verifies the embedded signature. Returns the
-// plain binary data or an error on signature verification failure.
+// binary data or an error on signature verification failure.
 func DecryptVerifyBinaryMessageArmored(
 	publicKey, privateKey string, passphrase []byte, data []byte,
 ) (plainData []byte, err error) {
