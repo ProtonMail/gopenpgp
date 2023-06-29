@@ -9,10 +9,7 @@ import (
 
 const messageToSign = "Hello World!"
 const messageCleartext = "  Signed message\n  \n  "
-
-// An implementation SHOULD add a line break after the cleartext,
-// but MAY omit it if the cleartext ends with a line break. This is for visual clarity.
-const expectedMessageCleartext = "  Signed message\n\n\n"
+const expectedMessageCleartext = "  Signed message\n\n"
 
 func TestSignVerifyStream(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
