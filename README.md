@@ -122,13 +122,13 @@ With signatures:
 ```go
 pgp := crypto.PGP()
 aliceKeyPriv, err := pgp.KeyGeneration().
-  UserId("alice", "alice@alice.com").
+  AddUserId("alice", "alice@alice.com").
   New().
   GenerateKey()
 aliceKeyPub, err := aliceKeyPriv.ToPublic()
 
 bobKeyPriv, err := pgp.KeyGeneration().
-  UserId("bob", "bob@bob.com").
+  AddUserId("bob", "bob@bob.com").
   New().
   GenerateKey()
 bobKeyPub, err := bobKeyPriv.ToPublic()
@@ -255,19 +255,19 @@ pgpCryptoRefresh := crypto.PGPWithProfile(profile.CryptoRefresh())
 // Note that RSA keys should not be generated anymore according to
 // draft-ietf-openpgp-crypto-refresh
 
-keyGenHandle := pgp4880.KeyGeneration().UserId(name, email).New()
+keyGenHandle := pgp4880.KeyGeneration().AddUserId(name, email).New()
 // Generates rsa keys with 3072 bits
 rsaKey, err := keyGenHandle.GenerateKey()
 // Generates rsa keys with 4092 bits
 rsaKeyHigh, err := keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
 
-keyGenHandle = gnuPG.KeyGeneration().UserId(name, email).New()
+keyGenHandle = gnuPG.KeyGeneration().AddUserId(name, email).New()
 // Generates curve25519 keys with GnuPG compatibility
 ecKey, err := keyGenHandle.GenerateKey()
 // Generates curve448 keys with GnuPG compatibility
 ecKeyHigh, err := keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
 
-keyGenHandle = pgpCryptoRefresh.KeyGeneration().UserId(name, email).New()
+keyGenHandle = pgpCryptoRefresh.KeyGeneration().AddUserId(name, email).New()
 // Generates curve25519 keys with draft-ietf-openpgp-crypto-refresh
 ecKey, err = keyGenHandle.GenerateKey()
 // Generates curve448 keys with draft-ietf-openpgp-crypto-refresh
@@ -367,7 +367,7 @@ dataPackets := pgpMessage.BinaryDataPacket()
 // Streaming 
 var keyPackets bytes.Buffer
 var dataPackets bytes.Buffer
-splitWriter := crypto.NewPGPMessageWriterKeyAndData(&keyPackets, &dataPackets)
+splitWriter := crypto.NewPGPSplitWriterKeyAndData(&keyPackets, &dataPackets)
 ptWriter, _ := encHandle.EncryptingWriter(splitWriter, crypto.Bytes)
 // ...
 // Key packets are written to keyPackets while data packets are written to dataPackets
