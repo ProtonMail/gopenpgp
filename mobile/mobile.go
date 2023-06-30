@@ -1,3 +1,4 @@
+// Package mobile provides tools for mobile compatibility.
 package mobile
 
 import "runtime/debug"

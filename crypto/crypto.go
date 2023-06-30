@@ -1,3 +1,4 @@
+// Package crypto provides a high-level API for common OpenPGP functionality.
 package crypto
 
 import (
