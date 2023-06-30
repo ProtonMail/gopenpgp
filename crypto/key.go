@@ -267,15 +267,18 @@ func (key *Key) CanEncrypt(unixTime int64) bool {
 // IsExpired checks whether the key is expired.
 func (key *Key) IsExpired(unixTime int64) bool {
 	current := time.Unix(unixTime, 0)
-	i := key.entity.PrimaryIdentity()
-	return key.entity.PrimaryKey.KeyExpired(i.SelfSignature, current) || // primary key has expired
-		i.SelfSignature.SigExpired(current) // user ID self-signature has expired
+	sig, err := key.entity.PrimarySelfSignature(time.Time{})
+	if err != nil {
+		return true
+	}
+	return key.entity.PrimaryKey.KeyExpired(sig, current) || // primary key has expired
+		sig.SigExpired(current) // user ID self-signature has expired
 }
 
 // IsRevoked checks whether the key or the primary identity has a valid revocation signature.
 func (key *Key) IsRevoked(unixTime int64) bool {
 	current := time.Unix(unixTime, 0)
-	return key.entity.Revoked(current) || key.entity.PrimaryIdentity().Revoked(current)
+	return key.entity.Revoked(current)
 }
 
 // IsPrivate returns true if the key is private.
@@ -335,7 +338,11 @@ func (key *Key) Check() (bool, error) {
 // PrintFingerprints is a debug helper function that prints the key and subkey fingerprints.
 func (key *Key) PrintFingerprints() {
 	for _, subKey := range key.entity.Subkeys {
-		if !subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage || subKey.Sig.FlagEncryptCommunications {
+		binding, err := subKey.LatestValidBindingSignature(time.Time{})
+		if err != nil {
+			continue
+		}
+		if !binding.FlagsValid || binding.FlagEncryptStorage || binding.FlagEncryptCommunications {
 			fmt.Println("SubKey:" + hex.EncodeToString(subKey.PublicKey.Fingerprint))
 		}
 	}
