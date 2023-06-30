@@ -1,3 +1,4 @@
+// Package mime provides an API to decrypt mime messages.
 package mime
 
 import (
