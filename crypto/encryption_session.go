@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"strconv"
+	"time"
 
 	"github.com/ProtonMail/go-crypto/v2/openpgp/packet"
 	"github.com/pkg/errors"
@@ -31,18 +32,20 @@ Loop:
 		case *packet.EncryptedKey:
 			hasPacket = true
 			ek = p
+			unverifiedEntities := keyRing.entities.EntitiesById(p.KeyId)
+			for _, unverifiedEntity := range unverifiedEntities {
+				keys := unverifiedEntity.DecryptionKeys(p.KeyId, time.Time{})
+				for _, key := range keys {
+					priv := key.PrivateKey
+					if priv.Encrypted {
+						continue
+					}
 
-			for _, key := range keyRing.entities.DecryptionKeys() {
-				priv := key.PrivateKey
-				if priv.Encrypted {
-					continue
-				}
-
-				if decryptErr = ek.Decrypt(priv, nil); decryptErr == nil {
-					break Loop
+					if decryptErr = ek.Decrypt(priv, nil); decryptErr == nil {
+						break Loop
+					}
 				}
 			}
-
 		case *packet.SymmetricallyEncrypted,
 			*packet.AEADEncrypted,
 			*packet.Compressed,
@@ -105,17 +108,18 @@ func encryptSessionKeyToWriter(
 	pubKeys := make([]*packet.PublicKey, 0, len(recipients.getEntities())+len(hiddenRecipients.getEntities()))
 	aeadSupport := config.AEAD() != nil
 	for _, e := range append(recipients.getEntities(), hiddenRecipients.getEntities()...) {
-		encryptionKey, ok := e.EncryptionKey(config.Time())
-		primarySelfSignature, _ := e.PrimarySelfSignature()
+		now := config.Now()
+		encryptionKey, ok := e.EncryptionKey(now)
+		if !ok {
+			return errors.New("gopenpgp: encryption key is unavailable for key id " + strconv.FormatUint(e.PrimaryKey.KeyId, 16))
+		}
+		primarySelfSignature, _ := e.PrimarySelfSignature(now)
 		if primarySelfSignature == nil {
 			return errors.Wrap(err, "gopenpgp: entity without a self-signature")
 		}
 
 		if !primarySelfSignature.SEIPDv2 {
 			aeadSupport = false
-		}
-		if !ok {
-			return errors.New("gopenpgp: encryption key is unavailable for key id " + strconv.FormatUint(e.PrimaryKey.KeyId, 16))
 		}
 		pubKeys = append(pubKeys, encryptionKey.PublicKey)
 	}

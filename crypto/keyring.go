@@ -108,7 +108,12 @@ func (keyRing *KeyRing) CountEntities() int {
 
 // CountDecryptionEntities returns the number of entities in the keyring.
 func (keyRing *KeyRing) CountDecryptionEntities() int {
-	return len(keyRing.entities.DecryptionKeys())
+	var count int
+	for _, entity := range keyRing.entities {
+		decryptionKeys := entity.DecryptionKeys(0, time.Time{})
+		count += len(decryptionKeys)
+	}
+	return count
 }
 
 // GetIdentities returns the list of identities associated with this key ring.
@@ -173,7 +178,11 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 			hasExpired := false
 			hasUnexpired := false
 			for _, subkey := range entity.Subkeys {
-				if subkey.PublicKey.KeyExpired(subkey.Sig, now) {
+				latestValid, err := subkey.LatestValidBindingSignature(now)
+				if err != nil {
+					hasExpired = true
+				}
+				if subkey.PublicKey.KeyExpired(latestValid, now) {
 					hasExpired = true
 				} else {
 					hasUnexpired = true
