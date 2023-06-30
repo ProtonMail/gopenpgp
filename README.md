@@ -8,6 +8,7 @@ crypto library](https://github.com/lubux/go-crypto/tree/version-2).
 <!-- TOC depthFrom:2 -->
 
 - [GopenPGP V3](#gopenpgp-v3)
+  - [Download/Install](#downloadinstall)
   - [Examples](#examples)
     - [Encrypt / Decrypt with a password](#encrypt--decrypt-with-a-password)
     - [Encrypt / Decrypt with PGP keys](#encrypt--decrypt-with-pgp-keys)
@@ -17,6 +18,28 @@ crypto library](https://github.com/lubux/go-crypto/tree/version-2).
     - [Encrypt with different outputs](#encrypt-with-different-outputs)
 
 <!-- /TOC -->
+
+## Download/Install
+
+To use GopenPGP with [Go Modules](https://github.com/golang/go/wiki/Modules) just run 
+```
+go get github.com/ProtonMail/gopenpgp/v3
+```
+in your project folder.
+
+Then, your code can include it as follows:
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/ProtonMail/gopenpgp/v3/crypto"
+)
+
+func main() {
+	pgp := crypto.PGP()
+}
+```
 
 ## Examples
 
@@ -41,6 +64,8 @@ myMessage := decrypted.Bytes()
 
 To encrypt with the new algorithms from the crypto refresh:
 ```go
+import "github.com/ProtonMail/gopenpgp/v3/profile"
+
 // Use the default crypto refresh profile
 pgp := crypto.PGPWithProfile(profile.CryptoRefresh())
 // The default crypto refresh profile uses Argon2 for deriving
@@ -53,6 +78,8 @@ pgp := crypto.PGPWithProfile(profile.CryptoRefresh())
 
 Use a custom or preset profile:
 ```go
+import "github.com/ProtonMail/gopenpgp/v3/profile"
+
 // RFC4880 profile
 pgp4880 := crypto.PGPWithProfile(profile.RFC4880()) 
 // GnuPG profile
@@ -117,7 +144,7 @@ armored, err := pgpMessage.ArmorBytes()
 // Decrypt armored encrypted message using the private key and obtain plain text
 decHandle, err := pgp.Decryption().
   DecryptionKey(bobKeyPriv).
-  VerifyKey(aliceKeyPub).
+  VerificationKey(aliceKeyPub).
   New()
 decrypted, err := decHandle.Decrypt(armored, crypto.Armor)
 if sigErr := decrypted.SignatureError(); sigErr != nil {
@@ -161,7 +188,7 @@ pgpMessage, _ := encHandle.Encrypt([]byte("my message"))
 // of alice's signature in the message.
 decHandleBob, _ := pgp.Decryption().
   DecryptionKey(bobKeyPriv).
-  VerifyKey(aliceKeyPub).
+  VerificationKey(aliceKeyPub).
   New()
 decryptedBob, _ := decHandleBob.Decrypt(pgpMessage.Bytes(), crypto.Bytes)
 fmt.Println(string(decryptedBob.Bytes()))
@@ -171,7 +198,7 @@ fmt.Println(string(decryptedBob.Bytes()))
 // If the check is not disabled, the decryption result would contain a signature error.
 decHandleCarol, _ := pgp.Decryption().
   DecryptionKey(carolKeyPriv).
-  VerifyKey(aliceKeyPub).
+  VerificationKey(aliceKeyPub).
   DisableIntendedRecipients().
   New()
 decryptedCarol, _ := decHandleCarol.Decrypt(pgpMessage.Bytes(), crypto.Bytes)
@@ -201,7 +228,7 @@ defer ctFileRead.Close()
 // Decrypt stream and read the result to memory
 decHandle, err := pgp.Decryption().
   DecryptionKey(bobKeyPriv).
-  VerifyKey(aliceKeyPub).
+  VerificationKey(aliceKeyPub).
   New()
 ptReader, err := decHandle.DecryptingReader(ctFileRead, crypto.Armor)
 decResult, err := ptReader.ReadAllAndVerifySignature()
@@ -271,7 +298,7 @@ signingMessage := []byte("message to sign")
 signer, err := pgp.Sign().SigningKey(aliceKeyPriv).Detached().New()
 signature, err := signer.Sign(signingMessage, crypto.Armor)
 
-verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
+verifier, err := pgp.Verify().VerificationKey(aliceKeyPub).New()
 verifyResult, err := verifier.VerifyDetached(signingMessage, signature, crypto.Armor)
 if sigErr := verifyResult.SignatureError(); sigErr != nil {
   // Handle sigErr
@@ -292,7 +319,7 @@ signingMessage := []byte("message to sign")
 signer, err := pgp.Sign().SigningKey(aliceKeyPriv).New()
 signatureMessage, err := signer.Sign(signingMessage, crypto.Armor)
 
-verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
+verifier, err := pgp.Verify().VerificationKey(aliceKeyPub).New()
 verifyResult, err := verifier.VerifyInline(signatureMessage, crypto.Armor)
 if sigErr := verifyResult.SignatureError(); sigErr != nil {
   // Handle sigErr
@@ -319,7 +346,7 @@ cleartextArmored, err := signer.SignCleartext(signingMessage)
 // ...
 // -----END PGP SIGNATURE-----
 
-verifier, err := pgp.Verify().VerifyKey(aliceKeyPub).New()
+verifier, err := pgp.Verify().VerificationKey(aliceKeyPub).New()
 verifyResult, err := verifier.VerifyCleartext(cleartextArmored)
 if sigErr := verifyResult.SignatureError(); sigErr != nil {
   // Handle sigErr
