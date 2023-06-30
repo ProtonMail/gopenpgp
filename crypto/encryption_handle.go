@@ -197,7 +197,7 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 		}
 		if eh.DetachedSignature {
 			armorSigWriter, err = armor.Encode(detachedSignature, constants.PGPMessageHeader, eh.ArmorHeaders)
-			detachedSignature = armorWriter
+			detachedSignature = armorSigWriter
 			if err != nil {
 				return
 			}
