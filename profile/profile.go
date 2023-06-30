@@ -1,3 +1,4 @@
+// Package profile provides different profiles to run GopenPGP.
 package profile
 
 import (
