@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ProtonMail/go-crypto/v2/openpgp"
 	"github.com/ProtonMail/go-crypto/v2/openpgp/armor"
@@ -350,7 +351,11 @@ func TestGetEntity(t *testing.T) {
 		t.Fatal("Cannot unarmor key:", err)
 	}
 	entity := publicKey.GetEntity()
-	assert.True(t, entity.PrimaryIdentity().SelfSignature.FlagsValid)
+	selfSig, err := entity.PrimarySelfSignature(time.Time{})
+	if err != nil {
+		t.Fatal("Expected no error, got: ", err)
+	}
+	assert.True(t, selfSig.FlagsValid)
 	assert.IsType(t, &openpgp.Entity{}, entity)
 }
 
@@ -409,9 +414,13 @@ func TestUnlockMismatchingKey(t *testing.T) {
 }
 
 func TestKeyCompression(t *testing.T) {
+	selfSig, err := keyTestEC.entity.PrimarySelfSignature(time.Time{})
+	if err != nil {
+		t.Fatal("no error expected, got: ", err)
+	}
 	assert.Equal(
 		t,
 		[]uint8{uint8(packet.CompressionNone), uint8(packet.CompressionZLIB)},
-		keyTestEC.entity.PrimaryIdentity().SelfSignature.PreferredCompression,
+		selfSig.PreferredCompression,
 	)
 }
