@@ -140,7 +140,9 @@ func (dh *decryptionHandle) decryptStreamWithSessionAndParse(messageReader io.Re
 		keyring = append(keyring, dh.DecryptionKeyRing.entities...)
 	}
 	checkIntendedRecipients := !dh.DisableIntendedRecipients
+	checkPacketSequence := false
 	config.CheckIntendedRecipients = &checkIntendedRecipients
+	config.CheckPacketSequence = &checkPacketSequence
 	md, err := openpgp.ReadMessage(decrypted, keyring, nil, config)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "gopenpgp: unable to decode symmetric packet")

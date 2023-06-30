@@ -1,13 +1,5 @@
-github.com/ProtonMail/go-crypto/v2 v2.0.0-20230608140156-89d44805992c h1:EZjBkx7VJ1g4GrEFaS6uLZzNOVnUbSP9QDbyXHFRnlI=
-github.com/ProtonMail/go-crypto/v2 v2.0.0-20230608140156-89d44805992c/go.mod h1:GDn05Mnp+gtqH5oI1R9ZsK6JfQ7HjE/SPcO9wQpSluk=
-github.com/ProtonMail/go-crypto/v2 v2.0.0-20230615124947-fd479ec1cdeb h1:i6kHy6yy6CzCrg4Q2Y1Zy300zD4JmlqMZ7BfYv+ebJQ=
-github.com/ProtonMail/go-crypto/v2 v2.0.0-20230615124947-fd479ec1cdeb/go.mod h1:GDn05Mnp+gtqH5oI1R9ZsK6JfQ7HjE/SPcO9wQpSluk=
-github.com/ProtonMail/go-crypto/v2 v2.0.0-20230616070713-16126ae69f04 h1:jgaJqo5ygtu8sotMRPYiejXewByvv2QWBK8FST3wIIo=
-github.com/ProtonMail/go-crypto/v2 v2.0.0-20230616070713-16126ae69f04/go.mod h1:GDn05Mnp+gtqH5oI1R9ZsK6JfQ7HjE/SPcO9wQpSluk=
-github.com/ProtonMail/go-crypto/v2 v2.0.0-20230616131459-affc78dd159d h1:yzYmJVkz1JjgsGu7yLxwxDUEbwa/7a09TNhXtT4S6sM=
-github.com/ProtonMail/go-crypto/v2 v2.0.0-20230616131459-affc78dd159d/go.mod h1:GDn05Mnp+gtqH5oI1R9ZsK6JfQ7HjE/SPcO9wQpSluk=
-github.com/ProtonMail/go-crypto/v2 v2.0.0-20230616131758-6d519829e49a h1:oKC8W8Lx9zUuBbQvRNdkqgZiWmT4Qy/BQ2X/dlQiw+E=
-github.com/ProtonMail/go-crypto/v2 v2.0.0-20230616131758-6d519829e49a/go.mod h1:GDn05Mnp+gtqH5oI1R9ZsK6JfQ7HjE/SPcO9wQpSluk=
+github.com/ProtonMail/go-crypto/v2 v2.0.0-20230630100040-74036ca00b66 h1:fi2M7ttIou2pTNvRlSgH8YbueyS3EGpmMM1XomFgsi0=
+github.com/ProtonMail/go-crypto/v2 v2.0.0-20230630100040-74036ca00b66/go.mod h1:GDn05Mnp+gtqH5oI1R9ZsK6JfQ7HjE/SPcO9wQpSluk=
 github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f h1:tCbYj7/299ekTTXpdwKYF8eBlsYsDVoggDAuAjoK66k=
 github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f/go.mod h1:gcr0kNtGBqin9zDW9GOHcVntrwnjrK+qdJ06mWYBybw=
 github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
