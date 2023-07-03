@@ -4,7 +4,6 @@ import (
 	"bytes"
 
 	"github.com/ProtonMail/go-crypto/v2/openpgp/armor"
-	armorHelper "github.com/ProtonMail/gopenpgp/v3/armor"
 
 	"github.com/pkg/errors"
 )
@@ -151,7 +150,7 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 		encryptedMessage = armoredBlock.Body
 	}
 	if encryptedSignature != nil {
-		encryptedSignature, armored = armorHelper.IsPGPArmored(encryptedSignature)
+		encryptedSignature, armored = encoding.unarmorInput(encryptedSignature)
 		if armored {
 			// Wrap encryptedSignature with decode armor reader.
 			armoredBlock, err = armor.Decode(encryptedSignature)
