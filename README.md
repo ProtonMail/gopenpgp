@@ -9,6 +9,7 @@ crypto library](https://github.com/lubux/go-crypto/tree/version-2).
 
 - [GopenPGP V3](#gopenpgp-v3)
   - [Download/Install](#downloadinstall)
+  - [Documentation](#documentation)
   - [Examples](#examples)
     - [Encrypt / Decrypt with a password](#encrypt--decrypt-with-a-password)
     - [Encrypt / Decrypt with PGP keys](#encrypt--decrypt-with-pgp-keys)
@@ -41,7 +42,13 @@ func main() {
 }
 ```
 
+## Documentation
+
+A full overview of the API can be found here: https://pkg.go.dev/github.com/ProtonMail/gopenpgp/v3.
+
 ## Examples
+
+A file of runnable examples can be found in [crypto_example_test.go](crypto/crypto_example_test.go).
 
 ### Encrypt / Decrypt with a password
 
