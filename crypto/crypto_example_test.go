@@ -332,7 +332,7 @@ func ExamplePGPHandle_Decryption_asymmetric() {
 	}
 	defer decHandle.ClearPrivateParams()
 	decrypted, err := decHandle.Decrypt([]byte(exampleEncryptedMessagePub), Armor)
-	fmt.Println(string(decrypted.Bytes()))
+	fmt.Println(decrypted.String())
 	// Output: my message
 }
 
@@ -370,7 +370,7 @@ func ExamplePGPHandle_Decryption_signcrypt() {
 	} else {
 		fmt.Println("OK")
 	}
-	fmt.Println(string(decrypted.Bytes()))
+	fmt.Println(decrypted.String())
 	// Output: OK
 	// my message
 }
@@ -423,7 +423,7 @@ func ExamplePGPHandle_Decryption_split() {
 	} else {
 		fmt.Println("OK")
 	}
-	fmt.Println(string(decrypted.Bytes()))
+	fmt.Println(decrypted.String())
 	// Output: OK
 	// my message
 }
@@ -467,7 +467,7 @@ func ExamplePGPHandle_Decryption_stream() {
 	} else {
 		fmt.Println("OK")
 	}
-	fmt.Println(string(decrypted.Bytes()))
+	fmt.Println(decrypted.String())
 	// Output: OK
 	// my message
 }
@@ -514,7 +514,7 @@ func ExamplePGPHandle_Decryption_detached() {
 	} else {
 		fmt.Println("OK")
 	}
-	fmt.Println(string(decrypted.Bytes()))
+	fmt.Println(decrypted.String())
 	// Output: OK
 	// my message
 }
@@ -692,7 +692,7 @@ func ExamplePGPHandle_Verify_inline() {
 	} else {
 		fmt.Println("OK")
 	}
-	fmt.Println(string(verifyResult.Bytes()))
+	fmt.Println(verifyResult.String())
 	// Output: OK
 	// message to sign
 }
@@ -749,7 +749,7 @@ func ExamplePGPHandle_Verify_stream() {
 	} else {
 		fmt.Println("OK")
 	}
-	fmt.Println(string(verifyResult.Bytes()))
+	fmt.Println(verifyResult.String())
 	// Output: OK
 	// message to sign
 }
