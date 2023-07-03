@@ -10,7 +10,6 @@ import (
 type PGPHandle struct {
 	profile     *profile.Custom
 	defaultTime Clock
-	localTime   Clock
 }
 
 // PGP creates a PGPHandle to interact with the API.
@@ -22,11 +21,9 @@ func PGP() *PGPHandle {
 // PGPWithProfile creates a PGPHandle to interact with the API.
 // Uses the provided profile for configuration.
 func PGPWithProfile(profile *profile.Custom) *PGPHandle {
-	defaultClock := time.Now
 	return &PGPHandle{
 		profile:     profile,
-		defaultTime: defaultClock,
-		localTime:   defaultClock,
+		defaultTime: time.Now,
 	}
 }
 
