@@ -149,6 +149,11 @@ func (r *VerifiedDataResult) Bytes() []byte {
 	return r.data
 }
 
+// String returns the result data as string.
+func (r *VerifiedDataResult) String() string {
+	return string(r.data)
+}
+
 // SessionKey returns the session key the data is decrypted with.
 // Returns nil, if the data was not encrypted or
 // session key caching was not enabled.
