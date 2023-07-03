@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"strings"
@@ -91,7 +92,24 @@ APwuHaxUQ7xX4WdqWm7WnipmbM/ARTJPESACNoFlw7p/aHuXw+nyolUeIRnadyle
 const exampleSplitMessage = `c1440361ce9c95894276da19cf0760b3a1150038c6d9ab20a5594fc9e32ce12009fb0a3ec12783b8efcf57521907d012786468567d736db82a9b160a598ea8decd762b982063
 d2c0140104f3439588864ca36d6c15c0ae9364c706a869f13fc71987acd5061716914b03b4ef1884d67d19f28e9c29447fbd76781cd9b69bad22fc2b7eefd0d1b6c4e5d3f90368d19b5a2eb02cb1fb4d706f77feb1b200ac553cd872e1e695bafbac39fbf729f89a96aaf9fdef72c801545db2e627b357df18d05841f2fbd5aeb82b38db28a7f4cd946b17f98922fcbd78cf03b3ff7247918f381e61482960a9eec2192c64aa1a3eddbab486a7372c65e8f2c9b284f6b232cd3a4147fa374635cd1ad7e8b210334fce25c49cce99f91ff835dbfb3c6a27`
 
-func ExamplePGPHandle_Encryption() {
+const exampleEncryptedDetachedMessage = `-----BEGIN PGP MESSAGE-----
+
+wVQDYc6clYlCdtoZVaZe8pDekqVSnY9/wtXIPV92Yi1b/Nc0cxaw3CyG7xkpCbnc
+V5NWsbpp0NaJ3Gxq/APdetC3iPG+AjM4xuWKhZWZ3/+bea/2q8jSOwF43weMcuQF
+zXxGfqB9uLYsOXejBTO4oPDbuWH11SVibxa6k1X79l2+kf2dDgruhMk564h4SU6v
+dbID
+-----END PGP MESSAGE-----`
+const exampleEncryptedDetachedSignatureMessage = `-----BEGIN PGP MESSAGE-----
+
+wVQDYc6clYlCdtoZVaZe8pDekqVSnY9/wtXIPV92Yi1b/Nc0cxaw3CyG7xkpCbnc
+V5NWsbpp0NaJ3Gxq/APdetC3iPG+AjM4xuWKhZWZ3/+bea/2q8jSpAHHbawcWmFq
+ecrYdNNCv7KZS3ofScFXVuYWI8tc8sgaCUd2b82krn0dWRAzaxBuz+rJ99/jQa8U
+GZSc+PaljzEvgR+GoQc5h8VJ58UmDXoN9VhWYKBBz1B1bkCu1vsDNS1yXk/XNi2e
+BMEdvkP9hUOsJTO9e1qQLhmmEQlyHkmQGSyIHFNaYMI18RSUVmfZwZ7fsL/I07zp
+nNWmL4dHU3Ba+56V
+-----END PGP MESSAGE-----`
+
+func ExamplePGPHandle_Encryption_password() {
 	// Encrypt data with a password
 	password := []byte("hunter2")
 	pgp := PGP()
@@ -112,7 +130,7 @@ func ExamplePGPHandle_Encryption() {
 	fmt.Println(armored)
 }
 
-func ExamplePGPHandle_Encryption_second() {
+func ExamplePGPHandle_Encryption_asymmetric() {
 	// Encrypt data with a public key
 	publicKey, err := NewKeyFromArmored(examplePubKey)
 	if err != nil {
@@ -133,7 +151,7 @@ func ExamplePGPHandle_Encryption_second() {
 	fmt.Println(armored)
 }
 
-func ExamplePGPHandle_Encryption_third() {
+func ExamplePGPHandle_Encryption_signcrypt() {
 	// Encrypt data with a public key
 	// and sign with private key
 	publicKey, err := NewKeyFromArmored(examplePubKey)
@@ -161,7 +179,7 @@ func ExamplePGPHandle_Encryption_third() {
 	fmt.Println(armored)
 }
 
-func ExamplePGPHandle_Encryption_fourth() {
+func ExamplePGPHandle_Encryption_stream() {
 	// Encrypt data with a public key
 	// and sign with private key streaming
 	publicKey, err := NewKeyFromArmored(examplePubKey)
@@ -193,7 +211,7 @@ func ExamplePGPHandle_Encryption_fourth() {
 	fmt.Println(ciphertextWriter.String())
 }
 
-func ExamplePGPHandle_Encryption_fifth() {
+func ExamplePGPHandle_Encryption_split() {
 	// Split encrypted message into key packets and data packets.
 	publicKey, err := NewKeyFromArmored(examplePubKey)
 	if err != nil {
@@ -229,7 +247,7 @@ func ExamplePGPHandle_Encryption_fifth() {
 	fmt.Printf("%x\n", dataPackets.Bytes())
 }
 
-func ExamplePGPHandle_Encryption_sixth() {
+func ExamplePGPHandle_Encryption_detached() {
 	// Produce encrypted detached signatures instead of
 	// embedded signatures:
 	publicKey, err := NewKeyFromArmored(examplePubKey)
@@ -267,7 +285,7 @@ func ExamplePGPHandle_Encryption_sixth() {
 	fmt.Println(pgpSignatureMessage.String())
 }
 
-func ExamplePGPHandle_Decryption() {
+func ExamplePGPHandle_Decryption_password() {
 	// Decrypt data with a password
 	pgp := PGP()
 	decHandle, err := pgp.
@@ -287,7 +305,7 @@ func ExamplePGPHandle_Decryption() {
 	// Output: my message
 }
 
-func ExamplePGPHandle_Decryption_second() {
+func ExamplePGPHandle_Decryption_asymmetric() {
 	// Decrypt armored encrypted message using
 	// the private key and obtain the plaintext
 	privateKey, err := NewKeyFromArmored(examplePrivKey)
@@ -311,7 +329,7 @@ func ExamplePGPHandle_Decryption_second() {
 	// Output: my message
 }
 
-func ExamplePGPHandle_Decryption_third() {
+func ExamplePGPHandle_Decryption_signcrypt() {
 	// Decrypt armored encrypted message using
 	// the private key and obtain the plaintext
 	publicKey, err := NewKeyFromArmored(examplePubKey)
@@ -339,12 +357,68 @@ func ExamplePGPHandle_Decryption_third() {
 	if sigErr := decrypted.SignatureError(); sigErr != nil {
 		fmt.Println(sigErr)
 		return
+	} else {
+		fmt.Println("OK")
 	}
 	fmt.Println(string(decrypted.Bytes()))
-	// Output: my message
+	// Output: OK
+	// my message
 }
 
-func ExamplePGPHandle_Decryption_fourth() {
+func ExamplePGPHandle_Decryption_split() {
+	// Decrypt key and data packet
+	// separately.
+	data := strings.Split(exampleSplitMessage, "\n")
+	keyPacket, _ := hex.DecodeString(data[0])
+	dataPacket, _ := hex.DecodeString(data[1])
+	publicKey, err := NewKeyFromArmored(examplePubKey)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	privateKey, err := NewKeyFromArmored(examplePrivKey)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer privateKey.ClearPrivateParams()
+	pgp := PGP()
+	decHandle, err := pgp.
+		Decryption().
+		DecryptionKey(privateKey).
+		New()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	sessionKey, err := decHandle.DecryptSessionKey(keyPacket)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	decHandle, err = pgp.
+		Decryption().
+		SessionKey(sessionKey).
+		VerificationKey(publicKey).
+		DisableIntendedRecipients().
+		New()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	decrypted, err := decHandle.Decrypt(dataPacket, Bytes)
+	if sigErr := decrypted.SignatureError(); sigErr != nil {
+		fmt.Println(sigErr)
+		return
+	} else {
+		fmt.Println("OK")
+	}
+	fmt.Println(string(decrypted.Bytes()))
+	// Output: OK
+	// my message
+}
+
+func ExamplePGPHandle_Decryption_stream() {
 	// Decrypt armored encrypted message using
 	// the private key and obtain the plaintext with streaming
 	publicKey, err := NewKeyFromArmored(examplePubKey)
@@ -380,12 +454,62 @@ func ExamplePGPHandle_Decryption_fourth() {
 	if sigErr := decrypted.SignatureError(); sigErr != nil {
 		fmt.Println(sigErr)
 		return
+	} else {
+		fmt.Println("OK")
 	}
 	fmt.Println(string(decrypted.Bytes()))
-	// Output: my message
+	// Output: OK
+	// my message
 }
 
-func ExamplePGPHandle_KeyGeneration() {
+func ExamplePGPHandle_Decryption_detached() {
+	// Decrypt armored encrypted message and verify an encrypted
+	// detached signature.
+	publicKey, err := NewKeyFromArmored(examplePubKey)
+	if err != nil {
+		return
+	}
+	privateKey, err := NewKeyFromArmored(examplePrivKey)
+	if err != nil {
+		return
+	}
+	defer privateKey.ClearPrivateParams()
+	pgp := PGP()
+	decHandle, err := pgp.
+		Decryption().
+		DecryptionKey(privateKey).
+		VerificationKey(publicKey).
+		New()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	ciphertextReader := NewPGPSplitReader(
+		strings.NewReader(exampleEncryptedDetachedMessage),
+		strings.NewReader(exampleEncryptedDetachedSignatureMessage),
+	)
+	ptReader, err := decHandle.DecryptingReader(ciphertextReader, Armor)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	decrypted, err := ptReader.ReadAllAndVerifySignature()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	if sigErr := decrypted.SignatureError(); sigErr != nil {
+		fmt.Println(sigErr)
+		return
+	} else {
+		fmt.Println("OK")
+	}
+	fmt.Println(string(decrypted.Bytes()))
+	// Output: OK
+	// my message
+}
+
+func ExamplePGPHandle_KeyGeneration_basic() {
 	pgp := PGP()
 	// Generate a PGP key
 	genHandle := pgp.KeyGeneration().
@@ -398,7 +522,7 @@ func ExamplePGPHandle_KeyGeneration() {
 	fmt.Println(key.Armor())
 }
 
-func ExamplePGPHandle_KeyGeneration_second() {
+func ExamplePGPHandle_KeyGeneration_profile() {
 	// Generate a PGP key with the crypto-refresh profile
 	pgp := PGPWithProfile(profile.CryptoRefresh())
 	genHandle := pgp.KeyGeneration().
@@ -411,7 +535,7 @@ func ExamplePGPHandle_KeyGeneration_second() {
 	fmt.Println(key.Armor())
 }
 
-func ExamplePGPHandle_KeyGeneration_third() {
+func ExamplePGPHandle_KeyGeneration_level() {
 	// Generate a PGP key with the crypto-refresh profile
 	// higher security level (Curve448)
 	pgp := PGPWithProfile(profile.CryptoRefresh())
@@ -425,7 +549,7 @@ func ExamplePGPHandle_KeyGeneration_third() {
 	fmt.Println(key.Armor())
 }
 
-func ExamplePGPHandle_Sign() {
+func ExamplePGPHandle_Sign_detached() {
 	// Sign a plaintext with a private key
 	// using a detached signatures.
 	privateKey, err := NewKeyFromArmored(examplePrivKey)
@@ -446,7 +570,7 @@ func ExamplePGPHandle_Sign() {
 	fmt.Println(string(signature))
 }
 
-func ExamplePGPHandle_Sign_second() {
+func ExamplePGPHandle_Sign_inline() {
 	// Sign a plaintext with a private key
 	// using a inline signature.
 	privateKey, err := NewKeyFromArmored(examplePrivKey)
@@ -466,7 +590,7 @@ func ExamplePGPHandle_Sign_second() {
 	fmt.Println(string(signatureMessage))
 }
 
-func ExamplePGPHandle_Sign_third() {
+func ExamplePGPHandle_Sign_cleartext() {
 	// Sign a plaintext with a private key
 	// using the cleartext signature framework.
 	privateKey, err := NewKeyFromArmored(examplePrivKey)
@@ -486,7 +610,7 @@ func ExamplePGPHandle_Sign_third() {
 	fmt.Println(string(signatureMessage))
 }
 
-func ExamplePGPHandle_Verify() {
+func ExamplePGPHandle_Verify_detached() {
 	// Verify detached signature with a public key.
 	verifyMessage := []byte("message to sign")
 	publicKey, err := NewKeyFromArmored(examplePubKey)
@@ -511,7 +635,7 @@ func ExamplePGPHandle_Verify() {
 	// Output: OK
 }
 
-func ExamplePGPHandle_Verify_second() {
+func ExamplePGPHandle_Verify_inline() {
 	// Verify a inline signed message with a public key.
 	publicKey, err := NewKeyFromArmored(examplePubKey)
 	if err != nil {
@@ -537,7 +661,7 @@ func ExamplePGPHandle_Verify_second() {
 	// message to sign
 }
 
-func ExamplePGPHandle_Verify_third() {
+func ExamplePGPHandle_Verify_cleartext() {
 	// Verify a cleartext signed message with a public key.
 	publicKey, err := NewKeyFromArmored(examplePubKey)
 	if err != nil {
