@@ -99,6 +99,7 @@ V5NWsbpp0NaJ3Gxq/APdetC3iPG+AjM4xuWKhZWZ3/+bea/2q8jSOwF43weMcuQF
 zXxGfqB9uLYsOXejBTO4oPDbuWH11SVibxa6k1X79l2+kf2dDgruhMk564h4SU6v
 dbID
 -----END PGP MESSAGE-----`
+
 const exampleEncryptedDetachedSignatureMessage = `-----BEGIN PGP MESSAGE-----
 
 wVQDYc6clYlCdtoZVaZe8pDekqVSnY9/wtXIPV92Yi1b/Nc0cxaw3CyG7xkpCbnc
@@ -140,6 +141,9 @@ func ExamplePGPHandle_Encryption_asymmetric() {
 	encHandle, err := pgp.Encryption().
 		Recipient(publicKey).
 		New()
+	if err != nil {
+		return
+	}
 	pgpMessage, err := encHandle.Encrypt([]byte("my message"))
 	if err != nil {
 		return
@@ -168,6 +172,9 @@ func ExamplePGPHandle_Encryption_signcrypt() {
 		Recipient(publicKey).
 		SigningKey(privateKey).
 		New()
+	if err != nil {
+		return
+	}
 	pgpMessage, err := encHandle.Encrypt([]byte("my message"))
 	if err != nil {
 		return
@@ -354,6 +361,9 @@ func ExamplePGPHandle_Decryption_signcrypt() {
 		return
 	}
 	decrypted, err := decHandle.Decrypt([]byte(exampleEncryptedAndSigned), Armor)
+	if err != nil {
+		return
+	}
 	if sigErr := decrypted.SignatureError(); sigErr != nil {
 		fmt.Println(sigErr)
 		return
@@ -610,6 +620,32 @@ func ExamplePGPHandle_Sign_cleartext() {
 	fmt.Println(string(signatureMessage))
 }
 
+func ExamplePGPHandle_Sign_stream() {
+	// Sign a plaintext with a private key
+	// using a inline signature with streaming.
+	privateKey, err := NewKeyFromArmored(examplePrivKey)
+	if err != nil {
+		return
+	}
+	defer privateKey.ClearPrivateParams()
+	pgp := PGP()
+	signer, _ := pgp.Sign().
+		SigningKey(privateKey).
+		New()
+	var signedMessage bytes.Buffer
+	messageWriter, err := signer.SigningWriter(&signedMessage, Armor)
+	if err != nil {
+		return
+	}
+	if _, err = io.Copy(messageWriter, strings.NewReader("message to sign")); err != nil {
+		return
+	}
+	if err = messageWriter.Close(); err != nil {
+		return
+	}
+	fmt.Println(signedMessage.String())
+}
+
 func ExamplePGPHandle_Verify_detached() {
 	// Verify detached signature with a public key.
 	verifyMessage := []byte("message to sign")
@@ -683,6 +719,37 @@ func ExamplePGPHandle_Verify_cleartext() {
 		fmt.Println("OK")
 	}
 	fmt.Println(string(verifyResult.Cleartext()))
+	// Output: OK
+	// message to sign
+}
+
+func ExamplePGPHandle_Verify_stream() {
+	// Verify a inline signed message with a public key using streaming.
+	publicKey, err := NewKeyFromArmored(examplePubKey)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	pgp := PGP()
+	verifier, _ := pgp.Verify().
+		VerificationKey(publicKey).
+		New()
+	messageReader, err := verifier.VerifyingReader(nil, strings.NewReader(exampleInlineSignature), Armor)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	verifyResult, err := messageReader.ReadAllAndVerifySignature()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	if sigErr := verifyResult.SignatureError(); sigErr != nil {
+		fmt.Println(sigErr)
+	} else {
+		fmt.Println("OK")
+	}
+	fmt.Println(string(verifyResult.Bytes()))
 	// Output: OK
 	// message to sign
 }
