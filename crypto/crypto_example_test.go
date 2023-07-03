@@ -686,3 +686,22 @@ func ExamplePGPHandle_Verify_cleartext() {
 	// Output: OK
 	// message to sign
 }
+
+func ExamplePGPHandle_LockKey() {
+	// Encrypt secret material in a private key with a passphrase.
+	privateKey, err := NewKeyFromArmored(examplePrivKey)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer privateKey.ClearPrivateParams()
+	pgp := PGP()
+	lockedKey, err := pgp.LockKey(privateKey, []byte("password"))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	locked, _ := lockedKey.IsLocked()
+	fmt.Println(locked)
+	// Output: true
+}
