@@ -227,6 +227,8 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 		}
 		// Decrypting reader for the encrypted signature
 		prompt = createPasswordPrompt(dh.Password)
+		checkPacketSequence := false
+		config.CheckPacketSequence = &checkPacketSequence
 		mdSig, err := openpgp.ReadMessage(encryptedSignature, entries, prompt, config)
 		if err != nil {
 			return nil, errors.Wrap(err, "gopenpgp: error in reading detached signature message")
