@@ -1,6 +1,8 @@
 package crypto
 
 import (
+	"io"
+
 	"github.com/ProtonMail/go-crypto/v2/openpgp/armor"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/internal"
@@ -207,9 +209,14 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 			return
 		}
 	}
-
 	if keys == nil {
-		keys = data
+		// No writer for key packets provided,
+		// write the key packets at the beginning of each message.
+		if eh.DetachedSignature {
+			keys = io.MultiWriter(data, detachedSignature)
+		} else {
+			keys = data
+		}
 	}
 	if eh.Recipients.CountEntities() > 0 ||
 		eh.HiddenRecipients.CountEntities() > 0 {
