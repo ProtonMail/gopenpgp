@@ -103,7 +103,6 @@ SLsovPktgEXx2kXVYUpsSf3bxDGPsz3pmfCJ6iumbWchxA==
 func TestDetachedSignaturesWithUnknownPackets(t *testing.T) {
 	ricarda_key_armor := `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Comment: 2ADE 0F8A A059 6BC9 4E50  D2AD 9162 53AB 652E F195
-Comment: Ricarda S. Ãlvarez <ricarda@openpgp.example>
 
 xsDNBGJvrDABDACrZUY7VU1uZ/uzntlAKEHVF4mb3eYSdW1rE3hVke0HoDvtQbzq
 KQ9qgfPaNwdkxRexgrNGSeKkQJcgR7gMWxFxM/FwddQIXfVL43nRlN+iGvFDYR+9

@@ -9,8 +9,8 @@ type PGPDecryption interface {
 	// Either read the message fully end then call VerifySignature or use the helper method ReadAllAndVerifySignature.
 	// The encoding indicates if the input message should be unarmored or not, i.e., Bytes/Armor/Auto
 	// where Auto tries to detect automatically.
-	// If encryptedMessage is of type PGPSplitReader, the method tries to verify an encrypted detached signature that is read from
-	// from the separate reader.
+	// If encryptedMessage is of type PGPSplitReader, the method tries to verify an encrypted detached signature
+	// that is read from from the separate reader.
 	DecryptingReader(encryptedMessage Reader, encoding PGPEncoding) (*VerifyDataReader, error)
 	// Decrypt decrypts an encrypted pgp message.
 	// Returns a VerifiedDataResult, which can be queried for potential signature verification errors,
