@@ -330,7 +330,6 @@ func ExamplePGPHandle_Decryption_asymmetric() {
 		fmt.Println(err)
 		return
 	}
-	defer decHandle.ClearPrivateParams()
 	decrypted, err := decHandle.Decrypt([]byte(exampleEncryptedMessagePub), Armor)
 	fmt.Println(decrypted.String())
 	// Output: my message
