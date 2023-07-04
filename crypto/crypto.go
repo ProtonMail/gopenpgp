@@ -1,4 +1,15 @@
 // Package crypto provides a high-level API for common OpenPGP functionality.
+// The package provides abstract interfaces for encryption ([PGPEncryption]),
+// decryption ([PGPDecryption]), signing ([PGPSign]), and verifying ([PGPVerify]).
+//
+// # Usage
+//
+// To get a concrete instantiation of the interfaces use the top level [PGPHandle] by
+// calling PGP() or PGPWithProfile(...). An example to instantiate a handle
+// that implements [PGPEncryption]:
+//
+//	pgp := PGP()
+//	encryptionHandle, _ :=pgp.Encryption().Password(...).New()
 package crypto
 
 import (

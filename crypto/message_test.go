@@ -291,6 +291,9 @@ func TestSHA1SignedMessageDecryption(t *testing.T) {
 		DisableVerifyTimeCheck().
 		New()
 	decrypted, err := decryptor.Decrypt(pgpMessage.Bytes(), Bytes)
+	if err != nil {
+		t.Fatal("Expected no error, got: ", err)
+	}
 	if err = decrypted.SignatureError(); err == nil {
 		t.Fatal("Expected verification error when decrypting")
 	}
