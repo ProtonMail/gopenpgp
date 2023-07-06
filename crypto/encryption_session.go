@@ -109,7 +109,7 @@ func encryptSessionKeyToWriter(
 	aeadSupport := config.AEAD() != nil
 	for _, e := range append(recipients.getEntities(), hiddenRecipients.getEntities()...) {
 		now := config.Now()
-		encryptionKey, ok := e.EncryptionKey(now)
+		encryptionKey, ok := e.EncryptionKey(now, nil)
 		if !ok {
 			return errors.New("gopenpgp: encryption key is unavailable for key id " + strconv.FormatUint(e.PrimaryKey.KeyId, 16))
 		}

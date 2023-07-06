@@ -297,7 +297,7 @@ func TestSHA1SignedMessageDecryption(t *testing.T) {
 	if err = decrypted.SignatureError(); err == nil {
 		t.Fatal("Expected verification error when decrypting")
 	}
-	if errStr := decrypted.SignatureError().Error(); errStr != "Signature Verification Error: Insecure signature" {
+	if errStr := decrypted.SignatureError().Error(); errStr != "Signature Verification Error: Invalid signature caused by openpgp: invalid signature: insecure message hash algorithm: SHA-1" {
 		t.Fatal("Expected verification error when decrypting, got:", errStr)
 	}
 	assert.Exactly(t, readTestFile("message_plaintext", true), string(decrypted.Bytes()))
@@ -359,7 +359,7 @@ func TestMessageGetEncryptionKeyIDs(t *testing.T) {
 	ids, ok := ciphertext.EncryptionKeyIDs()
 	assert.Exactly(t, 3, len(ids))
 	assert.True(t, ok)
-	encKey, ok := keyRingTestMultiple.entities[0].EncryptionKey(time.Now())
+	encKey, ok := keyRingTestMultiple.entities[0].EncryptionKey(time.Now(), nil)
 	assert.True(t, ok)
 	assert.Exactly(t, encKey.PublicKey.KeyId, ids[0])
 }
@@ -390,7 +390,7 @@ func TestMessageGetSignatureKeyIDs(t *testing.T) {
 	ids, ok := SignatureKeyIDs(signature)
 	assert.Exactly(t, 1, len(ids))
 	assert.True(t, ok)
-	signingKey, ok := keyRingTestPrivate.entities[0].SigningKey(time.Now())
+	signingKey, ok := keyRingTestPrivate.entities[0].SigningKey(time.Now(), nil)
 	assert.True(t, ok)
 	assert.Exactly(t, signingKey.PublicKey.KeyId, ids[0])
 }
