@@ -254,13 +254,13 @@ func (key *Key) GetPublicKey() (b []byte, err error) {
 
 // CanVerify returns true if any of the subkeys can be used for verification.
 func (key *Key) CanVerify(unixTime int64) bool {
-	_, canVerify := key.entity.SigningKey(time.Unix(unixTime, 0))
+	_, canVerify := key.entity.SigningKey(time.Unix(unixTime, 0), nil)
 	return canVerify
 }
 
 // CanEncrypt returns true if any of the subkeys can be used for encryption.
 func (key *Key) CanEncrypt(unixTime int64) bool {
-	_, canEncrypt := key.entity.EncryptionKey(time.Unix(unixTime, 0))
+	_, canEncrypt := key.entity.EncryptionKey(time.Unix(unixTime, 0), nil)
 	return canEncrypt
 }
 

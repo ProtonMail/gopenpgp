@@ -5,101 +5,6 @@ import (
 	"testing"
 )
 
-func TestRsaKeySizes(t *testing.T) {
-	private_key := `-----BEGIN PGP PRIVATE KEY BLOCK-----
-
-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
-=J6dK
------END PGP PRIVATE KEY BLOCK-----
-	`
-	message := "Hello World :)"
-
-	key, err := NewKeyFromArmored(private_key)
-	if err != nil {
-		t.Error("error: ", err)
-	}
-	pgp := PGP()
-	signer, err := pgp.Sign().Detached().SigningKey(key).New()
-	if err != nil {
-		t.Error("error: ", err)
-	}
-	sig, err := signer.Sign([]byte(message), Bytes)
-	if err != nil {
-		t.Error("error: ", err)
-	}
-	verifier, err := pgp.Verify().VerificationKey(key).New()
-	if err != nil {
-		t.Error("error: ", err)
-	}
-	res, err := verifier.VerifyDetached([]byte(message), sig, Bytes)
-	if err != nil {
-		t.Error("error: ", err)
-	}
-	if err = res.SignatureError(); err != nil {
-		t.Error("Should have no signature error, got:", err)
-	}
-}
-
 func TestDetachedSignaturesWithUnknownPackets(t *testing.T) {
 	ricarda_key_armor := `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Comment: 2ADE 0F8A A059 6BC9 4E50  D2AD 9162 53AB 652E F195
@@ -495,5 +400,101 @@ xqAY9Bwizt4FWgXuLm1a4+So4V9j1TRCXd12Uc2l2RNmgDE=
 	}
 	if !bytes.Equal(res.Cleartext(), []byte(message)) {
 		t.Errorf("Should be equal, got: %s", res.Cleartext())
+	}
+}
+
+func TestDetachedSignaturesLowRSABits(t *testing.T) {
+	ricarda_key_armor := `-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+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
+KNs/Xw4PLUnp6wQO2d/6oZay
+=ffeX
+-----END PGP PRIVATE KEY BLOCK-----	
+`
+	sig := `-----BEGIN PGP SIGNATURE-----
+
+wsE7BAABCgBvBYJkpnJFCRB8L6pN+Tw3skcUAAAAAAAeACBzYWx0QG5vdGF0aW9u
+cy5zZXF1b2lhLXBncC5vcme7t8QmfP04d0zI8u8HUPmZcNbExpgA23j+/ICq8B3N
+EhYhBB3c4V8JIXzuLzs3YHwvqk35PDeyAAA9fwwAtaSuGkMxdU3CyO1n8x7mBaZS
+F2QNzvUKlhei1vPf5RaXTlNmlDWl/wF7aqRlrbdSHnqvi5lbhVVNP5LU62tS1J1N
+WudlfoVhIexYOtoYOvOnsR3nBT95Mevk64UTVPs2rAfNDSD/0TKtK/gL+B9UBI2K
+8UJwxcjtO116qwsO6gJq5XJjn0y34nNdIJH8Rr5I1jtl6h3Xlh2et58Yp9LmubNw
+mrqvl+ES8bh8Q++KpesnswQnSZR9e4lp6FY6w7X6UDyxtJF9S0SBZnsduJtsoxUl
+U8J1SUKwl0ATk9a+4+bwkwK9UJXFzwqEJvLoMe4U5QJKYazosr7Mxw197/iYOLXD
+LlSSmcS1v5Oo37CVG+cZZnyiB1vra7x1fnpR+EA/bbsKkXXQjAepMhb61IFq44dL
+j/6t75dByS9g29r2Fen+KFHh4QZrai9jEabepP9nKgNza7hIEeZtVdNyJfENUfQd
+l6qOAQGHaxD0whADX2J53HqPUpcbidzw3jEKwWgI
+=+Dhj
+-----END PGP SIGNATURE-----
+`
+	message := "Hello World :)"
+
+	key, err := NewKeyFromArmored(ricarda_key_armor)
+	if err != nil {
+		t.Error("error: ", err)
+	}
+	pgp := PGP()
+	verifier, err := pgp.Verify().VerificationKey(key).New()
+	if err != nil {
+		t.Error("error: ", err)
+	}
+	res, err := verifier.VerifyDetached([]byte(message), []byte(sig), Armor)
+	if err != nil {
+		t.Error("error: ", err)
+	}
+	if err = res.SignatureError(); err == nil {
+		t.Error("Should have signature error", err)
 	}
 }
