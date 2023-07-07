@@ -120,8 +120,13 @@ func (sh *signatureHandle) signCleartext(message []byte) ([]byte, error) {
 	var buffer bytes.Buffer
 	var privateKeys []*packet.PrivateKey
 	for _, entity := range sh.SignKeyRing.entities {
-		if entity.PrivateKey != nil && !entity.PrivateKey.Encrypted {
-			privateKeys = append(privateKeys, entity.PrivateKey)
+		key, ok := entity.SigningKey(config.Now(), config)
+		if ok &&
+			key.PrivateKey != nil &&
+			!key.PrivateKey.Encrypted {
+			privateKeys = append(privateKeys, key.PrivateKey)
+		} else {
+			return nil, errors.New("gopenpgp: no signing key found for entity")
 		}
 	}
 	writer, err := clearsign.EncodeMulti(&buffer, privateKeys, config, sh.ArmorHeaders)
