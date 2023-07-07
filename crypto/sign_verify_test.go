@@ -20,7 +20,7 @@ func TestSignVerifyStream(t *testing.T) {
 			verifier, _ := material.pgp.Verify().
 				VerificationKeys(material.keyRingTestPublic).
 				New()
-			testSignVerifyStream(t, signer, verifier, Bytes)
+			testSignVerifyStream(t, signer, verifier, Bytes, len(material.keyRingTestPrivate.entities))
 		})
 	}
 }
@@ -36,7 +36,7 @@ func TestSignVerifyStreamContext(t *testing.T) {
 				VerificationKeys(material.keyRingTestPublic).
 				VerificationContext(NewVerificationContext(testContext, true, 0)).
 				New()
-			testSignVerifyStream(t, signer, verifier, Bytes)
+			testSignVerifyStream(t, signer, verifier, Bytes, len(material.keyRingTestPrivate.entities))
 		})
 	}
 }
@@ -50,7 +50,7 @@ func TestSignVerifyStreamArmor(t *testing.T) {
 			verifier, _ := material.pgp.Verify().
 				VerificationKeys(material.keyRingTestPublic).
 				New()
-			testSignVerifyStream(t, signer, verifier, Armor)
+			testSignVerifyStream(t, signer, verifier, Armor, len(material.keyRingTestPrivate.entities))
 		})
 	}
 }
@@ -64,7 +64,7 @@ func TestSignVerify(t *testing.T) {
 			verifier, _ := material.pgp.Verify().
 				VerificationKeys(material.keyRingTestPublic).
 				New()
-			testSignVerify(t, signer, verifier, false, Bytes)
+			testSignVerify(t, signer, verifier, false, Bytes, len(material.keyRingTestPrivate.entities))
 		})
 	}
 }
@@ -79,7 +79,7 @@ func TestSignVerifyDetached(t *testing.T) {
 			verifier, _ := material.pgp.Verify().
 				VerificationKeys(material.keyRingTestPublic).
 				New()
-			testSignVerify(t, signer, verifier, true, Bytes)
+			testSignVerify(t, signer, verifier, true, Bytes, len(material.keyRingTestPrivate.entities))
 		})
 	}
 }
@@ -93,7 +93,7 @@ func TestSignVerifyStreamDetached(t *testing.T) {
 			verifier, _ := material.pgp.Verify().
 				VerificationKeys(material.keyRingTestPublic).
 				New()
-			testSignVerifyDetachedStream(t, signer, verifier, Bytes)
+			testSignVerifyDetachedStream(t, signer, verifier, Bytes, len(material.keyRingTestPrivate.entities))
 		})
 	}
 }
@@ -110,7 +110,7 @@ func TestSignVerifyStreamDetachedContext(t *testing.T) {
 				VerificationKeys(material.keyRingTestPublic).
 				VerificationContext(NewVerificationContext(testContext, true, 0)).
 				New()
-			testSignVerifyDetachedStream(t, signer, verifier, Bytes)
+			testSignVerifyDetachedStream(t, signer, verifier, Bytes, len(material.keyRingTestPrivate.entities))
 		})
 	}
 }
@@ -125,7 +125,7 @@ func TestSignVerifyStreamDetachedArmor(t *testing.T) {
 			verifier, _ := material.pgp.Verify().
 				VerificationKeys(material.keyRingTestPublic).
 				New()
-			testSignVerifyDetachedStream(t, signer, verifier, Armor)
+			testSignVerifyDetachedStream(t, signer, verifier, Armor, len(material.keyRingTestPrivate.entities))
 		})
 	}
 }
@@ -149,7 +149,9 @@ func testSignVerify(
 	signer PGPSign,
 	verifier PGPVerify,
 	detached bool,
-	encoding PGPEncoding) {
+	encoding PGPEncoding,
+	numberOfSigsToVerify int,
+) {
 	messageBytes := []byte(messageToSign)
 	signature, err := signer.Sign(messageBytes, encoding)
 	if err != nil {
@@ -174,14 +176,23 @@ func testSignVerify(
 	if err = verifyResult.SignatureError(); err != nil {
 		t.Fatal("Expected no error while verifying the detached signature, got:", err)
 	}
-
+	if len(verifyResult.Signatures) != numberOfSigsToVerify {
+		t.Fatalf("Not enough signatures verified, should be %d", numberOfSigsToVerify)
+	}
+	for _, verifiedSignature := range verifyResult.Signatures {
+		if verifiedSignature.SignatureError != nil {
+			t.Fatal("One of the contained signatures did not correctly verify ", verifiedSignature.SignatureError.Message)
+		}
+	}
 }
 
 func testSignVerifyStream(
 	t *testing.T,
 	signer PGPSign,
 	verifier PGPVerify,
-	encoding PGPEncoding) {
+	encoding PGPEncoding,
+	numberOfSigsToVerify int,
+) {
 	messageBytes := []byte(messageToSign)
 	var messageBuffer bytes.Buffer
 	signingWriter, err := signer.SigningWriter(&messageBuffer, encoding)
@@ -205,15 +216,23 @@ func testSignVerifyStream(
 	if err != nil {
 		t.Fatal("Expected no error while verifying the message, got:", err)
 	}
-	result, err := verifyingReader.VerifySignature()
+	verifyResult, err := verifyingReader.VerifySignature()
 	if err != nil {
 		t.Fatal("Expected no error while verifying the message, got:", err)
 	}
-	if err = result.SignatureError(); err != nil {
+	if err = verifyResult.SignatureError(); err != nil {
 		t.Fatal("Expected no error while verifying the detached signature, got:", err)
 	}
 	if !bytes.Equal(messageOut, messageBytes) {
 		t.Fatal("Expected read message in verification to be equal to the input message")
+	}
+	if len(verifyResult.Signatures) != numberOfSigsToVerify {
+		t.Fatalf("Not enough signatures verified, should be %d", numberOfSigsToVerify)
+	}
+	for _, verifiedSignature := range verifyResult.Signatures {
+		if verifiedSignature.SignatureError != nil {
+			t.Fatal("One of the contained signatures did not correctly verify ", verifiedSignature.SignatureError.Message)
+		}
 	}
 }
 
@@ -222,6 +241,7 @@ func testSignVerifyDetachedStream(
 	signer PGPSign,
 	verifier PGPVerify,
 	encoding PGPEncoding,
+	numberOfSigsToVerify int,
 ) {
 	messageBytes := []byte(messageToSign)
 	var signatureBuffer bytes.Buffer
@@ -239,12 +259,20 @@ func testSignVerifyDetachedStream(
 	}
 
 	verifyingReader, _ := verifier.VerifyingReader(bytes.NewReader(messageBytes), &signatureBuffer, encoding)
-	result, err := verifyingReader.DiscardAllAndVerifySignature()
+	verifyResult, err := verifyingReader.DiscardAllAndVerifySignature()
 	if err != nil {
 		t.Fatal("Expected no error while verifying the message, got:", err)
 	}
-	if err = result.SignatureError(); err != nil {
+	if err = verifyResult.SignatureError(); err != nil {
 		t.Fatal("Expected no error while verifying the detached signature, got:", err)
+	}
+	if len(verifyResult.Signatures) != numberOfSigsToVerify {
+		t.Fatalf("Not enough signatures verified, should be %d", numberOfSigsToVerify)
+	}
+	for _, verifiedSignature := range verifyResult.Signatures {
+		if verifiedSignature.SignatureError != nil {
+			t.Fatal("One of the contained signatures did not correctly verify ", verifiedSignature.SignatureError.Message)
+		}
 	}
 }
 

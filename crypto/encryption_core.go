@@ -67,7 +67,7 @@ func (w *signAndEncryptWriteCloser) Close() error {
 
 func (eh *encryptionHandle) prepareEncryptAndSign(
 	plainMessageMetadata *LiteralMetadata,
-) (hints *openpgp.FileHints, config *packet.Config, signEntity *openpgp.Entity, err error) {
+) (hints *openpgp.FileHints, config *packet.Config, signEntities []*openpgp.Entity, err error) {
 	hints = &openpgp.FileHints{
 		FileName: plainMessageMetadata.Filename(),
 		IsUTF8:   eh.IsUTF8,
@@ -88,7 +88,7 @@ func (eh *encryptionHandle) prepareEncryptAndSign(
 	}
 
 	if eh.SignKeyRing != nil && len(eh.SignKeyRing.entities) > 0 {
-		signEntity, err = eh.SignKeyRing.getSigningEntity()
+		signEntities, err = eh.SignKeyRing.signingEntities()
 		if err != nil {
 			return
 		}
@@ -105,13 +105,9 @@ func (eh *encryptionHandle) encryptStream(
 	if eh.SessionKey != nil {
 		sessionKeyBytes = eh.SessionKey.Key
 	}
-	hints, config, signEntity, err := eh.prepareEncryptAndSign(plainMessageMetadata)
+	hints, config, signers, err := eh.prepareEncryptAndSign(plainMessageMetadata)
 	if err != nil {
 		return
-	}
-	var signers []*openpgp.Entity
-	if signEntity != nil {
-		signers = []*openpgp.Entity{signEntity}
 	}
 	plainMessageWriter, err = openpgp.EncryptWithParams(
 		dataPacketWriter,
@@ -141,14 +137,9 @@ func (eh *encryptionHandle) encryptStreamWithPassword(
 	if eh.SessionKey != nil {
 		sessionKeyBytes = eh.SessionKey.Key
 	}
-	hints, config, signEntity, err := eh.prepareEncryptAndSign(plainMessageMetadata)
+	hints, config, signers, err := eh.prepareEncryptAndSign(plainMessageMetadata)
 	if err != nil {
 		return
-	}
-
-	var signers []*openpgp.Entity
-	if signEntity != nil {
-		signers = []*openpgp.Entity{signEntity}
 	}
 	plainMessageWriter, err = openpgp.SymmetricallyEncryptWithParams(
 		eh.Password,
@@ -192,7 +183,7 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 	plainMessageMetadata *LiteralMetadata,
 	dataPacketWriter io.Writer,
 ) (encryptWriter, signWriter io.WriteCloser, err error) {
-	hints, config, signEntity, err := eh.prepareEncryptAndSign(plainMessageMetadata)
+	hints, config, signers, err := eh.prepareEncryptAndSign(plainMessageMetadata)
 	if err != nil {
 		return
 	}
@@ -224,8 +215,8 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 		}
 	}
 
-	if signEntity != nil {
-		signWriter, err = openpgp.SignWithParams(encryptWriter, []*openpgp.Entity{signEntity}, &openpgp.SignParams{
+	if signers != nil {
+		signWriter, err = openpgp.SignWithParams(encryptWriter, signers, &openpgp.SignParams{
 			Hints:   hints,
 			TextSig: eh.IsUTF8,
 			Config:  config,
