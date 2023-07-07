@@ -147,7 +147,7 @@ func (sh *signatureHandle) signCleartext(message []byte) ([]byte, error) {
 func (sh *signatureHandle) signingWriter(messageWriter Writer, literalData *LiteralMetadata) (WriteCloser, error) {
 	config := sh.profile.SignConfig()
 	config.Time = NewConstantClock(sh.clock().Unix())
-	signEntity, err := sh.SignKeyRing.getSigningEntity()
+	signers, err := sh.SignKeyRing.signingEntities()
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func (sh *signatureHandle) signingWriter(messageWriter Writer, literalData *Lite
 	if sh.SignContext != nil {
 		config.SignatureNotations = append(config.SignatureNotations, sh.SignContext.getNotation())
 	}
-	return openpgp.SignWithParams(messageWriter, []*openpgp.Entity{signEntity}, &openpgp.SignParams{
+	return openpgp.SignWithParams(messageWriter, signers, &openpgp.SignParams{
 		Hints:   hints,
 		TextSig: sh.IsUTF8,
 		Config:  config,
@@ -176,7 +176,7 @@ func signMessageDetachedWriter(
 ) (ptWriter io.WriteCloser, err error) {
 	config.Time = NewConstantClock(clock().Unix())
 
-	signEntity, err := signKeyRing.getSigningEntity()
+	signers, err := signKeyRing.signingEntities()
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +185,7 @@ func signMessageDetachedWriter(
 		config.SignatureNotations = append(config.SignatureNotations, context.getNotation())
 	}
 
-	ptWriter, err = openpgp.DetachSignWriter(outputWriter, []*openpgp.Entity{signEntity}, isUTF8, config)
+	ptWriter, err = openpgp.DetachSignWriter(outputWriter, signers, isUTF8, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in signing")
 	}
