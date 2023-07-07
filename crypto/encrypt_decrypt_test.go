@@ -2,12 +2,14 @@ package crypto
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
 
+	"github.com/ProtonMail/go-crypto/v2/openpgp"
 	"github.com/ProtonMail/gopenpgp/v3/profile"
 	"github.com/stretchr/testify/assert"
 )
@@ -58,6 +60,32 @@ func initEncDecTest() {
 		material := generateTestKeyMaterial(profile)
 		testMaterialForProfiles = append(testMaterialForProfiles, material)
 	}
+	if len(testMaterialForProfiles) < 2 {
+		return
+	}
+	firstMaterial := testMaterialForProfiles[0]
+	lastMaterial := testMaterialForProfiles[len(testMaterialForProfiles)-1]
+	// Mixed keys with different profiles
+	mixKeyringPriv := &KeyRing{
+		entities: openpgp.EntityList{
+			firstMaterial.keyRingTestPrivate.entities[0],
+			lastMaterial.keyRingTestPrivate.entities[0],
+		},
+	}
+	mixKeyringPub := &KeyRing{
+		entities: openpgp.EntityList{
+			firstMaterial.keyRingTestPublic.entities[0],
+			lastMaterial.keyRingTestPublic.entities[0],
+		},
+	}
+	mixedTestMaterial := &testMaterial{
+		profileName:        fmt.Sprintf("mixed(%s)(%s)", firstMaterial.profileName, lastMaterial.profileName),
+		pgp:                lastMaterial.pgp,
+		keyRingTestPublic:  mixKeyringPub,
+		keyRingTestPrivate: mixKeyringPriv,
+		testSessionKey:     lastMaterial.testSessionKey,
+	}
+	testMaterialForProfiles = append(testMaterialForProfiles, mixedTestMaterial)
 }
 
 type testMaterial struct {
@@ -85,7 +113,7 @@ func TestEncryptDecryptStream(t *testing.T) {
 				nil,
 				encHandle,
 				decHandle,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -111,7 +139,7 @@ func TestEncryptDecryptStreamWithContext(t *testing.T) {
 				nil,
 				encHandle,
 				decHandle,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -138,7 +166,7 @@ func TestEncryptDecryptStreamWithContextAndCompression(t *testing.T) {
 				nil,
 				encHandle,
 				decHandle,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -164,7 +192,7 @@ func TestEncryptDecryptStreamWithCachedSession(t *testing.T) {
 				nil,
 				encHandle,
 				decHandle,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -230,7 +258,7 @@ func TestSessionEncryptDecryptStream(t *testing.T) {
 				nil,
 				encHandle,
 				decHandle,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -256,7 +284,7 @@ func TestSessionEncryptDecryptStreamWithContext(t *testing.T) {
 				nil,
 				encHandle,
 				decHandle,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -284,7 +312,7 @@ func TestSessionEncryptDecryptStreamWithContextAndCompression(t *testing.T) {
 				nil,
 				encHandle,
 				decHandle,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -309,7 +337,7 @@ func TestEncryptDecryptStreamArmored(t *testing.T) {
 				nil,
 				encHandle,
 				decHandle,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Armor,
 			)
 		})
@@ -337,7 +365,7 @@ func TestEncryptDecryptUTF8Stream(t *testing.T) {
 				metadata,
 				encHandle,
 				decHandle,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -395,7 +423,7 @@ func TestEncryptDecryptSplitStream(t *testing.T) {
 				encHandle,
 				decHandle,
 				splitWriter,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -422,7 +450,7 @@ func TestEncryptDecryptSplitStreamWithContext(t *testing.T) {
 				encHandle,
 				decHandle,
 				splitWriter,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -450,7 +478,7 @@ func TestEncryptDecryptSplitStreamWithContextAndCompression(t *testing.T) {
 				encHandle,
 				decHandle,
 				splitWriter,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -475,7 +503,7 @@ func TestSessionEncryptDecryptSplitStream(t *testing.T) {
 				encHandle,
 				decHandle,
 				splitWriter,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -502,7 +530,7 @@ func TestSessionEncryptDecryptSplitStreamWithContext(t *testing.T) {
 				encHandle,
 				decHandle,
 				splitWriter,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -530,7 +558,7 @@ func TestSessionEncryptDecryptSplitStreamWithContextAndCompression(t *testing.T)
 				encHandle,
 				decHandle,
 				splitWriter,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -556,7 +584,7 @@ func TestEncryptDecryptDetached(t *testing.T) {
 				encHandle,
 				decHandle,
 				splitWriterDetachedSignature,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -583,7 +611,7 @@ func TestPasswordEncryptDecryptDetached(t *testing.T) {
 				encHandle,
 				decHandle,
 				splitWriterDetachedSignature,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -609,7 +637,7 @@ func TestSessionKeyEncryptDecryptDetached(t *testing.T) {
 				encHandle,
 				decHandle,
 				splitWriterDetachedSignature,
-				true,
+				len(material.keyRingTestPrivate.entities),
 				Bytes,
 			)
 		})
@@ -632,7 +660,7 @@ func TestPasswordEncryptDecryptStream(t *testing.T) {
 				nil,
 				encHandle,
 				decHandle,
-				false,
+				0,
 				Bytes,
 			)
 		})
@@ -657,7 +685,7 @@ func TestPasswordEncryptSignDecryptStream(t *testing.T) {
 				nil,
 				encHandle,
 				decHandle,
-				false,
+				0,
 				Bytes,
 			)
 		})
@@ -683,7 +711,7 @@ func TestPasswordEncryptSignDecryptStreamWithCachedSession(t *testing.T) {
 				nil,
 				encHandle,
 				decHandle,
-				false,
+				0,
 				Bytes,
 			)
 		})
@@ -826,7 +854,7 @@ func testEncryptSplitDecryptStream(
 	encHandle PGPEncryption,
 	decHandle PGPDecryption,
 	multiWriterCreator func(Writer, Writer, Writer) PGPSplitWriter,
-	checkSig bool,
+	numberOfSigsToVerify int,
 	encoding PGPEncoding,
 ) {
 	messageReader := bytes.NewReader(messageBytes)
@@ -878,13 +906,21 @@ func testEncryptSplitDecryptStream(
 	if !bytes.Equal(decryptedBytes, messageBytes) {
 		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptedBytes), string(messageBytes))
 	}
-	if checkSig {
+	if numberOfSigsToVerify > 0 {
 		verifyResult, err := decryptedReader.VerifySignature()
 		if err != nil {
 			t.Fatal("Expected no error, got:", err)
 		}
 		if err = verifyResult.SignatureError(); err != nil {
 			t.Fatal("Expected no error while verifying the signature, got:", err)
+		}
+		if len(verifyResult.Signatures) != numberOfSigsToVerify {
+			t.Fatalf("Not enough signatures verified, should be %d", numberOfSigsToVerify)
+		}
+		for _, verifiedSignature := range verifyResult.Signatures {
+			if verifiedSignature.SignatureError != nil {
+				t.Fatal("One of the contained signatures did not correctly verify ", verifiedSignature.SignatureError.Message)
+			}
 		}
 	}
 	decryptedMeta := decryptedReader.GetMetadata()
@@ -906,7 +942,7 @@ func testEncryptDecryptStream(
 	metadata *LiteralMetadata,
 	encHandle PGPEncryption,
 	decHandle PGPDecryption,
-	checkSig bool,
+	numberOfSigsToVerify int,
 	encoding PGPEncoding,
 ) {
 	messageReader := bytes.NewReader(messageBytes)
@@ -942,13 +978,21 @@ func testEncryptDecryptStream(
 	if !bytes.Equal(decryptedBytes, messageBytes) {
 		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptedBytes), string(messageBytes))
 	}
-	if checkSig {
+	if numberOfSigsToVerify > 0 {
 		verifyResult, err := decryptedReader.VerifySignature()
 		if err != nil {
 			t.Fatal("Expected no error while verifying the signature, got:", err)
 		}
 		if err = verifyResult.SignatureError(); err != nil {
 			t.Fatal("Expected no signature error while verifying the signature, got:", err)
+		}
+		if len(verifyResult.Signatures) != numberOfSigsToVerify {
+			t.Fatalf("Not enough signatures verified, should be %d", numberOfSigsToVerify)
+		}
+		for _, verifiedSignature := range verifyResult.Signatures {
+			if verifiedSignature.SignatureError != nil {
+				t.Fatal("One of the contained signatures did not correctly verify ", verifiedSignature.SignatureError.Message)
+			}
 		}
 	}
 	decryptedMeta := decryptedReader.GetMetadata()
