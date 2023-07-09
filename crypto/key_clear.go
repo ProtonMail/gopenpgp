@@ -4,6 +4,14 @@ import (
 	"crypto/dsa" //nolint:staticcheck
 	"crypto/rsa"
 	"errors"
+	"github.com/ProtonMail/go-crypto/openpgp/dilithium_ecdsa"
+	"github.com/ProtonMail/go-crypto/openpgp/dilithium_eddsa"
+	"github.com/ProtonMail/go-crypto/openpgp/ed25519"
+	"github.com/ProtonMail/go-crypto/openpgp/ed448"
+	"github.com/ProtonMail/go-crypto/openpgp/kyber_ecdh"
+	"github.com/ProtonMail/go-crypto/openpgp/sphincs_plus"
+	"github.com/ProtonMail/go-crypto/openpgp/x25519"
+	"github.com/ProtonMail/go-crypto/openpgp/x448"
 	"math/big"
 
 	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
@@ -61,6 +69,22 @@ func clearPrivateKey(privateKey interface{}) error {
 		return clearEdDSAPrivateKey(priv)
 	case *ecdh.PrivateKey:
 		return clearECDHPrivateKey(priv)
+	case *ed25519.PrivateKey:
+		return clearEd25519PrivateKey(priv)
+	case *x25519.PrivateKey:
+		return clearX25519PrivateKey(priv)
+	case *ed448.PrivateKey:
+		return clearEd448PrivateKey(priv)
+	case *x448.PrivateKey:
+		return clearX448PrivateKey(priv)
+	case *dilithium_ecdsa.PrivateKey:
+		return clearDilithiumECDSAPrivateKey(priv)
+	case *dilithium_eddsa.PrivateKey:
+		return clearDilithiumEdDSAPrivateKey(priv)
+	case *kyber_ecdh.PrivateKey:
+		return clearKyberECDHPrivateKey(priv)
+	case *sphincs_plus.PrivateKey:
+		return clearSphincsPlusPrivateKey(priv)
 	default:
 		return errors.New("gopenpgp: unknown private key")
 	}
@@ -123,6 +147,58 @@ func clearEdDSAPrivateKey(priv *eddsa.PrivateKey) error {
 
 func clearECDHPrivateKey(priv *ecdh.PrivateKey) error {
 	clearMem(priv.D)
+
+	return nil
+}
+
+func clearEd25519PrivateKey(priv *ed25519.PrivateKey) error {
+	clearMem(priv.Key)
+
+	return nil
+}
+
+func clearX25519PrivateKey(priv *x25519.PrivateKey) error {
+	clearMem(priv.Secret)
+
+	return nil
+}
+
+func clearEd448PrivateKey(priv *ed448.PrivateKey) error {
+	clearMem(priv.Key)
+
+	return nil
+}
+
+func clearX448PrivateKey(priv *x448.PrivateKey) error {
+	clearMem(priv.Secret)
+
+	return nil
+}
+
+func clearKyberECDHPrivateKey(priv *kyber_ecdh.PrivateKey) error {
+	clearMem(priv.SecretEC)
+	// Kyber is in a private struct
+
+	return nil
+}
+
+func clearDilithiumECDSAPrivateKey(priv *dilithium_ecdsa.PrivateKey) error {
+	clearBigInt(priv.SecretEC)
+	// Dilithium is in a private struct
+
+	return nil
+}
+
+func clearDilithiumEdDSAPrivateKey(priv *dilithium_eddsa.PrivateKey) error {
+	clearMem(priv.SecretEC)
+	// Dilithium is in a private struct
+
+	return nil
+}
+
+func clearSphincsPlusPrivateKey(priv *sphincs_plus.PrivateKey) error {
+	clearMem(priv.SecretData.SKseed)
+	clearMem(priv.SecretData.SKprf)
 
 	return nil
 }

@@ -6,8 +6,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/ProtonMail/go-crypto/openpgp/sphincs_plus"
 	"io"
-	"math/big"
 	"strconv"
 	"strings"
 
@@ -66,20 +66,11 @@ func NewKeyFromEntity(entity *openpgp.Entity) (*Key, error) {
 	return &Key{entity: entity}, nil
 }
 
-// GenerateRSAKeyWithPrimes generates a RSA key using the given primes.
-func GenerateRSAKeyWithPrimes(
-	name, email string,
-	bits int,
-	primeone, primetwo, primethree, primefour []byte,
-) (*Key, error) {
-	return generateKey(name, email, "rsa", bits, primeone, primetwo, primethree, primefour)
-}
-
 // GenerateKey generates a key of the given keyType ("rsa" or "x25519").
 // If keyType is "rsa", bits is the RSA bitsize of the key.
 // If keyType is "x25519" bits is unused.
-func GenerateKey(name, email string, keyType string, bits int) (*Key, error) {
-	return generateKey(name, email, keyType, bits, nil, nil, nil, nil)
+func GenerateKey(name, email string, keyType string, bits, sphincsPlusSecurityParameter int) (*Key, error) {
+	return generateKey(name, email, keyType, bits, sphincsPlusSecurityParameter)
 }
 
 // --- Operate on key
@@ -435,8 +426,7 @@ func (key *Key) readFrom(r io.Reader, armored bool) error {
 func generateKey(
 	name, email string,
 	keyType string,
-	bits int,
-	prime1, prime2, prime3, prime4 []byte,
+	bits, sphincsPlusSecurityParameter int,
 ) (*Key, error) {
 	if len(email) == 0 && len(name) == 0 {
 		return nil, errors.New("gopenpgp: neither name nor email set.")
@@ -445,30 +435,48 @@ func generateKey(
 	comments := ""
 
 	cfg := &packet.Config{
-		Algorithm:              packet.PubKeyAlgoRSA,
 		RSABits:                bits,
+		SphincsPlusParameterId: sphincs_plus.ParameterSetId(sphincsPlusSecurityParameter),
 		Time:                   getKeyGenerationTimeGenerator(),
 		DefaultHash:            crypto.SHA256,
 		DefaultCipher:          packet.CipherAES256,
 		DefaultCompressionAlgo: packet.CompressionZLIB,
+		V6Keys:                 true,
+		AEADConfig:             &packet.AEADConfig{DefaultMode: packet.AEADModeOCB},
 	}
 
-	if keyType == "x25519" {
-		cfg.Algorithm = packet.PubKeyAlgoEdDSA
+	algorithms := map[string]packet.PublicKeyAlgorithm{
+		"RSA":                    packet.PubKeyAlgoRSA,
+		"Ed25519":                packet.PubKeyAlgoEd25519,
+		"Ed448":                  packet.PubKeyAlgoEd448,
+		"P256":                   packet.PubKeyAlgoECDSA,
+		"P384":                   packet.PubKeyAlgoECDSA,
+		"P521":                   packet.PubKeyAlgoECDSA,
+		"BrainpoolP256":          packet.PubKeyAlgoECDSA,
+		"BrainpoolP384":          packet.PubKeyAlgoECDSA,
+		"BrainpoolP512":          packet.PubKeyAlgoECDSA,
+		"Dilithium3Ed25519":      packet.PubKeyAlgoDilithium3Ed25519,
+		"Dilithium5Ed448":        packet.PubKeyAlgoDilithium5Ed448,
+		"Dilithium3P256":         packet.PubKeyAlgoDilithium3p256,
+		"Dilithium5P384":         packet.PubKeyAlgoDilithium5p384,
+		"Dilithium3Brainpool256": packet.PubKeyAlgoDilithium3Brainpool256,
+		"Dilithium5Brainpool384": packet.PubKeyAlgoDilithium5Brainpool384,
+		"SphincsPlusSHA2":        packet.PubKeyAlgoSphincsPlusSha2,
+		"SphincsPlusShake":       packet.PubKeyAlgoSphincsPlusShake,
 	}
 
-	if prime1 != nil && prime2 != nil && prime3 != nil && prime4 != nil {
-		var bigPrimes [4]*big.Int
-		bigPrimes[0] = new(big.Int)
-		bigPrimes[0].SetBytes(prime1)
-		bigPrimes[1] = new(big.Int)
-		bigPrimes[1].SetBytes(prime2)
-		bigPrimes[2] = new(big.Int)
-		bigPrimes[2].SetBytes(prime3)
-		bigPrimes[3] = new(big.Int)
-		bigPrimes[3].SetBytes(prime4)
+	curves := map[string]packet.Curve{
+		"P256":          packet.CurveNistP256,
+		"P384":          packet.CurveNistP384,
+		"P521":          packet.CurveNistP521,
+		"BrainpoolP256": packet.CurveBrainpoolP256,
+		"BrainpoolP384": packet.CurveBrainpoolP384,
+		"BrainpoolP512": packet.CurveBrainpoolP512,
+	}
 
-		cfg.RSAPrimes = bigPrimes[:]
+	cfg.Algorithm = algorithms[keyType]
+	if cfg.Algorithm == packet.PubKeyAlgoECDSA {
+		cfg.Curve = curves[keyType]
 	}
 
 	newEntity, err := openpgp.NewEntity(name, comments, email, cfg)

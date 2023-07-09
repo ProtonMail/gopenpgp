@@ -2,13 +2,12 @@ package crypto
 
 import (
 	"crypto/rsa"
+	"github.com/ProtonMail/go-crypto/openpgp/ed25519"
+	"github.com/ProtonMail/go-crypto/openpgp/x25519"
 	"io/ioutil"
 	"math/big"
 	"strings"
 	"testing"
-
-	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
-	"github.com/ProtonMail/go-crypto/openpgp/eddsa"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -63,10 +62,10 @@ func assertRSACleared(t *testing.T, rsaPriv *rsa.PrivateKey) {
 	}
 }
 
-func assertEdDSACleared(t *testing.T, priv *eddsa.PrivateKey) {
-	assertMemCleared(t, priv.D)
+func assertEd25519Cleared(t *testing.T, priv *ed25519.PrivateKey) {
+	assertMemCleared(t, priv.Key)
 }
 
-func assertECDHCleared(t *testing.T, priv *ecdh.PrivateKey) {
-	assertMemCleared(t, priv.D)
+func assertX25519Cleared(t *testing.T, priv *x25519.PrivateKey) {
+	assertMemCleared(t, priv.Secret)
 }

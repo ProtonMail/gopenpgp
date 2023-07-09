@@ -1,8 +1,6 @@
 package crypto
 
 import (
-	"crypto/rsa"
-	"encoding/base64"
 	"io/ioutil"
 	"regexp"
 	"strings"
@@ -10,8 +8,6 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
-	"github.com/ProtonMail/go-crypto/openpgp/packet"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,12 +25,12 @@ var (
 
 func initGenerateKeys() {
 	var err error
-	keyTestRSA, err = GenerateKey(keyTestName, keyTestDomain, "rsa", 1024)
+	keyTestRSA, err = GenerateKey(keyTestName, keyTestDomain, "RSA", 1024, 0)
 	if err != nil {
 		panic("Cannot generate RSA key:" + err.Error())
 	}
 
-	keyTestEC, err = GenerateKey(keyTestName, keyTestDomain, "x25519", 256)
+	keyTestEC, err = GenerateKey(keyTestName, keyTestDomain, "Ed25519", 256, 0)
 	if err != nil {
 		panic("Cannot generate EC key:" + err.Error())
 	}
@@ -221,38 +217,17 @@ func TestIsExpired(t *testing.T) {
 	assert.Exactly(t, true, futureKey.IsExpired())
 }
 
-func TestGenerateKeyWithPrimes(t *testing.T) {
-	prime1, _ := base64.StdEncoding.DecodeString(
-		"/thF8zjjk6fFx/y9NId35NFx8JTA7jvHEl+gI0dp9dIl9trmeZb+ESZ8f7bNXUmTI8j271kyenlrVJiqwqk80Q==")
-	prime2, _ := base64.StdEncoding.DecodeString(
-		"0HyyG/TShsw7yObD+DDP9Ze39ye1Redljx+KOZ3iNDmuuwwI1/5y44rD/ezAsE7A188NsotMDTSy5xtfHmu0xQ==")
-	prime3, _ := base64.StdEncoding.DecodeString(
-		"3OyJpAdnQXNjPNzI1u3BWDmPrzWw099E0UfJj5oJJILSbsAg/DDrmrdrIZDt7f24d06HCnTErCNWjvFJ3Kdq4w==")
-	prime4, _ := base64.StdEncoding.DecodeString(
-		"58UEDXTX29Q9JqvuE3Tn+Qj275CXBnJbA8IVM4d05cPYAZ6H43bPN01pbJqJTJw/cuFxs+8C+HNw3/MGQOExqw==")
-
-	staticRsaKey, err := GenerateRSAKeyWithPrimes(keyTestName, keyTestDomain, 1024, prime1, prime2, prime3, prime4)
-	if err != nil {
-		t.Fatal("Cannot generate RSA key with primes:", err)
-	}
-
-	pk, ok := staticRsaKey.entity.PrivateKey.PrivateKey.(*rsa.PrivateKey)
-	assert.True(t, ok)
-	assert.Exactly(t, prime1, pk.Primes[0].Bytes())
-	assert.Exactly(t, prime2, pk.Primes[1].Bytes())
-}
-
 func TestFailCheckIntegrity25519(t *testing.T) {
-	failCheckIntegrity(t, "x25519", 0)
+	failCheckIntegrity(t, "Ed25519", 0)
 }
 
 func TestFailCheckIntegrityRSA(t *testing.T) {
-	failCheckIntegrity(t, "rsa", 2048)
+	failCheckIntegrity(t, "RSA", 2048)
 }
 
 func failCheckIntegrity(t *testing.T, keyType string, bits int) {
-	k1, _ := GenerateKey(keyTestName, keyTestDomain, keyType, bits)
-	k2, _ := GenerateKey(keyTestName, keyTestDomain, keyType, bits)
+	k1, _ := GenerateKey(keyTestName, keyTestDomain, keyType, bits, 0)
+	k2, _ := GenerateKey(keyTestName, keyTestDomain, keyType, bits, 0)
 
 	k1.entity.PrivateKey.PrivateKey = k2.entity.PrivateKey.PrivateKey // Swap private keys
 
@@ -443,12 +418,4 @@ func TestUnlockMismatchingKey(t *testing.T) {
 	if _, err = privateKey.Unlock([]byte("123")); err == nil {
 		t.Fatalf("Mismatching private key was not detected")
 	}
-}
-
-func TestKeyCompression(t *testing.T) {
-	assert.Equal(
-		t,
-		[]uint8{uint8(packet.CompressionNone), uint8(packet.CompressionZLIB)},
-		keyTestEC.entity.PrimaryIdentity().SelfSignature.PreferredCompression,
-	)
 }

@@ -242,6 +242,8 @@ func asymmetricEncryptStream(
 	config := &packet.Config{
 		DefaultCipher: packet.CipherAES256,
 		Time:          getTimeGenerator(),
+		V6Keys:        true,
+		AEADConfig:    &packet.AEADConfig{DefaultMode: packet.AEADModeOCB},
 	}
 
 	if compress {

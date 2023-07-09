@@ -3,12 +3,11 @@ package crypto
 import (
 	"crypto/rsa"
 	"errors"
+	"github.com/ProtonMail/go-crypto/openpgp/ed25519"
+	"github.com/ProtonMail/go-crypto/openpgp/x25519"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
-	"github.com/ProtonMail/go-crypto/openpgp/eddsa"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 )
@@ -160,7 +159,7 @@ func TestClearPrivateKey(t *testing.T) {
 
 	keys := keyRingCopy.GetKeys()
 	assertRSACleared(t, keys[0].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
-	assertEdDSACleared(t, keys[1].entity.PrivateKey.PrivateKey.(*eddsa.PrivateKey))
+	assertEd25519Cleared(t, keys[1].entity.PrivateKey.PrivateKey.(*ed25519.PrivateKey))
 	assertRSACleared(t, keys[2].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
 }
 
@@ -178,8 +177,8 @@ func TestClearPrivateWithSubkeys(t *testing.T) {
 	assertRSACleared(t, keys[0].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
 	assertRSACleared(t, keys[0].entity.Subkeys[0].PrivateKey.PrivateKey.(*rsa.PrivateKey))
 
-	assertEdDSACleared(t, keys[1].entity.PrivateKey.PrivateKey.(*eddsa.PrivateKey))
-	assertECDHCleared(t, keys[1].entity.Subkeys[0].PrivateKey.PrivateKey.(*ecdh.PrivateKey))
+	assertEd25519Cleared(t, keys[1].entity.PrivateKey.PrivateKey.(*ed25519.PrivateKey))
+	assertX25519Cleared(t, keys[1].entity.Subkeys[0].PrivateKey.PrivateKey.(*x25519.PrivateKey))
 
 	assertRSACleared(t, keys[2].entity.PrivateKey.PrivateKey.(*rsa.PrivateKey))
 	assertRSACleared(t, keys[2].entity.Subkeys[0].PrivateKey.PrivateKey.(*rsa.PrivateKey))

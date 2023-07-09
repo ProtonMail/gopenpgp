@@ -22,6 +22,8 @@ var allowedHashes = []crypto.Hash{
 	crypto.SHA256,
 	crypto.SHA384,
 	crypto.SHA512,
+	crypto.SHA3_256,
+	crypto.SHA3_512,
 }
 
 // SignatureVerificationError is returned from Decrypt and VerifyDetached
@@ -233,7 +235,7 @@ func verifySignature(
 	verifyTime int64,
 	verificationContext *VerificationContext,
 ) (*packet.Signature, error) {
-	config := &packet.Config{}
+	config := &packet.Config{V6Keys: true}
 	if verifyTime == 0 {
 		config.Time = func() time.Time {
 			return time.Unix(0, 0)
@@ -249,7 +251,7 @@ func verifySignature(
 	}
 	signatureReader := bytes.NewReader(signature)
 
-	sig, signer, err := openpgp.VerifyDetachedSignatureAndHash(pubKeyEntries, origText, signatureReader, allowedHashes, config)
+	sig, signer, err := openpgp.VerifyDetachedSignature(pubKeyEntries, origText, signatureReader, config)
 
 	if sig != nil && signer != nil && (errors.Is(err, pgpErrors.ErrSignatureExpired) || errors.Is(err, pgpErrors.ErrKeyExpired)) { //nolint:nestif
 		if verifyTime == 0 { // Expiration check disabled
@@ -307,6 +309,7 @@ func signMessageDetached(
 	config := &packet.Config{
 		DefaultHash: crypto.SHA512,
 		Time:        getTimeGenerator(),
+		V6Keys:      true,
 	}
 
 	signEntity, err := signKeyRing.getSigningEntity()
