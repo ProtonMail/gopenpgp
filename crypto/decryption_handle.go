@@ -52,7 +52,7 @@ func defaultDecryptionHandle(clock Clock) *decryptionHandle {
 // via the wrapper results in a decrypted read of the message.
 // The returned reader PlainMessageReader offers a method to verify signatures after the message has been read.
 // Decryption parameters are configured via the DecryptionParams struct.
-func (dh *decryptionHandle) DecryptingReader(encryptedMessage Reader, encoding PGPEncoding) (plainMessageReader *VerifyDataReader, err error) {
+func (dh *decryptionHandle) DecryptingReader(encryptedMessage Reader, encoding int8) (plainMessageReader *VerifyDataReader, err error) {
 	err = dh.validate()
 	if err != nil {
 		return
@@ -67,7 +67,7 @@ func (dh *decryptionHandle) DecryptingReader(encryptedMessage Reader, encoding P
 // Decrypt decrypts a pgp message as byte slice, and outputs the plaintext,
 // but does not return an error if signature verification fails.
 // Instead, the output struct contains a potential signature error.
-func (dh *decryptionHandle) Decrypt(pgpMessage []byte, encoding PGPEncoding) (*VerifiedDataResult, error) {
+func (dh *decryptionHandle) Decrypt(pgpMessage []byte, encoding int8) (*VerifiedDataResult, error) {
 	messageReader := bytes.NewReader(pgpMessage)
 	plainMessageReader, err := dh.DecryptingReader(messageReader, encoding)
 	if err != nil {
@@ -76,7 +76,7 @@ func (dh *decryptionHandle) Decrypt(pgpMessage []byte, encoding PGPEncoding) (*V
 	return plainMessageReader.ReadAllAndVerifySignature()
 }
 
-func (dh *decryptionHandle) DecryptDetached(pgpMessage []byte, encryptedDetachedSig []byte, encoding PGPEncoding) (*VerifiedDataResult, error) {
+func (dh *decryptionHandle) DecryptDetached(pgpMessage []byte, encryptedDetachedSig []byte, encoding int8) (*VerifiedDataResult, error) {
 	reader := &pgpSplitReader{
 		encMessage: bytes.NewReader(pgpMessage),
 	}
@@ -132,13 +132,13 @@ func (dh *decryptionHandle) validate() error {
 	return nil
 }
 
-func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedSignature Reader, encoding PGPEncoding) (plainMessageReader *VerifyDataReader, err error) {
+func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedSignature Reader, encoding int8) (plainMessageReader *VerifyDataReader, err error) {
 	err = dh.validate()
 	if err != nil {
 		return
 	}
 	var armored bool
-	encryptedMessage, armored = encoding.unarmorInput(encryptedMessage)
+	encryptedMessage, armored = unarmorInput(encoding, encryptedMessage)
 	var armoredBlock *armor.Block
 	if armored {
 		// Wrap encryptedMessage with decode armor reader.
@@ -150,7 +150,7 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 		encryptedMessage = armoredBlock.Body
 	}
 	if encryptedSignature != nil {
-		encryptedSignature, armored = encoding.unarmorInput(encryptedSignature)
+		encryptedSignature, armored = unarmorInput(encoding, encryptedSignature)
 		if armored {
 			// Wrap encryptedSignature with decode armor reader.
 			armoredBlock, err = armor.Decode(encryptedSignature)

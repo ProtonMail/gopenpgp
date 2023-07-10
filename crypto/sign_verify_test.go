@@ -149,7 +149,7 @@ func testSignVerify(
 	signer PGPSign,
 	verifier PGPVerify,
 	detached bool,
-	encoding PGPEncoding,
+	encoding int8,
 	numberOfSigsToVerify int,
 ) {
 	messageBytes := []byte(messageToSign)
@@ -190,7 +190,7 @@ func testSignVerifyStream(
 	t *testing.T,
 	signer PGPSign,
 	verifier PGPVerify,
-	encoding PGPEncoding,
+	encoding int8,
 	numberOfSigsToVerify int,
 ) {
 	messageBytes := []byte(messageToSign)
@@ -240,7 +240,7 @@ func testSignVerifyDetachedStream(
 	t *testing.T,
 	signer PGPSign,
 	verifier PGPVerify,
-	encoding PGPEncoding,
+	encoding int8,
 	numberOfSigsToVerify int,
 ) {
 	messageBytes := []byte(messageToSign)

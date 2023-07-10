@@ -17,7 +17,7 @@ type PGPEncryption interface {
 	// to different writers or to write a detached signature separately.
 	// The encoding argument defines the output encoding, i.e., Bytes or Armored
 	// The returned pgp message WriteCloser must be closed after the plaintext has been written.
-	EncryptingWriter(output Writer, encoding PGPEncoding) (WriteCloser, error)
+	EncryptingWriter(output Writer, encoding int8) (WriteCloser, error)
 	// Encrypt encrypts a plaintext message.
 	Encrypt(message []byte) (*PGPMessage, error)
 	// EncryptSessionKey encrypts a session key with the encryption handle.

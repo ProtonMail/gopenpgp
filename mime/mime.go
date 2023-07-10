@@ -25,12 +25,13 @@ type MIMECallbacks interface {
 }
 
 // Decrypt decrypts and verifies a MIME message.
+// messageEncoding provides the encoding of the encrypted MIME message, either crypto.Bytes or crypto.Armor.
 // The decryptionHandle is used to decrypt and verify the message, while
 // the verifyHandle is used to verify the signature contained in the decrypted mime message.
 // The verifyHandle can be nil.
 func Decrypt(
 	message []byte,
-	messageEncoding crypto.PGPEncoding,
+	messageEncoding int8, // crypto.Bytes or crypto.Armor
 	decryptionHandle crypto.PGPDecryption,
 	verifyHandle crypto.PGPVerify,
 	callbacks MIMECallbacks,

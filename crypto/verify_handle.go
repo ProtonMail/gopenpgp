@@ -40,9 +40,9 @@ func defaultVerifyHandle(clock Clock) *verifyHandle {
 // Thus, it is expected that signatureMessage contains the data to be verified.
 // If detachedData is not nil, signatureMessage must contain a detached signature,
 // which is verified against the detachedData.
-func (vh *verifyHandle) VerifyingReader(detachedData, signatureMessage Reader, encoding PGPEncoding) (*VerifyDataReader, error) {
+func (vh *verifyHandle) VerifyingReader(detachedData, signatureMessage Reader, encoding int8) (*VerifyDataReader, error) {
 	var armored bool
-	signatureMessage, armored = encoding.unarmorInput(signatureMessage)
+	signatureMessage, armored = unarmorInput(encoding, signatureMessage)
 	if armored {
 		// Wrap with decode armor reader.
 		armoredBlock, err := armor.Decode(signatureMessage)
@@ -62,7 +62,7 @@ func (vh *verifyHandle) VerifyingReader(detachedData, signatureMessage Reader, e
 // and returns a VerifyResult. The VerifyResult can be checked for failure
 // and allows access to information about the signatures.
 // Note that an error is only returned if it is not a signature error.
-func (vh *verifyHandle) VerifyDetached(data, signature []byte, encoding PGPEncoding) (verifyResult *VerifyResult, err error) {
+func (vh *verifyHandle) VerifyDetached(data, signature []byte, encoding int8) (verifyResult *VerifyResult, err error) {
 	signatureMessageReader := bytes.NewReader(signature)
 	detachedDataReader := bytes.NewReader(data)
 	ptReader, err := vh.VerifyingReader(detachedDataReader, signatureMessageReader, encoding)
@@ -80,7 +80,7 @@ func (vh *verifyHandle) VerifyDetached(data, signature []byte, encoding PGPEncod
 // and returns a VerifiedDataResult. The VerifiedDataResult can be checked for failure,
 // allows access to information about the signatures, and includes the plain message.
 // Note that an error is only returned if it is not a signature error.
-func (vh *verifyHandle) VerifyInline(message []byte, encoding PGPEncoding) (verifyDataResult *VerifiedDataResult, err error) {
+func (vh *verifyHandle) VerifyInline(message []byte, encoding int8) (verifyDataResult *VerifiedDataResult, err error) {
 	var ptReader *VerifyDataReader
 	messageReader := bytes.NewReader(message)
 	ptReader, err = vh.VerifyingReader(nil, messageReader, encoding)

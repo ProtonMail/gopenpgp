@@ -12,21 +12,21 @@ type PGPVerify interface {
 	// Thus, it is expected that signatureMessage contains the data to be verified.
 	// If detachedData is not nil, signatureMessage must contain a detached signature,
 	// which is verified against the detachedData.
-	VerifyingReader(detachedData, signatureMessage Reader, encoding PGPEncoding) (*VerifyDataReader, error)
+	VerifyingReader(detachedData, signatureMessage Reader, encoding int8) (*VerifyDataReader, error)
 	// VerifyDetached verifies a detached signature pgp message
 	// and returns a VerifyResult. The VerifyResult can be checked for failure
 	// and allows access to information about the signatures.
 	// Note that an error is only returned if it is not a signature error.
 	// The encoding indicates if the input signature message should be unarmored or not,
 	// i.e., Bytes/Armor/Auto where Auto tries to detect it automatically.
-	VerifyDetached(data []byte, signature []byte, encoding PGPEncoding) (*VerifyResult, error)
+	VerifyDetached(data []byte, signature []byte, encoding int8) (*VerifyResult, error)
 	// VerifyInline verifies an inline signed pgp message
 	// and returns a VerifiedDataResult. The VerifiedDataResult can be checked for failure,
 	// allows access to information about the signatures, and includes the plain message.
 	// Note that an error is only returned if it is not a signature error.
 	// The encoding indicates if the input message should be unarmored or not, i.e., Bytes/Armor/Auto
 	// where Auto tries to detect it automatically.
-	VerifyInline(message []byte, encoding PGPEncoding) (*VerifiedDataResult, error)
+	VerifyInline(message []byte, encoding int8) (*VerifiedDataResult, error)
 	// VerifyCleartext verifies an armored cleartext message
 	// and returns a VerifyCleartextResult. The VerifyCleartextResult can be checked for failure
 	// and allows access the contained message
