@@ -36,9 +36,9 @@ func defaultSignatureHandle(profile SignProfile, clock Clock) *signatureHandle {
 
 // --- Implements the signature handle methods
 
-func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding PGPEncoding) (messageWriter WriteCloser, err error) {
+func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding int8) (messageWriter WriteCloser, err error) {
 	var armorWriter WriteCloser
-	armorOutput := encoding.armorOutput()
+	armorOutput := armorOutput(encoding)
 	if armorOutput {
 		var err error
 		header := constants.PGPMessageHeader
@@ -78,7 +78,7 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding PGPEncodi
 	return
 }
 
-func (sh *signatureHandle) Sign(message []byte, encoding PGPEncoding) ([]byte, error) {
+func (sh *signatureHandle) Sign(message []byte, encoding int8) ([]byte, error) {
 	var writer bytes.Buffer
 	ptWriter, err := sh.SigningWriter(&writer, encoding)
 	if err != nil {

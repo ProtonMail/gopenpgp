@@ -6,7 +6,6 @@ import (
 
 	"github.com/ProtonMail/go-crypto/v2/openpgp/packet"
 	"github.com/ProtonMail/go-crypto/v2/openpgp/s2k"
-	"github.com/ProtonMail/gopenpgp/v3/constants"
 )
 
 // Custom type represents a profile setting algorithm
@@ -15,7 +14,7 @@ import (
 type Custom struct {
 	Name string
 
-	SetKeyAlgorithm func(*packet.Config, constants.SecurityLevel)
+	SetKeyAlgorithm func(*packet.Config, int8)
 
 	Hash crypto.Hash
 
@@ -45,7 +44,7 @@ func WithName(name string) *Custom {
 // Custom implements the profile interfaces:
 // KeyGenerationProfile, KeyEncryptionProfile, EncryptionProfile, and SignProfile
 
-func (p *Custom) KeyGenerationConfig(level constants.SecurityLevel) *packet.Config {
+func (p *Custom) KeyGenerationConfig(securityLevel int8) *packet.Config {
 	cfg := &packet.Config{
 		DefaultHash:            p.Hash,
 		DefaultCipher:          p.CipherEncryption,
@@ -54,7 +53,7 @@ func (p *Custom) KeyGenerationConfig(level constants.SecurityLevel) *packet.Conf
 		CompressionConfig:      p.CompressionConfiguration,
 		V6Keys:                 p.V6,
 	}
-	p.SetKeyAlgorithm(cfg, level)
+	p.SetKeyAlgorithm(cfg, securityLevel)
 	return cfg
 }
 

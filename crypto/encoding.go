@@ -8,23 +8,25 @@ import (
 
 type PGPEncoding int8
 
+// PGPEncoding determines the message encoding.
+// The type is int8 for compatibility with gomobile.
 const (
-	Armor PGPEncoding = 0
-	Bytes PGPEncoding = 1
-	Auto  PGPEncoding = 2
+	Armor int8 = 0
+	Bytes int8 = 1 // Default for other int8 values.
+	Auto  int8 = 2
 )
 
-func (e PGPEncoding) armorOutput() bool {
-	switch e {
+func armorOutput(e int8) bool {
+	switch int8(e) {
 	case Armor:
 		return true
 	}
 	return false
 }
 
-func (e PGPEncoding) unarmorInput(input io.Reader) (reader Reader, unarmor bool) {
+func unarmorInput(e int8, input io.Reader) (reader Reader, unarmor bool) {
 	reader = input
-	switch e {
+	switch int8(e) {
 	case Armor:
 		unarmor = true
 	case Auto:
