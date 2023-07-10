@@ -68,15 +68,15 @@ func defaultEncryptionHandle(profile EncryptionProfile, clock Clock) *encryption
 // EncryptingWriter returns a wrapper around underlying outputWriter io.Writer, such that any write-operation
 // via the wrapper results in a write to an encrypted PGP message.
 // The returned PGP message WriteCloser must be closed after the plaintext has been written.
-func (eh *encryptionHandle) EncryptingWriter(outputWriter Writer, encoding PGPEncoding) (messageWriter WriteCloser, err error) {
+func (eh *encryptionHandle) EncryptingWriter(outputWriter Writer, encoding int8) (messageWriter WriteCloser, err error) {
 	pgpMessageWriter := isPGPMessageWriter(outputWriter)
 	if pgpMessageWriter != nil {
-		return eh.encryptingWriters(pgpMessageWriter.Keys(), pgpMessageWriter, pgpMessageWriter.Signature(), nil, encoding.armorOutput())
+		return eh.encryptingWriters(pgpMessageWriter.Keys(), pgpMessageWriter, pgpMessageWriter.Signature(), nil, armorOutput(encoding))
 	}
 	if eh.DetachedSignature {
 		return nil, errors.New("gopenpgp: no pgp split writer provided for the detached signature")
 	}
-	return eh.encryptingWriters(nil, outputWriter, nil, nil, encoding.armorOutput())
+	return eh.encryptingWriters(nil, outputWriter, nil, nil, armorOutput(encoding))
 }
 
 // Encrypt encrypts a binary message, and outputs a PGPMessage.

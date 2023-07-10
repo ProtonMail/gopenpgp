@@ -85,8 +85,8 @@ func NewKeyFromEntity(entity *openpgp.Entity) (*Key, error) {
 // If keyType is "rsa", bits is the RSA bitsize of the key.
 // For other key types bits is unused.
 // If keyType is "" the method uses the default algorithm from config
-func generateKey(name, email string, clock Clock, profile KeyGenerationProfile, level constants.SecurityLevel, lifeTimeSec uint32) (*Key, error) {
-	config := profile.KeyGenerationConfig(level)
+func generateKey(name, email string, clock Clock, profile KeyGenerationProfile, securityLevel int8, lifeTimeSec uint32) (*Key, error) {
+	config := profile.KeyGenerationConfig(securityLevel)
 	config.Time = NewConstantClock(clock().Unix())
 	config.KeyLifetimeSecs = lifeTimeSec
 	return generateKeyWithConfig(name, email, "", config)

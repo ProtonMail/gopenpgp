@@ -27,9 +27,9 @@ func PresetProfiles() []string {
 // Default returns a custom profile that support features
 // that are widely implemented.
 func Default() *Custom {
-	setKeyAlgorithm := func(cfg *packet.Config, level constants.SecurityLevel) {
+	setKeyAlgorithm := func(cfg *packet.Config, securityLevel int8) {
 		cfg.Algorithm = packet.PubKeyAlgoEdDSA
-		switch level {
+		switch securityLevel {
 		case constants.HighSecurity:
 			cfg.Curve = packet.Curve25519
 		default:
@@ -52,9 +52,9 @@ func Default() *Custom {
 // RFC4880 returns a custom profile for this library
 // that conforms with the algorithms in rfc 4880.
 func RFC4880() *Custom {
-	setKeyAlgorithm := func(cfg *packet.Config, level constants.SecurityLevel) {
+	setKeyAlgorithm := func(cfg *packet.Config, securityLevel int8) {
 		cfg.Algorithm = packet.PubKeyAlgoRSA
-		switch level {
+		switch securityLevel {
 		case constants.HighSecurity:
 			cfg.RSABits = 4096
 		default:
@@ -75,9 +75,9 @@ func RFC4880() *Custom {
 // that conforms with the algorithms in GnuPG.
 // Use this profile for modern algorithms and GnuPG interoperability.
 func GnuPG() *Custom {
-	setKeyAlgorithm := func(cfg *packet.Config, level constants.SecurityLevel) {
+	setKeyAlgorithm := func(cfg *packet.Config, securityLevel int8) {
 		cfg.Algorithm = packet.PubKeyAlgoEdDSA
-		switch level {
+		switch securityLevel {
 		case constants.HighSecurity:
 			cfg.Curve = packet.Curve448
 		default:
@@ -99,8 +99,8 @@ func GnuPG() *Custom {
 // CryptoRefresh returns a custom profile for this library
 // that conforms with the algorithms in draft-ietf-openpgp-crypto-refresh.
 func CryptoRefresh() *Custom {
-	setKeyAlgorithm := func(cfg *packet.Config, level constants.SecurityLevel) {
-		switch level {
+	setKeyAlgorithm := func(cfg *packet.Config, securityLevel int8) {
+		switch securityLevel {
 		case constants.HighSecurity:
 			cfg.Algorithm = packet.PubKeyAlgoEd448
 		default:

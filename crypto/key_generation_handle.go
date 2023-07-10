@@ -32,7 +32,7 @@ func (kgh *keyGenerationHandle) GenerateKey() (key *Key, err error) {
 	return kgh.GenerateKeyWithSecurity(constants.StandardSecurity)
 }
 
-func (kgh *keyGenerationHandle) GenerateKeyWithSecurity(security constants.SecurityLevel) (key *Key, err error) {
+func (kgh *keyGenerationHandle) GenerateKeyWithSecurity(security int8) (key *Key, err error) {
 	config := kgh.profile.KeyGenerationConfig(security)
 	config.Time = NewConstantClock(kgh.clock().Unix())
 	config.KeyLifetimeSecs = kgh.keyLifetimeSecs
