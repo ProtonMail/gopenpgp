@@ -186,7 +186,7 @@ func TestMobile2GoReader(t *testing.T) {
 }
 
 func setUpTestKeyRing() (*crypto.KeyRing, *crypto.KeyRing, error) {
-	testKey, err := crypto.GenerateKey("test", "test@protonmail.com", "x25519", 256)
+	testKey, err := crypto.GenerateKey("test", "test@protonmail.com", "x25519", 0, 0)
 	if err != nil {
 		return nil, nil, err
 	}
