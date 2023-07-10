@@ -18,9 +18,10 @@ const (
 	SIGNATURE_BAD_CONTEXT int = 4
 )
 
-type SecurityLevel = int8
-
+// SecurityLevel constants
+// The type is int8 for compatibility with
+// gomobile
 const (
-	StandardSecurity SecurityLevel = 0
-	HighSecurity     SecurityLevel = 1
+	StandardSecurity int8 = 0
+	HighSecurity     int8 = 1
 )

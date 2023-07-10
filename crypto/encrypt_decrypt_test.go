@@ -855,7 +855,7 @@ func testEncryptSplitDecryptStream(
 	decHandle PGPDecryption,
 	multiWriterCreator func(Writer, Writer, Writer) PGPSplitWriter,
 	numberOfSigsToVerify int,
-	encoding PGPEncoding,
+	encoding int8,
 ) {
 	messageReader := bytes.NewReader(messageBytes)
 	var keyPackets bytes.Buffer
@@ -943,7 +943,7 @@ func testEncryptDecryptStream(
 	encHandle PGPEncryption,
 	decHandle PGPDecryption,
 	numberOfSigsToVerify int,
-	encoding PGPEncoding,
+	encoding int8,
 ) {
 	messageReader := bytes.NewReader(messageBytes)
 	var ciphertextBuf bytes.Buffer

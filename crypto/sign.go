@@ -13,10 +13,10 @@ type PGPSign interface {
 	// The encoding argument defines the output encoding, i.e., Bytes or Armored
 	// Once close is called on the returned WriteCloser the final signature is written to the output.
 	// Thus, the returned WriteCloser must be closed after the plaintext has been written.
-	SigningWriter(output Writer, encoding PGPEncoding) (WriteCloser, error)
+	SigningWriter(output Writer, encoding int8) (WriteCloser, error)
 	// Sign creates a detached or inline signature from the provided byte slice.
 	// The encoding argument defines the output encoding, i.e., Bytes or Armored
-	Sign(message []byte, encoding PGPEncoding) ([]byte, error)
+	Sign(message []byte, encoding int8) ([]byte, error)
 	// SignCleartext produces an armored cleartext message according to the specification.
 	// Returns an armored message even if the PGPSign is not configured for armored output.
 	SignCleartext(message []byte) ([]byte, error)
