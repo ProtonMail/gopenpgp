@@ -3,7 +3,6 @@ package crypto
 import (
 	"crypto"
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/ProtonMail/go-crypto/v2/openpgp"
@@ -218,14 +217,6 @@ func processSignatureExpiration(sig *packet.Signature, toCheck error, verifyTime
 		return toCheck
 	}
 	if disableTimeCheck {
-		return nil
-	}
-	created := sig.CreationTime.Unix()
-	expires := int64(math.MaxInt64)
-	if sig.SigLifetimeSecs != nil {
-		expires = int64(*sig.SigLifetimeSecs) + created
-	}
-	if verifyTime <= expires {
 		return nil
 	}
 	return toCheck
