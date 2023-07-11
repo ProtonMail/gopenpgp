@@ -191,7 +191,7 @@ func TestIssue11(t *testing.T) {
 	decryptor, _ := testPGP.Decryption().
 		DecryptionKeys(issue11Keyring).
 		VerificationKeys(senderKeyring).
-		VerifyTime(1559655272).New()
+		VerifyTime(1559655883).New()
 	decrypted, err := decryptor.Decrypt(pgpMessage.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting/verifying, got:", err)
