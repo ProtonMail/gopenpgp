@@ -256,6 +256,9 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 			armorSigWriter: armorSigWriter,
 		}
 	}
+	if eh.IsUTF8 {
+		messageWriter = internal.NewUtf8CheckWriteCloser(messageWriter)
+	}
 	return
 }
 
