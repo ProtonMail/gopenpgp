@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"time"
+	"unicode/utf8"
 
 	"github.com/ProtonMail/go-crypto/v2/openpgp"
 	"github.com/ProtonMail/go-crypto/v2/openpgp/armor"
@@ -75,6 +76,9 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding int8) (me
 			messageWriter: messageWriter,
 		}
 	}
+	if sh.IsUTF8 {
+		messageWriter = internal.NewUtf8CheckWriteCloser(messageWriter)
+	}
 	return
 }
 
@@ -119,6 +123,9 @@ func (sh *signatureHandle) signCleartext(message []byte) ([]byte, error) {
 	config.Time = NewConstantClock(sh.clock().Unix())
 	var buffer bytes.Buffer
 	var privateKeys []*packet.PrivateKey
+	if !utf8.Valid(message) {
+		return nil, internal.ErrIncorrectUtf8
+	}
 	for _, entity := range sh.SignKeyRing.entities {
 		key, ok := entity.SigningKey(config.Now(), config)
 		if ok &&

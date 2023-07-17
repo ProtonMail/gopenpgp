@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"encoding/hex"
 	"io"
 	"io/ioutil"
 	"regexp"
@@ -11,6 +12,7 @@ import (
 	"github.com/ProtonMail/go-crypto/v2/openpgp/packet"
 	"github.com/ProtonMail/gopenpgp/v3/armor"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
+	"github.com/ProtonMail/gopenpgp/v3/internal"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 
@@ -89,6 +91,17 @@ func TestSignTextDetached(t *testing.T) {
 	verificationError, _ = testVerifier().VerifyDetached(fakeMessage, textSignature, Bytes)
 
 	checkVerificationError(t, verificationError.SignatureError(), constants.SIGNATURE_FAILED)
+}
+
+func TestSignNonUtf8Text(t *testing.T) {
+	var err error
+
+	var nonUft8, _ = hex.DecodeString("fc80808080af")
+
+	textSignature, err = testSignerText().Sign([]byte(nonUft8), Bytes)
+	if err != internal.ErrIncorrectUtf8 {
+		t.Fatal("Expected not valid utf8 error")
+	}
 }
 
 func checkVerificationError(t *testing.T, err error, expectedStatus int) {
