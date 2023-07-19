@@ -19,6 +19,7 @@ type verifyHandle struct {
 	VerifyKeyRing          *KeyRing
 	VerificationContext    *VerificationContext
 	DisableVerifyTimeCheck bool
+	IsUTF8                 bool
 	clock                  Clock
 }
 
@@ -40,7 +41,7 @@ func defaultVerifyHandle(clock Clock) *verifyHandle {
 // Thus, it is expected that signatureMessage contains the data to be verified.
 // If detachedData is not nil, signatureMessage must contain a detached signature,
 // which is verified against the detachedData.
-func (vh *verifyHandle) VerifyingReader(detachedData, signatureMessage Reader, encoding int8) (*VerifyDataReader, error) {
+func (vh *verifyHandle) VerifyingReader(detachedData, signatureMessage Reader, encoding int8) (reader *VerifyDataReader, err error) {
 	var armored bool
 	signatureMessage, armored = unarmorInput(encoding, signatureMessage)
 	if armored {
@@ -52,10 +53,17 @@ func (vh *verifyHandle) VerifyingReader(detachedData, signatureMessage Reader, e
 		signatureMessage = armoredBlock.Body
 	}
 	if detachedData != nil {
-		return vh.verifyingDetachedReader(detachedData, signatureMessage)
+		reader, err = vh.verifyingDetachedReader(detachedData, signatureMessage)
 	} else {
-		return vh.verifyingReader(signatureMessage)
+		reader, err = vh.verifyingReader(signatureMessage)
 	}
+	if err != nil {
+		return nil, err
+	}
+	if vh.IsUTF8 {
+		reader.internalReader = internal.NewSanitizeReader(reader.internalReader)
+	}
+	return
 }
 
 // VerifyDetached verifies a detached signature pgp message

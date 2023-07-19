@@ -3,6 +3,7 @@ package crypto
 import (
 	"io"
 
+	"github.com/ProtonMail/go-crypto/v2/openpgp"
 	"github.com/ProtonMail/go-crypto/v2/openpgp/armor"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/internal"
@@ -257,7 +258,9 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 		}
 	}
 	if eh.IsUTF8 {
-		messageWriter = internal.NewUtf8CheckWriteCloser(messageWriter)
+		messageWriter = internal.NewUtf8CheckWriteCloser(
+			openpgp.NewCanonicalTextWriteCloser(messageWriter),
+		)
 	}
 	return
 }
