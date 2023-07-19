@@ -69,6 +69,22 @@ func TestSignVerify(t *testing.T) {
 	}
 }
 
+func TestSignVerifyUtf8(t *testing.T) {
+	for _, material := range testMaterialForProfiles {
+		t.Run(material.profileName, func(t *testing.T) {
+			signer, _ := material.pgp.Sign().
+				SigningKeys(material.keyRingTestPrivate).
+				UTF8().
+				New()
+			verifier, _ := material.pgp.Verify().
+				VerificationKeys(material.keyRingTestPublic).
+				UTF8().
+				New()
+			testSignVerify(t, signer, verifier, false, Bytes, len(material.keyRingTestPrivate.entities))
+		})
+	}
+}
+
 func TestSignVerifyDetached(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		t.Run(material.profileName, func(t *testing.T) {
@@ -83,6 +99,24 @@ func TestSignVerifyDetached(t *testing.T) {
 		})
 	}
 }
+
+func TestSignVerifyDetachedUtf8(t *testing.T) {
+	for _, material := range testMaterialForProfiles {
+		t.Run(material.profileName, func(t *testing.T) {
+			signer, _ := material.pgp.Sign().
+				SigningKeys(material.keyRingTestPrivate).
+				Detached().
+				UTF8().
+				New()
+			verifier, _ := material.pgp.Verify().
+				VerificationKeys(material.keyRingTestPublic).
+				UTF8().
+				New()
+			testSignVerify(t, signer, verifier, true, Bytes, len(material.keyRingTestPrivate.entities))
+		})
+	}
+}
+
 func TestSignVerifyStreamDetached(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		t.Run(material.profileName, func(t *testing.T) {
@@ -243,7 +277,7 @@ func testSignVerifyDetachedStream(
 	encoding int8,
 	numberOfSigsToVerify int,
 ) {
-	messageBytes := []byte(messageToSign)
+	messageBytes := []byte(messageCleartext)
 	var signatureBuffer bytes.Buffer
 	signingWriter, err := signer.SigningWriter(&signatureBuffer, encoding)
 	if err != nil {

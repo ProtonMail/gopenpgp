@@ -344,7 +344,7 @@ func TestEncryptDecryptStreamArmored(t *testing.T) {
 	}
 }
 
-func TestEncryptDecryptUTF8Stream(t *testing.T) {
+func TestEncryptDecryptSignUTF8Stream(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		metadata := &LiteralMetadata{
 			isUTF8: true,
@@ -366,6 +366,33 @@ func TestEncryptDecryptUTF8Stream(t *testing.T) {
 				encHandle,
 				decHandle,
 				len(material.keyRingTestPrivate.entities),
+				Bytes,
+			)
+		})
+	}
+}
+
+func TestEncryptDecryptUTF8Stream(t *testing.T) {
+	for _, material := range testMaterialForProfiles {
+		metadata := &LiteralMetadata{
+			isUTF8: true,
+		}
+		t.Run(material.profileName, func(t *testing.T) {
+			encHandle, _ := material.pgp.Encryption().
+				Recipients(material.keyRingTestPublic).
+				UTF8().
+				New()
+			decHandle, _ := material.pgp.Decryption().
+				DecryptionKeys(material.keyRingTestPrivate).
+				UTF8().
+				New()
+			testEncryptDecryptStream(
+				t,
+				[]byte(testMessageUTF8),
+				metadata,
+				encHandle,
+				decHandle,
+				0,
 				Bytes,
 			)
 		})

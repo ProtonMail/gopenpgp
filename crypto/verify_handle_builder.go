@@ -45,6 +45,13 @@ func (vhb *VerifyHandleBuilder) VerifyTime(unixTime int64) *VerifyHandleBuilder 
 	return vhb
 }
 
+// UTF8 indicates if the output plaintext is UTF8 and
+// should be sanitized from canonicalised line endings.
+func (vhb *VerifyHandleBuilder) UTF8() *VerifyHandleBuilder {
+	vhb.handle.IsUTF8 = true
+	return vhb
+}
+
 // DisableVerifyTimeCheck disables the check for comparing the signature expiration time
 // against the verification time.
 func (dpb *VerifyHandleBuilder) DisableVerifyTimeCheck() *VerifyHandleBuilder {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/ProtonMail/go-crypto/v2/openpgp/armor"
+	"github.com/ProtonMail/gopenpgp/v3/internal"
 
 	"github.com/pkg/errors"
 )
@@ -35,6 +36,7 @@ type decryptionHandle struct {
 	DisableIntendedRecipients bool
 	DisableVerifyTimeCheck    bool
 	RetrieveSessionKey        bool
+	IsUTF8                    bool
 	clock                     Clock
 }
 
@@ -187,6 +189,12 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 	} else {
 		// No decryption material provided.
 		err = errors.New("gopenpgp: no decryption key ring, session key, or password provided")
+	}
+	if err != nil {
+		return nil, err
+	}
+	if dh.IsUTF8 {
+		plainMessageReader.internalReader = internal.NewSanitizeReader(plainMessageReader.internalReader)
 	}
 	return
 }
