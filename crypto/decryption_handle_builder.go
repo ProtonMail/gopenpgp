@@ -85,6 +85,13 @@ func (dpb *DecryptionHandleBuilder) VerifyTime(unixTime int64) *DecryptionHandle
 	return dpb
 }
 
+// UTF8 indicates if the output plaintext is UTF8 and
+// should be sanitized from canonicalised line endings.
+func (dpb *DecryptionHandleBuilder) UTF8() *DecryptionHandleBuilder {
+	dpb.handle.IsUTF8 = true
+	return dpb
+}
+
 // DisableVerifyTimeCheck disables the check for comparing the signature creation time
 // against the verification time.
 func (dpb *DecryptionHandleBuilder) DisableVerifyTimeCheck() *DecryptionHandleBuilder {

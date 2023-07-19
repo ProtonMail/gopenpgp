@@ -77,7 +77,9 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding int8) (me
 		}
 	}
 	if sh.IsUTF8 {
-		messageWriter = internal.NewUtf8CheckWriteCloser(messageWriter)
+		messageWriter = internal.NewUtf8CheckWriteCloser(
+			openpgp.NewCanonicalTextWriteCloser(messageWriter),
+		)
 	}
 	return
 }
