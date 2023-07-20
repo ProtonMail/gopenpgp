@@ -211,12 +211,12 @@ func newSignatureNoVerifier() SignatureVerificationError {
 }
 
 // processSignatureExpiration handles signature time verification manually, so
-// we can add a margin to the creationTime check.
+// we can ignore signature expired errors if configured so.
 func processSignatureExpiration(sig *packet.Signature, toCheck error, verifyTime int64, disableTimeCheck bool) error {
 	if sig == nil || !errors.Is(toCheck, pgpErrors.ErrSignatureExpired) {
 		return toCheck
 	}
-	if disableTimeCheck {
+	if disableTimeCheck || verifyTime == 0 {
 		return nil
 	}
 	return toCheck
