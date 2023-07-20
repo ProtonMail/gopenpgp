@@ -53,15 +53,15 @@ func (vh *verifyHandle) VerifyingReader(detachedData, signatureMessage Reader, e
 		signatureMessage = armoredBlock.Body
 	}
 	if detachedData != nil {
+		if vh.IsUTF8 {
+			detachedData = openpgp.NewCanonicalTextReader(detachedData)
+		}
 		reader, err = vh.verifyingDetachedReader(detachedData, signatureMessage)
 	} else {
 		reader, err = vh.verifyingReader(signatureMessage)
-	}
-	if err != nil {
-		return nil, err
-	}
-	if vh.IsUTF8 {
-		reader.internalReader = internal.NewSanitizeReader(reader.internalReader)
+		if err == nil && vh.IsUTF8 {
+			reader.internalReader = internal.NewSanitizeReader(reader.internalReader)
+		}
 	}
 	return
 }
