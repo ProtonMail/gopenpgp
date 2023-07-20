@@ -3,6 +3,8 @@ package crypto
 import (
 	"bytes"
 	"testing"
+
+	"github.com/ProtonMail/gopenpgp/v3/internal"
 )
 
 func TestDetachedSignaturesWithUnknownPackets(t *testing.T) {
@@ -499,109 +501,69 @@ l6qOAQGHaxD0whADX2J53HqPUpcbidzw3jEKwWgI
 	}
 }
 
-func TestSignedAndEncryptedMessageAndroid(t *testing.T) {
-	bob_key_armor := `-----BEGIN PGP PRIVATE KEY BLOCK-----
-Version: ProtonMail
+func TestDetachedSignaturesAndroid(t *testing.T) {
+	ricarda_key_armor := `-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: GopenPGP 2.1.1
+Comment: https://gopenpgp.org
 
-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
-b5BlAx31rUZ+NdCZyPnU+83opOdYrRjy
-=kArG
------END PGP PRIVATE KEY BLOCK-----`
-	msg := ` -----BEGIN PGP MESSAGE-----
-Version: ProtonMail
-
-wcBMA5kajsUECZmgAQgAgJuGP/0+pUPu24mWeviRQ79s6fKKsKh6y1aBXwJM
-eQ8mSaLvHNSaCa8s9yozs9gWo2/Uf8Lpmqb70SMh2npwI5hyOFqXsrMEoEHn
-KTf86kSHnGZEtwrScXnekJjO1rfYynnAYuppTfpUc2E/uGZg6RChlwPbBZMw
-tOk8n6iL6u0+Ren9fxAmmMTw66vc5PDejmfAgzbdxeD7qV8wzqmipgiErk/w
-dPEzI5QGtGXUwsDfJeSGEdCslN1kHtZRj2B3tg6Ms7Ea/VIb3Kq6uyn2hQhS
-MlWwjzauF5mryV4Kbi1RP6yTykbPnRz6ia22HwbWzOVJ2Nu534RqNYA/99Bd
-G9JcAXjM6al21XdX0ZQww2R0Of3VzFVwQX+RSG1SWGq11u2nu5iXBVUJDa5x
-MS2SksqmW3Bh7Tbz2zlrCNZxH8USiAxXt/3xjwNlXgCg4b8sKNHNN4+Wa6S8
-HNwbYAc=
-=9RxF
------END PGP MESSAGE-----
+xsBNBF1BfxUBCADUpiiG3AhQK08E2nBmQ50XeztOWArmknINQV41pqGFW5VQkfbQ
+3FYsANhLGqbDBQ0XxmocjKL7W7W8Y4xmHCGgkCUy6gAqGbi+sXY9Sl8xqQNHuZDh
+WVdqT8+Rtv+DRxp/XrGkzC1U8CBYUmmKS92ldy0/zZIvgQXT6t5Q+v+BeUSv4jCs
+nY3BE0UBOljtrTXlOcXRZHQxORWG+kon0qgcJERdwwzhxY6eT8jEfAfJY0hzQaYg
++6bj6ZR0zkMtY2Psq2M05kzEw4On/dezZETAu1e9fSqfk1mp+H6BeLJ9RUyrFK/P
+qIO48+pU8CmAvTdx5eIihyOM16CFg/3GgV85ABEBAAHNMWFkYW10c3RAcHJvdG9u
+bWFpbC5ibHVlIDxhZGFtdHN0QHByb3Rvbm1haWwuYmx1ZT7CwGgEEwEIABwFAl1B
+fxUJEBHDHo5eB/TQAhsDAhkBAgsJAhUIAADHoggACDYDZkyTMZX69k9uoAygAQ75
+2kb52r0L3dSLge+hUelxJOiVUznbavzVhzjzF2FucXP0csOSJygHNejjS62BDtsX
+iIoPiVDO1+Hr72X4gE277VeZ1b6VozJvKC0+H4fhg/EtkD07oVhHJRxOOVlgUXGK
+nP2lz2ojny0McggvN+Nk8ILqt6ImlvEk6CnTs9XdmcmosMiQU+U+THKrKZ+5Yec8
+4kzlHG8ee7Tim2yn9n/FuBStrYkTJUsDuAL/LOfF9DnzTzukK6kqpDB6kDfMeYQJ
+Lq+Tu642n74P0lqOO0Wy7imI/hxM1W8yqcNdafS7PCuGHD99mecdKWVeYHCCY87A
+TQRdQX8VAQgAyAIj6ytLB1CUinP6f6aVKlLSM9e9Figv1CAw53NHeQBbmwzU5bZn
+tE6UERnvJy6ul7hJr9Jop+O1/jA6zaGanF5wv0nEvTHcoYRpJ4QiJgiQxvhOdItH
+29+jBV1F44xOzlGnEzFAv7GbPecKHAsQgX9qYCj+5ydcttQ29gWQ6nN23G03R3Lb
+KRS9H2uw1SIYGgif8FgKpJemwJjuSibyViXTf3JC8ZUtYbq+vIXqATFFtbrUHfKM
+AKlHo0uLYGq1rRINGR6Dmhu6bGhZonuW0na4+5Wh86kg9c/YI7jSIIspRRkH+v7+
+RXH51h8Rbc2Tiv64qy7cIJIH0Bk0lFAaIQARAQABwsBfBBgBCAATBQJdQX8VCRAR
+wx6OXgf00AIbDAAAgvAIAGyLaHYTjiXG/ORIIAgdQhKBYOozrOS4EcOPNdMSPBwT
+6P+BpNS/GD33pzANVKM9Mft8+NnePUFOR2f4QJrQ1VvSj9ko8P2sX7IAe7+rG614
+LQfzjG5R16KlSVOMFW0K2L8ZxumDdYl/N0BhgtZmB1lg1xY2TPHoDetznMnHG8sL
+6u6vyhGl5a6qcW2g1urlF0VF/CEqg1lwAKhFHIFiNR+X6jCjg0KJa9MjAW6oICOx
+oX0jp195mWix6suRJSWVK14uieT6uL5yYC5tZMz+t9rs7YxCkHxFRT1H5ZLHUD/r
+93liqW+pzUx+bVdz5qNMb0ZonHZRLe3/Fzb19x8UMPc=
+=6gp8
+-----END PGP PUBLIC KEY BLOCK-----
 `
-	expected := "Hello\r\nWorld!\n"
+	sig := `-----BEGIN PGP SIGNATURE-----
+Version: GopenPGP 2.4.10
+Comment: https://gopenpgp.org
 
-	key, err := NewKeyFromArmored(bob_key_armor)
-	if err != nil {
-		t.Error("error: ", err)
-	}
-	pwd := "ikaAA3dimv9p7D.bqZ6mq.R45LRS6oi"
-	key, err = key.Unlock([]byte(pwd))
+wsBzBAABCgAnBQJjocOZCZARwx6OXgf00BYhBCDPNjtY7JnnIuU+xBHDHo5eB/TQ
+AACGgwf7Bx6J7JLZ2G6RFvr/wtl0DENZxUVS4H3wZPEIuVTh3/Lzd5BHfWN/mD+q
+Sz0BcjRNxAI+nDY2/J8HPIibNg1NDlUgrgxK0NPLS1DMWmtoW3JTF5sfFMyiVGxo
+RH4oluOe/UQcfxYTbMr8/EX8Gc9kdx4U7MqQNEc9CM5VIuxrfMpSZ2hvn5zlwexQ
+WdnWjVWePpbwpltX98wTlAtU93XARUgeIMrzkhEBc1sNSg6/ynECLENm8EMxWQmj
+9lpaROb2Fw50G7S1YjSUlc7WK+e4+IIP3Fqw/b21Kd1BasHS92OuHZNalbxyJA0F
+V6Zkmvzj3h9CucLSJw1Bo6ZJTDbkBQ==
+=fVs7
+-----END PGP SIGNATURE-----
+`
+	message := "This is a test\nWith trailing spaces:    \n  With leading spaces\nWith trailing tabs:\t\t\n\tWith leading tabs\nWith trailing carriage returns:\r\n\rWith leading carriage returns\n\t \r With a mix \t\r\n"
+	message = internal.TrimEachLine(message)
+	key, err := NewKeyFromArmored(ricarda_key_armor)
 	if err != nil {
 		t.Error("error: ", err)
 	}
 	pgp := PGP()
-	decryptor, err := pgp.Decryption().DecryptionKey(key).UTF8().New()
+	verifier, err := pgp.Verify().VerificationKey(key).UTF8().New()
 	if err != nil {
 		t.Error("error: ", err)
 	}
-	res, err := decryptor.Decrypt([]byte(msg), Armor)
+	res, err := verifier.VerifyDetached([]byte(message), []byte(sig), Armor)
 	if err != nil {
 		t.Error("error: ", err)
 	}
 	if err = res.SignatureError(); err != nil {
-		t.Error("Should have no signature error, got:", err)
-	}
-	if !bytes.Equal(res.Bytes(), []byte(expected)) {
-		t.Errorf("Should be equal, got: %s", res.Bytes())
+		t.Error("Should have signature error", err)
 	}
 }
