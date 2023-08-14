@@ -555,7 +555,7 @@ V6Zkmvzj3h9CucLSJw1Bo6ZJTDbkBQ==
 		t.Error("error: ", err)
 	}
 	pgp := PGP()
-	verifier, err := pgp.Verify().VerificationKey(key).UTF8().New()
+	verifier, err := pgp.Verify().VerificationKey(key).Utf8().New()
 	if err != nil {
 		t.Error("error: ", err)
 	}
