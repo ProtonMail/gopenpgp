@@ -353,7 +353,7 @@ func TestEncryptDecryptSignUTF8Stream(t *testing.T) {
 			encHandle, _ := material.pgp.Encryption().
 				Recipients(material.keyRingTestPublic).
 				SigningKeys(material.keyRingTestPrivate).
-				UTF8().
+				Utf8().
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
@@ -380,11 +380,11 @@ func TestEncryptDecryptUTF8Stream(t *testing.T) {
 		t.Run(material.profileName, func(t *testing.T) {
 			encHandle, _ := material.pgp.Encryption().
 				Recipients(material.keyRingTestPublic).
-				UTF8().
+				Utf8().
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).
-				UTF8().
+				Utf8().
 				New()
 			testEncryptDecryptStream(
 				t,
@@ -776,7 +776,7 @@ func TestEncryptDecryptUTF8(t *testing.T) {
 			encHandle, _ := material.pgp.Encryption().
 				Recipients(material.keyRingTestPublic).
 				SigningKeys(material.keyRingTestPrivate).
-				UTF8().
+				Utf8().
 				New()
 			decHandle, _ := material.pgp.Decryption().
 				DecryptionKeys(material.keyRingTestPrivate).

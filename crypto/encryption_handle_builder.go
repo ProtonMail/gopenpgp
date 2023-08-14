@@ -107,9 +107,9 @@ func (epb *EncryptionHandleBuilder) Compress() *EncryptionHandleBuilder {
 	return epb
 }
 
-// UTF8 indicates if the plaintext should be signed with a text type
+// Utf8 indicates if the plaintext should be signed with a text type
 // signature. If set, the plaintext is signed after canonicalising the line endings.
-func (epb *EncryptionHandleBuilder) UTF8() *EncryptionHandleBuilder {
+func (epb *EncryptionHandleBuilder) Utf8() *EncryptionHandleBuilder {
 	epb.handle.IsUTF8 = true
 	return epb
 }
