@@ -57,10 +57,10 @@ func (shb *SignHandleBuilder) ArmorHeader(version, comment string) *SignHandleBu
 	return shb
 }
 
-// UTF8 indicates if the plaintext should be signed with a text type
+// Utf8 indicates if the plaintext should be signed with a text type
 // signature. If set, the plaintext is signed after
 // canonicalising the line endings.
-func (shb *SignHandleBuilder) UTF8() *SignHandleBuilder {
+func (shb *SignHandleBuilder) Utf8() *SignHandleBuilder {
 	shb.handle.IsUTF8 = true
 	return shb
 }

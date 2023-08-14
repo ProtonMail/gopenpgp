@@ -85,9 +85,9 @@ func (dpb *DecryptionHandleBuilder) VerifyTime(unixTime int64) *DecryptionHandle
 	return dpb
 }
 
-// UTF8 indicates if the output plaintext is UTF8 and
+// Utf8 indicates if the output plaintext is Utf8 and
 // should be sanitized from canonicalised line endings.
-func (dpb *DecryptionHandleBuilder) UTF8() *DecryptionHandleBuilder {
+func (dpb *DecryptionHandleBuilder) Utf8() *DecryptionHandleBuilder {
 	dpb.handle.IsUTF8 = true
 	return dpb
 }

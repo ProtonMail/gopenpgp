@@ -74,11 +74,11 @@ func TestSignVerifyUtf8(t *testing.T) {
 		t.Run(material.profileName, func(t *testing.T) {
 			signer, _ := material.pgp.Sign().
 				SigningKeys(material.keyRingTestPrivate).
-				UTF8().
+				Utf8().
 				New()
 			verifier, _ := material.pgp.Verify().
 				VerificationKeys(material.keyRingTestPublic).
-				UTF8().
+				Utf8().
 				New()
 			testSignVerify(t, signer, verifier, false, Bytes, len(material.keyRingTestPrivate.entities))
 		})
@@ -106,11 +106,11 @@ func TestSignVerifyDetachedUtf8(t *testing.T) {
 			signer, _ := material.pgp.Sign().
 				SigningKeys(material.keyRingTestPrivate).
 				Detached().
-				UTF8().
+				Utf8().
 				New()
 			verifier, _ := material.pgp.Verify().
 				VerificationKeys(material.keyRingTestPublic).
-				UTF8().
+				Utf8().
 				New()
 			testSignVerify(t, signer, verifier, true, Bytes, len(material.keyRingTestPrivate.entities))
 		})

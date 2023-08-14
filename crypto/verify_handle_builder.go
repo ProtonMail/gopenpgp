@@ -45,9 +45,9 @@ func (vhb *VerifyHandleBuilder) VerifyTime(unixTime int64) *VerifyHandleBuilder 
 	return vhb
 }
 
-// UTF8 indicates if the output plaintext is UTF8 and
+// Utf8 indicates if the output plaintext is Utf8 and
 // should be sanitized from canonicalised line endings.
-func (vhb *VerifyHandleBuilder) UTF8() *VerifyHandleBuilder {
+func (vhb *VerifyHandleBuilder) Utf8() *VerifyHandleBuilder {
 	vhb.handle.IsUTF8 = true
 	return vhb
 }
