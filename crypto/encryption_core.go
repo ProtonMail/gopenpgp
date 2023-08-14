@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"bytes"
 	"io"
 	"time"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+// pgpSplitWriter type implements the PGPSplitWriter
+// interface.
 type pgpSplitWriter struct {
 	keyPackets        Writer
 	ciphertext        Writer
@@ -29,6 +32,10 @@ func (mw *pgpSplitWriter) Signature() Writer {
 	return mw.detachedSignature
 }
 
+// NewPGPSplitWriter creates a type that implements the PGPSplitWriter interface
+// for encrypting a plaintext where the output PGP packets should be written to the different streams provided.
+// Key packets are written to keyPackets whereas the encrypted data packets are written to encPackets.
+// The encrypted detached signature data is written to encSigPacket.
 func NewPGPSplitWriter(keyPackets Writer, encPackets Writer, encSigPacket Writer) PGPSplitWriter {
 	return &pgpSplitWriter{
 		keyPackets:        keyPackets,
@@ -37,16 +44,50 @@ func NewPGPSplitWriter(keyPackets Writer, encPackets Writer, encSigPacket Writer
 	}
 }
 
+// NewPGPSplitWriterKeyAndData creates a type that implements the PGPSplitWriter interface
+// for encrypting a plaintext where the output PGP packets should be written to the different streams provided.
+// Key packets are written to keyPackets whereas the encrypted data packets are written to encPackets.
 func NewPGPSplitWriterKeyAndData(keyPackets Writer, encPackets Writer) PGPSplitWriter {
 	return NewPGPSplitWriter(keyPackets, encPackets, nil)
 }
 
+// NewPGPSplitWriterKeyAndData creates a type that implements the PGPSplitWriter interface
+// for encrypting a plaintext where the output PGP messages should be written to the different streams provided.
+// The encrypted data message is written to encMessage whereas the encrypted detached signature is written to
+// encSigMessage.
 func NewPGPSplitWriterDetachedSignature(encMessage Writer, encSigMessage Writer) PGPSplitWriter {
 	return NewPGPSplitWriter(nil, encMessage, encSigMessage)
 }
 
 func NewPGPSplitWriterFromWriter(writer Writer) PGPSplitWriter {
 	return NewPGPSplitWriter(writer, writer, nil)
+}
+
+// PGPSplitEncryptedDataWriter type implements the PGPSplitWriter
+// interface and buffers written key packets internally.
+type pgpSplitEncryptedDataWriter struct {
+	pgpSplitWriter
+	keyPacketsBuffer *bytes.Buffer
+}
+
+func (mw *pgpSplitEncryptedDataWriter) KeyPacketBytes() []byte {
+	return mw.keyPacketsBuffer.Bytes()
+}
+
+// NewPGPSplitDataWriter creates a type that implements the PGPSplitWriter interface
+// for encrypting a plaintext where the output PGP packets should be split.
+// Key packets are written to an internal buffer whereas the encrypted data packets are written to encPackets.
+// Call KeyPacketBytes() to retrieve the key packet bytes after writing the data.
+func NewPGPSplitDataWriter(encPackets Writer) PGPKeyPacketSplitWriter {
+	keyPacketsBuffer := bytes.NewBuffer(nil)
+	return &pgpSplitEncryptedDataWriter{
+		pgpSplitWriter: pgpSplitWriter{
+			keyPackets:        keyPacketsBuffer,
+			ciphertext:        encPackets,
+			detachedSignature: nil,
+		},
+		keyPacketsBuffer: keyPacketsBuffer,
+	}
 }
 
 type signAndEncryptWriteCloser struct {
