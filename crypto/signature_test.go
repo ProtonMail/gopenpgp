@@ -35,7 +35,7 @@ func getSignatureType(sig []byte) (packet.SignatureType, error) {
 func testSignerText() PGPSign {
 	signer, _ := testPGP.Sign().
 		SigningKeys(keyRingTestPrivate).
-		UTF8().
+		Utf8().
 		Detached().
 		New()
 	return signer
