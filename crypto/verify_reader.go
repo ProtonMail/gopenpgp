@@ -4,8 +4,8 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/ProtonMail/go-crypto/v2/openpgp"
-	"github.com/ProtonMail/go-crypto/v2/openpgp/packet"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/pkg/errors"
 )
 
@@ -31,7 +31,7 @@ func (msg *VerifyDataReader) GetMetadata() *LiteralMetadata {
 	}
 	return &LiteralMetadata{
 		filename: msg.details.LiteralData.FileName,
-		isUTF8:   msg.details.LiteralData.IsUTF8,
+		isUTF8:   !msg.details.LiteralData.IsBinary,
 		ModTime:  int64(msg.details.LiteralData.Time),
 	}
 }

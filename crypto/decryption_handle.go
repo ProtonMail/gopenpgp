@@ -3,7 +3,7 @@ package crypto
 import (
 	"bytes"
 
-	"github.com/ProtonMail/go-crypto/v2/openpgp/armor"
+	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/ProtonMail/gopenpgp/v3/internal"
 
 	"github.com/pkg/errors"
