@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ProtonMail/go-crypto/v2/openpgp/ecdh"
-	"github.com/ProtonMail/go-crypto/v2/openpgp/eddsa"
+	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
+	"github.com/ProtonMail/go-crypto/openpgp/eddsa"
 )
 
 var testSymmetricKey []byte

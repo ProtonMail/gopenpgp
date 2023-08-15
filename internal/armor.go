@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/ProtonMail/go-crypto/v2/openpgp/armor"
+	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/pkg/errors"
 )
 
