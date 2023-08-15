@@ -6,10 +6,10 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/ProtonMail/go-crypto/v2/openpgp"
-	"github.com/ProtonMail/go-crypto/v2/openpgp/armor"
-	"github.com/ProtonMail/go-crypto/v2/openpgp/clearsign"
-	"github.com/ProtonMail/go-crypto/v2/openpgp/packet"
+	"github.com/ProtonMail/go-crypto/openpgp/armor"
+	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/internal"
 	"github.com/pkg/errors"
@@ -138,7 +138,7 @@ func (sh *signatureHandle) signCleartext(message []byte) ([]byte, error) {
 			return nil, errors.New("gopenpgp: no signing key found for entity")
 		}
 	}
-	writer, err := clearsign.EncodeMulti(&buffer, privateKeys, config, sh.ArmorHeaders)
+	writer, err := clearsign.EncodeMultiWithHeader(&buffer, privateKeys, config, sh.ArmorHeaders)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +194,10 @@ func signMessageDetachedWriter(
 		config.SignatureNotations = append(config.SignatureNotations, context.getNotation())
 	}
 
-	ptWriter, err = openpgp.DetachSignWriter(outputWriter, signers, isUTF8, config)
+	ptWriter, err = openpgp.DetachSignWriter(outputWriter, signers, &openpgp.SignParams{
+		TextSig: isUTF8,
+		Config:  config,
+	})
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in signing")
 	}

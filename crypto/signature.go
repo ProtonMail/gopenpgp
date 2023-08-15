@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ProtonMail/go-crypto/v2/openpgp"
-	pgpErrors "github.com/ProtonMail/go-crypto/v2/openpgp/errors"
-	"github.com/ProtonMail/go-crypto/v2/openpgp/packet"
+	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/pkg/errors"
 
 	"github.com/ProtonMail/gopenpgp/v3/constants"
