@@ -1,6 +1,6 @@
 package crypto
 
-import "github.com/ProtonMail/go-crypto/v2/openpgp/packet"
+import "github.com/ProtonMail/go-crypto/openpgp/packet"
 
 type EncryptionProfile interface {
 	EncryptionConfig() *packet.Config

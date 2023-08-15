@@ -5,8 +5,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/ProtonMail/go-crypto/v2/openpgp"
-	"github.com/ProtonMail/go-crypto/v2/openpgp/packet"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/pkg/errors"
 )
 
@@ -268,7 +268,7 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 	} else {
 		encryptWriter, err = packet.SerializeLiteral(
 			encryptWriter,
-			plainMessageMetadata.IsUtf8(),
+			!plainMessageMetadata.IsUtf8(),
 			plainMessageMetadata.Filename(),
 			uint32(plainMessageMetadata.Time()),
 		)

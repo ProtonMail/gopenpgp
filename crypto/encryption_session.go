@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ProtonMail/go-crypto/v2/openpgp/packet"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/pkg/errors"
 )
 
@@ -129,7 +129,7 @@ func encryptSessionKeyToWriter(
 
 	for index, pub := range pubKeys {
 		isHidden := index >= len(recipients.getEntities())
-		err := packet.SerializeEncryptedKeyAEAD(outputWriter, pub, cf, aeadSupport, sk.Key, isHidden, nil)
+		err := packet.SerializeEncryptedKeyAEADwithHiddenOption(outputWriter, pub, cf, aeadSupport, sk.Key, isHidden, nil)
 		if err != nil {
 			return errors.Wrap(err, "gopenpgp: cannot set key")
 		}

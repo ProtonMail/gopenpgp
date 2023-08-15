@@ -4,8 +4,8 @@ package profile
 import (
 	"crypto"
 
-	"github.com/ProtonMail/go-crypto/v2/openpgp/packet"
-	"github.com/ProtonMail/go-crypto/v2/openpgp/s2k"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	"github.com/ProtonMail/go-crypto/openpgp/s2k"
 )
 
 // Custom type represents a profile setting algorithm
