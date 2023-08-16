@@ -9,10 +9,10 @@ import (
 )
 
 var nameToProfile = map[string]func() *Custom{
-	"default":                           Default,
-	"rfc4880":                           RFC4880,
-	"draft-koch-openpgp":                GnuPG,
-	"draft-ietf-openpgp-crypto-refresh": CryptoRefresh,
+	"default":                              Default,
+	"rfc4880":                              RFC4880,
+	"draft-koch-eddsa-for-openpgp-00":      GnuPG,
+	"draft-ietf-openpgp-crypto-refresh-10": CryptoRefresh,
 }
 
 // PresetProfiles returns the names of the available profiles.
@@ -85,7 +85,7 @@ func GnuPG() *Custom {
 		}
 	}
 	return &Custom{
-		Name:                 "draft-koch-openpgp",
+		Name:                 "draft-koch-eddsa-for-openpgp-00",
 		SetKeyAlgorithm:      setKeyAlgorithm,
 		Hash:                 crypto.SHA256,
 		HashSign:             crypto.SHA512,
