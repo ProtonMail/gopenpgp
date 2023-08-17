@@ -190,9 +190,12 @@ func (vh *verifyHandle) verifyingDetachedReader(
 }
 
 func (vh *verifyHandle) verifyCleartext(cleartext []byte) (*VerifyCleartextResult, error) {
-	block, _ := clearsign.Decode(cleartext)
+	block, rest := clearsign.Decode(cleartext)
 	if block == nil {
 		return nil, errors.New("gopenpgp: not able to parse cleartext message")
+	}
+	if len(bytes.TrimSpace(rest)) > 0 {
+		return nil, errors.New("gopenpgp: cleartext message has trailing text")
 	}
 	signature, err := io.ReadAll(block.ArmoredSignature.Body)
 	if err != nil {
