@@ -21,7 +21,7 @@ func ArmorKey(input []byte) (string, error) {
 // ArmorWriterWithType returns a io.WriteCloser which, when written to, writes
 // armored data to w with the given armorType.
 func ArmorWriterWithType(w io.Writer, armorType string) (io.WriteCloser, error) {
-	return armor.Encode(w, armorType, internal.ArmorHeaders)
+	return armor.EncodeWithChecksumOption(w, armorType, internal.ArmorHeaders, false)
 }
 
 // ArmorWriterWithTypeAndCustomHeaders returns a io.WriteCloser,
@@ -34,7 +34,7 @@ func ArmorWriterWithTypeAndCustomHeaders(w io.Writer, armorType, version, commen
 	if comment != "" {
 		headers["Comment"] = comment
 	}
-	return armor.Encode(w, armorType, headers)
+	return armor.EncodeWithChecksumOption(w, armorType, headers, false)
 }
 
 // ArmorWithType armors input with the given armorType.
@@ -154,7 +154,7 @@ func IsPGPArmored(in io.Reader) (io.Reader, bool) {
 func armorWithTypeAndHeaders(input []byte, armorType string, headers map[string]string) (*bytes.Buffer, error) {
 	var b bytes.Buffer
 
-	w, err := armor.Encode(&b, armorType, headers)
+	w, err := armor.EncodeWithChecksumOption(&b, armorType, headers, false)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "gopengp: unable to encode armoring")
