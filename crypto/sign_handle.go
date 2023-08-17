@@ -48,7 +48,7 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding int8) (me
 			// Append checksum for GnuPG detached signature compatibility
 			armorWriter, err = armor.EncodeWithChecksumOption(outputWriter, header, sh.ArmorHeaders, true)
 		} else {
-			armorWriter, err = armor.Encode(outputWriter, header, sh.ArmorHeaders)
+			armorWriter, err = armor.EncodeWithChecksumOption(outputWriter, header, sh.ArmorHeaders, false)
 		}
 		outputWriter = armorWriter
 		if err != nil {
