@@ -41,8 +41,3 @@ type PGPSplitWriter interface {
 	Keys() Writer
 	Signature() Writer
 }
-
-type PGPKeyPacketSplitWriter interface {
-	PGPSplitWriter
-	KeyPacketBytes() []byte
-}

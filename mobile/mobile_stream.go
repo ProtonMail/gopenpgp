@@ -1,6 +1,7 @@
 package mobile
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"hash"
 	"io"
@@ -179,4 +180,44 @@ func (r *Go2IOSReader) Read(max int) (result *MobileReadResult, err error) {
 		result.Data = b[:n]
 	}
 	return result, nil
+}
+
+// KeyPacketSplitWriter implement the crypto.PGPSplitWriter interface
+// for splitting encryption output into different packets.
+// Internally buffers the key packets and potential detached encrypted signatures.
+type KeyPacketSplitWriter struct {
+	dataWriter           crypto.Writer
+	keyPacket            *bytes.Buffer
+	encDetachedSignature *bytes.Buffer
+}
+
+func NewKeyPacketSplitWriter(dataWriter crypto.Writer) *KeyPacketSplitWriter {
+	return &KeyPacketSplitWriter{
+		dataWriter: dataWriter,
+		keyPacket:  bytes.NewBuffer(nil),
+	}
+}
+
+// KeyPackets returns the internally buffered key packets.
+func (sw *KeyPacketSplitWriter) KeyPackets() []byte {
+	return sw.keyPacket.Bytes()
+}
+
+// EncryptedDetachedSignature returns the internally buffered encrypted detached signature.
+func (sw *KeyPacketSplitWriter) EncryptedDetachedSignature() *crypto.PGPMessage {
+	return crypto.NewPGPSplitMessage(sw.keyPacket.Bytes(), sw.encDetachedSignature.Bytes())
+}
+
+// Implement the crypto.PGPSplitWriter interface.
+
+func (sw *KeyPacketSplitWriter) Write(b []byte) (n int, err error) {
+	return sw.dataWriter.Write(b)
+}
+
+func (sw *KeyPacketSplitWriter) Keys() crypto.Writer {
+	return sw.keyPacket
+}
+
+func (sw *KeyPacketSplitWriter) Signature() crypto.Writer {
+	return nil
 }
