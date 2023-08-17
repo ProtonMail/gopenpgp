@@ -193,13 +193,13 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 		if eh.ArmorHeaders == nil {
 			eh.ArmorHeaders = internal.ArmorHeaders
 		}
-		armorWriter, err = armor.Encode(data, constants.PGPMessageHeader, eh.ArmorHeaders)
+		armorWriter, err = armor.EncodeWithChecksumOption(data, constants.PGPMessageHeader, eh.ArmorHeaders, false)
 		data = armorWriter
 		if err != nil {
 			return
 		}
 		if eh.DetachedSignature {
-			armorSigWriter, err = armor.Encode(detachedSignature, constants.PGPMessageHeader, eh.ArmorHeaders)
+			armorSigWriter, err = armor.EncodeWithChecksumOption(detachedSignature, constants.PGPMessageHeader, eh.ArmorHeaders, false)
 			detachedSignature = armorSigWriter
 			if err != nil {
 				return
