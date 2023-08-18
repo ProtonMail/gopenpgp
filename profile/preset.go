@@ -91,8 +91,6 @@ func GnuPG() *Custom {
 		HashSign:             crypto.SHA512,
 		CipherEncryption:     packet.CipherAES256,
 		CompressionAlgorithm: packet.CompressionZLIB,
-		AeadKeyEncryption:    &packet.AEADConfig{},
-		AeadEncryption:       &packet.AEADConfig{},
 	}
 }
 
