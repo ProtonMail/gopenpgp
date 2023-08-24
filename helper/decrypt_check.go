@@ -17,6 +17,8 @@ func supported(cipher packet.CipherFunction) bool {
 	switch cipher {
 	case packet.CipherAES128, packet.CipherAES192, packet.CipherAES256:
 		return true
+	case packet.CipherCAST5, packet.Cipher3DES:
+		return false
 	}
 	return false
 }
@@ -25,6 +27,8 @@ func blockSize(cipher packet.CipherFunction) int {
 	switch cipher {
 	case packet.CipherAES128, packet.CipherAES192, packet.CipherAES256:
 		return AES_BLOCK_SIZE
+	case packet.CipherCAST5, packet.Cipher3DES:
+		return 0
 	}
 	return 0
 }
@@ -33,8 +37,10 @@ func blockCipher(cipher packet.CipherFunction, key []byte) (cipher.Block, error)
 	switch cipher {
 	case packet.CipherAES128, packet.CipherAES192, packet.CipherAES256:
 		return aes.NewCipher(key)
+	case packet.CipherCAST5, packet.Cipher3DES:
+		return nil, errors.New("gopenpgp: cipher not supported for quick check")
 	}
-	return nil, errors.New("gopenpgp: cipher not supported for quick check")
+	return nil, errors.New("gopenpgp: unknown cipher")
 }
 
 // QuickCheckDecryptReader checks with high probability if the provided session key
@@ -69,16 +75,16 @@ func QuickCheckDecryptReader(sessionKey *crypto.SessionKey, prefixReader crypto.
 
 	blockBuffer := make([]byte, blockSize)
 	// Decrypt 2 bytes of the second block
-	blockCipher.Encrypt(blockBuffer[:], encryptedData[:blockSize])
+	blockCipher.Encrypt(blockBuffer, encryptedData[:blockSize])
 	for ind := range blockBuffer[:2] {
 		encryptedData[blockSize+ind] ^= blockBuffer[ind]
 	}
-	for ind := range blockBuffer[:] {
+	for ind := range blockBuffer {
 		blockBuffer[ind] = 0
 	}
 	// Decrypt the first block
-	blockCipher.Encrypt(blockBuffer[:], blockBuffer[:])
-	for ind := range blockBuffer[:] {
+	blockCipher.Encrypt(blockBuffer, blockBuffer)
+	for ind := range blockBuffer {
 		encryptedData[ind] ^= blockBuffer[ind]
 	}
 
