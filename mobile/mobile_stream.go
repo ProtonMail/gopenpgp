@@ -183,7 +183,7 @@ func (r *Go2IOSReader) Read(max int) (result *MobileReadResult, err error) {
 }
 
 // KeyPacketSplitWriter implement the crypto.PGPSplitWriter interface
-// for splitting encryption output into different packets.
+// for splitting encryptions output into different packets.
 // Internally buffers the key packets and potential detached encrypted signatures.
 type KeyPacketSplitWriter struct {
 	dataWriter           crypto.Writer
@@ -219,5 +219,27 @@ func (sw *KeyPacketSplitWriter) Keys() crypto.Writer {
 }
 
 func (sw *KeyPacketSplitWriter) Signature() crypto.Writer {
-	return nil
+	return sw.encDetachedSignature
+}
+
+// DetachedSignaturePGPSplitReader implements the crypto.PGPSplitReader interface.
+type DetachedSignaturePGPSplitReader struct {
+	dataReader           crypto.Reader
+	encDetachedSignature crypto.Reader
+}
+
+func NewDetachedSignaturePGPSplitReader(keyPacket []byte, dataReader crypto.Reader, encSignature *crypto.PGPMessage) *DetachedSignaturePGPSplitReader {
+	internalDataReader := io.MultiReader(bytes.NewReader(keyPacket), dataReader)
+	return &DetachedSignaturePGPSplitReader{
+		dataReader:           internalDataReader,
+		encDetachedSignature: encSignature.NewReader(),
+	}
+}
+
+func (ds *DetachedSignaturePGPSplitReader) Read(b []byte) (n int, err error) {
+	return ds.dataReader.Read(b)
+}
+
+func (ds *DetachedSignaturePGPSplitReader) Signature() crypto.Reader {
+	return ds.encDetachedSignature
 }
