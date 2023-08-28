@@ -72,22 +72,7 @@ func QuickCheckDecryptReader(sessionKey *crypto.SessionKey, prefixReader crypto.
 	if err != nil {
 		return false, errors.New("gopenpgp: failed to initialize the cipher")
 	}
-
-	blockBuffer := make([]byte, blockSize)
-	// Decrypt 2 bytes of the second block
-	blockCipher.Encrypt(blockBuffer, encryptedData[:blockSize])
-	for ind := range blockBuffer[:2] {
-		encryptedData[blockSize+ind] ^= blockBuffer[ind]
-	}
-	for ind := range blockBuffer {
-		blockBuffer[ind] = 0
-	}
-	// Decrypt the first block
-	blockCipher.Encrypt(blockBuffer, blockBuffer)
-	for ind := range blockBuffer {
-		encryptedData[ind] ^= blockBuffer[ind]
-	}
-
+	_ = packet.NewOCFBDecrypter(blockCipher, encryptedData, packet.OCFBNoResync)
 	return encryptedData[blockSize-2] == encryptedData[blockSize] &&
 		encryptedData[blockSize-1] == encryptedData[blockSize+1], nil
 }
