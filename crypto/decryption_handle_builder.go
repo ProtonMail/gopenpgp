@@ -58,7 +58,16 @@ func (dpb *DecryptionHandleBuilder) SessionKeys(sessionKeys []*SessionKey) *Decr
 // Triggers the password decryption mode.
 // If not set, set another field for the type of decryption: DecryptionKeys or SessionKey
 func (dpb *DecryptionHandleBuilder) Password(password []byte) *DecryptionHandleBuilder {
-	dpb.handle.Password = password
+	dpb.handle.Passwords = [][]byte{password}
+	return dpb
+}
+
+// Passwords sets passwords that are used to derive keys to decrypt the pgp message.
+// Assumes the the message was encrypted with one of the keys derived from the passwords.
+// Triggers the password decryption mode.
+// If not set, set another field for the type of decryption: DecryptionKeys or SessionKey
+func (dpb *DecryptionHandleBuilder) Passwords(passwords [][]byte) *DecryptionHandleBuilder {
+	dpb.handle.Passwords = passwords
 	return dpb
 }
 
