@@ -118,9 +118,18 @@ func (dh *decryptionHandle) decryptStreamWithSession(dataPacketReader Reader) (p
 
 func (dh *decryptionHandle) decryptStreamWithSessionAndParse(messageReader io.Reader) (*openpgp.MessageDetails, int64, error) {
 	var keyring openpgp.EntityList
+	var decrypted io.ReadCloser
+	var selectedSessionKey *SessionKey
+	var err error
 	// Read symmetrically encrypted data packet
-	decrypted, err := dh.decryptStreamWithSessionKey(messageReader)
-	if err != nil {
+	for _, sessionKeyCandidate := range dh.SessionKeys {
+		decrypted, err = decryptStreamWithSessionKey(sessionKeyCandidate, messageReader)
+		if err == nil { // No error occurred
+			selectedSessionKey = sessionKeyCandidate
+			break
+		}
+	}
+	if selectedSessionKey == nil {
 		return nil, 0, errors.Wrap(err, "gopenpgp: unable to decrypt message with session key")
 	}
 
@@ -147,12 +156,12 @@ func (dh *decryptionHandle) decryptStreamWithSessionAndParse(messageReader io.Re
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "gopenpgp: unable to decode symmetric packet")
 	}
-	md.SessionKey = dh.SessionKey.Key
+	md.SessionKey = selectedSessionKey.Key
 	md.UnverifiedBody = checkReader{decrypted, md.UnverifiedBody}
 	return md, config.Time().Unix(), nil
 }
 
-func (dh *decryptionHandle) decryptStreamWithSessionKey(messageReader io.Reader) (io.ReadCloser, error) {
+func decryptStreamWithSessionKey(sessionKey *SessionKey, messageReader io.Reader) (io.ReadCloser, error) {
 	var decrypted io.ReadCloser
 	// Read symmetrically encrypted data packet
 Loop:
@@ -170,8 +179,8 @@ Loop:
 			continue
 		case *packet.SymmetricallyEncrypted, *packet.AEADEncrypted:
 			var dc packet.CipherFunction
-			if !dh.SessionKey.v6 {
-				dc, err = dh.SessionKey.GetCipherFunc()
+			if !sessionKey.v6 {
+				dc, err = sessionKey.GetCipherFunc()
 				if err != nil {
 					return nil, errors.Wrap(err, "gopenpgp: unable to decrypt with session key")
 				}
@@ -180,7 +189,7 @@ Loop:
 			if !isDataPacket {
 				return nil, errors.Wrap(err, "gopenpgp: unknown data packet")
 			}
-			decrypted, err = encryptedDataPacket.Decrypt(dc, dh.SessionKey.Key)
+			decrypted, err = encryptedDataPacket.Decrypt(dc, sessionKey.Key)
 			if err != nil {
 				return nil, errors.Wrap(err, "gopenpgp: unable to decrypt symmetric packet")
 			}
@@ -197,7 +206,7 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 	var mdData *openpgp.MessageDetails
 	var signature io.Reader
 	// Decrypt both messages
-	if dh.SessionKey != nil {
+	if len(dh.SessionKeys) > 0 {
 		// Decrypt with session key.
 		mdData, _, err = dh.decryptStreamWithSessionAndParse(encryptedData)
 		if err != nil {
