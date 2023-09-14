@@ -20,10 +20,10 @@ type decryptionHandle struct {
 	// Assumes the the message was encrypted with one of the session keys provided.
 	// If nil, set another field for the type of decryption: DecryptionKeyRing or Password
 	SessionKeys []*SessionKey
-	// Password provides a password for decrypting the pgp message.
-	// Assumes the the message was encrypted with a key derived from the password.
+	// Passwords provides passwords for decrypting the pgp message.
+	// Assumes the the message was encrypted with on of the keys derived from the passwords.
 	// If nil, set another field for the type of decryption: DecryptionKeyRing or SessionKey
-	Password []byte
+	Passwords [][]byte
 	// VerifyKeyRing provides a set of public keys to verify the signature of the pgp message, if any.
 	// If nil, the signatures are not verified.
 	VerifyKeyRing *KeyRing
@@ -92,9 +92,15 @@ func (dh *decryptionHandle) DecryptDetached(pgpMessage []byte, encryptedDetached
 	return verifier.ReadAllAndVerifySignature()
 }
 
-func (dh *decryptionHandle) DecryptSessionKey(keyPackets []byte) (*SessionKey, error) {
-	if dh.Password != nil {
-		return decryptSessionKeyWithPassword(keyPackets, dh.Password)
+func (dh *decryptionHandle) DecryptSessionKey(keyPackets []byte) (sk *SessionKey, err error) {
+	if len(dh.Passwords) > 0 {
+		for _, passwordCandidate := range dh.Passwords {
+			sk, err = decryptSessionKeyWithPassword(keyPackets, passwordCandidate)
+			if err == nil {
+				return
+			}
+		}
+		return
 	} else if dh.DecryptionKeyRing != nil {
 		return decryptSessionKey(dh.DecryptionKeyRing, keyPackets)
 	} else {
@@ -111,8 +117,10 @@ func (dh *decryptionHandle) ClearPrivateParams() {
 			sk.Clear()
 		}
 	}
-	if dh.Password != nil {
-		clearMem(dh.Password)
+	if len(dh.Passwords) > 0 {
+		for _, password := range dh.Passwords {
+			clearMem(password)
+		}
 	}
 }
 
@@ -121,7 +129,7 @@ func (dh *decryptionHandle) validate() error {
 	if dh.DecryptionKeyRing != nil {
 		keyMaterialPresent = true
 	}
-	if dh.Password != nil {
+	if len(dh.Passwords) > 0 {
 		if keyMaterialPresent {
 			return errors.New("openpgp: more than one decryption key material provided")
 		}
@@ -181,7 +189,7 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 			plainMessageReader, err = dh.decryptStream(encryptedMessage)
 		}
 
-	} else if dh.Password != nil {
+	} else if len(dh.Passwords) > 0 {
 		// Decrypt with password.
 		if encryptedSignature != nil {
 			plainMessageReader, err = dh.decryptStreamAndVerifyDetached(encryptedMessage, encryptedSignature)

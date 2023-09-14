@@ -62,12 +62,20 @@ func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage
 		}
 	} else {
 		// Password based decryption
-		prompt := createPasswordPrompt(dh.Password)
-		messageDetails, err = openpgp.ReadMessage(encryptedMessage, entries, prompt, config)
-		if err != nil {
+		var foundPassword bool = false
+		for _, password := range dh.Passwords {
+			prompt := createPasswordPrompt(password)
+			messageDetails, err = openpgp.ReadMessage(encryptedMessage, entries, prompt, config)
+			if err == nil {
+				foundPassword = true
+				break
+			}
+		}
+		if !foundPassword {
 			// Parsing errors when reading the message are most likely caused by incorrect password, but we cannot know for sure
 			return nil, errors.New("gopenpgp: error in reading password protected message: wrong password or malformed message")
 		}
+
 	}
 
 	// Add utf8 sanitizer if signature has type packet.SigTypeText
@@ -229,13 +237,26 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 			entries = append(entries, dh.DecryptionKeyRing.entities...)
 		}
 		// Decrypting reader for the encrypted data
-		prompt := createPasswordPrompt(dh.Password)
-		mdData, err = openpgp.ReadMessage(encryptedData, entries, prompt, config)
-		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: error in reading data message")
+		var selectedPassword []byte
+		if len(dh.Passwords) > 0 {
+			for _, passwordCandidate := range dh.Passwords {
+				prompt := createPasswordPrompt(passwordCandidate)
+				mdData, err = openpgp.ReadMessage(encryptedData, entries, prompt, config)
+				if err == nil { // No error occurred
+					selectedPassword = passwordCandidate
+				}
+			}
+			if selectedPassword == nil {
+				return nil, errors.Wrap(err, "gopenpgp: error in reading data message no password matched")
+			}
+		} else {
+			mdData, err = openpgp.ReadMessage(encryptedData, entries, nil, config)
+			if err != nil {
+				return nil, errors.Wrap(err, "gopenpgp: error in reading data message")
+			}
 		}
 		// Decrypting reader for the encrypted signature
-		prompt = createPasswordPrompt(dh.Password)
+		prompt := createPasswordPrompt(selectedPassword)
 		checkPacketSequence := false
 		config.CheckPacketSequence = &checkPacketSequence
 		mdSig, err := openpgp.ReadMessage(encryptedSignature, entries, prompt, config)
