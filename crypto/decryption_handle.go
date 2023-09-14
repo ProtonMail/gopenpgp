@@ -16,10 +16,10 @@ type decryptionHandle struct {
 	// Assumes the the message was encrypted towards a public key in DecryptionKeyRing.
 	// If nil, set another field for the type of decryption: SessionKey or Password
 	DecryptionKeyRing *KeyRing
-	// SessionKey provides a session key for decrypting the pgp message.
-	// Assumes the the message was encrypted with session key provided.
+	// SessionKeys provides one or more session keys for decrypting the pgp message.
+	// Assumes the the message was encrypted with one of the session keys provided.
 	// If nil, set another field for the type of decryption: DecryptionKeyRing or Password
-	SessionKey *SessionKey
+	SessionKeys []*SessionKey
 	// Password provides a password for decrypting the pgp message.
 	// Assumes the the message was encrypted with a key derived from the password.
 	// If nil, set another field for the type of decryption: DecryptionKeyRing or SessionKey
@@ -106,8 +106,10 @@ func (dh *decryptionHandle) ClearPrivateParams() {
 	if dh.DecryptionKeyRing != nil {
 		dh.DecryptionKeyRing.ClearPrivateParams()
 	}
-	if dh.SessionKey != nil {
-		dh.SessionKey.Clear()
+	if len(dh.SessionKeys) > 0 {
+		for _, sk := range dh.SessionKeys {
+			sk.Clear()
+		}
 	}
 	if dh.Password != nil {
 		clearMem(dh.Password)
@@ -125,7 +127,7 @@ func (dh *decryptionHandle) validate() error {
 		}
 		keyMaterialPresent = true
 	}
-	if dh.SessionKey != nil {
+	if len(dh.SessionKeys) > 0 {
 		keyMaterialPresent = true
 	}
 	if !keyMaterialPresent {
@@ -164,7 +166,7 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 		}
 	}
 
-	if dh.SessionKey != nil {
+	if len(dh.SessionKeys) > 0 {
 		// Decrypt with session key.
 		if encryptedSignature != nil {
 			plainMessageReader, err = dh.decryptStreamAndVerifyDetached(encryptedMessage, encryptedSignature)
