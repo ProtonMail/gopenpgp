@@ -117,6 +117,15 @@ func (dpb *DecryptionHandleBuilder) DisableVerifyTimeCheck() *DecryptionHandleBu
 	return dpb
 }
 
+// EnableStrictMessageParsing enables the check that decryption inputs conform
+// to the OpenPGP Message grammar.
+// If enabled, the decryption methods return an error if the message does not conform to the
+// OpenPGP message grammar.
+func (dpb *DecryptionHandleBuilder) EnableStrictMessageParsing() *DecryptionHandleBuilder {
+	dpb.handle.EnableStrictMessageParsing = true
+	return dpb
+}
+
 // DisableIntendedRecipients indicates if the signature verification should not check if
 // the decryption key matches the intended recipients of the message.
 // If disabled, the decryption methods throw no error in a non-matching case.
