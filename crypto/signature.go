@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"bytes"
 	"crypto"
 	"fmt"
 	"time"
@@ -102,6 +103,18 @@ func (vr *VerifyResult) SignedByKey() *Key {
 	return &Key{
 		entity: key.entity,
 	}
+}
+
+// Signature returns the serialized openpgp signature packet of the selected signature
+func (vr *VerifyResult) Signature() ([]byte, error) {
+	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
+		return nil, errors.New("gopenpgp: no signature present")
+	}
+	var serializedSignature bytes.Buffer
+	if err := vr.selectedSignature.Signature.Serialize(&serializedSignature); err != nil {
+		return nil, err
+	}
+	return serializedSignature.Bytes(), nil
 }
 
 // SignatureError returns nil if no signature err occurred else
