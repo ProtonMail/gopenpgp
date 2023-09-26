@@ -1,5 +1,7 @@
 github.com/ProtonMail/go-crypto v0.0.0-20230831124408-462e89636beb h1:L/DovexeG1CbqAwa8Ru3bPr9AAj090Buak13xtb2TjE=
 github.com/ProtonMail/go-crypto v0.0.0-20230831124408-462e89636beb/go.mod h1:K4vciqCJaZ1Ghw/SvtJbEAM4soEtwDCNVqkdQIIujwU=
+github.com/ProtonMail/go-crypto v0.0.0-20230926123128-623afc11003e h1:+h3uEr6UlCTc08QAfugn4mxrwlbNgfplyuGvIg2UMwI=
+github.com/ProtonMail/go-crypto v0.0.0-20230926123128-623afc11003e/go.mod h1:K4vciqCJaZ1Ghw/SvtJbEAM4soEtwDCNVqkdQIIujwU=
 github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f h1:tCbYj7/299ekTTXpdwKYF8eBlsYsDVoggDAuAjoK66k=
 github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f/go.mod h1:gcr0kNtGBqin9zDW9GOHcVntrwnjrK+qdJ06mWYBybw=
 github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
