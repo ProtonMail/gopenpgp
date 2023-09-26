@@ -4,7 +4,6 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/pkg/errors"
 )
@@ -54,17 +53,7 @@ func (msg *VerifyDataReader) VerifySignature() (result *VerifyResult, err error)
 	if !msg.readAll {
 		return nil, errors.New("gopenpgp: can't verify the signature until the message reader has been read entirely")
 	}
-	var verifiedSig *packet.Signature
-	if msg.details.Signature != nil {
-		verifiedSig = msg.details.Signature
-	}
 	if msg.verifyKeyRing != nil {
-		msg.details.SignatureError = processSignatureExpiration(
-			verifiedSig,
-			msg.details.SignatureError,
-			msg.verifyTime,
-			msg.disableTimeCheck,
-		)
 		return createVerifyResult(msg.details, msg.verifyKeyRing, msg.verificationContext, msg.verifyTime, msg.disableTimeCheck)
 	} else {
 		err = errors.New("gopenpgp: no verify keyring was provided before decryption")
