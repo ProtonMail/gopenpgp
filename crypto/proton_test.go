@@ -8,10 +8,7 @@ import (
 )
 
 func TestForwardeeDecryption(t *testing.T) {
-	pgp.latestServerTime = 1679044110
-	defer func() {
-		pgp.latestServerTime = testTime
-	}()
+	//pgp.latestServerTime = 1679044110
 
 	forwardeeKey, err := NewKeyFromArmored(readTestFile("key_forwardee", false))
 	if err != nil {
@@ -23,25 +20,23 @@ func TestForwardeeDecryption(t *testing.T) {
 		t.Fatal("Expected no error while building private keyring, got:", err)
 	}
 
-	pgpMessage, err := NewPGPMessageFromArmored(readTestFile("message_forwardee", false))
+	pgpMessage := readTestFile("message_forwardee", false)
+	decryptor, err := PGP().Decryption().
+		DecryptionKeys(forwardeeKeyRing).
+		VerifyTime(1679044110).
+		New()
 	if err != nil {
-		t.Fatal("Expected no error while reading ciphertext, got:", err)
+		t.Fatal(err)
 	}
-
-	plainMessage, err := forwardeeKeyRing.Decrypt(pgpMessage, nil, 0)
+	plainMessage, err := decryptor.Decrypt([]byte(pgpMessage), Armor)
 	if err != nil {
 		t.Fatal("Expected no error while decrypting/verifying, got:", err)
 	}
 
-	assert.Exactly(t, "Message for Bob", plainMessage.GetString())
+	assert.Exactly(t, "Message for Bob", plainMessage.String())
 }
 
 func TestSymmetricKeys(t *testing.T) {
-	pgp.latestServerTime = 1679044110
-	defer func() {
-		pgp.latestServerTime = testTime
-	}()
-
 	symmetricKey, err := NewKeyFromArmored(readTestFile("key_symmetric", false))
 	if err != nil {
 		t.Fatal("Expected no error while unarmoring private keyring, got:", err)
@@ -53,16 +48,30 @@ func TestSymmetricKeys(t *testing.T) {
 	}
 
 	binData, _ := base64.StdEncoding.DecodeString("ExXmnSiQ2QCey20YLH6qlLhkY3xnIBC1AwlIXwK/HvY=")
-	var message = NewPlainMessage(binData)
+	pgp := PGP()
+	encryptor, err := pgp.Encryption().
+		Recipients(symmetricKeyRing).
+		SignTime(1679044110).
+		New()
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	ciphertext, err := symmetricKeyRing.Encrypt(message, nil)
+	ciphertext, err := encryptor.Encrypt(binData)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	decrypted, err := symmetricKeyRing.Decrypt(ciphertext, nil, 0)
+	decryptor, err := pgp.Decryption().
+		DecryptionKeys(symmetricKeyRing).
+		VerifyTime(1679044110).
+		New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	decrypted, err := decryptor.Decrypt(ciphertext.Bytes(), Bytes)
 	if err != nil {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
-	assert.Exactly(t, message.GetBinary(), decrypted.GetBinary())
+	assert.Exactly(t, binData, decrypted.Bytes())
 }
