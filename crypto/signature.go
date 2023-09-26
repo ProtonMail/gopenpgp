@@ -153,15 +153,27 @@ func (e SignatureVerificationError) Unwrap() error {
 // Internal functions
 // ------------------
 
-// selectSignature selects the main signature to show in the result
-// Select policy: first successfully verified or last signature with an error
+// selectSignature selects the main signature to show in the result.
+// Selection policy:
+// first successfully verified or
+// last signature with an error and a matching key or
+// last signature with an error if no key matched
 func (vr *VerifyResult) selectSignature() {
+	var keyMatch bool
 	for _, signature := range vr.Signatures {
+		if signature.SignedBy != nil {
+			keyMatch = true
+			vr.selectedSignature = signature
+			vr.signatureError = signature.SignatureError
+			if signature.SignatureError == nil {
+				break
+			}
+		}
+	}
+	if !keyMatch && len(vr.Signatures) > 0 {
+		signature := vr.Signatures[len(vr.Signatures)-1]
 		vr.selectedSignature = signature
 		vr.signatureError = signature.SignatureError
-		if signature.SignatureError == nil {
-			break
-		}
 	}
 }
 
@@ -258,7 +270,7 @@ func createVerifyResult(
 			disableTimeCheck,
 		)
 		var signatureError SignatureVerificationError
-		if len(verifierKey.entities) == 0 || md.SignatureError == pgpErrors.ErrUnknownIssuer {
+		if len(verifierKey.entities) == 0 || signature.SignatureError == pgpErrors.ErrUnknownIssuer {
 			signatureError = newSignatureNoVerifier()
 		} else if signature.SignatureError != nil {
 			signatureError = newSignatureFailed(signature.SignatureError)
