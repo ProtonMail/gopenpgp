@@ -16,11 +16,12 @@ import (
 )
 
 type verifyHandle struct {
-	VerifyKeyRing          *KeyRing
-	VerificationContext    *VerificationContext
-	DisableVerifyTimeCheck bool
-	IsUTF8                 bool
-	clock                  Clock
+	VerifyKeyRing              *KeyRing
+	VerificationContext        *VerificationContext
+	DisableVerifyTimeCheck     bool
+	EnableStrictMessageParsing bool
+	IsUTF8                     bool
+	clock                      Clock
 }
 
 // --- Default verification handle to build from
@@ -148,7 +149,9 @@ func (vh *verifyHandle) verifyDetachedSignature(
 func (vh *verifyHandle) verifyingReader(
 	signatureMessage io.Reader,
 ) (reader *VerifyDataReader, err error) {
-	config := &packet.Config{}
+	config := &packet.Config{
+		CheckPacketSequence: &vh.EnableStrictMessageParsing,
+	}
 	verifyTime := vh.clock().Unix()
 	config.Time = NewConstantClock(verifyTime)
 	if vh.VerificationContext != nil {

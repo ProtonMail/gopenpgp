@@ -36,7 +36,8 @@ func NewPGPSplitReader(pgpMessage Reader, pgpEncryptedSignature Reader) *pgpSpli
 func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage *VerifyDataReader, err error) {
 	var entries openpgp.EntityList
 	config := &packet.Config{
-		CacheSessionKey: dh.RetrieveSessionKey,
+		CacheSessionKey:     dh.RetrieveSessionKey,
+		CheckPacketSequence: &dh.EnableStrictMessageParsing,
 	}
 	if dh.DecryptionKeyRing != nil {
 		entries = dh.DecryptionKeyRing.entities
@@ -229,8 +230,9 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 	} else {
 		// Password or private keys
 		config := &packet.Config{
-			CacheSessionKey: dh.RetrieveSessionKey,
-			Time:            NewConstantClock(verifyTime),
+			CacheSessionKey:     dh.RetrieveSessionKey,
+			Time:                NewConstantClock(verifyTime),
+			CheckPacketSequence: &dh.EnableStrictMessageParsing,
 		}
 		var entries openpgp.EntityList
 		if dh.DecryptionKeyRing != nil {
