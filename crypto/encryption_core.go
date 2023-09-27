@@ -6,6 +6,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
+	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/pkg/errors"
 )
 
@@ -90,11 +91,9 @@ func (eh *encryptionHandle) prepareEncryptAndSign(
 	config = eh.profile.EncryptionConfig()
 	config.Time = eh.clock
 
-	if eh.Compression {
-		compressionConfig := eh.profile.CompressionConfig()
-		config.DefaultCompressionAlgo = compressionConfig.DefaultCompressionAlgo
-		config.CompressionConfig = compressionConfig.CompressionConfig
-	}
+	compressionConfig := eh.selectCompression()
+	config.DefaultCompressionAlgo = compressionConfig.DefaultCompressionAlgo
+	config.CompressionConfig = compressionConfig.CompressionConfig
 
 	if eh.SigningContext != nil {
 		config.SignatureNotations = append(config.SignatureNotations, eh.SigningContext.getNotation())
@@ -375,4 +374,23 @@ func (eh *encryptionHandle) encryptSignDetachedStreamToRecipients(
 		return nil, err
 	}
 	return plaintextWriter, err
+}
+
+func (eh *encryptionHandle) selectCompression() (config *packet.Config) {
+	config = &packet.Config{}
+	switch eh.Compression {
+	case constants.DefaultCompression:
+		config = eh.profile.CompressionConfig()
+	case constants.ZIPCompression:
+		config.DefaultCompressionAlgo = packet.CompressionZIP
+		config.CompressionConfig = &packet.CompressionConfig{
+			Level: 6,
+		}
+	case constants.ZLIBCompression:
+		config.DefaultCompressionAlgo = packet.CompressionZLIB
+		config.CompressionConfig = &packet.CompressionConfig{
+			Level: 6,
+		}
+	}
+	return config
 }

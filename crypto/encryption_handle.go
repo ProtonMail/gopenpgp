@@ -48,8 +48,9 @@ type encryptionHandle struct {
 	// Only considered if Armored is set to true.
 	ArmorHeaders map[string]string
 	// Compression indicates if the plaintext should be compressed before encryption.
-	// If set true, the message is compressed before encryption.
-	Compression bool
+	// constants.NoCompression: none, constants.DefaultCompression: profile default
+	// constants.ZIPCompression: zip constants.ZLIBCompression: zlib
+	Compression int8
 	IsUTF8      bool
 	profile     EncryptionProfile
 	clock       Clock
