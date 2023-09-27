@@ -1,5 +1,7 @@
 package crypto
 
+import "github.com/ProtonMail/gopenpgp/v3/constants"
+
 type EncryptionHandleBuilder struct {
 	handle       *encryptionHandle
 	defaultClock Clock
@@ -103,7 +105,25 @@ func (epb *EncryptionHandleBuilder) Password(password []byte) *EncryptionHandleB
 // might allow to extract the plaintext data without a decryption key.
 // The openpgp crypto refresh recommends to not use compression.
 func (epb *EncryptionHandleBuilder) Compress() *EncryptionHandleBuilder {
-	epb.handle.Compression = true
+	epb.handle.Compression = constants.DefaultCompression
+	return epb
+}
+
+// CompressWith indicates if the plaintext should be compressed before encryption.
+// Compression affects security and opens the door for side-channel attacks, which
+// might allow to extract the plaintext data without a decryption key.
+// The openpgp crypto refresh recommends to not use compression.
+// Allowed config options:
+// constants.NoCompression: none, constants.DefaultCompression: profile default
+// constants.ZIBCompression: zib constants.ZLIBCompression: zlib
+func (epb *EncryptionHandleBuilder) CompressWith(config int8) *EncryptionHandleBuilder {
+	switch config {
+	case constants.NoCompression,
+		constants.DefaultCompression,
+		constants.ZIPCompression,
+		constants.ZLIBCompression:
+		epb.handle.Compression = config
+	}
 	return epb
 }
 
