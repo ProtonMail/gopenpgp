@@ -132,6 +132,7 @@ func (eh *encryptionHandle) encryptStream(
 			SessionKey: sessionKeyBytes,
 			Config:     config,
 			TextSig:    eh.IsUTF8,
+			OutsideSig: eh.ExternalSignature,
 		},
 	)
 	if err != nil {
@@ -163,6 +164,7 @@ func (eh *encryptionHandle) encryptStreamWithPassword(
 			SessionKey: sessionKeyBytes,
 			Config:     config,
 			TextSig:    eh.IsUTF8,
+			OutsideSig: eh.ExternalSignature,
 		},
 	)
 	if err != nil {
@@ -229,9 +231,10 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 
 	if signers != nil {
 		signWriter, err = openpgp.SignWithParams(encryptWriter, signers, &openpgp.SignParams{
-			Hints:   hints,
-			TextSig: eh.IsUTF8,
-			Config:  config,
+			Hints:      hints,
+			TextSig:    eh.IsUTF8,
+			OutsideSig: eh.ExternalSignature,
+			Config:     config,
 		})
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "gopenpgp: unable to sign")
