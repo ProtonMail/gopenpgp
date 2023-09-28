@@ -52,8 +52,11 @@ type encryptionHandle struct {
 	// constants.ZIPCompression: zip constants.ZLIBCompression: zlib
 	Compression int8
 	IsUTF8      bool
-	profile     EncryptionProfile
-	clock       Clock
+	// ExternalSignature allows to include an external signature into
+	// the encrypted message.
+	ExternalSignature []byte
+	profile           EncryptionProfile
+	clock             Clock
 }
 
 // --- Default decryption handle to build from

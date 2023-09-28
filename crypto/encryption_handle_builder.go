@@ -142,6 +142,15 @@ func (epb *EncryptionHandleBuilder) DetachedSignature() *EncryptionHandleBuilder
 	return epb
 }
 
+// IncludeExternalSignature indicates that the provided signature should be included
+// in the produced encrypted message.
+// Special feature: should not be used in normal use-cases,
+// can lead to broken or invalid PGP messages.
+func (epb *EncryptionHandleBuilder) IncludeExternalSignature(signature []byte) *EncryptionHandleBuilder {
+	epb.handle.ExternalSignature = signature
+	return epb
+}
+
 // SignTime sets the internal clock to always return
 // the supplied unix time for signing instead of the system time
 func (ehb *EncryptionHandleBuilder) SignTime(unixTime int64) *EncryptionHandleBuilder {
