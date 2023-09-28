@@ -11,3 +11,9 @@ func NewConstantClock(unixTime int64) Clock {
 		return time.Unix(unixTime, 0)
 	}
 }
+
+func ZeroClock() Clock {
+	return func() time.Time {
+		return time.Time{}
+	}
+}
