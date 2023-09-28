@@ -78,9 +78,14 @@ Loop:
 
 // encryptSessionKey encrypts the session key with the unarmored
 // publicKey and returns a binary public-key encrypted session key packet.
-func encryptSessionKey(recipients *KeyRing, hiddenRecipients *KeyRing, sk *SessionKey, config *packet.Config) ([]byte, error) {
+func encryptSessionKey(
+	recipients *KeyRing,
+	hiddenRecipients *KeyRing,
+	sk *SessionKey,
+	date time.Time,
+	config *packet.Config) ([]byte, error) {
 	outbuf := &bytes.Buffer{}
-	err := encryptSessionKeyToWriter(recipients, hiddenRecipients, sk, outbuf, config)
+	err := encryptSessionKeyToWriter(recipients, hiddenRecipients, sk, outbuf, date, config)
 	if err != nil {
 		return nil, err
 	}
@@ -94,6 +99,7 @@ func encryptSessionKeyToWriter(
 	hiddenRecipients *KeyRing,
 	sk *SessionKey,
 	outputWriter io.Writer,
+	date time.Time,
 	config *packet.Config,
 ) (err error) {
 	var cf packet.CipherFunction
@@ -108,12 +114,11 @@ func encryptSessionKeyToWriter(
 	pubKeys := make([]*packet.PublicKey, 0, len(recipients.getEntities())+len(hiddenRecipients.getEntities()))
 	aeadSupport := config.AEAD() != nil
 	for _, e := range append(recipients.getEntities(), hiddenRecipients.getEntities()...) {
-		now := config.Now()
-		encryptionKey, ok := e.EncryptionKey(now, nil)
+		encryptionKey, ok := e.EncryptionKey(date, nil)
 		if !ok {
 			return errors.New("gopenpgp: encryption key is unavailable for key id " + strconv.FormatUint(e.PrimaryKey.KeyId, 16))
 		}
-		primarySelfSignature, _ := e.PrimarySelfSignature(now)
+		primarySelfSignature, _ := e.PrimarySelfSignature(date)
 		if primarySelfSignature == nil {
 			return errors.Wrap(err, "gopenpgp: entity without a self-signature")
 		}

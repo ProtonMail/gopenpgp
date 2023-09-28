@@ -121,18 +121,24 @@ func (eh *encryptionHandle) encryptStream(
 	if err != nil {
 		return
 	}
+	var encryptionTimeOverride *time.Time
+	if eh.encryptionTimeOverride != nil {
+		encryptionTime := eh.encryptionTimeOverride()
+		encryptionTimeOverride = &encryptionTime
+	}
 	plainMessageWriter, err = openpgp.EncryptWithParams(
 		dataPacketWriter,
 		eh.Recipients.getEntities(),
 		eh.HiddenRecipients.getEntities(),
 		&openpgp.EncryptParams{
-			KeyWriter:  keyPacketWriter,
-			Signers:    signers,
-			Hints:      hints,
-			SessionKey: sessionKeyBytes,
-			Config:     config,
-			TextSig:    eh.IsUTF8,
-			OutsideSig: eh.ExternalSignature,
+			KeyWriter:      keyPacketWriter,
+			Signers:        signers,
+			Hints:          hints,
+			SessionKey:     sessionKeyBytes,
+			Config:         config,
+			TextSig:        eh.IsUTF8,
+			OutsideSig:     eh.ExternalSignature,
+			EncryptionTime: encryptionTimeOverride,
 		},
 	)
 	if err != nil {
@@ -343,6 +349,10 @@ func (eh *encryptionHandle) encryptSignDetachedStreamToRecipients(
 		keyPacketWriter = io.MultiWriter(encryptedDataWriter, encryptedSignatureWriter)
 	}
 
+	encryptionTimeOverride := configInput.Now()
+	if eh.encryptionTimeOverride != nil {
+		encryptionTimeOverride = eh.encryptionTimeOverride()
+	}
 	if eh.Recipients != nil || eh.HiddenRecipients != nil {
 		// Encrypt the session key to the different recipients.
 		err = encryptSessionKeyToWriter(
@@ -350,6 +360,7 @@ func (eh *encryptionHandle) encryptSignDetachedStreamToRecipients(
 			eh.HiddenRecipients,
 			eh.SessionKey,
 			keyPacketWriter,
+			encryptionTimeOverride,
 			configInput,
 		)
 	} else if eh.Password != nil {
