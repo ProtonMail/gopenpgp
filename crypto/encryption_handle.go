@@ -56,7 +56,9 @@ type encryptionHandle struct {
 	// the encrypted message.
 	ExternalSignature []byte
 	profile           EncryptionProfile
-	clock             Clock
+
+	encryptionTimeOverride Clock
+	clock                  Clock
 }
 
 // --- Default decryption handle to build from
@@ -109,7 +111,11 @@ func (eh *encryptionHandle) EncryptSessionKey(sessionKey *SessionKey) ([]byte, e
 	if eh.Password != nil {
 		return encryptSessionKeyWithPassword(sessionKey, eh.Password, config)
 	} else if eh.Recipients != nil || eh.HiddenRecipients != nil {
-		return encryptSessionKey(eh.Recipients, eh.HiddenRecipients, sessionKey, config)
+		encryptionTimeOverride := config.Now()
+		if eh.encryptionTimeOverride != nil {
+			encryptionTimeOverride = eh.encryptionTimeOverride()
+		}
+		return encryptSessionKey(eh.Recipients, eh.HiddenRecipients, sessionKey, encryptionTimeOverride, config)
 	} else {
 		return nil, errors.New("gopenpgp: no password or recipients in encryption handle")
 	}

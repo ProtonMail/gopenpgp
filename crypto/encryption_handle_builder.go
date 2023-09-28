@@ -151,8 +151,20 @@ func (epb *EncryptionHandleBuilder) IncludeExternalSignature(signature []byte) *
 	return epb
 }
 
+// EncryptionTime allows to specify a separate time for selecting encryption keys
+// instead of the internal clock (also used for signing). Note that the internal clock can be changed with SignTime.
+// If the input unixTime is 0 no expiration checks are performed on the encryption keys.
+func (ehb *EncryptionHandleBuilder) EncryptionTime(unixTime int64) *EncryptionHandleBuilder {
+	if unixTime == 0 {
+		ehb.handle.encryptionTimeOverride = ZeroClock()
+	} else {
+		ehb.handle.encryptionTimeOverride = NewConstantClock(unixTime)
+	}
+	return ehb
+}
+
 // SignTime sets the internal clock to always return
-// the supplied unix time for signing instead of the system time
+// the supplied unix time for signing instead of the system time.
 func (ehb *EncryptionHandleBuilder) SignTime(unixTime int64) *EncryptionHandleBuilder {
 	ehb.handle.clock = NewConstantClock(unixTime)
 	return ehb
