@@ -161,7 +161,7 @@ func (key *Key) Unlock(passphrase []byte) (*Key, error) {
 
 	err = unlockedKey.entity.DecryptPrivateKeys(passphrase)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in unlocking key")
+		return nil, errors.New("gopenpgp: error in unlocking key")
 	}
 
 	isUnlocked, err := unlockedKey.IsUnlocked()
