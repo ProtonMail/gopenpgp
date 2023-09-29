@@ -46,7 +46,7 @@ func WithName(name string) *Custom {
 
 func (p *Custom) KeyGenerationConfig(securityLevel int8) *packet.Config {
 	cfg := &packet.Config{
-		DefaultHash:            p.Hash,
+		DefaultHash:            p.HashSign,
 		DefaultCipher:          p.CipherEncryption,
 		AEADConfig:             p.AeadEncryption,
 		DefaultCompressionAlgo: p.CompressionAlgorithm,
