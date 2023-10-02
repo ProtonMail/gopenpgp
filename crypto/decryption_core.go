@@ -35,9 +35,10 @@ func NewPGPSplitReader(pgpMessage Reader, pgpEncryptedSignature Reader) *pgpSpli
 // decryptStream decrypts the stream either with the secret keys or a password
 func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage *VerifyDataReader, err error) {
 	var entries openpgp.EntityList
+	checkPacketSequence := !dh.DisableStrictMessageParsing
 	config := &packet.Config{
 		CacheSessionKey:     dh.RetrieveSessionKey,
-		CheckPacketSequence: &dh.EnableStrictMessageParsing,
+		CheckPacketSequence: &checkPacketSequence,
 	}
 	if dh.DecryptionKeyRing != nil {
 		entries = dh.DecryptionKeyRing.entities
@@ -229,10 +230,11 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 		signature = mdSig.UnverifiedBody
 	} else {
 		// Password or private keys
+		checkPacketSequence := !dh.DisableStrictMessageParsing
 		config := &packet.Config{
 			CacheSessionKey:     dh.RetrieveSessionKey,
 			Time:                NewConstantClock(verifyTime),
-			CheckPacketSequence: &dh.EnableStrictMessageParsing,
+			CheckPacketSequence: &checkPacketSequence,
 		}
 		var entries openpgp.EntityList
 		if dh.DecryptionKeyRing != nil {
@@ -259,8 +261,8 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 		}
 		// Decrypting reader for the encrypted signature
 		prompt := createPasswordPrompt(selectedPassword)
-		checkPacketSequence := false
-		config.CheckPacketSequence = &checkPacketSequence
+		noCheckPacketSequence := false
+		config.CheckPacketSequence = &noCheckPacketSequence
 		mdSig, err := openpgp.ReadMessage(encryptedSignature, entries, prompt, config)
 		if err != nil {
 			return nil, errors.Wrap(err, "gopenpgp: error in reading detached signature message")
