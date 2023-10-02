@@ -33,12 +33,12 @@ type decryptionHandle struct {
 	// DisableIntendedRecipients indicates if the signature verification should not check if
 	// the decryption key matches the intended recipients of the message.
 	// If disabled, the decryption throws no error in a non-matching case.
-	DisableIntendedRecipients  bool
-	DisableVerifyTimeCheck     bool
-	EnableStrictMessageParsing bool
-	RetrieveSessionKey         bool
-	IsUTF8                     bool
-	clock                      Clock
+	DisableIntendedRecipients   bool
+	DisableVerifyTimeCheck      bool
+	DisableStrictMessageParsing bool
+	RetrieveSessionKey          bool
+	IsUTF8                      bool
+	clock                       Clock
 }
 
 // --- Default decryption handle to build from
