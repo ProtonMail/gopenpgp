@@ -59,12 +59,12 @@ func (dpb *VerifyHandleBuilder) DisableVerifyTimeCheck() *VerifyHandleBuilder {
 	return dpb
 }
 
-// EnableStrictMessageParsing enables the check that the inputs conform
+// DisableStrictMessageParsing disables the check that the inputs conform
 // to the OpenPGP message grammar.
-// If enabled, an error is thrown if the input message does not conform to the
+// If set, no error is thrown if the input message does not conform to the
 // OpenPGP specification.
-func (vhb *VerifyHandleBuilder) EnableStrictMessageParsing() *VerifyHandleBuilder {
-	vhb.handle.EnableStrictMessageParsing = true
+func (vhb *VerifyHandleBuilder) DisableStrictMessageParsing() *VerifyHandleBuilder {
+	vhb.handle.DisableStrictMessageParsing = true
 	return vhb
 }
 
