@@ -117,12 +117,12 @@ func (dpb *DecryptionHandleBuilder) DisableVerifyTimeCheck() *DecryptionHandleBu
 	return dpb
 }
 
-// EnableStrictMessageParsing enables the check that decryption inputs conform
+// DisableStrictMessageParsing disables the check that decryption inputs conform
 // to the OpenPGP Message grammar.
-// If enabled, the decryption methods return an error if the message does not conform to the
+// If set, the decryption methods return no error if the message does not conform to the
 // OpenPGP message grammar.
-func (dpb *DecryptionHandleBuilder) EnableStrictMessageParsing() *DecryptionHandleBuilder {
-	dpb.handle.EnableStrictMessageParsing = true
+func (dpb *DecryptionHandleBuilder) DisableStrictMessageParsing() *DecryptionHandleBuilder {
+	dpb.handle.DisableStrictMessageParsing = true
 	return dpb
 }
 
