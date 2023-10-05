@@ -22,13 +22,15 @@ type verifyHandle struct {
 	DisableStrictMessageParsing bool
 	IsUTF8                      bool
 	clock                       Clock
+	profile                     SignProfile
 }
 
 // --- Default verification handle to build from
 
-func defaultVerifyHandle(clock Clock) *verifyHandle {
+func defaultVerifyHandle(profile SignProfile, clock Clock) *verifyHandle {
 	return &verifyHandle{
-		clock: clock,
+		clock:   clock,
+		profile: profile,
 	}
 }
 

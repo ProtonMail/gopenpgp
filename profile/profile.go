@@ -28,8 +28,7 @@ type Custom struct {
 	CompressionAlgorithm     packet.CompressionAlgo
 	CompressionConfiguration *packet.CompressionConfig
 
-	HashSign crypto.Hash
-	V6       bool
+	V6 bool
 }
 
 // WithName returns the custom profile with the given name.
@@ -46,7 +45,7 @@ func WithName(name string) *Custom {
 
 func (p *Custom) KeyGenerationConfig(securityLevel int8) *packet.Config {
 	cfg := &packet.Config{
-		DefaultHash:            p.HashSign,
+		DefaultHash:            p.Hash,
 		DefaultCipher:          p.CipherEncryption,
 		AEADConfig:             p.AeadEncryption,
 		DefaultCompressionAlgo: p.CompressionAlgorithm,
@@ -77,7 +76,7 @@ func (p *Custom) KeyEncryptionConfig() *packet.Config {
 
 func (p *Custom) SignConfig() *packet.Config {
 	return &packet.Config{
-		DefaultHash: p.HashSign,
+		DefaultHash: p.Hash,
 	}
 }
 
