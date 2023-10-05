@@ -39,13 +39,15 @@ type decryptionHandle struct {
 	RetrieveSessionKey          bool
 	IsUTF8                      bool
 	clock                       Clock
+	profile                     EncryptionProfile
 }
 
 // --- Default decryption handle to build from
 
-func defaultDecryptionHandle(clock Clock) *decryptionHandle {
+func defaultDecryptionHandle(profile EncryptionProfile, clock Clock) *decryptionHandle {
 	return &decryptionHandle{
-		clock: clock,
+		clock:   clock,
+		profile: profile,
 	}
 }
 
