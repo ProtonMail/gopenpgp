@@ -3,7 +3,7 @@ module github.com/ProtonMail/gopenpgp/v3
 go 1.15
 
 require (
-	github.com/ProtonMail/go-crypto v0.0.0-20230928134413-429954f2abe3
+	github.com/ProtonMail/go-crypto v0.0.0-20231005081642-d819a7726bdd
 	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
