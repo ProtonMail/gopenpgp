@@ -34,7 +34,19 @@ type KeyEncryptionProfile interface {
 // NewKeyFromReader reads binary or armored data into a Key object.
 func NewKeyFromReader(r io.Reader) (key *Key, err error) {
 	key = &Key{}
-	err = key.readFrom(r)
+	r, armored := armor.IsPGPArmored(r)
+	err = key.readFrom(r, armored)
+	if err != nil {
+		return nil, err
+	}
+
+	return key, nil
+}
+
+// NewKeyFromReaderExplicit reads binary or armored data into a Key object.
+func NewKeyFromReaderExplicit(r io.Reader, encoding int8) (key *Key, err error) {
+	key = &Key{}
+	err = key.readFrom(r, encoding == Armor)
 	if err != nil {
 		return nil, err
 	}
@@ -418,10 +430,10 @@ func getSHA256FingerprintBytes(pk *packet.PublicKey) []byte {
 }
 
 // readFrom reads unarmored and armored keys from r and adds them to the keyring.
-func (key *Key) readFrom(r io.Reader) error {
+func (key *Key) readFrom(r io.Reader, armored bool) error {
 	var err error
 	var entities openpgp.EntityList
-	r, armored := armor.IsPGPArmored(r)
+
 	if armored {
 		entities, err = openpgp.ReadArmoredKeyRing(r)
 	} else {
