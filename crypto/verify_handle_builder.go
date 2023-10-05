@@ -5,12 +5,14 @@ type VerifyHandleBuilder struct {
 	handle       *verifyHandle
 	defaultClock Clock
 	err          error
+	profile      SignProfile
 }
 
-func newVerifyHandleBuilder(clock Clock) *VerifyHandleBuilder {
+func newVerifyHandleBuilder(profile SignProfile, clock Clock) *VerifyHandleBuilder {
 	return &VerifyHandleBuilder{
-		handle:       defaultVerifyHandle(clock),
+		handle:       defaultVerifyHandle(profile, clock),
 		defaultClock: clock,
+		profile:      profile,
 	}
 }
 
@@ -80,7 +82,7 @@ func (vhb *VerifyHandleBuilder) New() (PGPVerify, error) {
 		return nil, vhb.err
 	}
 	handle := vhb.handle
-	vhb.handle = defaultVerifyHandle(vhb.defaultClock)
+	vhb.handle = defaultVerifyHandle(vhb.profile, vhb.defaultClock)
 	return handle, nil
 }
 
