@@ -18,8 +18,15 @@ import (
 	"github.com/ProtonMail/gopenpgp/v3/profile"
 )
 
+type Profile interface {
+	EncryptionProfile
+	KeyEncryptionProfile
+	KeyGenerationProfile
+	SignProfile
+}
+
 type PGPHandle struct {
-	profile     *profile.Custom
+	profile     Profile
 	defaultTime Clock
 }
 
@@ -31,7 +38,16 @@ func PGP() *PGPHandle {
 
 // PGPWithProfile creates a PGPHandle to interact with the API.
 // Uses the provided profile for configuration.
-func PGPWithProfile(profile *profile.Custom) *PGPHandle {
+func PGPWithProfile(profile Profile) *PGPHandle {
+	return &PGPHandle{
+		profile:     profile,
+		defaultTime: time.Now,
+	}
+}
+
+// PGPWithPresetProfile creates a PGPHandle to interact with the API.
+// Uses the provided profile for configuration.
+func PGPWithPresetProfile(profile *profile.Custom) *PGPHandle {
 	return &PGPHandle{
 		profile:     profile,
 		defaultTime: time.Now,
@@ -47,7 +63,7 @@ func (p *PGPHandle) Encryption() *EncryptionHandleBuilder {
 // Decryption returns a builder to create a DecryptionHandle
 // for decrypting pgp messages.
 func (p *PGPHandle) Decryption() *DecryptionHandleBuilder {
-	return newDecryptionHandleBuilder(p.defaultTime)
+	return newDecryptionHandleBuilder(p.profile, p.defaultTime)
 }
 
 // Sign returns a builder to create a SignHandle
@@ -59,7 +75,7 @@ func (p *PGPHandle) Sign() *SignHandleBuilder {
 // Verify returns a builder to create an VerifyHandle
 // for verifying signatures.
 func (p *PGPHandle) Verify() *VerifyHandleBuilder {
-	return newVerifyHandleBuilder(p.defaultTime)
+	return newVerifyHandleBuilder(p.profile, p.defaultTime)
 }
 
 func (p *PGPHandle) KeyGeneration() *KeyGenerationBuilder {

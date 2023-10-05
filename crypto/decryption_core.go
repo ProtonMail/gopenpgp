@@ -36,10 +36,9 @@ func NewPGPSplitReader(pgpMessage Reader, pgpEncryptedSignature Reader) *pgpSpli
 func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage *VerifyDataReader, err error) {
 	var entries openpgp.EntityList
 	checkPacketSequence := !dh.DisableStrictMessageParsing
-	config := &packet.Config{
-		CacheSessionKey:     dh.RetrieveSessionKey,
-		CheckPacketSequence: &checkPacketSequence,
-	}
+	config := dh.profile.EncryptionConfig()
+	config.CacheSessionKey = dh.RetrieveSessionKey
+	config.CheckPacketSequence = &checkPacketSequence
 	if dh.DecryptionKeyRing != nil {
 		entries = dh.DecryptionKeyRing.entities
 		checkIntendedRecipients := !dh.DisableIntendedRecipients
@@ -143,9 +142,8 @@ func (dh *decryptionHandle) decryptStreamWithSessionAndParse(messageReader io.Re
 		return nil, 0, errors.Wrap(err, "gopenpgp: unable to decrypt message with session key")
 	}
 
-	config := &packet.Config{
-		Time: NewConstantClock(dh.clock().Unix()),
-	}
+	config := dh.profile.EncryptionConfig()
+	config.Time = NewConstantClock(dh.clock().Unix())
 
 	if dh.VerificationContext != nil {
 		config.KnownNotations = map[string]bool{constants.SignatureContextName: true}
@@ -231,11 +229,10 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 	} else {
 		// Password or private keys
 		checkPacketSequence := !dh.DisableStrictMessageParsing
-		config := &packet.Config{
-			CacheSessionKey:     dh.RetrieveSessionKey,
-			Time:                NewConstantClock(verifyTime),
-			CheckPacketSequence: &checkPacketSequence,
-		}
+		config := dh.profile.EncryptionConfig()
+		config.CacheSessionKey = dh.RetrieveSessionKey
+		config.Time = NewConstantClock(verifyTime)
+		config.CheckPacketSequence = &checkPacketSequence
 		var entries openpgp.EntityList
 		if dh.DecryptionKeyRing != nil {
 			entries = append(entries, dh.DecryptionKeyRing.entities...)
@@ -271,9 +268,8 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 	}
 
 	checkIntendedRecipients := !dh.DisableIntendedRecipients
-	config := &packet.Config{
-		CheckIntendedRecipients: &checkIntendedRecipients,
-	}
+	config := dh.profile.EncryptionConfig()
+	config.CheckIntendedRecipients = &checkIntendedRecipients
 
 	// Verifying reader that wraps the decryption readers to verify the signature
 	sigVerifyReader, err := verifyingDetachedReader(

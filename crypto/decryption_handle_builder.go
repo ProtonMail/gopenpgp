@@ -6,12 +6,14 @@ type DecryptionHandleBuilder struct {
 	handle       *decryptionHandle
 	defaultClock Clock
 	err          error
+	profile      EncryptionProfile
 }
 
-func newDecryptionHandleBuilder(clock Clock) *DecryptionHandleBuilder {
+func newDecryptionHandleBuilder(profile EncryptionProfile, clock Clock) *DecryptionHandleBuilder {
 	return &DecryptionHandleBuilder{
-		handle:       defaultDecryptionHandle(clock),
+		handle:       defaultDecryptionHandle(profile, clock),
 		defaultClock: clock,
+		profile:      profile,
 	}
 }
 
@@ -153,7 +155,7 @@ func (dpb *DecryptionHandleBuilder) New() (PGPDecryption, error) {
 		return nil, dpb.err
 	}
 	handle := dpb.handle
-	dpb.handle = defaultDecryptionHandle(dpb.defaultClock)
+	dpb.handle = defaultDecryptionHandle(dpb.profile, dpb.defaultClock)
 	return handle, nil
 }
 

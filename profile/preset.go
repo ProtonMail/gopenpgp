@@ -40,7 +40,6 @@ func Default() *Custom {
 		Name:                 "default",
 		SetKeyAlgorithm:      setKeyAlgorithm,
 		Hash:                 crypto.SHA256,
-		HashSign:             crypto.SHA512,
 		CipherEncryption:     packet.CipherAES256,
 		CompressionAlgorithm: packet.CompressionZLIB,
 		CompressionConfiguration: &packet.CompressionConfig{
@@ -65,7 +64,6 @@ func RFC4880() *Custom {
 		Name:                 "rfc4880",
 		SetKeyAlgorithm:      setKeyAlgorithm,
 		Hash:                 crypto.SHA256,
-		HashSign:             crypto.SHA512,
 		CipherEncryption:     packet.CipherAES256,
 		CompressionAlgorithm: packet.CompressionZLIB,
 	}
@@ -80,6 +78,7 @@ func GnuPG() *Custom {
 		switch securityLevel {
 		case constants.HighSecurity:
 			cfg.Curve = packet.Curve448
+			cfg.DefaultHash = crypto.SHA512
 		default:
 			cfg.Curve = packet.Curve25519
 		}
@@ -88,7 +87,6 @@ func GnuPG() *Custom {
 		Name:                 "draft-koch-eddsa-for-openpgp-00",
 		SetKeyAlgorithm:      setKeyAlgorithm,
 		Hash:                 crypto.SHA256,
-		HashSign:             crypto.SHA512,
 		CipherEncryption:     packet.CipherAES256,
 		CompressionAlgorithm: packet.CompressionZLIB,
 	}
@@ -101,6 +99,7 @@ func CryptoRefresh() *Custom {
 		switch securityLevel {
 		case constants.HighSecurity:
 			cfg.Algorithm = packet.PubKeyAlgoEd448
+			cfg.DefaultHash = crypto.SHA512
 		default:
 			cfg.Algorithm = packet.PubKeyAlgoEd25519
 		}
@@ -109,7 +108,6 @@ func CryptoRefresh() *Custom {
 		Name:                 "draft-ietf-openpgp-crypto-refresh",
 		SetKeyAlgorithm:      setKeyAlgorithm,
 		Hash:                 crypto.SHA256,
-		HashSign:             crypto.SHA512,
 		CipherEncryption:     packet.CipherAES256,
 		CompressionAlgorithm: packet.CompressionZLIB,
 		AeadKeyEncryption:    &packet.AEADConfig{},
