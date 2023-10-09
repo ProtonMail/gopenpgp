@@ -18,6 +18,8 @@ const testMessageString = "Hello World!"
 const testMessageUTF8 = "Hell\ro World!\nmore\neven more\n"
 const testContext = "test-context"
 
+var password = []byte("password")
+var decPasswords = [][]byte{[]byte("wrongPassword"), password}
 var testMaterialForProfiles []*testMaterial
 
 func generateTestKeyMaterial(profile *profile.Custom) *testMaterial {
@@ -621,14 +623,13 @@ func TestEncryptDecryptDetached(t *testing.T) {
 func TestPasswordEncryptDecryptDetached(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		t.Run(material.profileName, func(t *testing.T) {
-			password := []byte("password")
 			encHandle, _ := material.pgp.Encryption().
 				Password(password).
 				SigningKeys(material.keyRingTestPrivate).
 				DetachedSignature().
 				New()
 			decHandle, _ := material.pgp.Decryption().
-				Password(password).
+				Passwords(decPasswords).
 				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptSplitDecryptStream(
@@ -674,12 +675,11 @@ func TestSessionKeyEncryptDecryptDetached(t *testing.T) {
 func TestPasswordEncryptDecryptStream(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		t.Run(material.profileName, func(t *testing.T) {
-			password := "password"
 			encHandle, _ := material.pgp.Encryption().
-				Password([]byte(password)).
+				Password(password).
 				New()
 			decHandle, _ := material.pgp.Decryption().
-				Password([]byte(password)).
+				Passwords(decPasswords).
 				New()
 			testEncryptDecryptStream(
 				t,
@@ -697,13 +697,12 @@ func TestPasswordEncryptDecryptStream(t *testing.T) {
 func TestPasswordEncryptSignDecryptStream(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		t.Run(material.profileName, func(t *testing.T) {
-			password := "password"
 			encHandle, _ := material.pgp.Encryption().
-				Password([]byte(password)).
+				Password(password).
 				SigningKeys(material.keyRingTestPrivate).
 				New()
 			decHandle, _ := material.pgp.Decryption().
-				Password([]byte(password)).
+				Passwords(decPasswords).
 				VerificationKeys(material.keyRingTestPublic).
 				New()
 			testEncryptDecryptStream(
@@ -722,9 +721,8 @@ func TestPasswordEncryptSignDecryptStream(t *testing.T) {
 func TestPasswordEncryptSignDecryptStreamWithCachedSession(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		t.Run(material.profileName, func(t *testing.T) {
-			password := "password"
 			encHandle, _ := material.pgp.Encryption().
-				Password([]byte(password)).
+				Password(password).
 				SigningKeys(material.keyRingTestPrivate).
 				SessionKey(material.testSessionKey).
 				New()
@@ -823,7 +821,6 @@ func TestEncryptDecryptSessionKey(t *testing.T) {
 func TestEncryptDecryptKey(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		t.Run(material.profileName, func(t *testing.T) {
-			password := []byte("password")
 			key := material.keyRingTestPrivate.GetKeys()[0]
 			keyLocked, err := material.pgp.LockKey(key, password)
 			if err != nil {
