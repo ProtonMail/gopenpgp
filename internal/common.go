@@ -3,6 +3,8 @@ package internal
 
 import (
 	"bytes"
+	"errors"
+	"io"
 	"strings"
 
 	"github.com/ProtonMail/gopenpgp/v3/constants"
@@ -49,4 +51,45 @@ func init() {
 			"Comment": constants.ArmorHeaderComment,
 		}
 	}
+}
+
+// ResetReader is a reader that can be reset by buffering data internally.
+type ResetReader struct {
+	Reader     io.Reader
+	buffer     *bytes.Buffer
+	bufferData bool
+}
+
+// NewResetReader creates a new ResetReader with the default state.
+func NewResetReader(reader io.Reader) *ResetReader {
+	return &ResetReader{
+		Reader:     reader,
+		buffer:     bytes.NewBuffer(nil),
+		bufferData: true,
+	}
+}
+
+func (rr *ResetReader) Read(b []byte) (n int, err error) {
+	n, err = rr.Reader.Read(b)
+	if rr.bufferData {
+		rr.buffer.Write(b[:n])
+	}
+	return
+}
+
+// DisableBuffering disables the internal buffering.
+// After the disable, a Reset is not allowed anymore.
+func (rr *ResetReader) DisableBuffering() {
+	rr.bufferData = false
+}
+
+// Reset creates a reader that reads again from the beginning and
+// resets the internal state.
+func (rr *ResetReader) Reset() (io.Reader, error) {
+	if !rr.bufferData {
+		return nil, errors.New("reset not possible if buffering is disabled")
+	}
+	rr.Reader = io.MultiReader(rr.buffer, rr.Reader)
+	rr.buffer = bytes.NewBuffer(nil)
+	return rr.Reader, nil
 }

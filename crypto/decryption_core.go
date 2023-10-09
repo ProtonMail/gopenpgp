@@ -64,12 +64,18 @@ func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage
 	} else {
 		// Password based decryption
 		var foundPassword bool = false
+		resetReader := internal.NewResetReader(encryptedMessage)
 		for _, password := range dh.Passwords {
 			prompt := createPasswordPrompt(password)
-			messageDetails, err = openpgp.ReadMessage(encryptedMessage, entries, prompt, config)
+			messageDetails, err = openpgp.ReadMessage(resetReader, entries, prompt, config)
 			if err == nil {
 				foundPassword = true
+				resetReader.DisableBuffering()
 				break
+			}
+			if _, err := resetReader.Reset(); err != nil {
+				// Should not happen.
+				return nil, errors.New("gopenpgp: buffer reset failed")
 			}
 		}
 		if !foundPassword {
@@ -240,11 +246,18 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 		// Decrypting reader for the encrypted data
 		var selectedPassword []byte
 		if len(dh.Passwords) > 0 {
+			resetReader := internal.NewResetReader(encryptedData)
 			for _, passwordCandidate := range dh.Passwords {
 				prompt := createPasswordPrompt(passwordCandidate)
-				mdData, err = openpgp.ReadMessage(encryptedData, entries, prompt, config)
+				mdData, err = openpgp.ReadMessage(resetReader, entries, prompt, config)
 				if err == nil { // No error occurred
 					selectedPassword = passwordCandidate
+					resetReader.DisableBuffering()
+					break
+				}
+				if _, err := resetReader.Reset(); err != nil {
+					// Should not happen
+					return nil, errors.New("gopenpgp: buffer reset failed")
 				}
 			}
 			if selectedPassword == nil {
