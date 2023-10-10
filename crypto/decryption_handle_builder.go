@@ -136,6 +136,13 @@ func (dpb *DecryptionHandleBuilder) DisableIntendedRecipients() *DecryptionHandl
 	return dpb
 }
 
+// DisableAutomaticTextSanitize indicates that automatic text sanitization should be disabled.
+// If not disabled, the output will be sanitized if a text signature is present.
+func (dpb *DecryptionHandleBuilder) DisableAutomaticTextSanitize() *DecryptionHandleBuilder {
+	dpb.handle.DisableAutomaticTextSanitize = true
+	return dpb
+}
+
 // RetrieveSessionKey sets the flag to indicate if the session key used for decryption
 // should be returned to the caller of the decryption function.
 func (dpb *DecryptionHandleBuilder) RetrieveSessionKey() *DecryptionHandleBuilder {

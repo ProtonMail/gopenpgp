@@ -16,13 +16,14 @@ import (
 )
 
 type verifyHandle struct {
-	VerifyKeyRing               *KeyRing
-	VerificationContext         *VerificationContext
-	DisableVerifyTimeCheck      bool
-	DisableStrictMessageParsing bool
-	IsUTF8                      bool
-	clock                       Clock
-	profile                     SignProfile
+	VerifyKeyRing                *KeyRing
+	VerificationContext          *VerificationContext
+	DisableVerifyTimeCheck       bool
+	DisableStrictMessageParsing  bool
+	DisableAutomaticTextSanitize bool
+	IsUTF8                       bool
+	clock                        Clock
+	profile                      SignProfile
 }
 
 // --- Default verification handle to build from
@@ -190,6 +191,7 @@ func (vh *verifyHandle) verifyingDetachedReader(
 		vh.VerifyKeyRing,
 		vh.VerificationContext,
 		vh.DisableVerifyTimeCheck,
+		vh.DisableAutomaticTextSanitize,
 		nil,
 		vh.clock,
 	)
@@ -230,6 +232,7 @@ func verifyingDetachedReader(
 	verifyKeyRing *KeyRing,
 	verificationContext *VerificationContext,
 	disableVerifyTimeCheck bool,
+	disableAutomaticTextSanitize bool,
 	config *packet.Config,
 	clock Clock,
 ) (*VerifyDataReader, error) {
@@ -252,6 +255,7 @@ func verifyingDetachedReader(
 	}
 	internalReader := md.UnverifiedBody
 	if len(md.SignatureCandidates) > 0 &&
+		!disableAutomaticTextSanitize &&
 		md.SignatureCandidates[0].SigType == packet.SigTypeText {
 		internalReader = internal.NewSanitizeReader(internalReader)
 	}
