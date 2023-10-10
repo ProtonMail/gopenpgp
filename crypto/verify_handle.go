@@ -153,9 +153,8 @@ func (vh *verifyHandle) verifyingReader(
 	signatureMessage io.Reader,
 ) (reader *VerifyDataReader, err error) {
 	checkPacketSequence := !vh.DisableStrictMessageParsing
-	config := &packet.Config{
-		CheckPacketSequence: &checkPacketSequence,
-	}
+	config := vh.profile.SignConfig()
+	config.CheckPacketSequence = &checkPacketSequence
 	verifyTime := vh.clock().Unix()
 	config.Time = NewConstantClock(verifyTime)
 	if vh.VerificationContext != nil {
@@ -192,7 +191,7 @@ func (vh *verifyHandle) verifyingDetachedReader(
 		vh.VerificationContext,
 		vh.DisableVerifyTimeCheck,
 		vh.DisableAutomaticTextSanitize,
-		nil,
+		vh.profile.SignConfig(),
 		vh.clock,
 	)
 }
