@@ -49,6 +49,8 @@ func (vhb *VerifyHandleBuilder) VerifyTime(unixTime int64) *VerifyHandleBuilder 
 
 // Utf8 indicates if the output plaintext is Utf8 and
 // should be sanitized from canonicalised line endings.
+// If enabled for detached verification, it canonicalises the input
+// before verification independent of the signature type.
 func (vhb *VerifyHandleBuilder) Utf8() *VerifyHandleBuilder {
 	vhb.handle.IsUTF8 = true
 	return vhb
@@ -67,6 +69,13 @@ func (dpb *VerifyHandleBuilder) DisableVerifyTimeCheck() *VerifyHandleBuilder {
 // OpenPGP specification.
 func (vhb *VerifyHandleBuilder) DisableStrictMessageParsing() *VerifyHandleBuilder {
 	vhb.handle.DisableStrictMessageParsing = true
+	return vhb
+}
+
+// DisableAutomaticTextSanitize indicates that automatic text sanitization should be disabled.
+// If not disabled, the output will be sanitized if a text signature is present.
+func (vhb *VerifyHandleBuilder) DisableAutomaticTextSanitize() *VerifyHandleBuilder {
+	vhb.handle.DisableAutomaticTextSanitize = true
 	return vhb
 }
 
