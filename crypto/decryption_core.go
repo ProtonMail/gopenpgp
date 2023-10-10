@@ -88,6 +88,7 @@ func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage
 	// Add utf8 sanitizer if signature has type packet.SigTypeText
 	internalReader := messageDetails.UnverifiedBody
 	if messageDetails.IsSigned &&
+		!dh.DisableAutomaticTextSanitize &&
 		len(messageDetails.SignatureCandidates) > 0 &&
 		messageDetails.SignatureCandidates[len(messageDetails.SignatureCandidates)-1].SigType == packet.SigTypeText {
 		// TODO: This currently assumes that only one type of signature
@@ -114,6 +115,7 @@ func (dh *decryptionHandle) decryptStreamWithSession(dataPacketReader Reader) (p
 	// Add utf8 sanitizer if signature has type packet.SigTypeText
 	internalReader := messageDetails.UnverifiedBody
 	if messageDetails.IsSigned &&
+		!dh.DisableAutomaticTextSanitize &&
 		len(messageDetails.SignatureCandidates) > 0 &&
 		messageDetails.SignatureCandidates[len(messageDetails.SignatureCandidates)-1].SigType == packet.SigTypeText {
 		// TODO: This currently assumes that only one type of signature
@@ -291,6 +293,7 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 		dh.VerifyKeyRing,
 		dh.VerificationContext,
 		dh.DisableVerifyTimeCheck,
+		dh.DisableAutomaticTextSanitize,
 		config,
 		NewConstantClock(verifyTime),
 	)
