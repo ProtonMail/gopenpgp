@@ -408,3 +408,39 @@ func TestAEADDataPacketDecryption(t *testing.T) {
 
 	assert.Exactly(t, "hello world\n", decrypted.GetString())
 }
+
+func TestSEDDecryption(t *testing.T) {
+	pgpMessageData, err := ioutil.ReadFile("testdata/sed_message")
+	if err != nil {
+		t.Fatal("Expected no error when reading message data, got:", err)
+	}
+	pgpMessage, err := NewPGPMessageFromArmored(string(pgpMessageData))
+	if err != nil {
+		t.Fatal("Expected no error when creating message, got:", err)
+	}
+
+	split, err := pgpMessage.SplitMessage()
+	if err != nil {
+		t.Fatal("Expected no error when splitting, got:", err)
+	}
+
+	privateKey, err := NewKeyFromArmored(readTestFile("sed_key", false))
+	if err != nil {
+		t.Fatal("Expected no error when unarmoring key, got:", err)
+	}
+
+	kR, err := NewKeyRing(privateKey)
+	if err != nil {
+		t.Fatal("Expected no error when creating the keyring, got:", err)
+	}
+	defer kR.ClearPrivateParams()
+	sessionKey, err := kR.DecryptSessionKey(split.GetBinaryKeyPacket())
+	if err != nil {
+		t.Fatal("Expected no error when decrypting session key, got:", err)
+	}
+
+	_, err = sessionKey.Decrypt(split.GetBinaryDataPacket())
+	if err == nil {
+		t.Fatal("sed packets without authentication should not be allowed", err)
+	}
+}

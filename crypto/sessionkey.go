@@ -409,6 +409,11 @@ func decryptStreamWithSessionKey(
 	// Decrypt data packet
 	switch p := p.(type) {
 	case *packet.SymmetricallyEncrypted, *packet.AEADEncrypted:
+		if symPacket, ok := p.(*packet.SymmetricallyEncrypted); ok {
+			if !symPacket.IntegrityProtected {
+				return nil, errors.New("gopenpgp: message is not authenticated")
+			}
+		}
 		dc, err := sk.GetCipherFunc()
 		if err != nil {
 			return nil, errors.Wrap(err, "gopenpgp: unable to decrypt with session key")
