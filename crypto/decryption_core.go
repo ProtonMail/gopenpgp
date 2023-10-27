@@ -194,6 +194,11 @@ Loop:
 			// Ignore potential key packets
 			continue
 		case *packet.SymmetricallyEncrypted, *packet.AEADEncrypted:
+			if symPacket, ok := p.(*packet.SymmetricallyEncrypted); ok {
+				if !symPacket.IntegrityProtected {
+					return nil, errors.New("gopenpgp: message is not authenticated")
+				}
+			}
 			var dc packet.CipherFunction
 			if !sessionKey.v6 {
 				dc, err = sessionKey.GetCipherFunc()
