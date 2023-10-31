@@ -1,31 +1,91 @@
 package internal
 
 import (
+	"bufio"
 	"bytes"
 	"io"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
-var escape = []byte{0xEF, 0xBF, 0xBD}
-
 func SanitizeString(input string) string {
-	return strings.ToValidUTF8(input, "\ufffd")
+	return strings.ToValidUTF8(input, string(unicode.ReplacementChar))
 }
 
 func NewSanitizeReader(r io.Reader) io.Reader {
-	return &sanitizeReader{r, new(bytes.Buffer), false, false}
+	sanitizer := &sanitizeReader{r, new(bytes.Buffer), false}
+	return newSanitizeUtf8Reader(sanitizer)
+}
+
+type sanitizeUtf8Reader struct {
+	r               *bufio.Reader
+	reminder        []byte
+	internalBuffer  [4]byte
+	lastRuneInvalid bool
+}
+
+func newSanitizeUtf8Reader(reader io.Reader) *sanitizeUtf8Reader {
+	return &sanitizeUtf8Reader{
+		r: bufio.NewReader(reader),
+	}
+}
+
+func (sr *sanitizeUtf8Reader) Read(buf []byte) (int, error) {
+	read := 0
+	// Check if there is a reminder from the pervious read
+	if sr.reminder != nil {
+		toCopy := len(sr.reminder)
+		if toCopy > len(buf) {
+			toCopy = len(buf)
+		}
+		copy(buf[read:], sr.reminder[:toCopy])
+		read += toCopy
+		if toCopy < len(sr.reminder) {
+			sr.reminder = sr.reminder[toCopy:]
+		} else {
+			sr.reminder = nil
+		}
+	}
+	// Decode utf-8 runes from the internal reader and copy
+	for read < len(buf) {
+		runeItem, size, err := sr.r.ReadRune()
+		if err != nil {
+			return read, err
+		}
+		if runeItem == unicode.ReplacementChar {
+			// If last rune written is a replacement skip
+			if sr.lastRuneInvalid {
+				continue
+			}
+			size = 3
+			sr.lastRuneInvalid = true
+		} else {
+			sr.lastRuneInvalid = false
+		}
+		if read+size <= len(buf) {
+			utf8.EncodeRune(buf[read:], runeItem)
+			read += size
+		} else {
+			// Not enough space to write the entire rune
+			size = utf8.EncodeRune(sr.internalBuffer[:], runeItem)
+			copied := copy(buf[read:], sr.internalBuffer[:len(buf)-read])
+			sr.reminder = sr.internalBuffer[copied:size]
+			read += copied
+			break
+		}
+	}
+	return read, nil
 }
 
 type sanitizeReader struct {
-	r            io.Reader
-	buffer       *bytes.Buffer
-	pin, invalid bool
+	r      io.Reader
+	buffer *bytes.Buffer
+	pin    bool
 }
 
 func (sr *sanitizeReader) resetState() {
 	sr.pin = false
-	sr.invalid = false
 }
 
 func (sr *sanitizeReader) Read(buf []byte) (int, error) {
@@ -58,33 +118,11 @@ func (sr *sanitizeReader) Read(buf []byte) (int, error) {
 			// check for \n on next char
 			i++
 			sr.pin = true
-			sr.invalid = false
 			continue
 		}
-
-		if c < utf8.RuneSelf {
-			// valid utf-8 char
-			i++
-			sr.resetState()
-			sr.buffer.WriteByte(c)
-			continue
-		}
-
-		_, wid := utf8.DecodeRune(buf[i:])
-		if wid == 1 {
-			// invalid utf-8 char
-			i++
-			if !sr.invalid {
-				sr.invalid = true
-				sr.pin = false
-				sr.buffer.Write(escape)
-			}
-			continue
-		}
-		// valid utf-8 rune
 		sr.resetState()
-		sr.buffer.Write(buf[i : i+wid])
-		i += wid
+		sr.buffer.Write(buf[i : i+1])
+		i++
 	}
 	if err == io.EOF && sr.pin {
 		sr.resetState()
