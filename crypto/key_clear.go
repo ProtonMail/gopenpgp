@@ -146,7 +146,7 @@ func clearX25519PrivateKey(priv *x25519.PrivateKey) error {
 }
 
 func clearEd25519PrivateKey(priv *ed25519.PrivateKey) error {
-	clearMem(priv.Key[:ed25519.PointSize])
+	clearMem(priv.Key[:ed25519.SeedSize])
 
 	return nil
 }
@@ -158,7 +158,7 @@ func clearX448PrivateKey(priv *x448.PrivateKey) error {
 }
 
 func clearEd448PrivateKey(priv *ed448.PrivateKey) error {
-	clearMem(priv.Key[:ed448.PointSize])
+	clearMem(priv.Key[:ed448.SeedSize])
 
 	return nil
 }
