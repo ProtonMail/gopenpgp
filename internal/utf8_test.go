@@ -18,7 +18,7 @@ func (c *noOpCloser) Write(p []byte) (n int, err error) {
 	return c.buff.Write(p)
 }
 
-func (cw *noOpCloser) Close() (err error) {
+func (c *noOpCloser) Close() (err error) {
 	return
 }
 

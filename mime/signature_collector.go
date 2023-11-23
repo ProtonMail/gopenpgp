@@ -65,10 +65,10 @@ func (sc *signatureCollector) Accept(
 
 		for i, p := range multiparts {
 			if err = sc.target.Accept(p, multipartHeaders[i], hasPlainChild, true, true); err != nil {
-				return
+				return err
 			}
 		}
-		return
+		return nil
 	}
 
 	// actual multipart/signed format

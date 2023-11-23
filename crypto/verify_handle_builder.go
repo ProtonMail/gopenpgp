@@ -58,9 +58,9 @@ func (vhb *VerifyHandleBuilder) Utf8() *VerifyHandleBuilder {
 
 // DisableVerifyTimeCheck disables the check for comparing the signature expiration time
 // against the verification time.
-func (dpb *VerifyHandleBuilder) DisableVerifyTimeCheck() *VerifyHandleBuilder {
-	dpb.handle.DisableVerifyTimeCheck = true
-	return dpb
+func (vhb *VerifyHandleBuilder) DisableVerifyTimeCheck() *VerifyHandleBuilder {
+	vhb.handle.DisableVerifyTimeCheck = true
+	return vhb
 }
 
 // DisableStrictMessageParsing disables the check that the inputs conform

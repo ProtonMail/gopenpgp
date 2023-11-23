@@ -72,7 +72,7 @@ func ArmorWithTypeAndCustomHeaders(input []byte, armorType, version, comment str
 	return buffer.String(), err
 }
 
-// ArmorWithTypeAndCustomHeaders armors input with the given armorType and
+// ArmorWithTypeAndCustomHeadersBytes armors input with the given armorType and
 // headers.
 func ArmorWithTypeAndCustomHeadersBytes(input []byte, armorType, version, comment string) ([]byte, error) {
 	headers := make(map[string]string)

@@ -209,6 +209,10 @@ func ExamplePGPHandle_Encryption_stream() {
 	messageReader := strings.NewReader("my message")
 	var ciphertextWriter bytes.Buffer
 	ptWriter, err := encHandle.EncryptingWriter(&ciphertextWriter, Armor)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	if _, err = io.Copy(ptWriter, messageReader); err != nil {
 		return
 	}
@@ -331,6 +335,10 @@ func ExamplePGPHandle_Decryption_asymmetric() {
 		return
 	}
 	decrypted, err := decHandle.Decrypt([]byte(exampleEncryptedMessagePub), Armor)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	fmt.Println(decrypted.String())
 	// Output: my message
 }
@@ -416,6 +424,10 @@ func ExamplePGPHandle_Decryption_split() {
 		return
 	}
 	decrypted, err := decHandle.Decrypt(dataPacket, Bytes)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	if sigErr := decrypted.SignatureError(); sigErr != nil {
 		fmt.Println(sigErr)
 		return

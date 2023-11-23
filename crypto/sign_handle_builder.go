@@ -88,6 +88,6 @@ func (shb *SignHandleBuilder) New() (PGPSign, error) {
 	return handle, nil
 }
 
-func (dpb *SignHandleBuilder) Error() error {
-	return dpb.err
+func (shb *SignHandleBuilder) Error() error {
+	return shb.err
 }
