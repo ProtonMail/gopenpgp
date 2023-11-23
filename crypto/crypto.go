@@ -78,6 +78,7 @@ func (p *PGPHandle) Verify() *VerifyHandleBuilder {
 	return newVerifyHandleBuilder(p.profile, p.defaultTime)
 }
 
+// KeyGeneration returns a builder to create a KeyGeneration handle.
 func (p *PGPHandle) KeyGeneration() *KeyGenerationBuilder {
 	return newKeyGenerationBuilder(p.profile, p.defaultTime)
 }

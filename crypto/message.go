@@ -291,6 +291,8 @@ func IsPGPMessage(data string) bool {
 	return re.MatchString(data)
 }
 
+// SignatureKeyIDs returns the key identifiers of the keys that were used
+// to create the signatures.
 func SignatureKeyIDs(signature []byte) ([]uint64, bool) {
 	packets := packet.NewReader(bytes.NewReader(signature))
 	var err error
@@ -326,6 +328,8 @@ Loop:
 	return ids, false
 }
 
+// SignatureKeyIDs returns the key identifiers of the keys that were used
+// to create the signatures in hexadecimal form.
 func SignatureHexKeyIDs(signature []byte) ([]string, bool) {
 	return hexKeyIDs(SignatureKeyIDs(signature))
 }

@@ -18,10 +18,11 @@ const (
 	SIGNATURE_BAD_CONTEXT int = 4
 )
 
-// SecurityLevel constants
-// The type is int8 for compatibility with
-// gomobile.
+// SecurityLevel constants.
+// The type is int8 for compatibility with gomobile.
 const (
+	// StandardSecurity is the default security level.
 	StandardSecurity int8 = 0
-	HighSecurity     int8 = 1
+	// HighSecurity is the high security level.
+	HighSecurity int8 = 1
 )
