@@ -6,7 +6,7 @@ type PGPVerify interface {
 	// Once all data is read from the returned verify reader, the signature can be verified
 	// with (VerifyDataReader).VerifySignature().
 	// Note that an error is only returned if it is not a signature error.
-	// The encoding indicates if the input input signature message should be unarmored or not,
+	// The encoding indicates if the input signature message should be unarmored or not,
 	// i.e., Bytes/Armor/Auto where Auto tries to detect it automatically.
 	// If detachedData is nil, signatureMessage is treated as an inline signature message.
 	// Thus, it is expected that signatureMessage contains the data to be verified.

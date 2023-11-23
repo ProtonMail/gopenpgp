@@ -17,16 +17,12 @@ const (
 )
 
 func armorOutput(e int8) bool {
-	switch int8(e) {
-	case Armor:
-		return true
-	}
-	return false
+	return e == Armor
 }
 
 func unarmorInput(e int8, input io.Reader) (reader Reader, unarmor bool) {
 	reader = input
-	switch int8(e) {
+	switch e {
 	case Armor:
 		unarmor = true
 	case Auto:
