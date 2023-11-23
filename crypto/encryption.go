@@ -23,7 +23,7 @@ type PGPEncryption interface {
 	// EncryptSessionKey encrypts a session key with the encryption handle.
 	// To encrypt a session key, the handle must contain either recipients or a password.
 	EncryptSessionKey(sessionKey *SessionKey) ([]byte, error)
-	// ClearPrivateParams clears all private key material contained in EncryptionHandle from memory,
+	// ClearPrivateParams clears all private key material contained in EncryptionHandle from memory.
 	ClearPrivateParams()
 }
 
@@ -36,8 +36,12 @@ type WriteCloser interface {
 	Close() (err error)
 }
 
+// PGPSplitWriter is an interface to write different parts of a PGP message
+// (i.e., packets) to different streams.
 type PGPSplitWriter interface {
 	Writer
+	// Keys returns the Writer to which the key packets are written to.
 	Keys() Writer
+	// Signature returns the Writer to which an encrypted detached signature is written to.
 	Signature() Writer
 }

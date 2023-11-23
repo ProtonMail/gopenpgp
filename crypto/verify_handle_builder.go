@@ -22,6 +22,7 @@ func (vhb *VerifyHandleBuilder) VerificationKeys(keys *KeyRing) *VerifyHandleBui
 	return vhb
 }
 
+// VerificationKey sets the public key for verifying the signatures.
 func (vhb *VerifyHandleBuilder) VerificationKey(key *Key) *VerifyHandleBuilder {
 	var err error
 	if vhb.handle.VerifyKeyRing == nil {
@@ -95,6 +96,7 @@ func (vhb *VerifyHandleBuilder) New() (PGPVerify, error) {
 	return handle, nil
 }
 
+// Error returns any errors that occurred within the builder.
 func (vhb *VerifyHandleBuilder) Error() error {
 	return vhb.err
 }

@@ -1,5 +1,7 @@
 package crypto
 
+// KeyGenerationBuilder allows to configure a key generation handle
+// to generate pgp keys.
 type KeyGenerationBuilder struct {
 	handle       *keyGenerationHandle
 	defaultClock Clock

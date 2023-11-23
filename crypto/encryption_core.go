@@ -59,6 +59,8 @@ func NewPGPSplitWriterDetachedSignature(encMessage Writer, encSigMessage Writer)
 	return NewPGPSplitWriter(nil, encMessage, encSigMessage)
 }
 
+// NewPGPSplitWriterFromWriter creates a type that implements the PGPSplitWriter interface
+// for encrypting a plaintext where the output PGP messages to the provided Writer.
 func NewPGPSplitWriterFromWriter(writer Writer) PGPSplitWriter {
 	return NewPGPSplitWriter(writer, writer, nil)
 }

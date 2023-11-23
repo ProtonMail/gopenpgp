@@ -1,5 +1,7 @@
 package crypto
 
+// SignHandleBuilder allows to configure a sign handle
+// to sign data with OpenPGP.
 type SignHandleBuilder struct {
 	handle       *signatureHandle
 	defaultClock Clock
@@ -13,6 +15,7 @@ func newSignHandleBuilder(profile SignProfile, clock Clock) *SignHandleBuilder {
 	}
 }
 
+// SigningKey sets the signing key that are used to create signature of the message.
 func (shb *SignHandleBuilder) SigningKey(key *Key) *SignHandleBuilder {
 	var err error
 	if shb.handle.SignKeyRing == nil {
@@ -88,6 +91,7 @@ func (shb *SignHandleBuilder) New() (PGPSign, error) {
 	return handle, nil
 }
 
+// Error returns any errors that occurred within the builder.
 func (shb *SignHandleBuilder) Error() error {
 	return shb.err
 }
