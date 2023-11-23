@@ -28,10 +28,13 @@ func defaultKeyGenerationHandle(profile KeyGenerationProfile, clock Clock) *keyG
 
 // --- Implements PGPKeyGeneration interface
 
+// GenerateKey generates a pgp key with the standard security level.
 func (kgh *keyGenerationHandle) GenerateKey() (key *Key, err error) {
 	return kgh.GenerateKeyWithSecurity(constants.StandardSecurity)
 }
 
+// GenerateKeyWithSecurity generates a pgp key with the given security level.
+// The argument security allows to set the security level, either standard or high.
 func (kgh *keyGenerationHandle) GenerateKeyWithSecurity(security int8) (key *Key, err error) {
 	config := kgh.profile.KeyGenerationConfig(security)
 	config.Time = NewConstantClock(kgh.clock().Unix())

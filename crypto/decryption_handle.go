@@ -54,10 +54,14 @@ func defaultDecryptionHandle(profile EncryptionProfile, clock Clock) *decryption
 
 // --- Implements PGPDecryption interface
 
-// DecryptingReader returns a wrapper around underlying encryptedMessage Reader, such that any read-operation
-// via the wrapper results in a decrypted read of the message.
-// The returned reader PlainMessageReader offers a method to verify signatures after the message has been read.
-// Decryption parameters are configured via the DecryptionParams struct.
+// DecryptingReader returns a wrapper around underlying encryptedMessage Reader,
+// such that any read-operation via the wrapper results in a read from the decrypted pgp message.
+// The returned VerifyDataReader has to be fully read before any potential signatures can be verified.
+// Either read the message fully end then call VerifySignature or use the helper method ReadAllAndVerifySignature.
+// The encoding indicates if the input message should be unarmored or not, i.e., Bytes/Armor/Auto
+// where Auto tries to detect automatically.
+// If encryptedMessage is of type PGPSplitReader, the method tries to verify an encrypted detached signature
+// that is read from the separate reader.
 func (dh *decryptionHandle) DecryptingReader(encryptedMessage Reader, encoding int8) (plainMessageReader *VerifyDataReader, err error) {
 	err = dh.validate()
 	if err != nil {
@@ -70,9 +74,12 @@ func (dh *decryptionHandle) DecryptingReader(encryptedMessage Reader, encoding i
 	return dh.decryptingReader(encryptedMessage, nil, encoding)
 }
 
-// Decrypt decrypts a pgp message as byte slice, and outputs the plaintext,
-// but does not return an error if signature verification fails.
-// Instead, the output struct contains a potential signature error.
+// Decrypt decrypts an encrypted pgp message.
+// Returns a VerifiedDataResult, which can be queried for potential signature verification errors,
+// and the plaintext data. Note that on a signature error, the method does not return an error.
+// Instead, the signature error is stored within the VerifiedDataResult.
+// The encoding indicates if the input message should be unarmored or not, i.e., Bytes/Armor/Auto
+// where Auto tries to detect automatically.
 func (dh *decryptionHandle) Decrypt(pgpMessage []byte, encoding int8) (*VerifiedDataResult, error) {
 	messageReader := bytes.NewReader(pgpMessage)
 	plainMessageReader, err := dh.DecryptingReader(messageReader, encoding)
@@ -82,6 +89,11 @@ func (dh *decryptionHandle) Decrypt(pgpMessage []byte, encoding int8) (*Verified
 	return plainMessageReader.ReadAllAndVerifySignature()
 }
 
+// DecryptDetached provides the same functionality as Decrypt but allows
+// to supply an encrypted detached signature that should be decrypted and verified
+// against the data in the pgp message. If encDetachedSignature is nil, the behavior is similar
+// to Decrypt. The encoding indicates if the input message should be unarmored or not,
+// i.e., Bytes/Armor/Auto where Auto tries to detect automatically.
 func (dh *decryptionHandle) DecryptDetached(pgpMessage []byte, encryptedDetachedSig []byte, encoding int8) (*VerifiedDataResult, error) {
 	reader := &pgpSplitReader{
 		encMessage: bytes.NewReader(pgpMessage),
@@ -96,6 +108,8 @@ func (dh *decryptionHandle) DecryptDetached(pgpMessage []byte, encryptedDetached
 	return verifier.ReadAllAndVerifySignature()
 }
 
+// DecryptSessionKey decrypts an encrypted session key.
+// To decrypted a session key, the decryption handle must contain either a decryption key or a password.
 func (dh *decryptionHandle) DecryptSessionKey(keyPackets []byte) (sk *SessionKey, err error) {
 	if len(dh.Passwords) > 0 {
 		for _, passwordCandidate := range dh.Passwords {
@@ -112,6 +126,7 @@ func (dh *decryptionHandle) DecryptSessionKey(keyPackets []byte) (sk *SessionKey
 	}
 }
 
+// ClearPrivateParams clears all private key material contained in EncryptionHandle from memory.
 func (dh *decryptionHandle) ClearPrivateParams() {
 	if dh.DecryptionKeyRing != nil {
 		dh.DecryptionKeyRing.ClearPrivateParams()

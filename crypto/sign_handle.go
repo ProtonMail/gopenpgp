@@ -37,6 +37,11 @@ func defaultSignatureHandle(profile SignProfile, clock Clock) *signatureHandle {
 
 // --- Implements the signature handle methods
 
+// SigningWriter returns a wrapper around underlying output Writer,
+// such that any write-operation via the wrapper results in a write to a detached or inline signature message.
+// The encoding argument defines the output encoding, i.e., Bytes or Armored
+// Once close is called on the returned WriteCloser the final signature is written to the output.
+// Thus, the returned WriteCloser must be closed after the plaintext has been written.
 func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding int8) (messageWriter WriteCloser, err error) {
 	var armorWriter WriteCloser
 	armorOutput := armorOutput(encoding)
@@ -87,6 +92,8 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding int8) (me
 	return messageWriter, nil
 }
 
+// Sign creates a detached or inline signature from the provided byte slice.
+// The encoding argument defines the output encoding, i.e., Bytes or Armored
 func (sh *signatureHandle) Sign(message []byte, encoding int8) ([]byte, error) {
 	var writer bytes.Buffer
 	ptWriter, err := sh.SigningWriter(&writer, encoding)
@@ -104,10 +111,13 @@ func (sh *signatureHandle) Sign(message []byte, encoding int8) ([]byte, error) {
 	return writer.Bytes(), nil
 }
 
+// SignCleartext produces an armored cleartext message according to the specification.
+// Returns an armored message even if the PGPSign is not configured for armored output.
 func (sh *signatureHandle) SignCleartext(message []byte) ([]byte, error) {
 	return sh.signCleartext(message)
 }
 
+// ClearPrivateParams clears all secret key material contained in the PGPSign from memory,
 func (sh *signatureHandle) ClearPrivateParams() {
 	if sh.SignKeyRing != nil {
 		sh.SignKeyRing.ClearPrivateParams()

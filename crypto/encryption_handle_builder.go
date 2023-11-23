@@ -2,6 +2,8 @@ package crypto
 
 import "github.com/ProtonMail/gopenpgp/v3/constants"
 
+// EncryptionHandleBuilder allows to configure a decryption handle
+// to decrypt a pgp message.
 type EncryptionHandleBuilder struct {
 	handle       *encryptionHandle
 	defaultClock Clock
@@ -15,6 +17,11 @@ func newEncryptionHandleBuilder(profile EncryptionProfile, clock Clock) *Encrypt
 	}
 }
 
+// Recipient sets the public key to which the message should be encrypted to.
+// Triggers hybrid encryption with public keys of the recipients and hidden recipients.
+// The recipients are included in the intended recipient fingerprint list
+// of the signature, if a signature is present.
+// If not set, set another type of encryption: HiddenRecipients, SessionKey, or Password.
 func (ehb *EncryptionHandleBuilder) Recipient(key *Key) *EncryptionHandleBuilder {
 	var err error
 	if ehb.handle.Recipients == nil {
@@ -36,6 +43,11 @@ func (ehb *EncryptionHandleBuilder) Recipients(recipients *KeyRing) *EncryptionH
 	return ehb
 }
 
+// HiddenRecipient sets a public key to which the message should be encrypted to.
+// Triggers hybrid encryption with public keys of the recipients and hidden recipients.
+// The hidden recipients are NOT included in the intended recipient fingerprint list
+// of the signature, if a signature is present.
+// If not set, set another type of encryption: Recipients, SessionKey, or Password.
 func (ehb *EncryptionHandleBuilder) HiddenRecipient(key *Key) *EncryptionHandleBuilder {
 	var err error
 	if ehb.handle.HiddenRecipients == nil {
@@ -57,6 +69,9 @@ func (ehb *EncryptionHandleBuilder) HiddenRecipients(hiddenRecipients *KeyRing) 
 	return ehb
 }
 
+// SigningKey sets the signing key that are used to create signature of the message.
+// Triggers that signatures are created for each signing key.
+// If not set, no signature is included.
 func (ehb *EncryptionHandleBuilder) SigningKey(key *Key) *EncryptionHandleBuilder {
 	var err error
 	if ehb.handle.SignKeyRing == nil {
@@ -186,6 +201,7 @@ func (ehb *EncryptionHandleBuilder) New() (PGPEncryption, error) {
 	return params, nil
 }
 
+// Error returns an errors that occurred within the builder.
 func (ehb *EncryptionHandleBuilder) Error() error {
 	return ehb.err
 }
