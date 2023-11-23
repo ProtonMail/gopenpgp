@@ -98,7 +98,7 @@ func TestSignNonUtf8Text(t *testing.T) {
 
 	var nonUft8, _ = hex.DecodeString("fc80808080af")
 
-	textSignature, err = testSignerText().Sign([]byte(nonUft8), Bytes)
+	textSignature, err = testSignerText().Sign(nonUft8, Bytes)
 	if err != internal.ErrIncorrectUtf8 {
 		t.Fatal("Expected not valid utf8 error")
 	}

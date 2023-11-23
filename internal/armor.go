@@ -18,7 +18,7 @@ func Unarmor(input string) (*armor.Block, error) {
 	return b, nil
 }
 
-// Unarmor unarmors an armored byte string.
+// UnarmorBytes unarmors an armored byte slice.
 func UnarmorBytes(input []byte) (*armor.Block, error) {
 	io := bytes.NewReader(input)
 	b, err := armor.Decode(io)

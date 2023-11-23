@@ -36,7 +36,7 @@ type encryptionHandle struct {
 	// If nil, set another field for the type of encryption: Recipients, HiddenRecipients, or SessionKey
 	Password []byte
 	// SignKeyRing provides an unlocked key ring to include signature in the message.
-	// If nil, no signature is inlcuded.
+	// If nil, no signature is included.
 	SignKeyRing *KeyRing
 	// SigningContext provides a signing context for the signature in the message.
 	// SignKeyRing has to be set if a SigningContext is provided.
@@ -123,29 +123,29 @@ func (eh *encryptionHandle) EncryptSessionKey(sessionKey *SessionKey) ([]byte, e
 
 // --- Helper methods on encryption handle
 
-func (dp *encryptionHandle) validate() error {
+func (eh *encryptionHandle) validate() error {
 	keyMaterialPresent := false
-	if dp.Recipients != nil || dp.HiddenRecipients != nil {
+	if eh.Recipients != nil || eh.HiddenRecipients != nil {
 		keyMaterialPresent = true
 	}
-	if dp.Password != nil {
+	if eh.Password != nil {
 		if keyMaterialPresent {
 			return errors.New("gopenpgp: more than one encryption key material provided")
 		}
 		keyMaterialPresent = true
 	}
-	if dp.SessionKey != nil {
+	if eh.SessionKey != nil {
 		keyMaterialPresent = true
 	}
 	if !keyMaterialPresent {
 		return errors.New("gopenpgp: no encryption key material provided")
 	}
 
-	if dp.SignKeyRing == nil && dp.SigningContext != nil {
+	if eh.SignKeyRing == nil && eh.SigningContext != nil {
 		return errors.New("gopenpgp: no signing key but signing context provided")
 	}
 
-	if dp.SignKeyRing == nil && dp.DetachedSignature {
+	if eh.SignKeyRing == nil && eh.DetachedSignature {
 		return errors.New("gopenpgp: no signing key provided for detached signature")
 	}
 	return nil
@@ -239,7 +239,6 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 			// Encrypted detached signature separate from the ciphertext.
 			messageWriter, err = eh.encryptSignDetachedStreamToRecipients(meta, detachedSignature, data, keys)
 		}
-
 	} else if eh.Password != nil {
 		// Encrypt with a password
 		if !eh.DetachedSignature {
