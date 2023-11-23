@@ -46,7 +46,7 @@ func (kgh *keyGenerationHandle) GenerateKeyWithSecurity(security int8) (key *Key
 		}
 	} else {
 		if err = kgh.identities[0].valid(); err != nil {
-			return
+			return nil, err
 		}
 		key.entity, err = openpgp.NewEntity(
 			kgh.identities[0].name,
@@ -61,7 +61,7 @@ func (kgh *keyGenerationHandle) GenerateKeyWithSecurity(security int8) (key *Key
 
 	for id := 1; id < len(kgh.identities); id++ {
 		if err = kgh.identities[id].valid(); err != nil {
-			return
+			return nil, err
 		}
 		err = key.entity.AddUserId(
 			kgh.identities[id].name,
@@ -77,7 +77,7 @@ func (kgh *keyGenerationHandle) GenerateKeyWithSecurity(security int8) (key *Key
 	if key.entity.PrivateKey == nil {
 		return nil, errors.New("gopenpgp: error in generating private key")
 	}
-	return
+	return key, nil
 }
 
 func (id identity) valid() error {

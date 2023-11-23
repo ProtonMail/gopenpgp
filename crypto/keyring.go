@@ -91,26 +91,6 @@ func (keyRing *KeyRing) GetKey(n int) (*Key, error) {
 	return &Key{keyRing.entities[n]}, nil
 }
 
-// getSigningEntity returns first private unlocked signing entity from keyring.
-func (keyRing *KeyRing) getSigningEntity() (*openpgp.Entity, error) {
-	var signEntity *openpgp.Entity
-
-	for _, e := range keyRing.entities {
-		// Entity.PrivateKey must be a signing key
-		if e.PrivateKey != nil {
-			if !e.PrivateKey.Encrypted {
-				signEntity = e
-				break
-			}
-		}
-	}
-	if signEntity == nil {
-		return nil, errors.New("gopenpgp: cannot sign message, unable to unlock signer key")
-	}
-
-	return signEntity, nil
-}
-
 func (keyRing *KeyRing) signingEntities() ([]*openpgp.Entity, error) {
 	var signEntity []*openpgp.Entity
 	for _, e := range keyRing.entities {
@@ -124,7 +104,7 @@ func (keyRing *KeyRing) signingEntities() ([]*openpgp.Entity, error) {
 	return signEntity, nil
 }
 
-// getSigningEntity returns the internal EntityList if the key ring is not nil
+// getSigningEntity returns the internal EntityList if the key ring is not nil.
 func (keyRing *KeyRing) getEntities() openpgp.EntityList {
 	if keyRing == nil {
 		return nil
@@ -204,7 +184,7 @@ func (keyRing *KeyRing) GetKeyIDs() []uint64 {
 // parts of these KeyRings.
 func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err error) {
 	now := time.Now()
-	hasExpiredEntity := false //nolint:ifshort
+	hasExpiredEntity := false
 	filteredKeys = make([]*KeyRing, 0)
 
 	for _, contactKeyRing := range contactKeys {

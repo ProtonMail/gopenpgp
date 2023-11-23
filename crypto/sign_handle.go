@@ -69,6 +69,9 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding int8) (me
 		// Inline signature
 		messageWriter, err = sh.signingWriter(outputWriter, nil)
 	}
+	if err != nil {
+		return nil, err
+	}
 	if armorOutput {
 		// Ensure that close is called on the armor writer for the armor suffix
 		messageWriter = &armoredWriteCloser{
@@ -81,7 +84,7 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding int8) (me
 			openpgp.NewCanonicalTextWriteCloser(messageWriter),
 		)
 	}
-	return
+	return messageWriter, nil
 }
 
 func (sh *signatureHandle) Sign(message []byte, encoding int8) ([]byte, error) {

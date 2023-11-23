@@ -183,7 +183,7 @@ func testSignVerify(
 	signer PGPSign,
 	verifier PGPVerify,
 	detached bool,
-	encoding int8,
+	encoding int8, //nolint:unparam
 	numberOfSigsToVerify int,
 ) {
 	messageBytes := []byte(messageToSign)

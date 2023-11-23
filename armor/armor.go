@@ -108,7 +108,7 @@ func Unarmor(input string) ([]byte, error) {
 	return ioutil.ReadAll(b.Body)
 }
 
-// Unarmor unarmors an armored input into a byte array.
+// UnarmorBytes unarmors an armored input into a byte array.
 func UnarmorBytes(input []byte) ([]byte, error) {
 	b, err := internal.UnarmorBytes(input)
 	if err != nil {

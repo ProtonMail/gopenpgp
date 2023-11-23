@@ -291,7 +291,6 @@ func TestSessionEncryptDecryptStreamWithContext(t *testing.T) {
 			)
 		})
 	}
-
 }
 
 func TestSessionEncryptDecryptStreamWithContextAndCompression(t *testing.T) {
@@ -319,7 +318,6 @@ func TestSessionEncryptDecryptStreamWithContextAndCompression(t *testing.T) {
 			)
 		})
 	}
-
 }
 
 func TestEncryptDecryptStreamArmored(t *testing.T) {
@@ -874,12 +872,12 @@ func testEncryptDecrypt(
 func testEncryptSplitDecryptStream(
 	t *testing.T,
 	messageBytes []byte,
-	metadata *LiteralMetadata,
+	metadata *LiteralMetadata, //nolint:unparam
 	encHandle PGPEncryption,
 	decHandle PGPDecryption,
 	multiWriterCreator func(Writer, Writer, Writer) PGPSplitWriter,
 	numberOfSigsToVerify int,
-	encoding int8,
+	encoding int8, //nolint:unparam
 ) {
 	messageReader := bytes.NewReader(messageBytes)
 	var keyPackets bytes.Buffer
