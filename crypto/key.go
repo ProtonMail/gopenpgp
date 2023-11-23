@@ -86,6 +86,7 @@ func NewPrivateKeyFromArmored(armored string, password []byte) (key *Key, err er
 	return
 }
 
+// NewKeyFromEntity creates a key from the provided go-crypto/openpgp entity.
 func NewKeyFromEntity(entity *openpgp.Entity) (*Key, error) {
 	if entity == nil {
 		return nil, errors.New("gopenpgp: nil entity provided")

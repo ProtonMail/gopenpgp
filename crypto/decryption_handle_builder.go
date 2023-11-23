@@ -1,6 +1,6 @@
 package crypto
 
-// DecryptionHandleBuilder allow to configure a decryption handle
+// DecryptionHandleBuilder allows to configure a decryption handle
 // to decrypt a pgp message.
 type DecryptionHandleBuilder struct {
 	handle       *decryptionHandle

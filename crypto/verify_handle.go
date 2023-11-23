@@ -41,6 +41,8 @@ func defaultVerifyHandle(profile SignProfile, clock Clock) *verifyHandle {
 // Once all data is read from the returned verify reader, the signature can be verified
 // with (VerifyDataReader).VerifySignature().
 // Note that an error is only returned if it is not a signature error.
+// The encoding indicates if the input signature message should be unarmored or not,
+// i.e., Bytes/Armor/Auto where Auto tries to detect it automatically.
 // If detachedData is nil, signatureMessage is treated as an inline signature message.
 // Thus, it is expected that signatureMessage contains the data to be verified.
 // If detachedData is not nil, signatureMessage must contain a detached signature,
@@ -74,6 +76,8 @@ func (vh *verifyHandle) VerifyingReader(detachedData, signatureMessage Reader, e
 // and returns a VerifyResult. The VerifyResult can be checked for failure
 // and allows access to information about the signatures.
 // Note that an error is only returned if it is not a signature error.
+// The encoding indicates if the input signature message should be unarmored or not,
+// i.e., Bytes/Armor/Auto where Auto tries to detect it automatically.
 func (vh *verifyHandle) VerifyDetached(data, signature []byte, encoding int8) (verifyResult *VerifyResult, err error) {
 	signatureMessageReader := bytes.NewReader(signature)
 	detachedDataReader := bytes.NewReader(data)
@@ -92,6 +96,8 @@ func (vh *verifyHandle) VerifyDetached(data, signature []byte, encoding int8) (v
 // and returns a VerifiedDataResult. The VerifiedDataResult can be checked for failure,
 // allows access to information about the signatures, and includes the plain message.
 // Note that an error is only returned if it is not a signature error.
+// The encoding indicates if the input message should be unarmored or not, i.e., Bytes/Armor/Auto
+// where Auto tries to detect it automatically.
 func (vh *verifyHandle) VerifyInline(message []byte, encoding int8) (verifyDataResult *VerifiedDataResult, err error) {
 	var ptReader *VerifyDataReader
 	messageReader := bytes.NewReader(message)

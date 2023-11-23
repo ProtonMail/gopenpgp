@@ -28,7 +28,7 @@ type PGPDecryption interface {
 	// DecryptSessionKey decrypts an encrypted session key.
 	// To decrypted a session key, the decryption handle must contain either a decryption key or a password.
 	DecryptSessionKey(keyPackets []byte) (*SessionKey, error)
-	// ClearPrivateParams clears all private key material contained in EncryptionHandle from memory,
+	// ClearPrivateParams clears all private key material contained in EncryptionHandle from memory.
 	ClearPrivateParams()
 }
 

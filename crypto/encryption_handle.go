@@ -72,9 +72,13 @@ func defaultEncryptionHandle(profile EncryptionProfile, clock Clock) *encryption
 
 // --- Implements PGPEncryption interface
 
-// EncryptingWriter returns a wrapper around underlying outputWriter io.Writer, such that any write-operation
-// via the wrapper results in a write to an encrypted PGP message.
-// The returned PGP message WriteCloser must be closed after the plaintext has been written.
+// EncryptingWriter returns a wrapper around underlying output Writer,
+// such that any write-operation via the wrapper results in a write to an encrypted pgp message.
+// If the output Writer is of type PGPSplitWriter, the output can be split to multiple writers
+// for different parts of the message. For example to write key packets and encrypted data packets
+// to different writers or to write a detached signature separately.
+// The encoding argument defines the output encoding, i.e., Bytes or Armored
+// The returned pgp message WriteCloser must be closed after the plaintext has been written.
 func (eh *encryptionHandle) EncryptingWriter(outputWriter Writer, encoding int8) (messageWriter WriteCloser, err error) {
 	pgpMessageWriter := isPGPMessageWriter(outputWriter)
 	if pgpMessageWriter != nil {
@@ -86,7 +90,7 @@ func (eh *encryptionHandle) EncryptingWriter(outputWriter Writer, encoding int8)
 	return eh.encryptingWriters(nil, outputWriter, nil, nil, armorOutput(encoding))
 }
 
-// Encrypt encrypts a binary message, and outputs a PGPMessage.
+// Encrypt encrypts a plaintext message.
 func (eh *encryptionHandle) Encrypt(message []byte) (*PGPMessage, error) {
 	pgpMessageBuffer := NewPGPMessageBuffer()
 	// Enforce that for a PGPMessage struct the output should not be armored.
@@ -105,6 +109,8 @@ func (eh *encryptionHandle) Encrypt(message []byte) (*PGPMessage, error) {
 	return pgpMessageBuffer.PGPMessage(), nil
 }
 
+// EncryptSessionKey encrypts a session key with the encryption handle.
+// To encrypt a session key, the handle must contain either recipients or a password.
 func (eh *encryptionHandle) EncryptSessionKey(sessionKey *SessionKey) ([]byte, error) {
 	config := eh.profile.EncryptionConfig()
 	config.Time = NewConstantClock(eh.clock().Unix())
@@ -173,6 +179,7 @@ func (w *armoredWriteCloser) Close() error {
 	return w.armorWriter.Close()
 }
 
+// ClearPrivateParams clears all private key material contained in EncryptionHandle from memory.
 func (eh *encryptionHandle) ClearPrivateParams() {
 	if eh.SignKeyRing != nil {
 		eh.SignKeyRing.ClearPrivateParams()
