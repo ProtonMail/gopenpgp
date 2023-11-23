@@ -151,7 +151,7 @@ func (dh *decryptionHandle) validate() error {
 func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedSignature Reader, encoding int8) (plainMessageReader *VerifyDataReader, err error) {
 	err = dh.validate()
 	if err != nil {
-		return
+		return nil, err
 	}
 	var armored bool
 	encryptedMessage, armored = unarmorInput(encoding, encryptedMessage)
@@ -161,7 +161,7 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 		armoredBlock, err = armor.Decode(encryptedMessage)
 		if err != nil {
 			err = errors.Wrap(err, "gopenpgp: unarmor failed for pgp message")
-			return
+			return nil, err
 		}
 		encryptedMessage = armoredBlock.Body
 	}
@@ -172,7 +172,7 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 			armoredBlock, err = armor.Decode(encryptedSignature)
 			if err != nil {
 				err = errors.Wrap(err, "gopenpgp: unarmor failed for pgp encrypted signature message")
-				return
+				return nil, err
 			}
 			encryptedSignature = armoredBlock.Body
 		}
@@ -209,7 +209,7 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 	if dh.IsUTF8 {
 		plainMessageReader.internalReader = internal.NewSanitizeReader(plainMessageReader.internalReader)
 	}
-	return
+	return plainMessageReader, nil
 }
 
 func isPGPSplitReader(w Reader) PGPSplitReader {

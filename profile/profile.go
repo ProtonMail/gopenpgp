@@ -12,23 +12,18 @@ import (
 // parameters for generating keys, encrypting data, and
 // signing data.
 type Custom struct {
-	Name string
-
-	SetKeyAlgorithm func(*packet.Config, int8)
-
-	Hash crypto.Hash
-
-	CipherKeyEncryption packet.CipherFunction
-	AeadKeyEncryption   *packet.AEADConfig
-	S2kKeyEncryption    *s2k.Config
-
-	CipherEncryption         packet.CipherFunction
+	Name                     string
+	SetKeyAlgorithm          func(*packet.Config, int8)
+	AeadKeyEncryption        *packet.AEADConfig
+	S2kKeyEncryption         *s2k.Config
 	AeadEncryption           *packet.AEADConfig
 	S2kEncryption            *s2k.Config
-	CompressionAlgorithm     packet.CompressionAlgo
 	CompressionConfiguration *packet.CompressionConfig
-
-	V6 bool
+	Hash                     crypto.Hash
+	CipherKeyEncryption      packet.CipherFunction
+	CipherEncryption         packet.CipherFunction
+	CompressionAlgorithm     packet.CompressionAlgo
+	V6                       bool
 }
 
 // WithName returns the custom profile with the given name.

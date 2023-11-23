@@ -18,9 +18,9 @@ func newDecryptionHandleBuilder(profile EncryptionProfile, clock Clock) *Decrypt
 }
 
 // DecryptionKeys sets the secret keys for decrypting the pgp message.
-// Assumes that the the message was encrypted towards one of the secret keys.
+// Assumes that the message was encrypted towards one of the secret keys.
 // Triggers the hybrid decryption mode.
-// If not set, set another field for the type of decryption: SessionKey or Password
+// If not set, set another field for the type of decryption: SessionKey or Password.
 func (dpb *DecryptionHandleBuilder) DecryptionKeys(decryptionKeyRing *KeyRing) *DecryptionHandleBuilder {
 	dpb.handle.DecryptionKeyRing = decryptionKeyRing
 	return dpb
@@ -38,36 +38,36 @@ func (dpb *DecryptionHandleBuilder) DecryptionKey(decryptionKey *Key) *Decryptio
 }
 
 // SessionKey sets a session key for decrypting the pgp message.
-// Assumes the the message was encrypted with session key provided.
+// Assumes that the message was encrypted with session key provided.
 // Triggers the session key decryption mode.
-// If not set, set another field for the type of decryption: DecryptionKeys or Password
+// If not set, set another field for the type of decryption: DecryptionKeys or Password.
 func (dpb *DecryptionHandleBuilder) SessionKey(sessionKey *SessionKey) *DecryptionHandleBuilder {
 	dpb.handle.SessionKeys = []*SessionKey{sessionKey}
 	return dpb
 }
 
 // SessionKeys sets multiple session keys for decrypting the pgp message.
-// Assumes the the message was encrypted with one of the session keys provided.
+// Assumes that the message was encrypted with one of the session keys provided.
 // Triggers the session key decryption mode.
-// If not set, set another field for the type of decryption: DecryptionKeys or Password
+// If not set, set another field for the type of decryption: DecryptionKeys or Password.
 func (dpb *DecryptionHandleBuilder) SessionKeys(sessionKeys []*SessionKey) *DecryptionHandleBuilder {
 	dpb.handle.SessionKeys = sessionKeys
 	return dpb
 }
 
 // Password sets a password that is used to derive a key to decrypt the pgp message.
-// Assumes the the message was encrypted with a key derived from the password.
+// Assumes that the message was encrypted with a key derived from the password.
 // Triggers the password decryption mode.
-// If not set, set another field for the type of decryption: DecryptionKeys or SessionKey
+// If not set, set another field for the type of decryption: DecryptionKeys or SessionKey.
 func (dpb *DecryptionHandleBuilder) Password(password []byte) *DecryptionHandleBuilder {
 	dpb.handle.Passwords = [][]byte{password}
 	return dpb
 }
 
 // Passwords sets passwords that are used to derive keys to decrypt the pgp message.
-// Assumes the the message was encrypted with one of the keys derived from the passwords.
+// Assumes that the message was encrypted with one of the keys derived from the passwords.
 // Triggers the password decryption mode.
-// If not set, set another field for the type of decryption: DecryptionKeys or SessionKey
+// If not set, set another field for the type of decryption: DecryptionKeys or SessionKey.
 func (dpb *DecryptionHandleBuilder) Passwords(passwords [][]byte) *DecryptionHandleBuilder {
 	dpb.handle.Passwords = passwords
 	return dpb
