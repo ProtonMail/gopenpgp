@@ -1,6 +1,6 @@
 package crypto
 
-// VerifyHandleBuilder configures a VerifyHandle handle
+// VerifyHandleBuilder configures a VerifyHandle handle.
 type VerifyHandleBuilder struct {
 	handle       *verifyHandle
 	defaultClock Clock

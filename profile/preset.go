@@ -17,9 +17,11 @@ var nameToProfile = map[string]func() *Custom{
 
 // PresetProfiles returns the names of the available profiles.
 func PresetProfiles() []string {
-	var profiles []string
+	profiles := make([]string, len(nameToProfile))
+	index := 0
 	for profile := range nameToProfile {
-		profiles = append(profiles, profile)
+		profiles[index] = profile
+		index++
 	}
 	return profiles
 }

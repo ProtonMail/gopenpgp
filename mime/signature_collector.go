@@ -48,7 +48,7 @@ func (sc *signatureCollector) Accept(
 	newPart, rawBody := gomime.GetRawMimePart(part, "--"+params["boundary"])
 	multiparts, multipartHeaders, err := gomime.GetMultipartParts(newPart, params)
 	if err != nil {
-		return
+		return err
 	}
 
 	hasPlainChild := false

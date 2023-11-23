@@ -332,7 +332,7 @@ func readTestFile(name string, trimNewlines bool) string {
 }
 
 func readTestFileBytes(name string) []byte {
-	data, err := ioutil.ReadFile("testdata/" + name)
+	data, err := ioutil.ReadFile(filepath.Join("testdata/", name)) //nolint:gosec
 	if err != nil {
 		panic(err)
 	}
