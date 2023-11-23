@@ -50,7 +50,7 @@ type VerifyResult struct {
 }
 
 // SignatureCreationTime returns the creation time of
-// the selected verified signature if found, else returns 0
+// the selected verified signature if found, else returns 0.
 func (vr *VerifyResult) SignatureCreationTime() int64 {
 	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
 		return 0
@@ -58,7 +58,7 @@ func (vr *VerifyResult) SignatureCreationTime() int64 {
 	return vr.selectedSignature.Signature.CreationTime.Unix()
 }
 
-// SignedWithType returns the type of the signature if found, else returns 0
+// SignedWithType returns the type of the signature if found, else returns 0.
 func (vr *VerifyResult) SignedWithType() packet.SignatureType {
 	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
 		return 0
@@ -67,7 +67,7 @@ func (vr *VerifyResult) SignedWithType() packet.SignatureType {
 }
 
 // SignedByKeyId returns the key id of the key that was used to verify the selected signature,
-// if found, else returns 0
+// if found, else returns 0.
 func (vr *VerifyResult) SignedByKeyId() uint64 {
 	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
 		return 0
@@ -76,7 +76,7 @@ func (vr *VerifyResult) SignedByKeyId() uint64 {
 }
 
 // SignedByFingerprint returns the key fingerprint of the key that was used to verify the selected signature,
-// if found, else returns nil
+// if found, else returns nil.
 func (vr *VerifyResult) SignedByFingerprint() []byte {
 	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
 		return nil
@@ -91,7 +91,7 @@ func (vr *VerifyResult) SignedByFingerprint() []byte {
 }
 
 // SignedByKey returns the key that was used to verify the selected signature,
-// if found, else returns nil
+// if found, else returns nil.
 func (vr *VerifyResult) SignedByKey() *Key {
 	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
 		return nil
@@ -105,7 +105,7 @@ func (vr *VerifyResult) SignedByKey() *Key {
 	}
 }
 
-// Signature returns the serialized openpgp signature packet of the selected signature
+// Signature returns the serialized openpgp signature packet of the selected signature.
 func (vr *VerifyResult) Signature() ([]byte, error) {
 	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
 		return nil, errors.New("gopenpgp: no signature present")
@@ -170,7 +170,7 @@ func (e SignatureVerificationError) Unwrap() error {
 // Selection policy:
 // first successfully verified or
 // last signature with an error and a matching key or
-// last signature with an error if no key matched
+// last signature with an error if no key matched.
 func (vr *VerifyResult) selectSignature() {
 	var keyMatch bool
 	for _, signature := range vr.Signatures {
@@ -254,7 +254,6 @@ func createVerifyResult(
 	verifyTime int64,
 	disableTimeCheck bool,
 ) (*VerifyResult, error) {
-	var verifiedSignatures []*VerifiedSignature
 	if !md.IsSigned {
 		signatureError := newSignatureNotSigned()
 		return &VerifyResult{
@@ -265,7 +264,8 @@ func createVerifyResult(
 		return nil, errors.New("gopenpgp: message has not been verified")
 	}
 
-	for _, signature := range md.SignatureCandidates {
+	verifiedSignatures := make([]*VerifiedSignature, len(md.SignatureCandidates))
+	for candidateIndex, signature := range md.SignatureCandidates {
 		var singedBy *Key
 		if signature.SignedBy != nil {
 			singedBy = &Key{
@@ -283,7 +283,7 @@ func createVerifyResult(
 			disableTimeCheck,
 		)
 		var signatureError SignatureVerificationError
-		if len(verifierKey.entities) == 0 || signature.SignatureError == pgpErrors.ErrUnknownIssuer {
+		if len(verifierKey.entities) == 0 || errors.Is(signature.SignatureError, pgpErrors.ErrUnknownIssuer) {
 			signatureError = newSignatureNoVerifier()
 		} else if signature.SignatureError != nil {
 			signatureError = newSignatureFailed(signature.SignatureError)
@@ -300,7 +300,7 @@ func createVerifyResult(
 		if signatureError.Status != constants.SIGNATURE_OK {
 			verifiedSignature.SignatureError = &signatureError
 		}
-		verifiedSignatures = append(verifiedSignatures, verifiedSignature)
+		verifiedSignatures[candidateIndex] = verifiedSignature
 	}
 
 	verifyResult := &VerifyResult{

@@ -47,7 +47,7 @@ func (shb *SignHandleBuilder) Detached() *SignHandleBuilder {
 // ArmorHeader indicates that the produced signature should be armored
 // with the given version and comment as header.
 // Note that this option only affects the method SignHandle.SigningWriter
-// and the headers in SignHandle.SignCleartext
+// and the headers in SignHandle.SignCleartext.
 func (shb *SignHandleBuilder) ArmorHeader(version, comment string) *SignHandleBuilder {
 	if shb.handle.ArmorHeaders == nil {
 		shb.handle.ArmorHeaders = make(map[string]string)
@@ -66,7 +66,7 @@ func (shb *SignHandleBuilder) Utf8() *SignHandleBuilder {
 }
 
 // SignTime sets the internal clock to always return
-// the supplied unix time for signing instead of the device time
+// the supplied unix time for signing instead of the device time.
 func (shb *SignHandleBuilder) SignTime(unixTime int64) *SignHandleBuilder {
 	shb.handle.clock = NewConstantClock(unixTime)
 	return shb

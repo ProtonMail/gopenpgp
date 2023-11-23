@@ -41,9 +41,6 @@ type encryptionHandle struct {
 	// SigningContext provides a signing context for the signature in the message.
 	// SignKeyRing has to be set if a SigningContext is provided.
 	SigningContext *SigningContext
-	// DetachedSignature indicates if a separate encrypted detached signature
-	// should be created
-	DetachedSignature bool
 	// ArmorHeaders provides armor headers if the message is armored.
 	// Only considered if Armored is set to true.
 	ArmorHeaders map[string]string
@@ -51,7 +48,10 @@ type encryptionHandle struct {
 	// constants.NoCompression: none, constants.DefaultCompression: profile default
 	// constants.ZIPCompression: zip constants.ZLIBCompression: zlib
 	Compression int8
-	IsUTF8      bool
+	// DetachedSignature indicates if a separate encrypted detached signature
+	// should be created
+	DetachedSignature bool
+	IsUTF8            bool
 	// ExternalSignature allows to include an external signature into
 	// the encrypted message.
 	ExternalSignature []byte
@@ -190,12 +190,12 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 	var armorSigWriter WriteCloser
 	err = eh.validate()
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	if eh.DetachedSignature && detachedSignature == nil {
 		err = errors.New("gopenpgp: no output provided for the detached signature")
-		return
+		return nil, err
 	}
 
 	if armorOutput {
@@ -206,18 +206,18 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 		armorWriter, err = armor.EncodeWithChecksumOption(data, constants.PGPMessageHeader, eh.ArmorHeaders, false)
 		data = armorWriter
 		if err != nil {
-			return
+			return nil, err
 		}
 		if eh.DetachedSignature {
 			armorSigWriter, err = armor.EncodeWithChecksumOption(detachedSignature, constants.PGPMessageHeader, eh.ArmorHeaders, false)
 			detachedSignature = armorSigWriter
 			if err != nil {
-				return
+				return nil, err
 			}
 		}
 		if keys != nil {
 			err = errors.New("gopenpgp: armor is not allowed if key packets are written separately")
-			return
+			return nil, err
 		}
 	}
 	if keys == nil {
@@ -257,7 +257,9 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 		// No encryption material provided
 		err = errors.New("gopenpgp: no encryption key ring, session key, or password provided")
 	}
-
+	if err != nil {
+		return nil, err
+	}
 	if armorOutput {
 		// Wrap armored writer
 		messageWriter = &armoredWriteCloser{
@@ -271,7 +273,7 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 			openpgp.NewCanonicalTextWriteCloser(messageWriter),
 		)
 	}
-	return
+	return messageWriter, nil
 }
 
 func isPGPMessageWriter(w Writer) PGPSplitWriter {

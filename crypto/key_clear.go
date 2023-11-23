@@ -1,7 +1,7 @@
 package crypto
 
 import (
-	"crypto/dsa" //nolint:staticcheck
+	"crypto/dsa"
 	"crypto/rsa"
 	"errors"
 	"math/big"

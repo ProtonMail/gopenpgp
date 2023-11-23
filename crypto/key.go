@@ -65,7 +65,7 @@ func NewKeyFromArmored(armored string) (key *Key, err error) {
 }
 
 // NewPrivateKeyFromArmored creates a new secret key from the first key in an armored string
-// and unlocks it with the password
+// and unlocks it with the password.
 func NewPrivateKeyFromArmored(armored string, password []byte) (key *Key, err error) {
 	lockedKey, err := NewKeyFromArmored(armored)
 	if err != nil {
@@ -96,7 +96,7 @@ func NewKeyFromEntity(entity *openpgp.Entity) (*Key, error) {
 // generateKey generates a key of the given keyType ("rsa", "x25519", "x448").
 // If keyType is "rsa", bits is the RSA bitsize of the key.
 // For other key types bits is unused.
-// If keyType is "" the method uses the default algorithm from config
+// If keyType is "" the method uses the default algorithm from config.
 func generateKey(name, email string, clock Clock, profile KeyGenerationProfile, securityLevel int8, lifeTimeSec uint32) (*Key, error) {
 	config := profile.KeyGenerationConfig(securityLevel)
 	config.Time = NewConstantClock(clock().Unix())

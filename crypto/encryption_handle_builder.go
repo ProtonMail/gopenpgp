@@ -30,7 +30,7 @@ func (ehb *EncryptionHandleBuilder) Recipient(key *Key) *EncryptionHandleBuilder
 // Triggers hybrid encryption with public keys of the recipients and hidden recipients.
 // The recipients are included in the intended recipient fingerprint list
 // of the signature, if a signature is present.
-// If not set, set another type of encryption: HiddenRecipients, SessionKey, or Password
+// If not set, set another type of encryption: HiddenRecipients, SessionKey, or Password.
 func (ehb *EncryptionHandleBuilder) Recipients(recipients *KeyRing) *EncryptionHandleBuilder {
 	ehb.handle.Recipients = recipients
 	return ehb
@@ -51,7 +51,7 @@ func (ehb *EncryptionHandleBuilder) HiddenRecipient(key *Key) *EncryptionHandleB
 // Triggers hybrid encryption with public keys of the recipients and hidden recipients.
 // The hidden recipients are NOT included in the intended recipient fingerprint list
 // of the signature, if a signature is present.
-// If not set, set another type of encryption: Recipients, SessionKey, or Password
+// If not set, set another type of encryption: Recipients, SessionKey, or Password.
 func (ehb *EncryptionHandleBuilder) HiddenRecipients(hiddenRecipients *KeyRing) *EncryptionHandleBuilder {
 	ehb.handle.HiddenRecipients = hiddenRecipients
 	return ehb
@@ -86,7 +86,7 @@ func (ehb *EncryptionHandleBuilder) SigningContext(siningContext *SigningContext
 
 // SessionKey sets the session key the message should be encrypted with.
 // Triggers session key encryption with the included session key.
-// If not set, set another the type of encryption: Recipients, HiddenRecipients, or Password
+// If not set, set another the type of encryption: Recipients, HiddenRecipients, or Password.
 func (ehb *EncryptionHandleBuilder) SessionKey(sessionKey *SessionKey) *EncryptionHandleBuilder {
 	ehb.handle.SessionKey = sessionKey
 	return ehb
@@ -94,7 +94,7 @@ func (ehb *EncryptionHandleBuilder) SessionKey(sessionKey *SessionKey) *Encrypti
 
 // Password sets a password the message should be encrypted with.
 // Triggers password based encryption with a key derived from the password.
-// If not set, set another the type of encryption: Recipients, HiddenRecipients, or SessionKey
+// If not set, set another the type of encryption: Recipients, HiddenRecipients, or SessionKey.
 func (ehb *EncryptionHandleBuilder) Password(password []byte) *EncryptionHandleBuilder {
 	ehb.handle.Password = password
 	return ehb
@@ -115,7 +115,7 @@ func (ehb *EncryptionHandleBuilder) Compress() *EncryptionHandleBuilder {
 // The openpgp crypto refresh recommends to not use compression.
 // Allowed config options:
 // constants.NoCompression: none, constants.DefaultCompression: profile default
-// constants.ZIBCompression: zib constants.ZLIBCompression: zlib
+// constants.ZIBCompression: zib constants.ZLIBCompression: zlib.
 func (ehb *EncryptionHandleBuilder) CompressWith(config int8) *EncryptionHandleBuilder {
 	switch config {
 	case constants.NoCompression,
@@ -172,7 +172,7 @@ func (ehb *EncryptionHandleBuilder) SignTime(unixTime int64) *EncryptionHandleBu
 
 // New creates an EncryptionHandle and checks that the given
 // combination of parameters is valid. If the parameters are invalid
-// an error is returned
+// an error is returned.
 func (ehb *EncryptionHandleBuilder) New() (PGPEncryption, error) {
 	if ehb.err != nil {
 		return nil, ehb.err

@@ -32,7 +32,7 @@ func NewPGPSplitReader(pgpMessage Reader, pgpEncryptedSignature Reader) *pgpSpli
 	}
 }
 
-// decryptStream decrypts the stream either with the secret keys or a password
+// decryptStream decrypts the stream either with the secret keys or a password.
 func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage *VerifyDataReader, err error) {
 	var entries openpgp.EntityList
 	checkPacketSequence := !dh.DisableStrictMessageParsing

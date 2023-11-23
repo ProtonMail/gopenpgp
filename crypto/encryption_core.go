@@ -51,7 +51,7 @@ func NewPGPSplitWriterKeyAndData(keyPackets Writer, encPackets Writer) PGPSplitW
 	return NewPGPSplitWriter(keyPackets, encPackets, nil)
 }
 
-// NewPGPSplitWriterKeyAndData creates a type that implements the PGPSplitWriter interface
+// NewPGPSplitWriterDetachedSignature creates a type that implements the PGPSplitWriter interface
 // for encrypting a plaintext where the output PGP messages should be written to the different streams provided.
 // The encrypted data message is written to encMessage whereas the encrypted detached signature is written to
 // encSigMessage.
@@ -119,7 +119,7 @@ func (eh *encryptionHandle) encryptStream(
 	}
 	hints, config, signers, err := eh.prepareEncryptAndSign(plainMessageMetadata)
 	if err != nil {
-		return
+		return nil, err
 	}
 	var encryptionTimeOverride *time.Time
 	if eh.encryptionTimeOverride != nil {
@@ -205,7 +205,7 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 ) (encryptWriter, signWriter io.WriteCloser, err error) {
 	hints, config, signers, err := eh.prepareEncryptAndSign(plainMessageMetadata)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
 	if !eh.SessionKey.v6 {
