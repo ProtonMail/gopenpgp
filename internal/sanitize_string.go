@@ -33,7 +33,7 @@ func newSanitizeUtf8Reader(reader io.Reader) *sanitizeUtf8Reader {
 
 func (sr *sanitizeUtf8Reader) Read(buf []byte) (int, error) {
 	read := 0
-	// Check if there is a reminder from the pervious read
+	// Check if there is a reminder from the previous read
 	if sr.reminder != nil {
 		toCopy := len(sr.reminder)
 		if toCopy > len(buf) {
@@ -97,7 +97,7 @@ func (sr *sanitizeReader) Read(buf []byte) (int, error) {
 	// if there is more space in buf, read from the reader
 	n, err := sr.r.Read(buf[internalRead:])
 	if err != nil && err != io.EOF {
-		// error occured that is not EOF
+		// error occurred that is not EOF
 		return n, err
 	}
 	// filter non-unicode and \r\n in what has been read from the reader,

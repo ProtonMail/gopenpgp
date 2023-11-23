@@ -20,7 +20,7 @@ const (
 
 // SecurityLevel constants
 // The type is int8 for compatibility with
-// gomobile
+// gomobile.
 const (
 	StandardSecurity int8 = 0
 	HighSecurity     int8 = 1

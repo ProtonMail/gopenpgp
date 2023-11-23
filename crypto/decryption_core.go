@@ -63,7 +63,7 @@ func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage
 		}
 	} else {
 		// Password based decryption
-		var foundPassword bool = false
+		var foundPassword = false
 		resetReader := internal.NewResetReader(encryptedMessage)
 		for _, password := range dh.Passwords {
 			prompt := createPasswordPrompt(password)
@@ -82,7 +82,6 @@ func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage
 			// Parsing errors when reading the message are most likely caused by incorrect password, but we cannot know for sure
 			return nil, errors.New("gopenpgp: error in reading password protected message: wrong password or malformed message")
 		}
-
 	}
 
 	// Add utf8 sanitizer if signature has type packet.SigTypeText

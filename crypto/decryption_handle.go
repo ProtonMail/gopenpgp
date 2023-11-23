@@ -13,15 +13,15 @@ import (
 // The fields in the struct allow to customize the decryption.
 type decryptionHandle struct {
 	// DecryptionKeyRing provides the secret keys for decrypting the pgp message.
-	// Assumes the the message was encrypted towards a public key in DecryptionKeyRing.
+	// Assumes that the message was encrypted towards a public key in DecryptionKeyRing.
 	// If nil, set another field for the type of decryption: SessionKey or Password
 	DecryptionKeyRing *KeyRing
 	// SessionKeys provides one or more session keys for decrypting the pgp message.
-	// Assumes the the message was encrypted with one of the session keys provided.
+	// Assumes that the message was encrypted with one of the session keys provided.
 	// If nil, set another field for the type of decryption: DecryptionKeyRing or Password
 	SessionKeys []*SessionKey
 	// Passwords provides passwords for decrypting the pgp message.
-	// Assumes the the message was encrypted with on of the keys derived from the passwords.
+	// Assumes that the message was encrypted with on of the keys derived from the passwords.
 	// If nil, set another field for the type of decryption: DecryptionKeyRing or SessionKey
 	Passwords [][]byte
 	// VerifyKeyRing provides a set of public keys to verify the signature of the pgp message, if any.
@@ -192,7 +192,6 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 		} else {
 			plainMessageReader, err = dh.decryptStream(encryptedMessage)
 		}
-
 	} else if len(dh.Passwords) > 0 {
 		// Decrypt with password.
 		if encryptedSignature != nil {
