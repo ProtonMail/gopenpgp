@@ -80,6 +80,8 @@ func (dpb *DecryptionHandleBuilder) VerificationKeys(keys *KeyRing) *DecryptionH
 	return dpb
 }
 
+// VerificationKey sets the public key for verifying the signatures of the pgp message, if any.
+// If not set, the signatures cannot be verified.
 func (dpb *DecryptionHandleBuilder) VerificationKey(key *Key) *DecryptionHandleBuilder {
 	var err error
 	if dpb.handle.VerifyKeyRing == nil {

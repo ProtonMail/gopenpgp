@@ -44,10 +44,12 @@ type PGPMessageBuffer struct {
 
 // ---- GENERATORS -----
 
+// NewFileMetadata creates literal metadata.
 func NewFileMetadata(isUTF8 bool, filename string, modTime int64) *LiteralMetadata {
 	return &LiteralMetadata{isUTF8: isUTF8, filename: filename, ModTime: modTime}
 }
 
+// NewMetadata creates new default literal metadata with utf-8 set to isUTF8.
 func NewMetadata(isUTF8 bool) *LiteralMetadata {
 	return &LiteralMetadata{isUTF8: isUTF8}
 }
@@ -90,6 +92,7 @@ func NewPGPSplitMessage(keyPacket []byte, dataPacket []byte) *PGPMessage {
 	}
 }
 
+// NewPGPMessageBuffer creates a message buffer.
 func NewPGPMessageBuffer() *PGPMessageBuffer {
 	return &PGPMessageBuffer{
 		key:       new(bytes.Buffer),
@@ -250,6 +253,7 @@ Loop:
 	}, nil
 }
 
+// Filename return the filename of the literal metadata.
 func (msg *LiteralMetadata) Filename() string {
 	if msg == nil {
 		return ""
@@ -257,6 +261,7 @@ func (msg *LiteralMetadata) Filename() string {
 	return msg.filename
 }
 
+// IsUtf8 whether the literal metadata is annotated with uft-8.
 func (msg *LiteralMetadata) IsUtf8() bool {
 	if msg == nil {
 		return false
@@ -277,6 +282,7 @@ func (mb *PGPMessageBuffer) Write(b []byte) (n int, err error) {
 	return mb.data.Write(b)
 }
 
+// PGPMessage returns the PGPMessage extracted from the internal buffers.
 func (mb *PGPMessageBuffer) PGPMessage() *PGPMessage {
 	var detachedSignature []byte
 	if mb.signature.Len() > 0 {
