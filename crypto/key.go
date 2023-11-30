@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
+	packet "github.com/ProtonMail/go-crypto/openpgp/packet"
+	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/ProtonMail/gopenpgp/v3/armor"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/pkg/errors"
-	packet "github.com/ProtonMail/go-crypto/openpgp/packet"
-	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 )
 
 // Key contains a single private or public key.
@@ -93,10 +93,7 @@ func NewKeyFromEntity(entity *openpgp.Entity) (*Key, error) {
 	return &Key{entity: entity}, nil
 }
 
-// generateKey generates a key of the given keyType ("rsa", "x25519", "x448").
-// If keyType is "rsa", bits is the RSA bitsize of the key.
-// For other key types bits is unused.
-// If keyType is "" the method uses the default algorithm from config.
+// generateKey generates a key with the given key-generation profile and security-level.
 func generateKey(name, email string, clock Clock, profile KeyGenerationProfile, securityLevel int8, lifeTimeSec uint32) (*Key, error) {
 	config := profile.KeyGenerationConfig(securityLevel)
 	config.Time = NewConstantClock(clock().Unix())
@@ -116,7 +113,7 @@ func (key *Key) Copy() (*Key, error) {
 	return NewKey(serialized)
 }
 
-// Lock locks a copy of the key.
+// lock locks a copy of the key.
 func (key *Key) lock(passphrase []byte, profile KeyEncryptionProfile) (*Key, error) {
 	unlocked, err := key.IsUnlocked()
 	if err != nil {
