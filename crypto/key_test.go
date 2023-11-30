@@ -12,7 +12,6 @@ import (
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/profile"
-
 	"github.com/stretchr/testify/assert"
 )
 

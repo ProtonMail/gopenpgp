@@ -121,9 +121,8 @@ func (vh *verifyHandle) VerifyInline(message []byte, encoding int8) (verifyDataR
 	return
 }
 
-// VerifyCleartext verifies an armored cleartext message
-// and returns a VerifyCleartextResult. The VerifyCleartextResult can be checked for failure
-// and allows access the contained message
+// VerifyCleartext verifies an armored cleartext message and returns a VerifyCleartextResult. 
+// The VerifyCleartextResult can be checked for failure and allows access the contained message.
 // Note that an error is only returned if it is not a signature error.
 func (vh *verifyHandle) VerifyCleartext(cleartext []byte) (*VerifyCleartextResult, error) {
 	return vh.verifyCleartext(cleartext)
