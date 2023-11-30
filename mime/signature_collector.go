@@ -104,7 +104,7 @@ func (sc *signatureCollector) Accept(
 			return newSignatureNoVerifier()
 		}
 		if err != nil {
-			return errors.Wrap(err, "gopenpgp: error in armor decoding")
+			return errors.Wrap(err, "gopenpgp: signature verification failed")
 		}
 		sc.verified = verifyResult.SignatureError()
 	} else {
