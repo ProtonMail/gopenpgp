@@ -130,20 +130,10 @@ func (eh *encryptionHandle) EncryptSessionKey(sessionKey *SessionKey) ([]byte, e
 // --- Helper methods on encryption handle
 
 func (eh *encryptionHandle) validate() error {
-	keyMaterialPresent := false
-	if eh.Recipients != nil || eh.HiddenRecipients != nil {
-		keyMaterialPresent = true
-	}
-	if eh.Password != nil {
-		if keyMaterialPresent {
-			return errors.New("gopenpgp: more than one encryption key material provided")
-		}
-		keyMaterialPresent = true
-	}
-	if eh.SessionKey != nil {
-		keyMaterialPresent = true
-	}
-	if !keyMaterialPresent {
+	if eh.Recipients != nil &&
+		eh.HiddenRecipients != nil &&
+		eh.Password == nil &&
+		eh.SessionKey == nil {
 		return errors.New("gopenpgp: no encryption key material provided")
 	}
 
