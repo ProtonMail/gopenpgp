@@ -14,12 +14,12 @@ import (
 
 // SessionKey stores a decrypted session key.
 type SessionKey struct {
-	// The decrypted binary session key.
+	// Key defines the decrypted binary session key.
 	Key []byte
-	// The symmetric encryption algorithm used with this key.
+	// Algo defines the symmetric encryption algorithm used with this key.
 	// Only present if the key was not parsed from a v6 packet.
 	Algo string
-	// Flag to indicate that the session key was parsed from a v6 PKESK or SKESK packet
+	// v6 is a flag to indicate that the session key was parsed from a v6 PKESK or SKESK packet
 	v6 bool
 }
 
@@ -122,7 +122,6 @@ func NewSessionKeyFromToken(token []byte, algo string) *SessionKey {
 	return &SessionKey{
 		Key:  clone(token),
 		Algo: algo,
-		v6:   algo == "",
 	}
 }
 
