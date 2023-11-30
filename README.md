@@ -69,7 +69,7 @@ decrypted, err := decHandle.Decrypt(armored, crypto.Armor)
 myMessage := decrypted.Bytes()
 ```
 
-To encrypt with the new algorithms from the crypto refresh:
+To encrypt with the [latest proposed standard](https://www.ietf.org/archive/id/draft-ietf-openpgp-crypto-refresh-12.html):
 ```go
 import "github.com/ProtonMail/gopenpgp/v3/profile"
 
@@ -140,7 +140,7 @@ bobKeyPriv, err := pgp.KeyGeneration().
   GenerateKey()
 bobKeyPub, err := bobKeyPriv.ToPublic()
 
-// Encrypt plaintext message from alice to bob
+// Encrypt and sign plaintext message from alice to bob
 encHandle, err := pgp.Encryption().
   Recipient(bobKeyPub).
   SigningKey(aliceKeyPriv).
