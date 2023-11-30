@@ -27,10 +27,12 @@ type PGPEncryption interface {
 	ClearPrivateParams()
 }
 
+// Writer replicates the io.Writer interface for go-mobile.
 type Writer interface {
 	Write(b []byte) (n int, err error)
 }
 
+// WriteCloser replicates the io.WriteCloser interface for go-mobile.
 type WriteCloser interface {
 	Write(b []byte) (n int, err error)
 	Close() (err error)
