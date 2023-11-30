@@ -27,9 +27,9 @@ type LiteralMetadata struct {
 
 // PGPMessage stores a PGP-encrypted message.
 type PGPMessage struct {
-	// KeyPacket stores the key packets of the message
+	// KeyPacket refrences the PKESK and SKESK packets of the message
 	KeyPacket []byte
-	// DataPacket stores the data packets of the message
+	// DataPacket references the SEIPD or AEAD protected packet of the message
 	DataPacket []byte
 	// DetachedSignature stores the encrypted detached signature.
 	// Is nil, if the signature is embedded in the data packets or not existent.
