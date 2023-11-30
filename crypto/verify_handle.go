@@ -121,7 +121,7 @@ func (vh *verifyHandle) VerifyInline(message []byte, encoding int8) (verifyDataR
 	return
 }
 
-// VerifyCleartext verifies an armored cleartext message and returns a VerifyCleartextResult. 
+// VerifyCleartext verifies an armored cleartext message and returns a VerifyCleartextResult.
 // The VerifyCleartextResult can be checked for failure and allows access the contained message.
 // Note that an error is only returned if it is not a signature error.
 func (vh *verifyHandle) VerifyCleartext(cleartext []byte) (*VerifyCleartextResult, error) {
@@ -212,9 +212,6 @@ func (vh *verifyHandle) verifyCleartext(cleartext []byte) (*VerifyCleartextResul
 	signature, err := io.ReadAll(block.ArmoredSignature.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: signature not parsable in cleartext")
-	}
-	if err != nil {
-		return nil, errors.New("gopenpgp: cleartext header not parsable")
 	}
 	reader := bytes.NewReader(block.Bytes)
 	result, err := vh.verifyDetachedSignature(
