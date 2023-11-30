@@ -149,7 +149,7 @@ func (vh *verifyHandle) verifyDetachedSignature(
 	}
 	_, err = io.Copy(ioutil.Discard, ptReader)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: hashing failed")
+		return nil, errors.Wrap(err, "gopenpgp: reading all data from plaintext reader failed")
 	}
 	return ptReader.VerifySignature()
 }
