@@ -327,7 +327,7 @@ Loop:
 	return ids, false
 }
 
-// SignatureKeyIDs returns the key identifiers of the keys that were used
+// SignatureHexKeyIDs returns the key identifiers of the keys that were used
 // to create the signatures in hexadecimal form.
 func SignatureHexKeyIDs(signature []byte) ([]string, bool) {
 	return hexKeyIDs(SignatureKeyIDs(signature))
