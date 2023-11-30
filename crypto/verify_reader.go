@@ -55,10 +55,9 @@ func (msg *VerifyDataReader) VerifySignature() (result *VerifyResult, err error)
 	}
 	if msg.verifyKeyRing != nil {
 		return createVerifyResult(msg.details, msg.verifyKeyRing, msg.verificationContext, msg.verifyTime, msg.disableTimeCheck)
-	} else {
-		err = errors.New("gopenpgp: no verify keyring was provided before decryption")
 	}
-	return
+
+	return nil, errors.New("gopenpgp: no verify keyring was provided before decryption")
 }
 
 // ReadAll reads all plaintext data from the reader

@@ -1,7 +1,6 @@
 package crypto
 
-// KeyGenerationBuilder allows to configure a key generation handle
-// to generate pgp keys.
+// KeyGenerationBuilder allows to configure a key generation handle to generate OpenPGP keys.
 type KeyGenerationBuilder struct {
 	handle       *keyGenerationHandle
 	defaultClock Clock

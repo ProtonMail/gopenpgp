@@ -15,7 +15,7 @@ func newSignHandleBuilder(profile SignProfile, clock Clock) *SignHandleBuilder {
 	}
 }
 
-// SigningKey sets the signing key that are used to create signature of the message.
+// SigningKey sets the signing key that is used to create signature of the message.
 func (shb *SignHandleBuilder) SigningKey(key *Key) *SignHandleBuilder {
 	var err error
 	if shb.handle.SignKeyRing == nil {

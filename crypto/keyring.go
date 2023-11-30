@@ -98,7 +98,7 @@ func (keyRing *KeyRing) signingEntities() ([]*openpgp.Entity, error) {
 		if e.PrivateKey != nil && !e.PrivateKey.Encrypted {
 			signEntity = append(signEntity, e)
 		} else {
-			return nil, errors.New("gopenpgp: signing entity contains no or encrypted private key")
+			return nil, errors.New("gopenpgp: signing entity does not contain unencrypted private key")
 		}
 	}
 	return signEntity, nil

@@ -2,8 +2,7 @@ package crypto
 
 import "github.com/ProtonMail/gopenpgp/v3/constants"
 
-// EncryptionHandleBuilder allows to configure a decryption handle
-// to decrypt a pgp message.
+// EncryptionHandleBuilder allows to configure a decryption handle to decrypt an OpenPGP message.
 type EncryptionHandleBuilder struct {
 	handle       *encryptionHandle
 	defaultClock Clock
