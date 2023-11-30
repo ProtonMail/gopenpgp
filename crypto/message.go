@@ -82,8 +82,7 @@ func NewPGPMessageFromArmored(armored string) (*PGPMessage, error) {
 	return pgpMessage, nil
 }
 
-// NewPGPSplitMessage generates a new PGPSplitMessage from the binary unarmored keypacket,
-// datapacket.
+// NewPGPSplitMessage generates a new PGPSplitMessage from the binary unarmored keypacket and datapacket.
 func NewPGPSplitMessage(keyPacket []byte, dataPacket []byte) *PGPMessage {
 	return &PGPMessage{
 		KeyPacket:  clone(keyPacket),

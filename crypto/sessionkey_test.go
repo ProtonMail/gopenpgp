@@ -16,7 +16,7 @@ func init() {
 	var err error
 	testSessionKey, err = GenerateSessionKeyAlgo("aes256")
 	if err != nil {
-		panic("Expected no error while generating random session key with default algorithm, got:" + err.Error())
+		panic("Expected no error while generating random session key with aes256, got:" + err.Error())
 	}
 }
 
