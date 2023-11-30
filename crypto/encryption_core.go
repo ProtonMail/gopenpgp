@@ -116,8 +116,12 @@ func (eh *encryptionHandle) encryptStream(
 	plainMessageMetadata *LiteralMetadata,
 ) (plainMessageWriter WriteCloser, err error) {
 	var sessionKeyBytes []byte
+	var additionalPasswords [][]byte
 	if eh.SessionKey != nil {
 		sessionKeyBytes = eh.SessionKey.Key
+	}
+	if eh.Password != nil {
+		additionalPasswords = [][]byte{eh.Password}
 	}
 	hints, config, signers, err := eh.prepareEncryptAndSign(plainMessageMetadata)
 	if err != nil {
@@ -137,6 +141,7 @@ func (eh *encryptionHandle) encryptStream(
 			Signers:        signers,
 			Hints:          hints,
 			SessionKey:     sessionKeyBytes,
+			Passwords:      additionalPasswords,
 			Config:         config,
 			TextSig:        eh.IsUTF8,
 			OutsideSig:     eh.ExternalSignature,
@@ -347,7 +352,7 @@ func (eh *encryptionHandle) encryptSignDetachedStreamToRecipients(
 	}
 	if keyPacketWriter == nil {
 		// If no separate keyPacketWriter is given, write the key packets
-		// as prefix to the encrypted data and encrypted signature
+		// as prefix to the encrypted data and encrypted signature.
 		keyPacketWriter = io.MultiWriter(encryptedDataWriter, encryptedSignatureWriter)
 	}
 
@@ -357,29 +362,32 @@ func (eh *encryptionHandle) encryptSignDetachedStreamToRecipients(
 	}
 	if eh.Recipients != nil || eh.HiddenRecipients != nil {
 		// Encrypt the session key to the different recipients.
-		err = encryptSessionKeyToWriter(
+		if err = encryptSessionKeyToWriter(
 			eh.Recipients,
 			eh.HiddenRecipients,
 			eh.SessionKey,
 			keyPacketWriter,
 			encryptionTimeOverride,
 			configInput,
-		)
-	} else if eh.Password != nil {
+		); err != nil {
+			return nil, err
+		}
+	}
+	if eh.Password != nil {
 		// If not recipients present use the provided password
-		err = encryptSessionKeyWithPasswordToWriter(
+		if err = encryptSessionKeyWithPasswordToWriter(
 			eh.Password,
 			eh.SessionKey,
 			keyPacketWriter,
 			configInput,
-		)
-	} else {
-		err = errors.New("openpgp: no key material to encrypt")
+		); err != nil {
+			return nil, err
+		}
+	}
+	if eh.Password == nil && eh.Recipients == nil && eh.HiddenRecipients == nil {
+		return nil, errors.New("openpgp: no key material to encrypt")
 	}
 
-	if err != nil {
-		return nil, err
-	}
 	// Use the session key to encrypt message + signature of the message.
 	plaintextWriter, err = eh.encryptSignDetachedStreamWithSessionKey(
 		plainMessageMetadata,
