@@ -144,20 +144,7 @@ func (dh *decryptionHandle) ClearPrivateParams() {
 }
 
 func (dh *decryptionHandle) validate() error {
-	keyMaterialPresent := false
-	if dh.DecryptionKeyRing != nil {
-		keyMaterialPresent = true
-	}
-	if len(dh.Passwords) > 0 {
-		if keyMaterialPresent {
-			return errors.New("openpgp: more than one decryption key material provided")
-		}
-		keyMaterialPresent = true
-	}
-	if len(dh.SessionKeys) > 0 {
-		keyMaterialPresent = true
-	}
-	if !keyMaterialPresent {
+	if dh.DecryptionKeyRing == nil && len(dh.Passwords) == 0 && len(dh.SessionKeys) == 0 {
 		return errors.New("openpgp: no decryption key material provided")
 	}
 	return nil
@@ -193,6 +180,7 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 		}
 	}
 
+	var decryptionTried bool
 	if len(dh.SessionKeys) > 0 {
 		// Decrypt with session key.
 		if encryptedSignature != nil {
@@ -200,21 +188,27 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 		} else {
 			plainMessageReader, err = dh.decryptStreamWithSession(encryptedMessage)
 		}
-	} else if dh.DecryptionKeyRing != nil {
+		decryptionTried = true
+	}
+	if (!decryptionTried || err != nil) && dh.DecryptionKeyRing != nil {
 		// Decrypt with keyring.
 		if encryptedSignature != nil {
 			plainMessageReader, err = dh.decryptStreamAndVerifyDetached(encryptedMessage, encryptedSignature)
 		} else {
 			plainMessageReader, err = dh.decryptStream(encryptedMessage)
 		}
-	} else if len(dh.Passwords) > 0 {
+		decryptionTried = true
+	}
+	if (!decryptionTried || err != nil) && len(dh.Passwords) > 0 {
 		// Decrypt with password.
 		if encryptedSignature != nil {
 			plainMessageReader, err = dh.decryptStreamAndVerifyDetached(encryptedMessage, encryptedSignature)
 		} else {
 			plainMessageReader, err = dh.decryptStream(encryptedMessage)
 		}
-	} else {
+		decryptionTried = true
+	}
+	if !decryptionTried {
 		// No decryption material provided.
 		err = errors.New("gopenpgp: no decryption key ring, session key, or password provided")
 	}
