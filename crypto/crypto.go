@@ -18,15 +18,8 @@ import (
 	"github.com/ProtonMail/gopenpgp/v3/profile"
 )
 
-type Profile interface {
-	EncryptionProfile
-	KeyEncryptionProfile
-	KeyGenerationProfile
-	SignProfile
-}
-
 type PGPHandle struct {
-	profile     Profile
+	profile     *profile.Custom
 	defaultTime Clock
 }
 
@@ -38,16 +31,7 @@ func PGP() *PGPHandle {
 
 // PGPWithProfile creates a PGPHandle to interact with the API.
 // Uses the provided profile for configuration.
-func PGPWithProfile(profile Profile) *PGPHandle {
-	return &PGPHandle{
-		profile:     profile,
-		defaultTime: time.Now,
-	}
-}
-
-// PGPWithPresetProfile creates a PGPHandle to interact with the API.
-// Uses the provided profile for configuration.
-func PGPWithPresetProfile(profile *profile.Custom) *PGPHandle {
+func PGPWithProfile(profile *profile.Custom) *PGPHandle {
 	return &PGPHandle{
 		profile:     profile,
 		defaultTime: time.Now,
