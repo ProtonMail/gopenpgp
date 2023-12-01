@@ -17,6 +17,7 @@ crypto library](https://github.com/ProtonMail/go-crypto/tree/version-2).
     - [Detached and inline signatures](#detached-and-inline-signatures)
     - [Cleartext signed messages](#cleartext-signed-messages)
     - [Encrypt with different outputs](#encrypt-with-different-outputs)
+  - [Using with Go Mobile](#using-with-go-mobile)
 
 <!-- /TOC -->
 
@@ -405,3 +406,27 @@ ptWriter, err := encHandle.EncryptingWriter(splitWriter, crypto.Bytes)
 // Key packets are written to keyPackets, data packets are written to dataPackets ,and
 // Data packets of the encrypted signature to encSigDataPackets
 ```
+
+## Using with Go Mobile
+This library can be compiled with [Gomobile](https://github.com/golang/go/wiki/Mobile) too.
+First ensure you have a working installation of gomobile:
+```bash
+gomobile version
+```
+In case this fails, install it with:
+```bash
+go get -u golang.org/x/mobile/cmd/gomobile
+```
+Then ensure your path env var has gomobile's binary, and it is properly init-ed:
+```bash
+export PATH="$PATH:$GOPATH/bin"
+gomobile init
+```
+Then you must ensure that the Android or iOS frameworks are installed and the respective env vars set.
+
+Finally, build the application
+```bash
+sh build.sh
+```
+This script will build for both android and iOS at the same time,
+to filter one out you can comment out the line in the corresponding section.
