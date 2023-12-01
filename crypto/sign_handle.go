@@ -93,7 +93,7 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding int8) (me
 }
 
 // Sign creates a detached or inline signature from the provided byte slice.
-// The encoding argument defines the output encoding, i.e., Bytes or Armored
+// The encoding argument defines the output encoding, i.e., Bytes or Armored.
 func (sh *signatureHandle) Sign(message []byte, encoding int8) ([]byte, error) {
 	var writer bytes.Buffer
 	ptWriter, err := sh.SigningWriter(&writer, encoding)
@@ -117,7 +117,7 @@ func (sh *signatureHandle) SignCleartext(message []byte) ([]byte, error) {
 	return sh.signCleartext(message)
 }
 
-// ClearPrivateParams clears all secret key material contained in the PGPSign from memory,
+// ClearPrivateParams clears all secret key material contained in the PGPSign from memory.
 func (sh *signatureHandle) ClearPrivateParams() {
 	if sh.SignKeyRing != nil {
 		sh.SignKeyRing.ClearPrivateParams()
