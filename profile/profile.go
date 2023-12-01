@@ -8,22 +8,49 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/s2k"
 )
 
-// Custom type represents a profile setting algorithm
+const weakMinRSABits = 1023
+
+// Custom type represents a profile for setting algorithm
 // parameters for generating keys, encrypting data, and
 // signing data.
+
+// Use one of the pre-defined profiles if possible.
+// i.e., profile.Default(), profile.RFC4880()
 type Custom struct {
-	Name                     string
-	SetKeyAlgorithm          func(*packet.Config, int8)
-	AeadKeyEncryption        *packet.AEADConfig
-	S2kKeyEncryption         *s2k.Config
-	AeadEncryption           *packet.AEADConfig
-	S2kEncryption            *s2k.Config
+	// Name defines the name of the custom profile.
+	Name string
+	// SetKeyAlgorithm is a function that sets public key encryption
+	// algorithm in the config bases on the int8 security level.
+	SetKeyAlgorithm func(*packet.Config, int8)
+	// AeadKeyEncryption defines the aead encryption algorithm for key encryption.
+	AeadKeyEncryption *packet.AEADConfig
+	// S2kKeyEncryption defines the s2k algorithm for key encryption.
+	S2kKeyEncryption *s2k.Config
+	// AeadEncryption defines the aead encryption algorithm for pgp encryption.
+	AeadEncryption *packet.AEADConfig
+	// S2kEncryption defines the s2k algorithm for pgp encryption.
+	S2kEncryption *s2k.Config
+	// CompressionConfiguration defines the compression configuration to be used if any.
 	CompressionConfiguration *packet.CompressionConfig
-	Hash                     crypto.Hash
-	CipherKeyEncryption      packet.CipherFunction
-	CipherEncryption         packet.CipherFunction
-	CompressionAlgorithm     packet.CompressionAlgo
-	V6                       bool
+	// Hash defines hash algorithm to be used.
+	Hash crypto.Hash
+	// SignHash defines if a different hash algorithm should be used for signing.
+	// If nil, the a above field Hash is used.
+	SignHash *crypto.Hash
+	// CipherKeyEncryption defines the cipher to be used for key encryption.
+	CipherKeyEncryption packet.CipherFunction
+	// CipherEncryption defines the cipher to be used for pgp message encryption.
+	CipherEncryption packet.CipherFunction
+	// CompressionAlgorithm defines the compression algorithm to be used if any.
+	CompressionAlgorithm packet.CompressionAlgo
+	// V6 is a flag to indicate if v6 from the crypto-refresh should be used.
+	V6 bool
+	// AllowAllPublicKeyAlgorithms is a flag to disable all checks for deprecated public key algorithms.
+	AllowAllPublicKeyAlgorithms bool
+	// DisableIntendedRecipients is a flag to disable the intended recipients pgp feature from the crypto-refresh.
+	DisableIntendedRecipients bool
+	// AllowWeakRSA is a flag to disable checks for weak rsa keys.
+	AllowWeakRSA bool
 }
 
 // WithName returns the custom profile with the given name.
@@ -52,12 +79,22 @@ func (p *Custom) KeyGenerationConfig(securityLevel int8) *packet.Config {
 }
 
 func (p *Custom) EncryptionConfig() *packet.Config {
-	return &packet.Config{
+	config := &packet.Config{
 		DefaultHash:   p.Hash,
 		DefaultCipher: p.CipherEncryption,
 		AEADConfig:    p.AeadEncryption,
 		S2KConfig:     p.S2kEncryption,
 	}
+	switch {
+	case p.DisableIntendedRecipients:
+		intendedRecipients := false
+		config.CheckIntendedRecipients = &intendedRecipients
+	case p.AllowAllPublicKeyAlgorithms:
+		config.RejectPublicKeyAlgorithms = map[packet.PublicKeyAlgorithm]bool{}
+	case p.AllowWeakRSA:
+		config.MinRSABits = weakMinRSABits
+	}
+	return config
 }
 
 func (p *Custom) KeyEncryptionConfig() *packet.Config {
@@ -70,9 +107,21 @@ func (p *Custom) KeyEncryptionConfig() *packet.Config {
 }
 
 func (p *Custom) SignConfig() *packet.Config {
-	return &packet.Config{
+	config := &packet.Config{
 		DefaultHash: p.Hash,
 	}
+	switch {
+	case p.SignHash != nil:
+		config.DefaultHash = *p.SignHash
+	case p.DisableIntendedRecipients:
+		intendedRecipients := false
+		config.CheckIntendedRecipients = &intendedRecipients
+	case p.AllowAllPublicKeyAlgorithms:
+		config.RejectPublicKeyAlgorithms = map[packet.PublicKeyAlgorithm]bool{}
+	case p.AllowWeakRSA:
+		config.MinRSABits = weakMinRSABits
+	}
+	return config
 }
 
 func (p *Custom) CompressionConfig() *packet.Config {
