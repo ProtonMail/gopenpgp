@@ -32,7 +32,7 @@ type PGPMessage struct {
 	// DataPacket references the SEIPD or AEAD protected packet of the message
 	DataPacket []byte
 	// DetachedSignature stores the encrypted detached signature.
-	// Is nil, if the signature is embedded in the data packets or not existent.
+	// Nil when the signature is embedded in the data packet or not present.
 	DetachedSignature []byte
 }
 
