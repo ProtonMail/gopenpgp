@@ -8,7 +8,7 @@ import (
 )
 
 func TestDetachedSignaturesWithUnknownPackets(t *testing.T) {
-	ricarda_key_armor := `-----BEGIN PGP PUBLIC KEY BLOCK-----
+	const ricarda_key_armor = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Comment: 2ADE 0F8A A059 6BC9 4E50  D2AD 9162 53AB 652E F195
 
 xsDNBGJvrDABDACrZUY7VU1uZ/uzntlAKEHVF4mb3eYSdW1rE3hVke0HoDvtQbzq
@@ -94,7 +94,7 @@ u1Fr1U9mB1v6s2rXN2USut8xQECpA+OIiUItczMBd/OYOnu0Y3eImkYc
 =i+jK
 -----END PGP PUBLIC KEY BLOCK-----
 `
-	sig := `-----BEGIN PGP SIGNATURE-----
+	const sig = `-----BEGIN PGP SIGNATURE-----
 
 wsE7BAABCgBvBYJkit2rCRD7/MgqAV5zMEcUAAAAAAAeACBzYWx0QG5vdGF0aW9u
 cy5zZXF1b2lhLXBncC5vcmelgsnbOPsc1mt9YRUNBmoAWxgPfqyzTjfUu2WQ1NQd
@@ -141,7 +141,7 @@ sWC04HotaaBXdIHf
 }
 
 func TestSignedAndEncryptedMessages(t *testing.T) {
-	bob_key_armor := `-----BEGIN PGP PRIVATE KEY BLOCK-----
+	const bob_key_armor = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 Comment: Bob's OpenPGP Transferable Secret Key
 
 lQVYBF2lnPIBDAC5cL9PQoQLTMuhjbYvb4Ncuuo0bfmgPRFywX53jPhoFf4Zg6mv
@@ -286,7 +286,7 @@ Ik4fzHKnqkcmTwUng+v5sDcU2R2x4Rel6YuR
 }
 
 func TestProblematicCleartextSignature(t *testing.T) {
-	bob_key_armor := `-----BEGIN PGP PRIVATE KEY BLOCK-----
+	const bob_key_armor = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 Comment: Bob's OpenPGP Transferable Secret Key
 
 lQVYBF2lnPIBDAC5cL9PQoQLTMuhjbYvb4Ncuuo0bfmgPRFywX53jPhoFf4Zg6mv
@@ -369,7 +369,7 @@ xqAY9Bwizt4FWgXuLm1a4+So4V9j1TRCXd12Uc2l2RNmgDE=
 =miES
 -----END PGP PRIVATE KEY BLOCK-----
 `
-	message := `From the grocery store we need:
+	const message = `From the grocery store we need:
 
 - tofu
 - vegetables
@@ -406,7 +406,7 @@ xqAY9Bwizt4FWgXuLm1a4+So4V9j1TRCXd12Uc2l2RNmgDE=
 }
 
 func TestDetachedSignaturesLowRSABits(t *testing.T) {
-	ricarda_key_armor := `-----BEGIN PGP PRIVATE KEY BLOCK-----
+	const ricarda_key_armor = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 
 xcA4BF2lnPIBAgDJNC6ahwp/G+kb5lKvpbR4MdEs5GTSCgY8aU7m/dIcANhtZds8
 VRAURBHWhDaG09gQGALulT/nZ0wDzGaBhCTjABEBAAEAAfoCqvt3NxUvjEoyAYLV
@@ -465,7 +465,7 @@ KNs/Xw4PLUnp6wQO2d/6oZay
 =ffeX
 -----END PGP PRIVATE KEY BLOCK-----	
 `
-	sig := `-----BEGIN PGP SIGNATURE-----
+	const sig = `-----BEGIN PGP SIGNATURE-----
 
 wsE7BAABCgBvBYJkpnJFCRB8L6pN+Tw3skcUAAAAAAAeACBzYWx0QG5vdGF0aW9u
 cy5zZXF1b2lhLXBncC5vcme7t8QmfP04d0zI8u8HUPmZcNbExpgA23j+/ICq8B3N
@@ -502,7 +502,7 @@ l6qOAQGHaxD0whADX2J53HqPUpcbidzw3jEKwWgI
 }
 
 func TestDetachedSignaturesAndroid(t *testing.T) {
-	ricarda_key_armor := `-----BEGIN PGP PUBLIC KEY BLOCK-----
+	const ricarda_key_armor = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: GopenPGP 2.1.1
 Comment: https://gopenpgp.org
 
@@ -534,7 +534,7 @@ oX0jp195mWix6suRJSWVK14uieT6uL5yYC5tZMz+t9rs7YxCkHxFRT1H5ZLHUD/r
 =6gp8
 -----END PGP PUBLIC KEY BLOCK-----
 `
-	sig := `-----BEGIN PGP SIGNATURE-----
+	const sig = `-----BEGIN PGP SIGNATURE-----
 Version: GopenPGP 2.4.10
 Comment: https://gopenpgp.org
 
