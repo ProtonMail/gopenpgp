@@ -123,10 +123,10 @@ func (keyRing *KeyRing) CountEntities() int {
 }
 
 // CountDecryptionEntities returns the number of entities in the keyring.
-func (keyRing *KeyRing) CountDecryptionEntities() int {
+func (keyRing *KeyRing) CountDecryptionEntities(time time.Time) int {
 	var count int
 	for _, entity := range keyRing.entities {
-		decryptionKeys := entity.DecryptionKeys(0, time.Time{})
+		decryptionKeys := entity.DecryptionKeys(0, time)
 		count += len(decryptionKeys)
 	}
 	return count

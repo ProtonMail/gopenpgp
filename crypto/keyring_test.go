@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/rsa"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -123,7 +124,7 @@ func TestKeyIds(t *testing.T) {
 func TestMultipleKeyRing(t *testing.T) {
 	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
 	assert.Exactly(t, 3, keyRingTestMultiple.CountEntities())
-	assert.Exactly(t, 3, keyRingTestMultiple.CountDecryptionEntities())
+	assert.Exactly(t, 3, keyRingTestMultiple.CountDecryptionEntities(time.Time{}))
 
 	assert.Exactly(t, 3, len(keyRingTestMultiple.GetKeys()))
 
@@ -142,7 +143,7 @@ func TestMultipleKeyRing(t *testing.T) {
 	}
 	assert.Exactly(t, 1, len(singleKeyRing.entities))
 	assert.Exactly(t, 1, singleKeyRing.CountEntities())
-	assert.Exactly(t, 1, singleKeyRing.CountDecryptionEntities())
+	assert.Exactly(t, 1, singleKeyRing.CountDecryptionEntities(time.Time{}))
 }
 
 func TestSerializeParse(t *testing.T) {
