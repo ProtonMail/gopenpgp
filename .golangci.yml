@@ -26,6 +26,8 @@ issues:
       text: "G101: Potential hardcoded credentials"
     - path: crypto/encrypt_decrypt_test.go
       text: "Using the variable on range scope"
+    - path: crypto/encrypt_decrypt_err_test.go
+      text: "Using the variable on range scope"
     - path: crypto/sign_verify_test.go
       text: "Using the variable on range scope"
 

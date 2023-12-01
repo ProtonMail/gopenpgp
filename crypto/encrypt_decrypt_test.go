@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
@@ -48,12 +49,20 @@ func generateTestKeyMaterial(profile *profile.Custom) *testMaterial {
 	if err != nil {
 		panic("Cannot create keyring:" + err.Error())
 	}
+	keyWrong, err := handle.KeyGeneration().
+		AddUserId("testWrong", "testWrong@test.test").
+		New().
+		GenerateKey()
+	if err != nil {
+		panic("Cannot generate key:" + err.Error())
+	}
 	return &testMaterial{
 		profileName:        profile.Name,
 		pgp:                handle,
 		keyRingTestPublic:  keyRingTestPublic,
 		keyRingTestPrivate: keyRingTestPrivate,
 		testSessionKey:     testSessionKey,
+		keyWrong:           keyWrong,
 	}
 }
 
@@ -95,6 +104,7 @@ type testMaterial struct {
 	pgp                *PGPHandle
 	keyRingTestPublic  *KeyRing
 	keyRingTestPrivate *KeyRing
+	keyWrong           *Key
 	testSessionKey     *SessionKey
 }
 
@@ -829,6 +839,41 @@ func TestEncryptDecryptKey(t *testing.T) {
 				t.Fatal("Expected no error while decrypting key, got:", err)
 			}
 			reflect.DeepEqual(key, unlockedKey)
+		})
+	}
+}
+
+func TestEncryptCompressionApplied(t *testing.T) {
+	const numReplicas = 10
+	builder := strings.Builder{}
+	for i := 0; i < numReplicas; i++ {
+		builder.WriteString(testMessage)
+	}
+	messageToEncrypt := builder.String()
+	for _, material := range testMaterialForProfiles {
+		t.Run(material.profileName, func(t *testing.T) {
+			encHandleCompress, _ := material.pgp.Encryption().
+				Recipients(material.keyRingTestPublic).
+				SigningKeys(material.keyRingTestPrivate).
+				Compress().
+				New()
+
+			encHandle, _ := material.pgp.Encryption().
+				Recipients(material.keyRingTestPublic).
+				SigningKeys(material.keyRingTestPrivate).
+				New()
+
+			compressedMessage, err := encHandleCompress.Encrypt([]byte(messageToEncrypt))
+			if err != nil {
+				t.Fatal(err)
+			}
+			message, err := encHandle.Encrypt([]byte(messageToEncrypt))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(compressedMessage.DataPacket) >= len(message.DataPacket) {
+				t.Fatal("Expected compressed encrypted message to be smaller than the encrypted message")
+			}
 		})
 	}
 }
