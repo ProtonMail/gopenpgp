@@ -350,7 +350,7 @@ func TestGetEntity(t *testing.T) {
 		t.Fatal("Cannot unarmor key:", err)
 	}
 	entity := publicKey.GetEntity()
-	selfSig, err := entity.PrimarySelfSignature(time.Time{})
+	selfSig, err := entity.PrimarySelfSignature(time.Unix(testTime, 0))
 	if err != nil {
 		t.Fatal("Expected no error, got: ", err)
 	}
@@ -389,16 +389,19 @@ func TestKeyCapabilities(t *testing.T) {
 	assert.True(t, publicKey.CanEncrypt(testTime))
 }
 
+const testRevokedKeyCapabilitiesTime = 1632219895
+
 func TestRevokedKeyCapabilities(t *testing.T) {
+
 	revokedKey, err := NewKeyFromArmored(readTestFile("key_revoked", false))
 	if err != nil {
 		t.Fatal("Cannot unarmor key:", err)
 	}
 
-	assert.False(t, revokedKey.CanVerify(1632219895))
-	assert.False(t, revokedKey.CanEncrypt(1632219895))
-	assert.False(t, revokedKey.IsExpired(1632219895))
-	assert.True(t, revokedKey.IsRevoked(1632219895))
+	assert.False(t, revokedKey.CanVerify(testRevokedKeyCapabilitiesTime))
+	assert.False(t, revokedKey.CanEncrypt(testRevokedKeyCapabilitiesTime))
+	assert.False(t, revokedKey.IsExpired(testRevokedKeyCapabilitiesTime))
+	assert.True(t, revokedKey.IsRevoked(testRevokedKeyCapabilitiesTime))
 }
 
 func TestUnlockMismatchingKey(t *testing.T) {
