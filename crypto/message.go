@@ -27,7 +27,7 @@ type LiteralMetadata struct {
 
 // PGPMessage stores a PGP-encrypted message.
 type PGPMessage struct {
-	// KeyPacket refrences the PKESK and SKESK packets of the message
+	// KeyPacket references the PKESK and SKESK packets of the message
 	KeyPacket []byte
 	// DataPacket references the SEIPD or AEAD protected packet of the message
 	DataPacket []byte

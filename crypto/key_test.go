@@ -392,7 +392,6 @@ func TestKeyCapabilities(t *testing.T) {
 const testRevokedKeyCapabilitiesTime = 1632219895
 
 func TestRevokedKeyCapabilities(t *testing.T) {
-
 	revokedKey, err := NewKeyFromArmored(readTestFile("key_revoked", false))
 	if err != nil {
 		t.Fatal("Cannot unarmor key:", err)
