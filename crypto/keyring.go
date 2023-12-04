@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"encoding/json"
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
@@ -20,8 +21,8 @@ type KeyRing struct {
 
 // Identity contains the name and the email of a key holder.
 type Identity struct {
-	Name  string
-	Email string
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 // --- New keyrings
@@ -75,6 +76,7 @@ func NewKeyRingFromBinary(binKeys []byte) (*KeyRing, error) {
 // --- Extract keys from keyring
 
 // GetKeys returns openpgp keys contained in this KeyRing.
+// Not supported on go mobile clients.
 func (keyRing *KeyRing) GetKeys() []*Key {
 	keys := make([]*Key, keyRing.CountEntities())
 	for i, entity := range keyRing.entities {
@@ -123,16 +125,23 @@ func (keyRing *KeyRing) CountEntities() int {
 }
 
 // CountDecryptionEntities returns the number of entities in the keyring.
-func (keyRing *KeyRing) CountDecryptionEntities(time time.Time) int {
+// Takes the current time for checking the keys in unix time format.
+// If the unix time is zero, time checks are ignored.
+func (keyRing *KeyRing) CountDecryptionEntities(unixTime int64) int {
 	var count int
+	var checkTime time.Time
+	if unixTime != 0 {
+		checkTime = time.Unix(unixTime, 0)
+	}
 	for _, entity := range keyRing.entities {
-		decryptionKeys := entity.DecryptionKeys(0, time)
+		decryptionKeys := entity.DecryptionKeys(0, checkTime)
 		count += len(decryptionKeys)
 	}
 	return count
 }
 
 // GetIdentities returns the list of identities associated with this key ring.
+// Not supported on go-mobile clients use keyRing.GetIdentitiesJson() instead.
 func (keyRing *KeyRing) GetIdentities() []*Identity {
 	var identities []*Identity
 	for _, e := range keyRing.entities {
@@ -144,6 +153,17 @@ func (keyRing *KeyRing) GetIdentities() []*Identity {
 		}
 	}
 	return identities
+}
+
+// GetIdentitiesJson returns the list of identities associated with this key ring encoded as json.
+// Returns nil if an encoding error occurs.
+// Helper function for go-mobile clients.
+func (keyRing *KeyRing) GetIdentitiesJson() []byte {
+	identitiesJson, err := json.Marshal(keyRing.GetIdentities())
+	if err != nil {
+		return nil
+	}
+	return identitiesJson
 }
 
 // CanVerify returns true if any of the keys in the keyring can be used for verification.
@@ -169,12 +189,28 @@ func (keyRing *KeyRing) CanEncrypt(unixTime int64) bool {
 }
 
 // GetKeyIDs returns array of IDs of keys in this KeyRing.
+// Not supported on go-mobile clients.
 func (keyRing *KeyRing) GetKeyIDs() []uint64 {
 	var res = make([]uint64, len(keyRing.entities))
 	for id, e := range keyRing.entities {
 		res[id] = e.PrimaryKey.KeyId
 	}
 	return res
+}
+
+// GetHexKeyIDsJson returns an IDs of keys in this KeyRing as a json array.
+// Key ids are encoded as hexadecimal and nil is returned if an error occurs.
+// Helper function for go-mobile clients.
+func (keyRing *KeyRing) GetHexKeyIDsJson() []byte {
+	var res = make([]string, len(keyRing.entities))
+	for id, e := range keyRing.entities {
+		res[id] = keyIDToHex(e.PrimaryKey.KeyId)
+	}
+	keyIdsJson, err := json.Marshal(res)
+	if err != nil {
+		return nil
+	}
+	return keyIdsJson
 }
 
 // --- Filter keyrings

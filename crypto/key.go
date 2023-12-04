@@ -364,6 +364,7 @@ func (key *Key) GetHexKeyID() string {
 }
 
 // GetKeyID returns the key ID, encoded as 8-byte int.
+// Does not work for go-mobile clients, use GetHexKeyID instead.
 func (key *Key) GetKeyID() uint64 {
 	return key.entity.PrimaryKey.KeyId
 }
@@ -394,6 +395,7 @@ func (key *Key) GetJsonSHA256Fingerprints() ([]byte, error) {
 }
 
 // GetEntity gets x/crypto Entity object.
+// Not supported on go-mobile clients.
 func (key *Key) GetEntity() *openpgp.Entity {
 	return key.entity
 }
