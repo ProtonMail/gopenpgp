@@ -13,9 +13,8 @@ const weakMinRSABits = 1023
 // Custom type represents a profile for setting algorithm
 // parameters for generating keys, encrypting data, and
 // signing data.
-
 // Use one of the pre-defined profiles if possible.
-// i.e., profile.Default(), profile.RFC4880()
+// i.e., profile.Default(), profile.RFC4880().
 type Custom struct {
 	// Name defines the name of the custom profile.
 	Name string

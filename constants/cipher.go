@@ -26,3 +26,14 @@ const (
 	// HighSecurity is the high security level.
 	HighSecurity int8 = 1
 )
+
+// Warps the packet.CipherFunction enum from go-crypto
+// for go-mobile clients.
+// int8 type for go-mobile support.
+const (
+	Cipher3DES   int8 = 2
+	CipherCAST5  int8 = 3
+	CipherAES128 int8 = 7
+	CipherAES192 int8 = 8
+	CipherAES256 int8 = 9
+)
