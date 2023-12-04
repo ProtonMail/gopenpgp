@@ -50,6 +50,7 @@ func (dpb *DecryptionHandleBuilder) SessionKey(sessionKey *SessionKey) *Decrypti
 // Assumes that the message was encrypted with one of the session keys provided.
 // Triggers the session key decryption mode.
 // If not set, set another field for the type of decryption: DecryptionKeys or Password.
+// Not supported on go-mobile clients.
 func (dpb *DecryptionHandleBuilder) SessionKeys(sessionKeys []*SessionKey) *DecryptionHandleBuilder {
 	dpb.handle.SessionKeys = sessionKeys
 	return dpb
@@ -68,6 +69,7 @@ func (dpb *DecryptionHandleBuilder) Password(password []byte) *DecryptionHandleB
 // Assumes that the message was encrypted with one of the keys derived from the passwords.
 // Triggers the password decryption mode.
 // If not set, set another field for the type of decryption: DecryptionKeys or SessionKey.
+// Not supported on go-mobile clients.
 func (dpb *DecryptionHandleBuilder) Passwords(passwords [][]byte) *DecryptionHandleBuilder {
 	dpb.handle.Passwords = passwords
 	return dpb

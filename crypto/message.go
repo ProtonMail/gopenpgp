@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"encoding/json"
 	goerrors "errors"
 	"io"
 	"io/ioutil"
@@ -110,6 +111,7 @@ func (msg *PGPMessage) Bytes() []byte {
 
 // NewReader returns a New io.Reader for the unarmored binary data of the
 // message.
+// Not supported on go-mobile clients.
 func (msg *PGPMessage) NewReader() io.Reader {
 	return bytes.NewReader(msg.Bytes())
 }
@@ -137,6 +139,7 @@ func (msg *PGPMessage) ArmorWithCustomHeaders(comment, version string) (string, 
 }
 
 // EncryptionKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
+// Not supported on go-mobile clients use msg.HexEncryptionKeyIDsJson() instead.
 func (msg *PGPMessage) EncryptionKeyIDs() ([]uint64, bool) {
 	packets := packet.NewReader(bytes.NewReader(msg.KeyPacket))
 	var err error
@@ -165,19 +168,52 @@ Loop:
 	return ids, false
 }
 
-// HexEncryptionKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
+// HexEncryptionKeyIDs returns the key IDs of the keys to which the session key is encrypted.
+// Not supported on go-mobile clients use msg.HexEncryptionKeyIDsJson() instead.
 func (msg *PGPMessage) HexEncryptionKeyIDs() ([]string, bool) {
 	return hexKeyIDs(msg.EncryptionKeyIDs())
 }
 
-// SignatureKeyIDs Returns the key IDs of the keys to which the (readable) signature packets are encrypted to.
+// HexEncryptionKeyIDsJson returns the key IDs of the keys to which the session key is encrypted as a JSON array.
+// If an error occurs it returns nil.
+// Helper function for go-mobile clients.
+func (msg *PGPMessage) HexEncryptionKeyIDsJson() []byte {
+	hexIds, ok := msg.HexEncryptionKeyIDs()
+	if !ok {
+		return nil
+	}
+	hexIdsJson, err := json.Marshal(hexIds)
+	if err != nil {
+		return nil
+	}
+	return hexIdsJson
+}
+
+// SignatureKeyIDs returns the key IDs of the keys to which the (readable) signature packets are encrypted to.
+// Not supported on go-mobile clients use msg.HexSignatureKeyIDsJson() instead.
 func (msg *PGPMessage) SignatureKeyIDs() ([]uint64, bool) {
 	return SignatureKeyIDs(msg.DataPacket)
 }
 
-// HexSignatureKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
+// HexSignatureKeyIDs returns the key IDs of the keys to which the session key is encrypted.
+// Not supported on go-mobile clients use msg.HexSignatureKeyIDsJson() instead.
 func (msg *PGPMessage) HexSignatureKeyIDs() ([]string, bool) {
 	return hexKeyIDs(msg.SignatureKeyIDs())
+}
+
+// HexSignatureKeyIDsJson returns the key IDs of the keys to which the session key is encrypted as a JSON array.
+// If an error occurs it returns nil.
+// Helper function for go-mobile clients.
+func (msg *PGPMessage) HexSignatureKeyIDsJson() []byte {
+	sigHexSigIds, ok := msg.HexSignatureKeyIDs()
+	if !ok {
+		return nil
+	}
+	sigHexKeyIdsJSON, err := json.Marshal(sigHexSigIds)
+	if err != nil {
+		return nil
+	}
+	return sigHexKeyIdsJSON
 }
 
 // BinaryDataPacket returns the unarmored binary datapacket as a []byte.
