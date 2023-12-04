@@ -64,6 +64,7 @@ func (cr checkReader) Read(buf []byte) (int, error) {
 
 // GetCipherFunc returns the cipher function corresponding to the algorithm used
 // with this SessionKey.
+// Not supported in go-mobile clients use sk.GetCipherFuncInt instead.
 func (sk *SessionKey) GetCipherFunc() (packet.CipherFunction, error) {
 	if sk.v6 {
 		return 0, errors.New("gopenpgp: no cipher function available for a v6 session key")
@@ -73,6 +74,14 @@ func (sk *SessionKey) GetCipherFunc() (packet.CipherFunction, error) {
 		return cf, errors.New("gopenpgp: unsupported cipher function: " + sk.Algo)
 	}
 	return cf, nil
+}
+
+// GetCipherFuncInt returns the cipher function as int8 corresponding to the algorithm used
+// with this SessionKey.
+// The int8 type is used for go-mobile clients, see constant.Cipher...
+func (sk *SessionKey) GetCipherFuncInt() (int8, error) {
+	cipherFunc, err := sk.GetCipherFunc()
+	return int8(cipherFunc), err
 }
 
 // GetBase64Key returns the session key as base64 encoded string.

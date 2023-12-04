@@ -59,6 +59,7 @@ func (vr *VerifyResult) SignatureCreationTime() int64 {
 }
 
 // SignedWithType returns the type of the signature if found, else returns 0.
+// Not supported in go-mobile use SignedWithTypeInteger instead.
 func (vr *VerifyResult) SignedWithType() packet.SignatureType {
 	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
 		return 0
@@ -66,13 +67,27 @@ func (vr *VerifyResult) SignedWithType() packet.SignatureType {
 	return vr.selectedSignature.Signature.SigType
 }
 
+// SignedWithTypeInt8 returns the type of the signature as int8 type if found, else returns 0.
+// See constants.SigType... for the different types.
+func (vr *VerifyResult) SignedWithTypeInt8() int8 {
+	return int8(vr.SignedWithType())
+}
+
 // SignedByKeyId returns the key id of the key that was used to verify the selected signature,
 // if found, else returns 0.
+// Not supported in go-mobile use SignedByKeyIdString instead.
 func (vr *VerifyResult) SignedByKeyId() uint64 {
 	if vr.selectedSignature == nil || vr.selectedSignature.Signature == nil {
 		return 0
 	}
 	return *vr.selectedSignature.Signature.IssuerKeyId
+}
+
+// SignedByKeyIdHex returns the key id of the key that was used to verify the selected signature
+// as a hex encoded string.
+// Helper for go-mobile.
+func (vr *VerifyResult) SignedByKeyIdHex() string {
+	return keyIDToHex(vr.SignedByKeyId())
 }
 
 // SignedByFingerprint returns the key fingerprint of the key that was used to verify the selected signature,
