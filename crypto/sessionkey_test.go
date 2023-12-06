@@ -304,7 +304,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 		t.Fatal("Unable to decrypt and verify joined keypacket and datapacket, got:", err)
 	}
 	if err = finalMessage.SignatureError(); err != nil {
-		t.Fatal("Unable to decrypt and verify joined keypacket and datapacket, got:", err)
+		t.Fatal("Unexpected verification error for joined keypacket and datapacket, got:", err)
 	}
 
 	assert.Exactly(t, message, finalMessage.Bytes())
