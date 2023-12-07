@@ -27,7 +27,7 @@ const (
 	HighSecurity int8 = 1
 )
 
-// Warps the packet.CipherFunction enum from go-crypto
+// Wraps the packet.CipherFunction enum from go-crypto
 // for go-mobile clients.
 // int8 type for go-mobile support.
 const (

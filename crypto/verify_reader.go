@@ -155,8 +155,7 @@ type VerifyCleartextResult struct {
 	cleartext []byte
 }
 
-// Cleartext returns the parsed plain text of
-// a the result.
+// Cleartext returns the parsed plain text of the result.
 func (vc *VerifyCleartextResult) Cleartext() []byte {
 	return vc.cleartext
 }

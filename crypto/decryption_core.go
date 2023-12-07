@@ -75,7 +75,7 @@ func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage
 			}
 			if _, err := resetReader.Reset(); err != nil {
 				// Should not happen.
-				return nil, errors.New("gopenpgp: buffer reset failed")
+				return nil, errors.Wrap(err, "gopenpgp: buffer reset failed")
 			}
 		}
 		if !foundPassword {

@@ -46,7 +46,7 @@ type encryptionHandle struct {
 	ArmorHeaders map[string]string
 	// Compression indicates if the plaintext should be compressed before encryption.
 	// constants.NoCompression: none, constants.DefaultCompression: profile default
-	// constants.ZIPCompression: zip constants.ZLIBCompression: zlib
+	// constants.ZIPCompression: zip, constants.ZLIBCompression: zlib
 	Compression int8
 	// DetachedSignature indicates if a separate encrypted detached signature
 	// should be created

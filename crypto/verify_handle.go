@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
-
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
