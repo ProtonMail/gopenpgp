@@ -80,9 +80,9 @@ func defaultEncryptionHandle(profile EncryptionProfile, clock Clock) *encryption
 // The encoding argument defines the output encoding, i.e., Bytes or Armored
 // The returned pgp message WriteCloser must be closed after the plaintext has been written.
 func (eh *encryptionHandle) EncryptingWriter(outputWriter Writer, encoding int8) (messageWriter WriteCloser, err error) {
-	pgpMessageWriter := isPGPMessageWriter(outputWriter)
-	if pgpMessageWriter != nil {
-		return eh.encryptingWriters(pgpMessageWriter.Keys(), pgpMessageWriter, pgpMessageWriter.Signature(), nil, armorOutput(encoding))
+	pgpSplitWriter := castToPGPSplitWriter(outputWriter)
+	if pgpSplitWriter != nil {
+		return eh.encryptingWriters(pgpSplitWriter.Keys(), pgpSplitWriter, pgpSplitWriter.Signature(), nil, armorOutput(encoding))
 	}
 	if eh.DetachedSignature {
 		return nil, errors.New("gopenpgp: no pgp split writer provided for the detached signature")
@@ -271,7 +271,7 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 	return messageWriter, nil
 }
 
-func isPGPMessageWriter(w Writer) PGPSplitWriter {
+func castToPGPSplitWriter(w Writer) PGPSplitWriter {
 	v, ok := interface{}(w).(PGPSplitWriter)
 	if ok {
 		return v
