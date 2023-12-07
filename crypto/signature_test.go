@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/ProtonMail/gopenpgp/v3/armor"
@@ -15,8 +14,6 @@ import (
 	"github.com/ProtonMail/gopenpgp/v3/internal"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/ProtonMail/gopenpgp/v2/constants"
 )
 
 const signedPlainText = "Signed message\n"
@@ -672,53 +669,4 @@ func Test_VerifyWithDoubleContext(t *testing.T) {
 	}
 	// then
 	checkVerificationError(t, result.SignatureError(), constants.SIGNATURE_BAD_CONTEXT)
-}
-
-func Test_verifySignaturExpire(t *testing.T) {
-	defer func(t int64) { pgp.latestServerTime = t }(pgp.latestServerTime)
-	pgp.latestServerTime = 0
-
-	const lifetime = uint32(time.Hour / time.Second)
-
-	cfg := &packet.Config{
-		Algorithm:              packet.PubKeyAlgoEdDSA,
-		DefaultHash:            crypto.SHA256,
-		DefaultCipher:          packet.CipherAES256,
-		DefaultCompressionAlgo: packet.CompressionZLIB,
-		KeyLifetimeSecs:        lifetime,
-		SigLifetimeSecs:        lifetime,
-	}
-
-	entity, err := openpgp.NewEntity("John Smith", "Linux", "john.smith@example.com", cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	key, err := NewKeyFromEntity(entity)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	keyRing, err := NewKeyRing(key)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	data := []byte("Hello, World!")
-	message := NewPlainMessage(data)
-
-	signature, err := keyRing.SignDetached(message)
-	if err != nil {
-		t.Fatalf("%#+v", err)
-	}
-
-	sig := NewPGPSignature(signature.GetBinary())
-
-	// packet.PublicKey.KeyExpired will return false here because PublicKey CreationTime has
-	// nanosecond precision, while pgpcrypto.GetUnixTime() has only second precision.
-	// Adjust the check time to be in the future to ensure that the key is not expired.
-	err = keyRing.VerifyDetached(message, sig, GetUnixTime()+1)
-	if err != nil {
-		t.Fatal(err)
-	}
 }
