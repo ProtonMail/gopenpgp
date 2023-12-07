@@ -182,7 +182,7 @@ func (r *Go2IOSReader) Read(max int) (result *MobileReadResult, err error) {
 	return result, nil
 }
 
-// KeyPacketSplitWriter implement the crypto.PGPSplitWriter interface
+// KeyPacketSplitWriter implements the crypto.PGPSplitWriter interface
 // for splitting encryptions output into different packets.
 // Internally buffers the key packets and potential detached encrypted signatures.
 type KeyPacketSplitWriter struct {

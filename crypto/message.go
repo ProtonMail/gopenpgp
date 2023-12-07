@@ -239,8 +239,7 @@ func (msg *PGPMessage) EncryptedDetachedSignature() *PGPMessage {
 	}
 }
 
-// SplitMessage splits the message into key and data packet(s).
-// Parameters are for backwards compatibility and are unused.
+// splitMessage splits the message into key and data packet(s).
 func (msg *PGPMessage) splitMessage() (*PGPMessage, error) {
 	data := msg.DataPacket
 	bytesReader := bytes.NewReader(data)
@@ -268,7 +267,7 @@ Loop:
 	}, nil
 }
 
-// Filename return the filename of the literal metadata.
+// Filename returns the filename of the literal metadata.
 func (msg *LiteralMetadata) Filename() string {
 	if msg == nil {
 		return ""
@@ -276,7 +275,7 @@ func (msg *LiteralMetadata) Filename() string {
 	return msg.filename
 }
 
-// IsUtf8 whether the literal metadata is annotated with uft-8.
+// IsUtf8 returns whether the literal metadata is annotated with utf-8.
 func (msg *LiteralMetadata) IsUtf8() bool {
 	if msg == nil {
 		return false
