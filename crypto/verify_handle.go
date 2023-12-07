@@ -208,7 +208,7 @@ func (vh *verifyHandle) verifyCleartext(cleartext []byte) (*VerifyCleartextResul
 	if len(bytes.TrimSpace(rest)) > 0 {
 		return nil, errors.New("gopenpgp: cleartext message has trailing text")
 	}
-	signature, err := io.ReadAll(block.ArmoredSignature.Body)
+	signature, err := ioutil.ReadAll(block.ArmoredSignature.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: signature not parsable in cleartext")
 	}
