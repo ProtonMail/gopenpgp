@@ -102,7 +102,7 @@ func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage
 		dh.DisableVerifyTimeCheck,
 		false,
 		dh.VerificationContext,
-	}, err
+	}, nil
 }
 
 func (dh *decryptionHandle) decryptStreamWithSession(dataPacketReader Reader) (plainMessage *VerifyDataReader, err error) {
