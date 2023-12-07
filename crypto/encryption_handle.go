@@ -191,8 +191,7 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 	}
 
 	if eh.DetachedSignature && detachedSignature == nil {
-		err = errors.New("gopenpgp: no output provided for the detached signature")
-		return nil, err
+		return nil, errors.New("gopenpgp: no output provided for the detached signature")
 	}
 
 	if armorOutput {
@@ -213,8 +212,7 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 			}
 		}
 		if keys != nil {
-			err = errors.New("gopenpgp: armor is not allowed if key packets are written separately")
-			return nil, err
+			return nil, errors.New("gopenpgp: armor is not allowed if key packets are written separately")
 		}
 	}
 	if keys == nil {

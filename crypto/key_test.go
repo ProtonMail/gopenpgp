@@ -231,8 +231,8 @@ func TestIsExpired(t *testing.T) {
 		t.Fatal("Cannot unarmor future key:", err)
 	}
 
-	assert.Exactly(t, true, expiredKey.IsExpired(testTime))
-	assert.Exactly(t, true, futureKey.IsExpired(testTime))
+	assert.True(t, expiredKey.IsExpired(testTime))
+	assert.True(t, futureKey.IsExpired(testTime))
 }
 
 func TestGetPublicKey(t *testing.T) {
