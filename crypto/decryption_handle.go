@@ -111,19 +111,19 @@ func (dh *decryptionHandle) DecryptDetached(pgpMessage []byte, encryptedDetached
 // DecryptSessionKey decrypts an encrypted session key.
 // To decrypted a session key, the decryption handle must contain either a decryption key or a password.
 func (dh *decryptionHandle) DecryptSessionKey(keyPackets []byte) (sk *SessionKey, err error) {
-	if len(dh.Passwords) > 0 {
+	switch {
+	case len(dh.Passwords) > 0:
 		for _, passwordCandidate := range dh.Passwords {
 			sk, err = decryptSessionKeyWithPassword(keyPackets, passwordCandidate)
 			if err == nil {
-				return
+				return sk, nil
 			}
 		}
-		return
-	} else if dh.DecryptionKeyRing != nil {
+		return nil, err
+	case dh.DecryptionKeyRing != nil:
 		return decryptSessionKey(dh.DecryptionKeyRing, keyPackets)
-	} else {
-		return nil, errors.New("gopenpgp: no decryption key or password provided")
 	}
+	return nil, errors.New("gopenpgp: no decryption key or password provided")
 }
 
 // ClearPrivateParams clears all private key material contained in EncryptionHandle from memory.
