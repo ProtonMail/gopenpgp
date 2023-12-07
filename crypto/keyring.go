@@ -106,7 +106,7 @@ func (keyRing *KeyRing) signingEntities() ([]*openpgp.Entity, error) {
 	return signEntity, nil
 }
 
-// getSigningEntity returns the internal EntityList if the key ring is not nil.
+// getEntities returns the internal EntityList if the key ring is not nil.
 func (keyRing *KeyRing) getEntities() openpgp.EntityList {
 	if keyRing == nil {
 		return nil

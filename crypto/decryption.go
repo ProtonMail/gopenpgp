@@ -26,7 +26,7 @@ type PGPDecryption interface {
 	// i.e., Bytes/Armor/Auto where Auto tries to detect automatically.
 	DecryptDetached(pgpMessage []byte, encDetachedSignature []byte, encoding int8) (*VerifiedDataResult, error)
 	// DecryptSessionKey decrypts an encrypted session key.
-	// To decrypted a session key, the decryption handle must contain either a decryption key or a password.
+	// To decrypt a session key, the decryption handle must contain either a decryption key or a password.
 	DecryptSessionKey(keyPackets []byte) (*SessionKey, error)
 	// ClearPrivateParams clears all private key material contained in EncryptionHandle from memory.
 	ClearPrivateParams()

@@ -218,8 +218,8 @@ func ExampleKey_PrintFingerprints() {
 }
 
 func TestIsExpired(t *testing.T) {
-	assert.Exactly(t, false, keyTestRSA.IsExpired(testTime))
-	assert.Exactly(t, false, keyTestEC.IsExpired(testTime))
+	assert.False(t, keyTestRSA.IsExpired(testTime))
+	assert.False(t, keyTestEC.IsExpired(testTime))
 
 	expiredKey, err := NewKeyFromArmored(readTestFile("key_expiredKey", false))
 	if err != nil {
