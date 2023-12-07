@@ -14,11 +14,11 @@ import (
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 )
 
-var allowedHashes = []crypto.Hash{
-	crypto.SHA224,
-	crypto.SHA256,
-	crypto.SHA384,
-	crypto.SHA512,
+var allowedHashesSet = map[crypto.Hash]struct{}{
+	crypto.SHA224: {},
+	crypto.SHA256: {},
+	crypto.SHA384: {},
+	crypto.SHA512: {},
 }
 
 // VerifiedSignature is a result of a signature verification.
@@ -298,15 +298,16 @@ func createVerifyResult(
 			disableTimeCheck,
 		)
 		var signatureError SignatureVerificationError
-		if len(verifierKey.entities) == 0 || errors.Is(signature.SignatureError, pgpErrors.ErrUnknownIssuer) {
+
+		switch {
+		case len(verifierKey.entities) == 0 ||
+			errors.Is(signature.SignatureError, pgpErrors.ErrUnknownIssuer):
 			signatureError = newSignatureNoVerifier()
-		} else if signature.SignatureError != nil {
+		case signature.SignatureError != nil:
 			signatureError = newSignatureFailed(signature.SignatureError)
-		} else if signature.CorrespondingSig == nil ||
-			signature.CorrespondingSig.Hash < allowedHashes[0] ||
-			signature.CorrespondingSig.Hash > allowedHashes[len(allowedHashes)-1] {
+		case signature.CorrespondingSig == nil || !isHashAllowed(signature.CorrespondingSig.Hash):
 			signatureError = newSignatureInsecure()
-		} else if verificationContext != nil {
+		case verificationContext != nil:
 			err := verificationContext.verifyContext(signature.CorrespondingSig)
 			if err != nil {
 				signatureError = newSignatureBadContext(err)
@@ -407,4 +408,9 @@ func (context *VerificationContext) verifyContext(sig *packet.Signature) error {
 	}
 
 	return nil
+}
+
+func isHashAllowed(h crypto.Hash) bool {
+	_, ok := allowedHashesSet[h]
+	return ok
 }
