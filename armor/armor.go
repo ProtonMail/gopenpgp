@@ -103,7 +103,7 @@ func ArmorReader(in io.Reader) (io.Reader, error) {
 func Unarmor(input string) ([]byte, error) {
 	b, err := internal.Unarmor(input)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopengp: unable to unarmor")
+		return nil, errors.Wrap(err, "armor: unable to unarmor")
 	}
 	return ioutil.ReadAll(b.Body)
 }
@@ -112,7 +112,7 @@ func Unarmor(input string) ([]byte, error) {
 func UnarmorBytes(input []byte) ([]byte, error) {
 	b, err := internal.UnarmorBytes(input)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopengp: unable to unarmor")
+		return nil, errors.Wrap(err, "armor: unable to unarmor")
 	}
 	return ioutil.ReadAll(b.Body)
 }
@@ -157,13 +157,13 @@ func armorWithTypeAndHeaders(input []byte, armorType string, headers map[string]
 	w, err := armor.EncodeWithChecksumOption(&b, armorType, headers, false)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "gopengp: unable to encode armoring")
+		return nil, errors.Wrap(err, "armor: unable to encode armoring")
 	}
 	if _, err = w.Write(input); err != nil {
-		return nil, errors.Wrap(err, "gopengp: unable to write armored to buffer")
+		return nil, errors.Wrap(err, "armor: unable to write armored to buffer")
 	}
 	if err := w.Close(); err != nil {
-		return nil, errors.Wrap(err, "gopengp: unable to close armor buffer")
+		return nil, errors.Wrap(err, "armor: unable to close armor buffer")
 	}
 	return &b, nil
 }
