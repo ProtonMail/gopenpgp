@@ -63,7 +63,7 @@ func (msg *VerifyDataReader) VerifySignature() (result *VerifyResult, err error)
 // ReadAll reads all plaintext data from the reader
 // and returns it as a byte slice.
 func (msg *VerifyDataReader) ReadAll() (plaintext []byte, err error) {
-	return io.ReadAll(msg)
+	return ioutil.ReadAll(msg)
 }
 
 // DiscardAll reads all data from the reader and discards it.
