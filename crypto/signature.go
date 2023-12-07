@@ -127,7 +127,7 @@ func (vr *VerifyResult) Signature() ([]byte, error) {
 	}
 	var serializedSignature bytes.Buffer
 	if err := vr.selectedSignature.Signature.Serialize(&serializedSignature); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "gopenpgp: signature serialization failed")
 	}
 	return serializedSignature.Bytes(), nil
 }
