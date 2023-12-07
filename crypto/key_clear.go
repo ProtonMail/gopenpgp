@@ -22,7 +22,7 @@ func (sk *SessionKey) Clear() (ok bool) {
 	return true
 }
 
-// ClearPrivateParams zeros the sensitive data in the key.
+// ClearPrivateParams zeroes the sensitive data in the key.
 func (key *Key) ClearPrivateParams() (ok bool) {
 	num := key.clearPrivateWithSubkeys()
 	key.entity.PrivateKey = nil
