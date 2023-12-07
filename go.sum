@@ -1,5 +1,3 @@
-github.com/ProtonMail/go-crypto v0.0.0-20231122163255-f0a31d287aac h1:DUark25n/K1Pc7HYg2b+u66uZbxOCcbSU2rEx8epRZw=
-github.com/ProtonMail/go-crypto v0.0.0-20231122163255-f0a31d287aac/go.mod h1:K4vciqCJaZ1Ghw/SvtJbEAM4soEtwDCNVqkdQIIujwU=
 github.com/ProtonMail/go-crypto v0.0.0-20231130142838-f5a3bd6c529f h1:xCljVH5H3DndCB6GwnIXMKbxI56SD1WkQQwwqSWP4V0=
 github.com/ProtonMail/go-crypto v0.0.0-20231130142838-f5a3bd6c529f/go.mod h1:K4vciqCJaZ1Ghw/SvtJbEAM4soEtwDCNVqkdQIIujwU=
 github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f h1:tCbYj7/299ekTTXpdwKYF8eBlsYsDVoggDAuAjoK66k=
@@ -7,9 +5,8 @@ github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f/go.mod h1:gcr0k
 github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
 github.com/cloudflare/circl v1.3.3 h1:fE/Qz0QdIGqeWfnwq0RE0R7MI51s0M2E4Ga9kq5AEMs=
 github.com/cloudflare/circl v1.3.3/go.mod h1:5XYMA4rFBvNIrhs50XuiBJ15vF2pZn4nnUKZrLbUZFA=
+github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
-github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/kr/pretty v0.2.1 h1:Fmg33tUaq4/8ym9TJN1x7sLJnHVwhP33CNkpYV/7rwI=
 github.com/kr/pretty v0.2.1/go.mod h1:ipq/a2n7PKx3OHsz4KJII5eveXtPO4qwEXGdVfWzfnI=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
