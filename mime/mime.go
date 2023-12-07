@@ -95,13 +95,13 @@ func parseMIME(
 ) (*gomime.BodyCollector, []string, []string, error) {
 	mm, err := mail.ReadMessage(bytes.NewReader(mimeBody))
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "gopenpgp: error in reading message")
+		return nil, nil, nil, errors.Wrap(err, "mime: error in reading message")
 	}
 
 	h := textproto.MIMEHeader(mm.Header)
 	mmBodyData, err := ioutil.ReadAll(mm.Body)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "gopenpgp: error in reading message body data")
+		return nil, nil, nil, errors.Wrap(err, "mime: error in reading message body data")
 	}
 
 	printAccepter := gomime.NewMIMEPrinter()

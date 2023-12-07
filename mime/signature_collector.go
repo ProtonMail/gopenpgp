@@ -60,7 +60,7 @@ func (sc *signatureCollector) Accept(
 		sc.verified = newSignatureNotSigned()
 		// Invalid multipart/signed format just pass along
 		if _, err = ioutil.ReadAll(rawBody); err != nil {
-			return errors.Wrap(err, "gopenpgp: error in reading raw message body")
+			return errors.Wrap(err, "mime: error in reading raw message body")
 		}
 
 		for i, p := range multiparts {
@@ -74,12 +74,12 @@ func (sc *signatureCollector) Accept(
 	// actual multipart/signed format
 	err = sc.target.Accept(multiparts[0], multipartHeaders[0], hasPlainChild, true, true)
 	if err != nil {
-		return errors.Wrap(err, "gopenpgp: error in parsing body")
+		return errors.Wrap(err, "mime: error in parsing body")
 	}
 
 	partData, err := ioutil.ReadAll(multiparts[1])
 	if err != nil {
-		return errors.Wrap(err, "gopenpgp: error in ready part data")
+		return errors.Wrap(err, "mime: error in ready part data")
 	}
 
 	decodedPart := gomime.DecodeContentEncoding(
@@ -88,12 +88,12 @@ func (sc *signatureCollector) Accept(
 
 	buffer, err := ioutil.ReadAll(decodedPart)
 	if err != nil {
-		return errors.Wrap(err, "gopenpgp: error in reading decoded data")
+		return errors.Wrap(err, "mime: error in reading decoded data")
 	}
 	mediaType, _, _ := mime.ParseMediaType(header.Get("Content-Type"))
 	buffer, err = gomime.DecodeCharset(buffer, mediaType, params)
 	if err != nil {
-		return errors.Wrap(err, "gopenpgp: error in decoding charset")
+		return errors.Wrap(err, "mime: error in decoding charset")
 	}
 	sc.signature = string(buffer)
 	str, _ := ioutil.ReadAll(rawBody)
@@ -104,7 +104,7 @@ func (sc *signatureCollector) Accept(
 			return newSignatureNoVerifier()
 		}
 		if err != nil {
-			return errors.Wrap(err, "gopenpgp: signature verification failed")
+			return errors.Wrap(err, "mime: signature verification failed")
 		}
 		sc.verified = verifyResult.SignatureError()
 	} else {
