@@ -23,6 +23,9 @@ jobs:
         go-version: ^1.16
       id: go
 
+    - name: Install NDK
+      run: echo "y" | $ANDROID_HOME/tools/bin/sdkmanager "ndk;23.2.8568313"
+
     - name: Checkout
       uses: actions/checkout@v2
 
