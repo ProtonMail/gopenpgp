@@ -114,17 +114,17 @@ func (eh *encryptionHandle) Encrypt(message []byte) (*PGPMessage, error) {
 func (eh *encryptionHandle) EncryptSessionKey(sessionKey *SessionKey) ([]byte, error) {
 	config := eh.profile.EncryptionConfig()
 	config.Time = NewConstantClock(eh.clock().Unix())
-	if eh.Password != nil {
+	switch {
+	case eh.Password != nil:
 		return encryptSessionKeyWithPassword(sessionKey, eh.Password, config)
-	} else if eh.Recipients != nil || eh.HiddenRecipients != nil {
+	case eh.Recipients != nil || eh.HiddenRecipients != nil:
 		encryptionTimeOverride := config.Now()
 		if eh.encryptionTimeOverride != nil {
 			encryptionTimeOverride = eh.encryptionTimeOverride()
 		}
 		return encryptSessionKey(eh.Recipients, eh.HiddenRecipients, sessionKey, encryptionTimeOverride, config)
-	} else {
-		return nil, errors.New("gopenpgp: no password or recipients in encryption handle")
 	}
+	return nil, errors.New("gopenpgp: no password or recipients in encryption handle")
 }
 
 // --- Helper methods on encryption handle
@@ -224,8 +224,8 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 			keys = data
 		}
 	}
-	if eh.Recipients.CountEntities() > 0 ||
-		eh.HiddenRecipients.CountEntities() > 0 {
+	switch {
+	case eh.Recipients.CountEntities() > 0 || eh.HiddenRecipients.CountEntities() > 0:
 		// Encrypt towards recipients
 		if !eh.DetachedSignature {
 			// Signature is inside the ciphertext.
@@ -234,21 +234,21 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 			// Encrypted detached signature separate from the ciphertext.
 			messageWriter, err = eh.encryptSignDetachedStreamToRecipients(meta, detachedSignature, data, keys)
 		}
-	} else if eh.Password != nil {
+	case eh.Password != nil:
 		// Encrypt with a password
 		if !eh.DetachedSignature {
 			messageWriter, err = eh.encryptStreamWithPassword(keys, data, meta)
 		} else {
 			messageWriter, err = eh.encryptSignDetachedStreamToRecipients(meta, detachedSignature, data, keys)
 		}
-	} else if eh.SessionKey != nil {
+	case eh.SessionKey != nil:
 		// Encrypt towards session key
 		if !eh.DetachedSignature {
 			messageWriter, err = eh.encryptStreamWithSessionKey(data, meta)
 		} else {
 			messageWriter, err = eh.encryptSignDetachedStreamWithSessionKey(meta, detachedSignature, data)
 		}
-	} else {
+	default:
 		// No encryption material provided
 		err = errors.New("gopenpgp: no encryption key ring, session key, or password provided")
 	}

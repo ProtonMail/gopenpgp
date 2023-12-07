@@ -8,7 +8,7 @@ linters-settings:
     statements: 80
   cyclop:
     # the minimal code complexity to report
-    max-complexity: 22
+    max-complexity: 23
   gocognit:
     min-complexity: 45
 
@@ -19,7 +19,6 @@ issues:
     - GetJsonSHA256Fingerprints should be GetJSONSHA256Fingerprints
     - ST1003  # CamelCase variables; see constants/cipher.go
     - missing output for example, go test can't validate it
-    - ifElseChain
     - variable 'hasExpiredEntity' is only used in the if-statement
   exclude-rules:
     - path: crypto/crypto_example_test.go
