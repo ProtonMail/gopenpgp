@@ -82,13 +82,19 @@ func TestSignTextDetached(t *testing.T) {
 
 	assert.Regexp(t, signatureTest, string(armoredSignature))
 
-	verificationError, _ := testVerifier().VerifyDetached([]byte(signedPlainText), textSignature, Bytes)
+	verificationError, err := testVerifier().VerifyDetached([]byte(signedPlainText), textSignature, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if err = verificationError.SignatureError(); err != nil {
 		t.Fatal("Cannot verify plaintext signature:", err)
 	}
 
 	fakeMessage := []byte("wrong text")
-	verificationError, _ = testVerifier().VerifyDetached(fakeMessage, textSignature, Bytes)
+	verificationError, err = testVerifier().VerifyDetached(fakeMessage, textSignature, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	checkVerificationError(t, verificationError.SignatureError(), constants.SIGNATURE_FAILED)
 }
@@ -143,7 +149,10 @@ func TestSignBinDetached(t *testing.T) {
 
 	assert.Regexp(t, signatureTest, string(armoredSignature))
 
-	verificationError, _ := testVerifier().VerifyDetached([]byte(signedPlainText), binSignature, Bytes)
+	verificationError, err := testVerifier().VerifyDetached([]byte(signedPlainText), binSignature, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if err = verificationError.SignatureError(); err != nil {
 		t.Fatal("Cannot verify binary signature:", err)
 	}
@@ -165,7 +174,10 @@ func Test_KeyRing_GetVerifiedSignatureTimestampSuccess(t *testing.T) {
 		VerificationKeys(keyRingTestPublic).
 		VerifyTime(timeLocal).
 		New()
-	verificationResult, _ := verifier.VerifyDetached(message, signature, Bytes)
+	verificationResult, err := verifier.VerifyDetached(message, signature, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	actualTime := verificationResult.SignatureCreationTime()
 	if err != nil {
 		t.Errorf("Got an error while parsing the signature creation time: %v", err)
@@ -211,7 +223,10 @@ func Test_KeyRing_GetVerifiedSignatureWithTwoKeysTimestampSuccess(t *testing.T) 
 		DisableVerifyTimeCheck().
 		New()
 
-	verificationResult, _ := verifier.VerifyDetached(message, signature, Bytes)
+	verificationResult, err := verifier.VerifyDetached(message, signature, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	actualTime := verificationResult.SignatureCreationTime()
 	otherTime := verificationResult.Signatures[1].Signature.CreationTime.Unix()
 	if err != nil {
@@ -280,7 +295,10 @@ func Test_KeyRing_GetVerifiedSignatureTimestampError(t *testing.T) {
 		VerificationKeys(keyRingTestPublic).
 		VerifyTime(timeLocal).
 		New()
-	verificationResult, _ := verifier.VerifyDetached(messageCorrupted, signature, Bytes)
+	verificationResult, err := verifier.VerifyDetached(messageCorrupted, signature, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if verificationResult.SignatureError() == nil {
 		t.Errorf("Expected an error while parsing the creation time of a wrong signature, got nil")
 	}
@@ -393,7 +411,10 @@ func Test_VerifyWithUnknownCriticalContext(t *testing.T) {
 		VerificationKeys(keyRingTestPublic).
 		DisableVerifyTimeCheck().
 		New()
-	result, _ := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	result, err := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// then
 	checkVerificationError(t, result.SignatureError(), constants.SIGNATURE_FAILED)
 }
@@ -414,7 +435,10 @@ func Test_VerifyWithUnKnownNonCriticalContext(t *testing.T) {
 		VerificationKeys(keyRingTestPublic).
 		DisableVerifyTimeCheck().
 		New()
-	result, _ := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	result, err := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// then
 	if err = result.SignatureError(); err != nil {
 		t.Fatalf("Expected no verification error, got %v", err)
@@ -443,7 +467,10 @@ func Test_VerifyWithKnownCriticalContext(t *testing.T) {
 		VerificationContext(verificationContext).
 		DisableVerifyTimeCheck().
 		New()
-	result, _ := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	result, err := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// then
 	if err = result.SignatureError(); err != nil {
 		t.Fatalf("Expected no verification error, got %v", err)
@@ -472,7 +499,10 @@ func Test_VerifyWithWrongContext(t *testing.T) {
 		VerificationContext(verificationContext).
 		DisableVerifyTimeCheck().
 		New()
-	result, _ := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	result, err := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// then
 	checkVerificationError(t, result.SignatureError(), constants.SIGNATURE_BAD_CONTEXT)
 }
@@ -499,7 +529,10 @@ func Test_VerifyWithMissingNonRequiredContext(t *testing.T) {
 		VerificationContext(verificationContext).
 		DisableVerifyTimeCheck().
 		New()
-	result, _ := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	result, err := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// then
 	if err = result.SignatureError(); err != nil {
 		t.Fatalf("Expected no verification error, got %v", err)
@@ -528,7 +561,10 @@ func Test_VerifyWithMissingRequiredContext(t *testing.T) {
 		VerificationContext(verificationContext).
 		DisableVerifyTimeCheck().
 		New()
-	result, _ := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	result, err := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// then
 	checkVerificationError(t, result.SignatureError(), constants.SIGNATURE_BAD_CONTEXT)
 }
@@ -562,7 +598,10 @@ func Test_VerifyWithMissingRequiredContextBeforeCutoff(t *testing.T) {
 		VerificationContext(verificationContext).
 		DisableVerifyTimeCheck().
 		New()
-	result, _ := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	result, err := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// then
 	if err = result.SignatureError(); err != nil {
 		t.Fatalf("Expected no verification error, got %v", err)
@@ -598,7 +637,10 @@ func Test_VerifyWithMissingRequiredContextAfterCutoff(t *testing.T) {
 		VerificationContext(verificationContext).
 		DisableVerifyTimeCheck().
 		New()
-	result, _ := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	result, err := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// then
 	checkVerificationError(t, result.SignatureError(), constants.SIGNATURE_BAD_CONTEXT)
 }
@@ -624,7 +666,10 @@ func Test_VerifyWithDoubleContext(t *testing.T) {
 		VerificationContext(verificationContext).
 		DisableVerifyTimeCheck().
 		New()
-	result, _ := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	result, err := verifier.VerifyDetached([]byte(testMessage), sig, Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// then
 	checkVerificationError(t, result.SignatureError(), constants.SIGNATURE_BAD_CONTEXT)
 }
