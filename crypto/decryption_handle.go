@@ -145,7 +145,7 @@ func (dh *decryptionHandle) ClearPrivateParams() {
 
 func (dh *decryptionHandle) validate() error {
 	if dh.DecryptionKeyRing == nil && len(dh.Passwords) == 0 && len(dh.SessionKeys) == 0 {
-		return errors.New("openpgp: no decryption key material provided")
+		return errors.New("gopenpgp: no decryption key material provided")
 	}
 	return nil
 }

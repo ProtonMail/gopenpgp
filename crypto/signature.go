@@ -155,7 +155,7 @@ func (vr *VerifyResult) ConstrainToTimeRange(unixFrom int64, unixTo int64) {
 		if signature.Signature != nil && signature.SignatureError == nil {
 			sigUnixTime := signature.Signature.CreationTime.Unix()
 			if sigUnixTime < unixFrom || sigUnixTime > unixTo {
-				sigError := newSignatureFailed(errors.New("signature creation time is out of range"))
+				sigError := newSignatureFailed(errors.New("gopenpgp: signature creation time is out of range"))
 				signature.SignatureError = &sigError
 			}
 		}

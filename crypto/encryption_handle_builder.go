@@ -129,7 +129,7 @@ func (ehb *EncryptionHandleBuilder) Compress() *EncryptionHandleBuilder {
 // The openpgp crypto refresh recommends to not use compression.
 // Allowed config options:
 // constants.NoCompression: none, constants.DefaultCompression: profile default
-// constants.ZIBCompression: zib constants.ZLIBCompression: zlib.
+// constants.ZIPCompression: zip, constants.ZLIBCompression: zlib.
 func (ehb *EncryptionHandleBuilder) CompressWith(config int8) *EncryptionHandleBuilder {
 	switch config {
 	case constants.NoCompression,

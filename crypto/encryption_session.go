@@ -129,7 +129,7 @@ func encryptSessionKeyToWriter(
 		pubKeys = append(pubKeys, encryptionKey.PublicKey)
 	}
 	if len(pubKeys) == 0 {
-		return errors.New("cannot set key: no public key available")
+		return errors.New("gopenpgp: cannot set key: no public key available")
 	}
 
 	for index, pub := range pubKeys {

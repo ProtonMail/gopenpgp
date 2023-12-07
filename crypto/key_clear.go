@@ -16,7 +16,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/x448"
 )
 
-// Clear zeros the sensitive data in the session key.
+// Clear zeroes the sensitive data in the session key.
 func (sk *SessionKey) Clear() (ok bool) {
 	clearMem(sk.Key)
 	return true
