@@ -24,10 +24,7 @@ jobs:
       id: go
 
     - name: Install NDK
-      uses: nttld/setup-ndk@v1
-      with:
-        ndk-version: r23c
-        link-to-sdk: true
+      run: echo "y" | $ANDROID_HOME/tools/bin/sdkmanager "ndk;23.2.8568313"
 
     - name: Checkout
       uses: actions/checkout@v2
