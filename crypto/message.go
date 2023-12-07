@@ -60,7 +60,13 @@ func NewPGPMessage(data []byte) *PGPMessage {
 	pgpMessage := &PGPMessage{
 		DataPacket: clone(data),
 	}
-	pgpMessage, _ = pgpMessage.splitMessage()
+	pgpMessage, err := pgpMessage.splitMessage()
+	if err != nil {
+		// If there is an error in split treat the data as data packets.
+		return &PGPMessage{
+			DataPacket: clone(data),
+		}
+	}
 	return pgpMessage
 }
 
