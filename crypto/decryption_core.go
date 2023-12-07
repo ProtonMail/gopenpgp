@@ -263,11 +263,11 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 				}
 				if _, err := resetReader.Reset(); err != nil {
 					// Should not happen
-					return nil, errors.New("gopenpgp: buffer reset failed")
+					return nil, errors.Wrap(err, "gopenpgp: buffer reset failed")
 				}
 			}
 			if selectedPassword == nil {
-				return nil, errors.Wrap(err, "gopenpgp: error in reading data message no password matched")
+				return nil, errors.Wrap(err, "gopenpgp: error in reading data message: no password matched")
 			}
 		} else {
 			mdData, err = openpgp.ReadMessage(encryptedData, entries, nil, config)

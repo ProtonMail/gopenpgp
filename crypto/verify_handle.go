@@ -136,7 +136,7 @@ func (vh *verifyHandle) validate() error {
 	return nil
 }
 
-// verifySignature verifies if a signature is valid with the entity list.
+// verifyDetachedSignature verifies if a detached signature is valid with the entity list.
 func (vh *verifyHandle) verifyDetachedSignature(
 	origText io.Reader,
 	signature []byte,
