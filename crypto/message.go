@@ -56,15 +56,25 @@ func NewMetadata(isUTF8 bool) *LiteralMetadata {
 }
 
 // NewPGPMessage generates a new PGPMessage from the unarmored binary data.
+// Clones the data for go-mobile compatibility.
 func NewPGPMessage(data []byte) *PGPMessage {
+	return NewPGPMessageWithCloneFlag(data, true)
+}
+
+// NewPGPMessageWithCloneFlag generates a new PGPMessage from the unarmored binary data.
+func NewPGPMessageWithCloneFlag(data []byte, doClone bool) *PGPMessage {
+	packetData := data
+	if doClone {
+		packetData = clone(data)
+	}
 	pgpMessage := &PGPMessage{
-		DataPacket: clone(data),
+		DataPacket: packetData,
 	}
 	pgpMessage, err := pgpMessage.splitMessage()
 	if err != nil {
 		// If there is an error in split treat the data as data packets.
 		return &PGPMessage{
-			DataPacket: clone(data),
+			DataPacket: packetData,
 		}
 	}
 	return pgpMessage
@@ -92,6 +102,7 @@ func NewPGPMessageFromArmored(armored string) (*PGPMessage, error) {
 }
 
 // NewPGPSplitMessage generates a new PGPSplitMessage from the binary unarmored keypacket and datapacket.
+// Clones the slices for go-mobile compatibility.
 func NewPGPSplitMessage(keyPacket []byte, dataPacket []byte) *PGPMessage {
 	return &PGPMessage{
 		KeyPacket:  clone(keyPacket),

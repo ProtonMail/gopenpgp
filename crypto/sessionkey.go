@@ -127,6 +127,8 @@ func generateSessionKey(config *packet.Config) (*SessionKey, error) {
 	return GenerateSessionKeyAlgo(cf)
 }
 
+// NewSessionKeyFromToken creates a SessionKey struct with the given token and algorithm.
+// Clones the token for compatibility with go-mobile.
 func NewSessionKeyFromToken(token []byte, algo string) *SessionKey {
 	return &SessionKey{
 		Key:  clone(token),
