@@ -54,8 +54,17 @@ func NewKeyFromReaderExplicit(r io.Reader, encoding int8) (key *Key, err error) 
 }
 
 // NewKey creates a new key from the first key in the unarmored or armored binary data.
+// Clones the binKeys data for go-mobile compatibility.
 func NewKey(binKeys []byte) (key *Key, err error) {
 	return NewKeyFromReader(bytes.NewReader(clone(binKeys)))
+}
+
+// NewKeyWithCloneFlag creates a new key from the first key in the unarmored or armored binary data.
+func NewKeyWithCloneFlag(binKeys []byte, clone bool) (key *Key, err error) {
+	if clone {
+		return NewKey(binKeys)
+	}
+	return NewKeyFromReader(bytes.NewReader(binKeys))
 }
 
 // NewKeyFromArmored creates a new key from the first key in an armored string.
