@@ -11,24 +11,7 @@ import (
 // Default returns a custom profile that support features
 // that are widely implemented.
 func Default() *Custom {
-	setKeyAlgorithm := func(cfg *packet.Config, securityLevel int8) {
-		cfg.Algorithm = packet.PubKeyAlgoEdDSA
-		switch securityLevel {
-		case constants.HighSecurity:
-			cfg.Curve = packet.Curve25519
-		default:
-			cfg.Curve = packet.Curve25519
-		}
-	}
-	return &Custom{
-		SetKeyAlgorithm:      setKeyAlgorithm,
-		Hash:                 crypto.SHA256,
-		CipherEncryption:     packet.CipherAES256,
-		CompressionAlgorithm: packet.CompressionZLIB,
-		CompressionConfiguration: &packet.CompressionConfig{
-			Level: 6,
-		},
-	}
+	return ProtonV1()
 }
 
 // RFC4880 returns a custom profile for this library
@@ -146,4 +129,50 @@ func Symmetric() *Custom {
 		},
 		V6: true,
 	}
+}
+
+// ProtonV1 is the version 1 profile used in proton clients.
+func ProtonV1() *Custom {
+	const maxDecompressedMessageSize = 50 * (int64(1) << 20)
+	setKeyAlgorithm := func(cfg *packet.Config, securityLevel int8) {
+		cfg.Algorithm = packet.PubKeyAlgoEdDSA
+		switch securityLevel {
+		case constants.HighSecurity:
+			cfg.Curve = packet.Curve25519
+		default:
+			cfg.Curve = packet.Curve25519
+		}
+	}
+	s2kConfig := s2k.Config{
+		S2KMode:  s2k.IteratedSaltedS2K,
+		Hash:     crypto.SHA256,
+		S2KCount: 65536,
+	}
+	return &Custom{
+		SetKeyAlgorithm:      setKeyAlgorithm,
+		Hash:                 crypto.SHA512,
+		CipherEncryption:     packet.CipherAES256,
+		CipherKeyEncryption:  packet.CipherAES256,
+		CompressionAlgorithm: packet.CompressionZLIB,
+		CompressionConfiguration: &packet.CompressionConfig{
+			Level: 6,
+		},
+		S2kKeyEncryption:                       &s2kConfig,
+		S2kEncryption:                          &s2kConfig,
+		DisableIntendedRecipients:              true,
+		AllowAllPublicKeyAlgorithms:            true,
+		InsecureAllowWeakRSA:                   true,
+		InsecureAllowDecryptionWithSigningKeys: true,
+		MaxDecompressedMessageSize:             maxDecompressedMessageSize,
+	}
+}
+
+// ProtonAeadV1 is the Proton profile but with AEAD enabled.
+// Use this profile with care as it is not backward compatible.
+func ProtonAeadV1() *Custom {
+	profile := ProtonV1()
+	profile.AeadEncryption = &packet.AEADConfig{
+		DefaultMode: packet.AEADModeGCM,
+	}
+	return profile
 }
