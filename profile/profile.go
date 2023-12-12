@@ -84,13 +84,14 @@ func (p *Custom) EncryptionConfig() *packet.Config {
 		AEADConfig:    p.AeadEncryption,
 		S2KConfig:     p.S2kEncryption,
 	}
-	switch {
-	case p.DisableIntendedRecipients:
+	if p.DisableIntendedRecipients {
 		intendedRecipients := false
 		config.CheckIntendedRecipients = &intendedRecipients
-	case p.AllowAllPublicKeyAlgorithms:
+	}
+	if p.AllowAllPublicKeyAlgorithms {
 		config.RejectPublicKeyAlgorithms = map[packet.PublicKeyAlgorithm]bool{}
-	case p.AllowWeakRSA:
+	}
+	if p.AllowWeakRSA {
 		config.MinRSABits = weakMinRSABits
 	}
 	return config
@@ -109,15 +110,17 @@ func (p *Custom) SignConfig() *packet.Config {
 	config := &packet.Config{
 		DefaultHash: p.Hash,
 	}
-	switch {
-	case p.SignHash != nil:
+	if p.SignHash != nil {
 		config.DefaultHash = *p.SignHash
-	case p.DisableIntendedRecipients:
+	}
+	if p.DisableIntendedRecipients {
 		intendedRecipients := false
 		config.CheckIntendedRecipients = &intendedRecipients
-	case p.AllowAllPublicKeyAlgorithms:
+	}
+	if p.AllowAllPublicKeyAlgorithms {
 		config.RejectPublicKeyAlgorithms = map[packet.PublicKeyAlgorithm]bool{}
-	case p.AllowWeakRSA:
+	}
+	if p.AllowWeakRSA {
 		config.MinRSABits = weakMinRSABits
 	}
 	return config
