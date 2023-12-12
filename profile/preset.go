@@ -29,25 +29,7 @@ func PresetProfiles() []string {
 // Default returns a custom profile that support features
 // that are widely implemented.
 func Default() *Custom {
-	setKeyAlgorithm := func(cfg *packet.Config, securityLevel int8) {
-		cfg.Algorithm = packet.PubKeyAlgoEdDSA
-		switch securityLevel {
-		case constants.HighSecurity:
-			cfg.Curve = packet.Curve25519
-		default:
-			cfg.Curve = packet.Curve25519
-		}
-	}
-	return &Custom{
-		Name:                 "default",
-		SetKeyAlgorithm:      setKeyAlgorithm,
-		Hash:                 crypto.SHA256,
-		CipherEncryption:     packet.CipherAES256,
-		CompressionAlgorithm: packet.CompressionZLIB,
-		CompressionConfiguration: &packet.CompressionConfig{
-			Level: 6,
-		},
-	}
+	return ProtonV1()
 }
 
 // RFC4880 returns a custom profile for this library
@@ -123,5 +105,31 @@ func CryptoRefresh() *Custom {
 			Argon2Config: &s2k.Argon2Config{},
 		},
 		V6: true,
+	}
+}
+
+// ProtonV1 is the version 1 profile used in proton clients.
+func ProtonV1() *Custom {
+	setKeyAlgorithm := func(cfg *packet.Config, securityLevel int8) {
+		cfg.Algorithm = packet.PubKeyAlgoEdDSA
+		switch securityLevel {
+		case constants.HighSecurity:
+			cfg.Curve = packet.Curve25519
+		default:
+			cfg.Curve = packet.Curve25519
+		}
+	}
+	return &Custom{
+		Name:                 "proton-v1",
+		SetKeyAlgorithm:      setKeyAlgorithm,
+		Hash:                 crypto.SHA256,
+		CipherEncryption:     packet.CipherAES256,
+		CompressionAlgorithm: packet.CompressionZLIB,
+		CompressionConfiguration: &packet.CompressionConfig{
+			Level: 6,
+		},
+		DisableIntendedRecipients:   true,
+		AllowAllPublicKeyAlgorithms: true,
+		AllowWeakRSA:                true,
 	}
 }
