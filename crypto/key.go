@@ -32,24 +32,28 @@ type KeyEncryptionProfile interface {
 
 // NewKeyFromReader reads binary or armored data into a Key object.
 func NewKeyFromReader(r io.Reader) (key *Key, err error) {
+	return NewKeyFromReaderExplicit(r, Auto)
+}
+
+// NewKeyFromReaderExplicit reads binary or armored data into a Key object.
+// Allows to set the encoding explicitly to avoid the armor check.
+func NewKeyFromReaderExplicit(r io.Reader, encoding int8) (key *Key, err error) {
+	var armored bool
 	key = &Key{}
-	r, armored := armor.IsPGPArmored(r)
+	switch encoding {
+	case Auto:
+		r, armored = armor.IsPGPArmored(r)
+	case Armor:
+		armored = true
+	case Bytes:
+		armored = false
+	default:
+		return nil, errors.New("gopenpgp: encoding is not supported")
+	}
 	err = key.readFrom(r, armored)
 	if err != nil {
 		return nil, err
 	}
-
-	return key, nil
-}
-
-// NewKeyFromReaderExplicit reads binary or armored data into a Key object.
-func NewKeyFromReaderExplicit(r io.Reader, encoding int8) (key *Key, err error) {
-	key = &Key{}
-	err = key.readFrom(r, encoding == Armor)
-	if err != nil {
-		return nil, err
-	}
-
 	return key, nil
 }
 
