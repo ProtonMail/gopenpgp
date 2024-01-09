@@ -38,7 +38,7 @@ func (c *utf8Checker) check(p []byte) error {
 			continue
 		}
 		r, sizeRune := utf8.DecodeRune(p[pos:])
-		if r == utf8.RuneError {
+		if r == utf8.RuneError && sizeRune == 1 {
 			remaining := len(p) - pos
 			if remaining < maxSize {
 				// Could still be valid utf-8 on next check
