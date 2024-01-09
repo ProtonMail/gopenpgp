@@ -413,6 +413,11 @@ func (key *Key) GetEntity() *openpgp.Entity {
 	return key.entity
 }
 
+// GetVersion returns the OpenPGP key packet version of this key.
+func (key *Key) GetVersion() int {
+	return key.entity.PrimaryKey.Version
+}
+
 // ToPublic returns the corresponding public key of the given private key.
 func (key *Key) ToPublic() (publicKey *Key, err error) {
 	if !key.IsPrivate() {
