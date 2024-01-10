@@ -3,6 +3,7 @@ package internal
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -61,7 +62,7 @@ func TestUtf8CheckWriteCloser(t *testing.T) {
 				dataReader := strings.NewReader(valid)
 				for {
 					_, err := io.CopyN(writeCloser, dataReader, copySize)
-					if err == io.EOF {
+					if errors.Is(err, io.EOF) {
 						break
 					}
 					if err != nil {
