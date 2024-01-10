@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     name: Build library for Android with gomobile
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
     - name: Set up JDK 1.8
@@ -24,7 +24,10 @@ jobs:
       id: go
 
     - name: Install NDK
-      run: echo "y" | $ANDROID_HOME/tools/bin/sdkmanager "ndk;23.2.8568313"
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r23c
+        link-to-sdk: true
 
     - name: Checkout
       uses: actions/checkout@v2
