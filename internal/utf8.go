@@ -68,7 +68,7 @@ func canOverlap(in []byte) []byte {
 
 // valid is a slightly modified utf8.Valid() function copied from the standard library.
 // If the byte slice is not valid utf8, it additionally returns the remaining data if the
-// the remaining data is smaller than the largest potential rune.
+// remaining data is smaller than the largest potential rune.
 func valid(p []byte) (bool, []byte) {
 	p = p[:len(p):len(p)]
 	for len(p) >= 8 {
