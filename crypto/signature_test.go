@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"io"
-	"io/ioutil"
+	"os"
 	"regexp"
 	"testing"
 
@@ -185,18 +185,18 @@ func Test_KeyRing_GetVerifiedSignatureTimestampSuccess(t *testing.T) {
 }
 
 func Test_KeyRing_GetVerifiedSignatureWithTwoKeysTimestampSuccess(t *testing.T) {
-	publicKey1Armored, err := ioutil.ReadFile("testdata/signature/publicKey1")
+	publicKey1Armored, err := os.ReadFile("testdata/signature/publicKey1")
 	if err != nil {
 		t.Errorf("Couldn't read the public key file: %v", err)
 	}
 	publicKey1 := parseKey(t, string(publicKey1Armored))
-	publicKey2Armored, err := ioutil.ReadFile("testdata/signature/publicKey2")
+	publicKey2Armored, err := os.ReadFile("testdata/signature/publicKey2")
 	if err != nil {
 		t.Errorf("Couldn't read the public key file: %v", err)
 	}
 	publicKey2 := parseKey(t, string(publicKey2Armored))
 	message := []byte("hello world")
-	signatureArmored, err := ioutil.ReadFile("testdata/signature/detachedSigSignedTwice")
+	signatureArmored, err := os.ReadFile("testdata/signature/detachedSigSignedTwice")
 	if err != nil {
 		t.Errorf("Couldn't read the signature file: %v", err)
 	}
@@ -394,7 +394,7 @@ func Test_SignDetachedWithCriticalContext(t *testing.T) {
 func Test_VerifyWithUnknownCriticalContext(t *testing.T) {
 	// given
 
-	signatureArmored, err := ioutil.ReadFile("testdata/signature/critical_context_detached_sig")
+	signatureArmored, err := os.ReadFile("testdata/signature/critical_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -419,7 +419,7 @@ func Test_VerifyWithUnknownCriticalContext(t *testing.T) {
 func Test_VerifyWithUnKnownNonCriticalContext(t *testing.T) {
 	// given
 
-	signatureArmored, err := ioutil.ReadFile("testdata/signature/non_critical_context_detached_sig")
+	signatureArmored, err := os.ReadFile("testdata/signature/non_critical_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -445,7 +445,7 @@ func Test_VerifyWithUnKnownNonCriticalContext(t *testing.T) {
 func Test_VerifyWithKnownCriticalContext(t *testing.T) {
 	// given
 
-	signatureArmored, err := ioutil.ReadFile("testdata/signature/critical_context_detached_sig")
+	signatureArmored, err := os.ReadFile("testdata/signature/critical_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -477,7 +477,7 @@ func Test_VerifyWithKnownCriticalContext(t *testing.T) {
 func Test_VerifyWithWrongContext(t *testing.T) {
 	// given
 
-	signatureArmored, err := ioutil.ReadFile("testdata/signature/critical_context_detached_sig")
+	signatureArmored, err := os.ReadFile("testdata/signature/critical_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -507,7 +507,7 @@ func Test_VerifyWithWrongContext(t *testing.T) {
 func Test_VerifyWithMissingNonRequiredContext(t *testing.T) {
 	// given
 
-	signatureArmored, err := ioutil.ReadFile("testdata/signature/no_context_detached_sig")
+	signatureArmored, err := os.ReadFile("testdata/signature/no_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -539,7 +539,7 @@ func Test_VerifyWithMissingNonRequiredContext(t *testing.T) {
 func Test_VerifyWithMissingRequiredContext(t *testing.T) {
 	// given
 
-	signatureArmored, err := ioutil.ReadFile("testdata/signature/no_context_detached_sig")
+	signatureArmored, err := os.ReadFile("testdata/signature/no_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -568,7 +568,7 @@ func Test_VerifyWithMissingRequiredContext(t *testing.T) {
 
 func Test_VerifyWithMissingRequiredContextBeforeCutoff(t *testing.T) {
 	// given
-	signatureArmored, err := ioutil.ReadFile("testdata/signature/no_context_detached_sig")
+	signatureArmored, err := os.ReadFile("testdata/signature/no_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -607,7 +607,7 @@ func Test_VerifyWithMissingRequiredContextBeforeCutoff(t *testing.T) {
 
 func Test_VerifyWithMissingRequiredContextAfterCutoff(t *testing.T) {
 	// given
-	signatureArmored, err := ioutil.ReadFile("testdata/signature/no_context_detached_sig")
+	signatureArmored, err := os.ReadFile("testdata/signature/no_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -644,7 +644,7 @@ func Test_VerifyWithMissingRequiredContextAfterCutoff(t *testing.T) {
 
 func Test_VerifyWithDoubleContext(t *testing.T) {
 	// given
-	signatureArmored, err := ioutil.ReadFile("testdata/signature/double_critical_context_detached_sig")
+	signatureArmored, err := os.ReadFile("testdata/signature/double_critical_context_detached_sig")
 	if err != nil {
 		t.Fatal(err)
 	}

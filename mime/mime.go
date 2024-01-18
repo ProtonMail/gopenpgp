@@ -3,7 +3,7 @@ package mime
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/mail"
 	"net/textproto"
 
@@ -99,7 +99,7 @@ func parseMIME(
 	}
 
 	h := textproto.MIMEHeader(mm.Header)
-	mmBodyData, err := ioutil.ReadAll(mm.Body)
+	mmBodyData, err := io.ReadAll(mm.Body)
 	if err != nil {
 		return nil, nil, nil, errors.Wrap(err, "mime: error in reading message body data")
 	}

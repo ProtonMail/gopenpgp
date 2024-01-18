@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"io"
-	"io/ioutil"
 
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/pkg/errors"
@@ -63,12 +62,12 @@ func (msg *VerifyDataReader) VerifySignature() (result *VerifyResult, err error)
 // ReadAll reads all plaintext data from the reader
 // and returns it as a byte slice.
 func (msg *VerifyDataReader) ReadAll() (plaintext []byte, err error) {
-	return ioutil.ReadAll(msg)
+	return io.ReadAll(msg)
 }
 
 // DiscardAll reads all data from the reader and discards it.
 func (msg *VerifyDataReader) DiscardAll() (err error) {
-	_, err = io.Copy(ioutil.Discard, msg)
+	_, err = io.Copy(io.Discard, msg)
 	return err
 }
 

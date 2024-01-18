@@ -2,8 +2,8 @@ package crypto
 
 import (
 	"crypto/rsa"
-	"io/ioutil"
 	"math/big"
+	"os"
 	"strings"
 	"testing"
 
@@ -21,7 +21,7 @@ var testPGP *PGPHandle
 var testProfiles []*profile.Custom
 
 func readTestFile(name string, trimNewlines bool) string {
-	data, err := ioutil.ReadFile("testdata/" + name) //nolint
+	data, err := os.ReadFile("testdata/" + name) //nolint
 	if err != nil {
 		panic(err)
 	}
