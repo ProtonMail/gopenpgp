@@ -3,7 +3,7 @@ package crypto
 import (
 	"encoding/base64"
 	"encoding/hex"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/ProtonMail/gopenpgp/v3/constants"
@@ -182,7 +182,7 @@ func TestSessionKeyClear(t *testing.T) {
 }
 
 func TestAEADDataPacketDecryption(t *testing.T) {
-	pgpMessageData, err := ioutil.ReadFile("testdata/gpg2.3-aead-pgp-message.pgp")
+	pgpMessageData, err := os.ReadFile("testdata/gpg2.3-aead-pgp-message.pgp")
 	if err != nil {
 		t.Fatal("Expected no error when reading message data, got:", err)
 	}

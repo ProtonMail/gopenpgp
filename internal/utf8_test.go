@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 )
@@ -27,7 +27,7 @@ func (c *noOpCloser) Close() (err error) {
 }
 
 func loadLargeData(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/utf8Valid.txt")
+	data, err := os.ReadFile("testdata/utf8Valid.txt")
 	if err != nil {
 		t.Fatal(err)
 	}

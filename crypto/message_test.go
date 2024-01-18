@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"io"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -91,7 +91,7 @@ func TestTextMixedMessageDecryptionWithPassword(t *testing.T) {
 		t.Fatal("Expected no error when decrypting, got:", err)
 	}
 
-	expected, err := ioutil.ReadFile("testdata/message_mixedPasswordPublicExpected")
+	expected, err := os.ReadFile("testdata/message_mixedPasswordPublicExpected")
 	if err != nil {
 		panic(err)
 	}

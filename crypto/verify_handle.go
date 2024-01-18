@@ -3,7 +3,6 @@ package crypto
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
@@ -84,7 +83,7 @@ func (vh *verifyHandle) VerifyDetached(data, signature []byte, encoding int8) (v
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: verifying signature failed")
 	}
-	_, err = io.Copy(ioutil.Discard, ptReader)
+	_, err = io.Copy(io.Discard, ptReader)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: reading data to verify signature failed")
 	}
@@ -146,7 +145,7 @@ func (vh *verifyHandle) verifyDetachedSignature(
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: verify signature failed")
 	}
-	_, err = io.Copy(ioutil.Discard, ptReader)
+	_, err = io.Copy(io.Discard, ptReader)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: reading all data from plaintext reader failed")
 	}
@@ -208,7 +207,7 @@ func (vh *verifyHandle) verifyCleartext(cleartext []byte) (*VerifyCleartextResul
 	if len(bytes.TrimSpace(rest)) > 0 {
 		return nil, errors.New("gopenpgp: cleartext message has trailing text")
 	}
-	signature, err := ioutil.ReadAll(block.ArmoredSignature.Body)
+	signature, err := io.ReadAll(block.ArmoredSignature.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: signature not parsable in cleartext")
 	}

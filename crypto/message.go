@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	goerrors "errors"
 	"io"
-	"io/ioutil"
 	"regexp"
 
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
@@ -87,7 +86,7 @@ func NewPGPMessageFromArmored(armored string) (*PGPMessage, error) {
 		return nil, errors.Wrap(err, "gopenpgp: error in unarmoring message")
 	}
 
-	message, err := ioutil.ReadAll(encryptedIO.Body)
+	message, err := io.ReadAll(encryptedIO.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in reading armored message")
 	}
