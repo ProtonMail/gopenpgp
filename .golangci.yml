@@ -21,6 +21,8 @@ issues:
     - missing output for example, go test can't validate it
     - variable 'hasExpiredEntity' is only used in the if-statement
   exclude-rules:
+    - path: crypto/key_clear.go
+      text: "SA1019"
     - path: crypto/crypto_example_test.go
       text: "G101: Potential hardcoded credentials"
     - path: crypto/encrypt_decrypt_test.go
