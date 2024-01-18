@@ -4,53 +4,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.8.0-alpha.1] 2024-04-09
-
+## [3.0.0-alpha.0] 2024-01-18
 ### Added
-- API to serialize KeyRings to binary data:
-	```go
-	func (keyRing *KeyRing) Serialize() ([]byte, error)
-	```
-- API to parse KeyRings from binary data:
-	```go
-	func NewKeyRingFromBinary(binKeys []byte) (*KeyRing, error)
-	```
+- New simplified API that is not backward compatible.
+- Full support for the crypto refresh.
+- Improved interoperability with other OpenPGP libraries.
+- Streaming support for all operations.
+- Introduces profiles for OpenPGP customization.
+- More documentation and examples.
 
-## [2.8.0-alpha.0] 2024-02-28
+### Changed
+- Mobile specific code is moved to the `mobile` package.
+- Mime specific code is moved to the `mime` package.
+- Replaces the go-crypto v1 API with the v2 API.
 
-### Added 
-- Adds support for the OpenPGP crypto-refresh by updating the go-crypto dependency to `v1.1.0-alpha.1`.
-- Adapts the session key logic to handle PKESK/SKESK v6 packets without an algorithm attached
-- Updates the min go version to `1.17` as required by  go-crypto `v1.1.0-alpha.1`.
-- Update the cricl dependency to `1.3.7` matching go-crypto.
-
-
-## [2.7.5] 2023-31-01
-
-### Added
-- API to get signature key IDs for mobile:
-	```go
-	func (msg *PGPMessage) GetHexSignatureKeyIDsJson() []byte
-	```
-- API to get encryption key IDs for mobile:
-	```go
-	func (msg *PGPMessage) GetHexEncryptionKeyIDsJson() []byte
-	```
-- API to get the number of key packets in a PGP message:
-	```go
-	func (msg *PGPSplitMessage) GetNumberOfKeyPackets() (int, error)
-	```
-- API in package `helper` to encrypt a PGP message to an additional key:
-	```go
-	func EncryptPGPMessageToAdditionalKey(messageToModify *crypto.PGPSplitMessage, keyRing *crypto.KeyRing, additionalKey *crypto.KeyRing) error
-	```
+### Removed
+- The `helper` package, use the crypto package with the new API instead.
+- `subtle` and `models` package.
+- Time management code for retrieving and setting timestamps.
 
 ## [2.7.4] 2023-10-27
 ### Fixed
 - Ensure that `(SessionKey).Decrypt` functions return an error if no integrity protection is present in the encrypted input. To protect SEIPDv1 encrypted messages, SED packets must not be allowed in decryption.
   
 ## [2.7.3] 2023-08-28
-## Added
+### Added
 - Add `helper.QuickCheckDecrypt` function to the helper package. The function allows to check with high probability if a session key can decrypt a SEIPDv1 data packet given its 24-byte prefix.
 
 ## [2.7.2] 2023-07-17
