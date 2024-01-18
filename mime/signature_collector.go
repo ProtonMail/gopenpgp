@@ -3,7 +3,6 @@ package mime
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net/textproto"
 
@@ -59,7 +58,7 @@ func (sc *signatureCollector) Accept(
 	if len(multiparts) != 2 {
 		sc.verified = newSignatureNotSigned()
 		// Invalid multipart/signed format just pass along
-		if _, err = ioutil.ReadAll(rawBody); err != nil {
+		if _, err = io.ReadAll(rawBody); err != nil {
 			return errors.Wrap(err, "mime: error in reading raw message body")
 		}
 
@@ -77,7 +76,7 @@ func (sc *signatureCollector) Accept(
 		return errors.Wrap(err, "mime: error in parsing body")
 	}
 
-	partData, err := ioutil.ReadAll(multiparts[1])
+	partData, err := io.ReadAll(multiparts[1])
 	if err != nil {
 		return errors.Wrap(err, "mime: error in ready part data")
 	}
@@ -86,7 +85,7 @@ func (sc *signatureCollector) Accept(
 		bytes.NewReader(partData),
 		multipartHeaders[1].Get("Content-Transfer-Encoding"))
 
-	buffer, err := ioutil.ReadAll(decodedPart)
+	buffer, err := io.ReadAll(decodedPart)
 	if err != nil {
 		return errors.Wrap(err, "mime: error in reading decoded data")
 	}
@@ -96,7 +95,7 @@ func (sc *signatureCollector) Accept(
 		return errors.Wrap(err, "mime: error in decoding charset")
 	}
 	sc.signature = string(buffer)
-	str, _ := ioutil.ReadAll(rawBody)
+	str, _ := io.ReadAll(rawBody)
 	canonicalizedBody := internal.CanonicalizeBytes(internal.TrimEachLineBytes(str))
 	if sc.verifyHandle != nil {
 		verifyResult, err := sc.verifyHandle.VerifyDetached(canonicalizedBody, buffer, crypto.Armor)

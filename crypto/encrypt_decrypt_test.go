@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"strings"
@@ -966,7 +965,7 @@ func testEncryptSplitDecryptStream(
 	if err == nil {
 		t.Fatal("Expected verify error not read all, got nil")
 	}
-	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
@@ -1038,7 +1037,7 @@ func testEncryptDecryptStream(
 	if err == nil {
 		t.Fatal("Expected an error while verifying the signature before reading the data, got nil")
 	}
-	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
