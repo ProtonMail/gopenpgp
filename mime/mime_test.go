@@ -2,7 +2,7 @@ package mime
 
 import (
 	"errors"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -101,7 +101,7 @@ func (tc *testMIMECallbacks) OnError(err error) {
 }
 
 func loadPrivateKeyRing(file string, passphrase string) (*crypto.KeyRing, error) {
-	armored, err := ioutil.ReadFile(filepath.Clean(file))
+	armored, err := os.ReadFile(filepath.Clean(file))
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func loadPrivateKeyRing(file string, passphrase string) (*crypto.KeyRing, error)
 }
 
 func loadPublicKeyRing(file string) (*crypto.KeyRing, error) {
-	armored, err := ioutil.ReadFile(filepath.Clean(file))
+	armored, err := os.ReadFile(filepath.Clean(file))
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func loadPublicKeyRing(file string) (*crypto.KeyRing, error) {
 }
 
 func loadMessage(file string) ([]byte, error) {
-	armored, err := ioutil.ReadFile(filepath.Clean(file))
+	armored, err := os.ReadFile(filepath.Clean(file))
 	if err != nil {
 		return nil, err
 	}
@@ -332,7 +332,7 @@ func readTestFile(name string, trimNewlines bool) string {
 }
 
 func readTestFileBytes(name string) []byte {
-	data, err := ioutil.ReadFile(filepath.Join("testdata/", name)) //nolint:gosec
+	data, err := os.ReadFile(filepath.Join("testdata/", name)) //nolint:gosec
 	if err != nil {
 		panic(err)
 	}

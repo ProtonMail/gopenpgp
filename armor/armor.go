@@ -5,7 +5,6 @@ package armor
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
@@ -105,7 +104,7 @@ func Unarmor(input string) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "armor: unable to unarmor")
 	}
-	return ioutil.ReadAll(b.Body)
+	return io.ReadAll(b.Body)
 }
 
 // UnarmorBytes unarmors an armored input into a byte array.
@@ -114,7 +113,7 @@ func UnarmorBytes(input []byte) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "armor: unable to unarmor")
 	}
-	return ioutil.ReadAll(b.Body)
+	return io.ReadAll(b.Body)
 }
 
 func ArmorPGPSignatureBinary(signature []byte) ([]byte, error) {
