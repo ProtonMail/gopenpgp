@@ -23,6 +23,12 @@ jobs:
         go-version: ^1.16
       id: go
 
+    - name: Install NDK
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r23c
+        link-to-sdk: true
+
     - name: Checkout
       uses: actions/checkout@v2
 
