@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	goerrors "errors"
 	"io"
 	"io/ioutil"
@@ -287,6 +288,21 @@ func (msg *PGPMessage) GetHexEncryptionKeyIDs() ([]string, bool) {
 	return getHexKeyIDs(msg.GetEncryptionKeyIDs())
 }
 
+// GetHexEncryptionKeyIDsJson returns the key IDs of the keys to which the session key is encrypted as a JSON array.
+// If an error occurs it returns nil.
+// Helper function for go-mobile clients.
+func (msg *PGPMessage) GetHexEncryptionKeyIDsJson() []byte {
+	hexIds, ok := msg.GetHexEncryptionKeyIDs()
+	if !ok {
+		return nil
+	}
+	hexIdsJson, err := json.Marshal(hexIds)
+	if err != nil {
+		return nil
+	}
+	return hexIdsJson
+}
+
 // GetSignatureKeyIDs Returns the key IDs of the keys to which the (readable) signature packets are encrypted to.
 func (msg *PGPMessage) GetSignatureKeyIDs() ([]uint64, bool) {
 	return getSignatureKeyIDs(msg.Data)
@@ -295,6 +311,20 @@ func (msg *PGPMessage) GetSignatureKeyIDs() ([]uint64, bool) {
 // GetHexSignatureKeyIDs Returns the key IDs of the keys to which the session key is encrypted.
 func (msg *PGPMessage) GetHexSignatureKeyIDs() ([]string, bool) {
 	return getHexKeyIDs(msg.GetSignatureKeyIDs())
+}
+
+// GetHexSignatureKeyIDsJson returns the key IDs of the keys to which the (readable) signature packets
+// are encrypted to as a JSON array. Helper function for go-mobile clients.
+func (msg *PGPMessage) GetHexSignatureKeyIDsJson() []byte {
+	sigHexSigIds, ok := msg.GetHexSignatureKeyIDs()
+	if !ok {
+		return nil
+	}
+	sigHexKeyIdsJSON, err := json.Marshal(sigHexSigIds)
+	if err != nil {
+		return nil
+	}
+	return sigHexKeyIdsJSON
 }
 
 // GetBinaryDataPacket returns the unarmored binary datapacket as a []byte.
@@ -322,6 +352,27 @@ func (msg *PGPSplitMessage) GetArmored() (string, error) {
 // packet to obtain a PGP message.
 func (msg *PGPSplitMessage) GetPGPMessage() *PGPMessage {
 	return NewPGPMessage(append(msg.KeyPacket, msg.DataPacket...))
+}
+
+// GetNumberOfKeyPackets returns the number of keys packets in this message.
+func (msg *PGPSplitMessage) GetNumberOfKeyPackets() (int, error) {
+	bytesReader := bytes.NewReader(msg.KeyPacket)
+	packets := packet.NewReader(bytesReader)
+	var keyPacketCount int
+	for {
+		p, err := packets.Next()
+		if goerrors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return 0, err
+		}
+		switch p.(type) {
+		case *packet.SymmetricKeyEncrypted, *packet.EncryptedKey:
+			keyPacketCount += 1
+		}
+	}
+	return keyPacketCount, nil
 }
 
 // SplitMessage splits the message into key and data packet(s).
