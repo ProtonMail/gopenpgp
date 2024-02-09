@@ -32,6 +32,17 @@ func (kgb *KeyGenerationBuilder) AddUserId(name, email string) *KeyGenerationBui
 	return kgb
 }
 
+// OverrideProfileAlgorithm allows to override the algorithm of the output key instead of using the profile's
+// algorithm with the respective security level.
+//
+// Allowed inputs (integer enum for go-mobile compatibility):
+// crypto.KeyGenerationRSA4096, crypto.KeyGenerationC25519, crypto.KeyGenerationC25519Refresh
+// crypto.KeyGenerationC448, crypto.KeyGenerationC448Refresh
+func (kgb *KeyGenerationBuilder) OverrideProfileAlgorithm(algorithm int) *KeyGenerationBuilder {
+	kgb.handle.overrideAlgorithm = algorithm
+	return kgb
+}
+
 // New creates a new key generation handle from the internal configuration
 // that allows to generate pgp keys.
 func (kgb *KeyGenerationBuilder) New() PGPKeyGeneration {

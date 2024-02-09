@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/pkg/errors"
@@ -11,10 +12,11 @@ type identity struct {
 }
 
 type keyGenerationHandle struct {
-	identities      []identity
-	keyLifetimeSecs uint32
-	profile         KeyGenerationProfile
-	clock           Clock
+	identities        []identity
+	keyLifetimeSecs   uint32
+	overrideAlgorithm int
+	profile           KeyGenerationProfile
+	clock             Clock
 }
 
 // --- Default key generation handle to build from
@@ -37,6 +39,7 @@ func (kgh *keyGenerationHandle) GenerateKey() (key *Key, err error) {
 // The argument security allows to set the security level, either standard or high.
 func (kgh *keyGenerationHandle) GenerateKeyWithSecurity(security int8) (key *Key, err error) {
 	config := kgh.profile.KeyGenerationConfig(security)
+	updateConfig(config, kgh.overrideAlgorithm)
 	config.Time = NewConstantClock(kgh.clock().Unix())
 	config.KeyLifetimeSecs = kgh.keyLifetimeSecs
 	key = &Key{}
@@ -88,4 +91,22 @@ func (id identity) valid() error {
 		return errors.New("gopenpgp: neither name nor email set in user id")
 	}
 	return nil
+}
+
+func updateConfig(config *packet.Config, algorithm int) {
+	switch algorithm {
+	case KeyGenerationRSA4096:
+		config.Algorithm = packet.PubKeyAlgoRSA
+		config.RSABits = 4096
+	case KeyGenerationC25519:
+		config.Algorithm = packet.PubKeyAlgoEdDSA
+		config.Curve = packet.Curve25519
+	case KeyGenerationC25519Refresh:
+		config.Algorithm = packet.PubKeyAlgoEd25519
+	case KeyGenerationC448:
+		config.Algorithm = packet.PubKeyAlgoEdDSA
+		config.Curve = packet.Curve448
+	case KeyGenerationC448Refresh:
+		config.Algorithm = packet.PubKeyAlgoEd448
+	}
 }
