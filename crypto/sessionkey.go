@@ -17,6 +17,7 @@ import (
 
 // SessionKey stores a decrypted session key.
 type SessionKey struct {
+	V6 bool
 	// The decrypted binary session key.
 	Key []byte
 	// The symmetric encryption algorithm used with this key.
@@ -57,6 +58,9 @@ func (cr checkReader) Read(buf []byte) (int, error) {
 // GetCipherFunc returns the cipher function corresponding to the algorithm used
 // with this SessionKey.
 func (sk *SessionKey) GetCipherFunc() (packet.CipherFunction, error) {
+	if sk.V6 {
+		return 0, nil
+	}
 	cf, ok := symKeyAlgos[sk.Algo]
 	if !ok {
 		return cf, errors.New("gopenpgp: unsupported cipher function: " + sk.Algo)
@@ -107,6 +111,7 @@ func NewSessionKeyFromToken(token []byte, algo string) *SessionKey {
 	return &SessionKey{
 		Key:  clone(token),
 		Algo: algo,
+		V6:   algo == "",
 	}
 }
 
@@ -118,13 +123,14 @@ func newSessionKeyFromEncrypted(ek *packet.EncryptedKey) (*SessionKey, error) {
 			break
 		}
 	}
-	if algo == "" {
+	if algo == "" && ek.Version < 6 {
 		return nil, fmt.Errorf("gopenpgp: unsupported cipher function: %v", ek.CipherFunc)
 	}
 
 	sk := &SessionKey{
 		Key:  ek.Key,
 		Algo: algo,
+		V6:   ek.Version == 6,
 	}
 
 	if err := sk.checkSize(); err != nil {
@@ -455,6 +461,12 @@ func decryptStreamWithSessionKey(
 }
 
 func (sk *SessionKey) checkSize() error {
+	if sk.V6 {
+		if len(sk.Key) == 0 {
+			return errors.New("empty session key")
+		}
+		return nil
+	}
 	cf, ok := symKeyAlgos[sk.Algo]
 	if !ok {
 		return errors.New("unknown symmetric key algorithm")
@@ -468,6 +480,9 @@ func (sk *SessionKey) checkSize() error {
 }
 
 func getAlgo(cipher packet.CipherFunction) string {
+	if cipher == 0 {
+		return ""
+	}
 	algo := constants.AES256
 	for k, v := range symKeyAlgos {
 		if v == cipher {

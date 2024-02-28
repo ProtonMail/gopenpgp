@@ -57,6 +57,7 @@ func DecryptSessionKeyWithPassword(keyPacket, password []byte) (*SessionKey, err
 			key, cipherFunc, err := s.Decrypt(password)
 			if err == nil {
 				sk := &SessionKey{
+					V6:   s.Version == 6,
 					Key:  key,
 					Algo: getAlgo(cipherFunc),
 				}
