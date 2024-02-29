@@ -235,16 +235,33 @@ const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 -----END PGP PRIVATE KEY BLOCK-----` // Encrypted private key
 const passphrase = []byte("LongSecret") // Private key passphrase
 
-var message = crypto.NewPlaintextMessage("Verified message")
+var message = crypto.NewPlainMessageFromString("Verified message")
 
-privateKeyObj, err := crypto.NewKeyFromArmored(privkey)
-unlockedKeyObj = privateKeyObj.Unlock(passphrase)
-signingKeyRing, err := crypto.NewKeyRing(unlockedKeyObj)
+privateKeyObj, err := crypto.NewKeyFromArmoredReader(f)
+if err != nil {
+  log.Fatalf("failed to create private key object, %s", err)
+}
 
-pgpSignature, err := signingKeyRing.SignDetached(message, trimNewlines)
+unlockedKeyObj, err := privateKeyObj.Unlock(passphrase)
+if err != nil {
+  log.Fatalf("failed to unlock key %s", err)
+}
+
+signingKeyring, err := crypto.NewKeyRing(unlockedKeyObj)
+if err != nil {
+  log.Fatalf("failed to create new keyring %s", err)
+}
+
+pgpSignature, err := signingKeyring.SignDetached(message)
+if err != nil {
+  log.Fatalf("failed to sign message %s", err)
+}
 
 // The armored signature is in pgpSignature.GetArmored()
+fmt.Println(pgpSignature.GetArmored())
+	
 // The signed text is in message.GetString()
+fmt.Println(message.GetString())
 ```
 
 To verify a signature either private or public keyring can be provided.
