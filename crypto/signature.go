@@ -240,7 +240,7 @@ func verifySignature(
 		}
 	} else {
 		config.Time = func() time.Time {
-			return time.Unix(verifyTime+internal.CreationTimeOffset, 0)
+			return time.Unix(verifyTime+internal.CreationTimeOffset, 999999999)
 		}
 	}
 
@@ -258,7 +258,7 @@ func verifySignature(
 			// Maybe the creation time offset pushed it over the edge
 			// Retry with the actual verification time
 			config.Time = func() time.Time {
-				return time.Unix(verifyTime, 0)
+				return time.Unix(verifyTime, 999999999)
 			}
 
 			seeker, ok := origText.(io.ReadSeeker)

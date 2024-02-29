@@ -13,6 +13,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 )
@@ -662,4 +663,34 @@ func Test_verifySignaturExpire(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestKeyNotExpired(t *testing.T) {
+	const lifetime = uint32(time.Hour / time.Second)
+
+	cfg := &packet.Config{
+		Algorithm:              packet.PubKeyAlgoEdDSA,
+		DefaultHash:            crypto.SHA256,
+		DefaultCipher:          packet.CipherAES256,
+		DefaultCompressionAlgo: packet.CompressionZLIB,
+		KeyLifetimeSecs:        lifetime,
+		SigLifetimeSecs:        lifetime,
+		Time:                   func() time.Time { return time.Unix(GetUnixTime(), 42) },
+	}
+
+	entity, err := openpgp.NewEntity("John Smith", "Linux", "john.smith@example.com", cfg)
+	require.NoError(t, err)
+	key, err := NewKeyFromEntity(entity)
+	require.NoError(t, err)
+	keyRing, err := NewKeyRing(key)
+	require.NoError(t, err)
+
+	data := []byte("Hello, World!")
+	message := NewPlainMessage(data)
+	signature, err := keyRing.SignDetached(message)
+	require.NoError(t, err)
+
+	sig := NewPGPSignature(signature.GetBinary())
+	err = keyRing.VerifyDetached(message, sig, GetUnixTime())
+	require.NoError(t, err)
 }
