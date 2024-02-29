@@ -4,14 +4,24 @@ import (
 	"time"
 )
 
-// UpdateTime updates cached time.
+// UpdateTime updates cached time, new time has to be after previously set or will be ignored otherwise.
+// Calling this function will cause time used in all crypto operations to be constant equal to provided.
 func UpdateTime(newTime int64) {
 	pgp.lock.Lock()
 	defer pgp.lock.Unlock()
 
-	if newTime > pgp.latestServerTime {
-		pgp.latestServerTime = newTime
+	if pgp.fixedTime < newTime {
+		pgp.fixedTime = newTime
 	}
+}
+
+// SetTimeOffset updates time offset used for crypto operations.
+// Offset will be applied to all crypto operations unless fixed time is used.
+func SetTimeOffset(newOffset int64) {
+	pgp.lock.Lock()
+	defer pgp.lock.Unlock()
+
+	pgp.timeOffset = newOffset
 }
 
 // SetKeyGenerationOffset updates the offset when generating keys.
@@ -24,46 +34,39 @@ func SetKeyGenerationOffset(offset int64) {
 
 // GetUnixTime gets latest cached time.
 func GetUnixTime() int64 {
-	return getNow().Unix()
+	return GetTime().Unix()
 }
 
 // GetTime gets latest cached time.
 func GetTime() time.Time {
-	return getNow()
+	pgp.lock.RLock()
+	defer pgp.lock.RUnlock()
+
+	if pgp.fixedTime == 0 {
+		return time.Unix(time.Now().Unix()+pgp.timeOffset, 0)
+	}
+
+	return time.Unix(pgp.fixedTime, 0)
 }
 
 // ----- INTERNAL FUNCTIONS -----
 
-// getNow returns the latest server time.
-func getNow() time.Time {
+// setFixedTime sets fixed pgp time
+func setFixedTime(newTime int64) {
+	pgp.lock.Lock()
+	defer pgp.lock.Unlock()
+
+	pgp.fixedTime = newTime
+}
+
+// getKeyGenerationTime returns the current time with the key generation offset.
+func getKeyGenerationTime() time.Time {
 	pgp.lock.RLock()
 	defer pgp.lock.RUnlock()
 
-	if pgp.latestServerTime == 0 {
-		return time.Now()
+	if pgp.fixedTime == 0 {
+		return time.Unix(time.Now().Unix()+pgp.generationOffset+pgp.timeOffset, 0)
 	}
 
-	return time.Unix(pgp.latestServerTime, 0)
-}
-
-// getTimeGenerator Returns a time generator function.
-func getTimeGenerator() func() time.Time {
-	return getNow
-}
-
-// getNowKeyGenerationOffset returns the current time with the key generation offset.
-func getNowKeyGenerationOffset() time.Time {
-	pgp.lock.RLock()
-	defer pgp.lock.RUnlock()
-
-	if pgp.latestServerTime == 0 {
-		return time.Unix(time.Now().Unix()+pgp.generationOffset, 0)
-	}
-
-	return time.Unix(pgp.latestServerTime+pgp.generationOffset, 0)
-}
-
-// getKeyGenerationTimeGenerator Returns a time generator function with the key generation offset.
-func getKeyGenerationTimeGenerator() func() time.Time {
-	return getNowKeyGenerationOffset
+	return time.Unix(pgp.fixedTime+pgp.generationOffset, 0)
 }

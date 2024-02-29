@@ -139,12 +139,11 @@ func TestVerifyBinDetachedSig(t *testing.T) {
 }
 
 func Test_KeyRing_GetVerifiedSignatureTimestampSuccess(t *testing.T) {
-	message := NewPlainMessageFromString(testMessage)
+	defer setFixedTime(testTime)
 	var time int64 = 1600000000
-	pgp.latestServerTime = time
-	defer func() {
-		pgp.latestServerTime = testTime
-	}()
+	setFixedTime(time)
+	message := NewPlainMessageFromString(testMessage)
+
 	signature, err := keyRingTestPrivate.SignDetached(message)
 	if err != nil {
 		t.Errorf("Got an error while generating the signature: %v", err)
@@ -159,12 +158,10 @@ func Test_KeyRing_GetVerifiedSignatureTimestampSuccess(t *testing.T) {
 }
 
 func Test_KeyRing_GetVerifiedSignatureTimestampWithContext(t *testing.T) {
-	message := NewPlainMessageFromString(testMessage)
+	defer setFixedTime(testTime)
 	var time int64 = 1600000000
-	pgp.latestServerTime = time
-	defer func() {
-		pgp.latestServerTime = testTime
-	}()
+	setFixedTime(time)
+	message := NewPlainMessageFromString(testMessage)
 	var testContext = "test-context"
 	signature, err := keyRingTestPrivate.SignDetachedWithContext(message, NewSigningContext(testContext, true))
 	if err != nil {
@@ -259,12 +256,10 @@ func getTimestampOfIssuer(signature *PGPSignature, keyID uint64) int64 {
 }
 
 func Test_KeyRing_GetVerifiedSignatureTimestampError(t *testing.T) {
-	message := NewPlainMessageFromString(testMessage)
+	defer setFixedTime(testTime)
 	var time int64 = 1600000000
-	pgp.latestServerTime = time
-	defer func() {
-		pgp.latestServerTime = testTime
-	}()
+	setFixedTime(time)
+	message := NewPlainMessageFromString(testMessage)
 	signature, err := keyRingTestPrivate.SignDetached(message)
 	if err != nil {
 		t.Errorf("Got an error while generating the signature: %v", err)
@@ -616,12 +611,13 @@ func Test_VerifyDetachedWithDoubleContext(t *testing.T) {
 }
 
 func Test_verifySignaturExpire(t *testing.T) {
-	defer func(t int64) { pgp.latestServerTime = t }(pgp.latestServerTime)
-	pgp.latestServerTime = 0
+	defer setFixedTime(testTime)
+	setFixedTime(0)
 
 	const lifetime = uint32(time.Hour / time.Second)
 
 	cfg := &packet.Config{
+		Time:                   GetTime,
 		Algorithm:              packet.PubKeyAlgoEdDSA,
 		DefaultHash:            crypto.SHA256,
 		DefaultCipher:          packet.CipherAES256,
@@ -655,10 +651,7 @@ func Test_verifySignaturExpire(t *testing.T) {
 
 	sig := NewPGPSignature(signature.GetBinary())
 
-	// packet.PublicKey.KeyExpired will return false here because PublicKey CreationTime has
-	// nanosecond precision, while pgpcrypto.GetUnixTime() has only second precision.
-	// Adjust the check time to be in the future to ensure that the key is not expired.
-	err = keyRing.VerifyDetached(message, sig, GetUnixTime()+1)
+	err = keyRing.VerifyDetached(message, sig, GetUnixTime())
 	if err != nil {
 		t.Fatal(err)
 	}

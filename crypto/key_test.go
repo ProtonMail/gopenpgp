@@ -221,6 +221,42 @@ func TestIsExpired(t *testing.T) {
 	assert.Exactly(t, true, futureKey.IsExpired())
 }
 
+func TestGeneratedWithOffset(t *testing.T) {
+	defer setFixedTime(testTime)
+	setFixedTime(0)
+	defer SetTimeOffset(0)
+	var timeOffset int64 = 30
+	SetTimeOffset(timeOffset)
+
+	// generate key with offset
+	keyTestRSA, err := GenerateKey(keyTestName, keyTestDomain, "rsa", 1024)
+	if err != nil {
+		panic("Cannot generate RSA key:" + err.Error())
+	}
+
+	// Bring back offset to zero
+	SetTimeOffset(0)
+
+	// Verify if key was generated with offset but lower by 1 sec to compensate time passing in test
+	assert.GreaterOrEqual(t, keyTestRSA.entity.PrimaryKey.CreationTime.Unix(), GetUnixTime()+timeOffset-1)
+}
+
+func TestGeneratedWithKeyOffset(t *testing.T) {
+	defer setFixedTime(testTime)
+	setFixedTime(testTime)
+	defer SetKeyGenerationOffset(0)
+	var timeOffset int64 = 30
+	SetKeyGenerationOffset(timeOffset)
+
+	// generate key with key offset
+	keyTestRSA, err := GenerateKey(keyTestName, keyTestDomain, "rsa", 1024)
+	if err != nil {
+		panic("Cannot generate RSA key:" + err.Error())
+	}
+
+	assert.GreaterOrEqual(t, keyTestRSA.entity.PrimaryKey.CreationTime.Unix(), testTime+timeOffset)
+}
+
 func TestGenerateKeyWithPrimes(t *testing.T) {
 	prime1, _ := base64.StdEncoding.DecodeString(
 		"/thF8zjjk6fFx/y9NId35NFx8JTA7jvHEl+gI0dp9dIl9trmeZb+ESZ8f7bNXUmTI8j271kyenlrVJiqwqk80Q==")
@@ -418,10 +454,8 @@ func TestKeyCapabilities(t *testing.T) {
 }
 
 func TestRevokedKeyCapabilities(t *testing.T) {
-	pgp.latestServerTime = 1632219895
-	defer func() {
-		pgp.latestServerTime = testTime
-	}()
+	defer setFixedTime(testTime)
+	setFixedTime(1632219895)
 
 	revokedKey, err := NewKeyFromArmored(readTestFile("key_revoked", false))
 	if err != nil {

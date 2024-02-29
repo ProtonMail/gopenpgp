@@ -6,13 +6,15 @@ import "sync"
 // GopenPGP is used as a "namespace" for many of the functions in this package.
 // It is a struct that keeps track of time skew between server and client.
 type GopenPGP struct {
-	latestServerTime int64
+	fixedTime        int64
+	timeOffset       int64
 	generationOffset int64
 	lock             *sync.RWMutex
 }
 
 var pgp = GopenPGP{
-	latestServerTime: 0,
+	fixedTime:        0,
+	timeOffset:       0,
 	generationOffset: 0,
 	lock:             &sync.RWMutex{},
 }

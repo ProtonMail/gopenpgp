@@ -264,26 +264,26 @@ func (key *Key) GetPublicKey() (b []byte, err error) {
 
 // CanVerify returns true if any of the subkeys can be used for verification.
 func (key *Key) CanVerify() bool {
-	_, canVerify := key.entity.SigningKey(getNow())
+	_, canVerify := key.entity.SigningKey(GetTime())
 	return canVerify
 }
 
 // CanEncrypt returns true if any of the subkeys can be used for encryption.
 func (key *Key) CanEncrypt() bool {
-	_, canEncrypt := key.entity.EncryptionKey(getNow())
+	_, canEncrypt := key.entity.EncryptionKey(GetTime())
 	return canEncrypt
 }
 
 // IsExpired checks whether the key is expired.
 func (key *Key) IsExpired() bool {
 	i := key.entity.PrimaryIdentity()
-	return key.entity.PrimaryKey.KeyExpired(i.SelfSignature, getNow()) || // primary key has expired
-		i.SelfSignature.SigExpired(getNow()) // user ID self-signature has expired
+	return key.entity.PrimaryKey.KeyExpired(i.SelfSignature, GetTime()) || // primary key has expired
+		i.SelfSignature.SigExpired(GetTime()) // user ID self-signature has expired
 }
 
 // IsRevoked checks whether the key or the primary identity has a valid revocation signature.
 func (key *Key) IsRevoked() bool {
-	return key.entity.Revoked(getNow()) || key.entity.PrimaryIdentity().Revoked(getNow())
+	return key.entity.Revoked(GetTime()) || key.entity.PrimaryIdentity().Revoked(GetTime())
 }
 
 // IsPrivate returns true if the key is private.
@@ -447,7 +447,7 @@ func generateKey(
 	cfg := &packet.Config{
 		Algorithm:              packet.PubKeyAlgoRSA,
 		RSABits:                bits,
-		Time:                   getKeyGenerationTimeGenerator(),
+		Time:                   getKeyGenerationTime,
 		DefaultHash:            crypto.SHA256,
 		DefaultCipher:          packet.CipherAES256,
 		DefaultCompressionAlgo: packet.CompressionZLIB,

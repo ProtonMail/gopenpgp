@@ -211,10 +211,8 @@ func TestBinaryMessageEncryption(t *testing.T) {
 }
 
 func TestIssue11(t *testing.T) {
-	pgp.latestServerTime = 1559655272
-	defer func() {
-		pgp.latestServerTime = testTime
-	}()
+	defer setFixedTime(testTime)
+	setFixedTime(1559655272)
 
 	var issue11Password = []byte("1234")
 
@@ -258,8 +256,8 @@ func TestIssue11(t *testing.T) {
 }
 
 func TestDummy(t *testing.T) {
-	pgp.latestServerTime = 1636644417
-	defer func() { pgp.latestServerTime = testTime }()
+	defer setFixedTime(testTime)
+	setFixedTime(1636644417)
 
 	dummyKey, err := NewKeyFromArmored(readTestFile("key_dummy", false))
 	if err != nil {

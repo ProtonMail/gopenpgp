@@ -94,6 +94,7 @@ func EncryptSessionKeyWithPassword(sk *SessionKey, password []byte) ([]byte, err
 
 	config := &packet.Config{
 		DefaultCipher: cf,
+		Time:          GetTime,
 	}
 
 	err = packet.SerializeSymmetricKeyEncryptedReuseKey(outbuf, sk.Key, password, config)
@@ -110,7 +111,7 @@ func passwordEncrypt(message *PlainMessage, password []byte) ([]byte, error) {
 
 	config := &packet.Config{
 		DefaultCipher: packet.CipherAES256,
-		Time:          getTimeGenerator(),
+		Time:          GetTime,
 	}
 
 	hints := &openpgp.FileHints{
@@ -149,7 +150,7 @@ func passwordDecrypt(encryptedIO io.Reader, password []byte) (*PlainMessage, err
 	}
 
 	config := &packet.Config{
-		Time: getTimeGenerator(),
+		Time: GetTime,
 	}
 
 	var emptyKeyRing openpgp.EntityList
