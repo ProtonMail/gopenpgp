@@ -112,7 +112,7 @@ message, err := helper.DecryptMessageWithPassword(password, armor)
 
 To encrypt binary data or use more advanced modes:
 ```go
-import "github.com/ProtonMail/gopenpgp/v2/constants"
+import "github.com/ProtonMail/gopenpgp/v2/crypto"
 
 const password = []byte("hunter2")
 
@@ -121,11 +121,11 @@ var message = crypto.NewPlainMessage(data)
 message = crypto.NewPlainMessageFromString(string)
 
 // Encrypt data with password
-encrypted, err := EncryptMessageWithPassword(message, password)
+encrypted, err := crypto.EncryptMessageWithPassword(message, password)
 // Encrypted message in encrypted.GetBinary() or encrypted.GetArmored()
 
 // Decrypt data with password
-decrypted, err := DecryptMessageWithPassword(encrypted, password)
+decrypted, err := crypto.DecryptMessageWithPassword(encrypted, password)
 
 //Original message in decrypted.GetBinary()
 ```
