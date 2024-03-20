@@ -52,11 +52,7 @@ func (msg *VerifyDataReader) VerifySignature() (result *VerifyResult, err error)
 	if !msg.readAll {
 		return nil, errors.New("gopenpgp: can't verify the signature until the message reader has been read entirely")
 	}
-	if msg.verifyKeyRing != nil {
-		return createVerifyResult(msg.details, msg.verifyKeyRing, msg.verificationContext, msg.verifyTime, msg.disableTimeCheck)
-	}
-
-	return nil, errors.New("gopenpgp: no verify keyring was provided before decryption")
+	return createVerifyResult(msg.details, msg.verifyKeyRing, msg.verificationContext, msg.verifyTime, msg.disableTimeCheck)
 }
 
 // ReadAll reads all plaintext data from the reader
@@ -82,28 +78,20 @@ func (msg *VerifyDataReader) DiscardAllAndVerifySignature() (vr *VerifyResult, e
 }
 
 // ReadAllAndVerifySignature reads all plaintext data from the reader
-// and verifies that the signatures are valid.
-// Only checks the signatures if any verify keys are present.
+// and tries to verify the signatures included in the message.
 // Returns the data in a VerifiedDataResult struct, which can be checked for signature errors.
 func (msg *VerifyDataReader) ReadAllAndVerifySignature() (*VerifiedDataResult, error) {
 	plaintext, err := msg.ReadAll()
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: reading all data from reader failed")
 	}
-	if msg.verifyKeyRing != nil {
-		verifyResult, err := msg.VerifySignature()
-		return &VerifiedDataResult{
-			VerifyResult:     *verifyResult,
-			data:             plaintext,
-			metadata:         msg.GetMetadata(),
-			cachedSessionKey: msg.SessionKey(),
-		}, err
-	}
+	verifyResult, err := msg.VerifySignature()
 	return &VerifiedDataResult{
+		VerifyResult:     *verifyResult,
 		data:             plaintext,
 		metadata:         msg.GetMetadata(),
 		cachedSessionKey: msg.SessionKey(),
-	}, nil
+	}, err
 }
 
 // SessionKey returns the session key the data is decrypted with.

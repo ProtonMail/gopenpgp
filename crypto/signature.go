@@ -300,7 +300,7 @@ func createVerifyResult(
 		var signatureError SignatureVerificationError
 
 		switch {
-		case len(verifierKey.entities) == 0 ||
+		case verifierKey == nil || len(verifierKey.entities) == 0 ||
 			errors.Is(signature.SignatureError, pgpErrors.ErrUnknownIssuer):
 			signatureError = newSignatureNoVerifier()
 		case signature.SignatureError != nil:
