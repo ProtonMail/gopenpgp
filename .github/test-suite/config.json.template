@@ -18,10 +18,6 @@
         "path": "__SOP_OPENPGPJS__"
       },
       {
-        "id": "gosop-v2",
-        "path": "__GOSOP_V2__"
-      },
-      {
         "path": "__RNP_SOP__"
       }
     ],
