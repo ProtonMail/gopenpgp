@@ -36,7 +36,7 @@ jobs:
 
     - name: Test
       run: go test -v -race ./...
-
+      
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -48,4 +48,4 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.50.1
+          version: v1.54.2

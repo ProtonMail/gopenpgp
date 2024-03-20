@@ -31,9 +31,6 @@ jobs:
         env:
           platform: ${{ 'iOS Simulator' }}
         run: |
-          for d in $ANDROID_NDK_HOME/../23*; do
-            ANDROID_NDK_HOME=$d
-          done
           ./build.sh apple
           find dist
 

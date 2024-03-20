@@ -1,7 +1,7 @@
 package crypto
 
 import (
-	"crypto/dsa" //nolint:staticcheck
+	"crypto/dsa"
 	"crypto/rsa"
 	"errors"
 	"math/big"
@@ -16,11 +16,13 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/x448"
 )
 
+// Clear zeroes the sensitive data in the session key.
 func (sk *SessionKey) Clear() (ok bool) {
 	clearMem(sk.Key)
 	return true
 }
 
+// ClearPrivateParams zeroes the sensitive data in the key.
 func (key *Key) ClearPrivateParams() (ok bool) {
 	num := key.clearPrivateWithSubkeys()
 	key.entity.PrivateKey = nil

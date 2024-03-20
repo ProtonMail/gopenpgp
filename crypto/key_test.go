@@ -1,17 +1,17 @@
 package crypto
 
 import (
-	"crypto/rsa"
-	"encoding/base64"
-	"io/ioutil"
+	"io"
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-
+	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
+	"github.com/ProtonMail/gopenpgp/v3/constants"
+	"github.com/ProtonMail/gopenpgp/v3/profile"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,12 +29,26 @@ var (
 
 func initGenerateKeys() {
 	var err error
-	keyTestRSA, err = GenerateKey(keyTestName, keyTestDomain, "rsa", 1024)
+	clock := NewConstantClock(testTime)
+	keyTestRSA, err = generateKey(
+		keyTestName,
+		keyTestDomain,
+		clock,
+		profile.RFC4880(),
+		constants.StandardSecurity,
+		0,
+	)
 	if err != nil {
 		panic("Cannot generate RSA key:" + err.Error())
 	}
-
-	keyTestEC, err = GenerateKey(keyTestName, keyTestDomain, "x25519", 256)
+	keyTestEC, err = generateKey(
+		keyTestName,
+		keyTestDomain,
+		clock,
+		profile.GnuPG(),
+		constants.StandardSecurity,
+		0,
+	)
 	if err != nil {
 		panic("Cannot generate EC key:" + err.Error())
 	}
@@ -42,7 +56,7 @@ func initGenerateKeys() {
 
 func initArmoredKeys() {
 	var err error
-	lockedRSA, err := keyTestRSA.Lock(keyTestPassphrase)
+	lockedRSA, err := testPGP.LockKey(keyTestRSA, keyTestPassphrase)
 	if err != nil {
 		panic("Cannot lock RSA key:" + err.Error())
 	}
@@ -52,7 +66,7 @@ func initArmoredKeys() {
 		panic("Cannot armor protected RSA key:" + err.Error())
 	}
 
-	lockedEC, err := keyTestEC.Lock(keyTestPassphrase)
+	lockedEC, err := testPGP.LockKey(keyTestEC, keyTestPassphrase)
 	if err != nil {
 		panic("Cannot lock EC key:" + err.Error())
 	}
@@ -75,7 +89,7 @@ func TestArmorKeys(t *testing.T) {
 		t.Fatal("Cannot armor unprotected EC key:" + err.Error())
 	}
 
-	rTest := regexp.MustCompile(`(?s)^-----BEGIN PGP PRIVATE KEY BLOCK-----.*Version: GopenPGP [0-9]+\.[0-9]+\.[0-9]+.*-----END PGP PRIVATE KEY BLOCK-----$`)
+	rTest := regexp.MustCompile(`(?s)^-----BEGIN PGP PRIVATE KEY BLOCK-----.*-----END PGP PRIVATE KEY BLOCK-----$`)
 	assert.Regexp(t, rTest, noPasswordRSA)
 	assert.Regexp(t, rTest, noPasswordEC)
 	assert.Regexp(t, rTest, keyTestArmoredRSA)
@@ -119,7 +133,7 @@ func TestLockUnlockKeys(t *testing.T) {
 		t.Fatal("Should not be able to unlock public key:")
 	}
 
-	_, err = publicKey.Lock(keyTestPassphrase)
+	_, err = testPGP.LockKey(publicKey, keyTestPassphrase)
 	if err == nil {
 		t.Fatal("Should not be able to lock public key:")
 	}
@@ -169,7 +183,7 @@ func testLockUnlockKey(t *testing.T, armoredKey string, pass []byte) {
 	}
 
 	// re-lock key
-	relockedKey, err := unlockedKey.Lock(keyTestPassphrase)
+	relockedKey, err := testPGP.LockKey(unlockedKey, keyTestPassphrase)
 	if err != nil {
 		t.Fatal("Cannot lock key:", err)
 	}
@@ -204,8 +218,8 @@ func ExampleKey_PrintFingerprints() {
 }
 
 func TestIsExpired(t *testing.T) {
-	assert.Exactly(t, false, keyTestRSA.IsExpired())
-	assert.Exactly(t, false, keyTestEC.IsExpired())
+	assert.False(t, keyTestRSA.IsExpired(testTime))
+	assert.False(t, keyTestEC.IsExpired(testTime))
 
 	expiredKey, err := NewKeyFromArmored(readTestFile("key_expiredKey", false))
 	if err != nil {
@@ -217,53 +231,8 @@ func TestIsExpired(t *testing.T) {
 		t.Fatal("Cannot unarmor future key:", err)
 	}
 
-	assert.Exactly(t, true, expiredKey.IsExpired())
-	assert.Exactly(t, true, futureKey.IsExpired())
-}
-
-func TestGenerateKeyWithPrimes(t *testing.T) {
-	prime1, _ := base64.StdEncoding.DecodeString(
-		"/thF8zjjk6fFx/y9NId35NFx8JTA7jvHEl+gI0dp9dIl9trmeZb+ESZ8f7bNXUmTI8j271kyenlrVJiqwqk80Q==")
-	prime2, _ := base64.StdEncoding.DecodeString(
-		"0HyyG/TShsw7yObD+DDP9Ze39ye1Redljx+KOZ3iNDmuuwwI1/5y44rD/ezAsE7A188NsotMDTSy5xtfHmu0xQ==")
-	prime3, _ := base64.StdEncoding.DecodeString(
-		"3OyJpAdnQXNjPNzI1u3BWDmPrzWw099E0UfJj5oJJILSbsAg/DDrmrdrIZDt7f24d06HCnTErCNWjvFJ3Kdq4w==")
-	prime4, _ := base64.StdEncoding.DecodeString(
-		"58UEDXTX29Q9JqvuE3Tn+Qj275CXBnJbA8IVM4d05cPYAZ6H43bPN01pbJqJTJw/cuFxs+8C+HNw3/MGQOExqw==")
-
-	staticRsaKey, err := GenerateRSAKeyWithPrimes(keyTestName, keyTestDomain, 1024, prime1, prime2, prime3, prime4)
-	if err != nil {
-		t.Fatal("Cannot generate RSA key with primes:", err)
-	}
-
-	pk, ok := staticRsaKey.entity.PrivateKey.PrivateKey.(*rsa.PrivateKey)
-	assert.True(t, ok)
-	assert.Exactly(t, prime1, pk.Primes[0].Bytes())
-	assert.Exactly(t, prime2, pk.Primes[1].Bytes())
-}
-
-func TestFailCheckIntegrity25519(t *testing.T) {
-	failCheckIntegrity(t, "x25519", 0)
-}
-
-func TestFailCheckIntegrityRSA(t *testing.T) {
-	failCheckIntegrity(t, "rsa", 2048)
-}
-
-func failCheckIntegrity(t *testing.T, keyType string, bits int) {
-	k1, _ := GenerateKey(keyTestName, keyTestDomain, keyType, bits)
-	k2, _ := GenerateKey(keyTestName, keyTestDomain, keyType, bits)
-
-	k1.entity.PrivateKey.PrivateKey = k2.entity.PrivateKey.PrivateKey // Swap private keys
-
-	serialized, err := k1.Serialize()
-	if err != nil {
-		t.Fatal("Expected no error while serializing keyring, got:", err)
-	}
-
-	_, err = NewKey(serialized)
-
-	assert.Error(t, err)
+	assert.True(t, expiredKey.IsExpired(testTime))
+	assert.True(t, futureKey.IsExpired(testTime))
 }
 
 func TestGetPublicKey(t *testing.T) {
@@ -309,12 +278,12 @@ func TestGetArmoredPublicKey(t *testing.T) {
 
 	assert.Exactly(t, expected.Type, block.Type)
 
-	b, err := ioutil.ReadAll(block.Body)
+	b, err := io.ReadAll(block.Body)
 	if err != nil {
 		t.Fatal("Expected no error while reading armored public key body, got:", err)
 	}
 
-	eb, err := ioutil.ReadAll(expected.Body)
+	eb, err := io.ReadAll(expected.Body)
 	if err != nil {
 		t.Fatal("Expected no error while reading expected armored public key body, got:", err)
 	}
@@ -333,7 +302,6 @@ func TestGetArmoredPublicKey(t *testing.T) {
 
 	assert.False(t, decodedKey.IsPrivate())
 	assert.True(t, keyTestRSA.IsPrivate())
-	assert.Contains(t, publicKey, "Version: GopenPGP")
 
 	privateFingerprint := keyTestRSA.GetFingerprint()
 	publicFingerprint := decodedKey.GetFingerprint()
@@ -382,7 +350,11 @@ func TestGetEntity(t *testing.T) {
 		t.Fatal("Cannot unarmor key:", err)
 	}
 	entity := publicKey.GetEntity()
-	assert.True(t, entity.PrimaryIdentity().SelfSignature.FlagsValid)
+	selfSig, err := entity.PrimarySelfSignature(time.Unix(testTime, 0))
+	if err != nil {
+		t.Fatal("Expected no error, got: ", err)
+	}
+	assert.True(t, selfSig.FlagsValid)
 	assert.IsType(t, &openpgp.Entity{}, entity)
 }
 
@@ -403,35 +375,32 @@ func TestToPublic(t *testing.T) {
 }
 
 func TestKeyCapabilities(t *testing.T) {
-	assert.True(t, keyTestEC.CanVerify())
-	assert.True(t, keyTestEC.CanEncrypt())
-	assert.True(t, keyTestRSA.CanVerify())
-	assert.True(t, keyTestRSA.CanEncrypt())
+	assert.True(t, keyTestEC.CanVerify(testTime))
+	assert.True(t, keyTestEC.CanEncrypt(testTime))
+	assert.True(t, keyTestRSA.CanVerify(testTime))
+	assert.True(t, keyTestRSA.CanEncrypt(testTime))
 
 	publicKey, err := keyTestEC.ToPublic()
 	if err != nil {
 		t.Fatal("Cannot make key public:", err)
 	}
 
-	assert.True(t, publicKey.CanVerify())
-	assert.True(t, publicKey.CanEncrypt())
+	assert.True(t, publicKey.CanVerify(testTime))
+	assert.True(t, publicKey.CanEncrypt(testTime))
 }
 
-func TestRevokedKeyCapabilities(t *testing.T) {
-	pgp.latestServerTime = 1632219895
-	defer func() {
-		pgp.latestServerTime = testTime
-	}()
+const testRevokedKeyCapabilitiesTime = 1632219895
 
+func TestRevokedKeyCapabilities(t *testing.T) {
 	revokedKey, err := NewKeyFromArmored(readTestFile("key_revoked", false))
 	if err != nil {
 		t.Fatal("Cannot unarmor key:", err)
 	}
 
-	assert.False(t, revokedKey.CanVerify())
-	assert.False(t, revokedKey.CanEncrypt())
-	assert.False(t, revokedKey.IsExpired())
-	assert.True(t, revokedKey.IsRevoked())
+	assert.False(t, revokedKey.CanVerify(testRevokedKeyCapabilitiesTime))
+	assert.False(t, revokedKey.CanEncrypt(testRevokedKeyCapabilitiesTime))
+	assert.False(t, revokedKey.IsExpired(testRevokedKeyCapabilitiesTime))
+	assert.True(t, revokedKey.IsRevoked(testRevokedKeyCapabilitiesTime))
 }
 
 func TestUnlockMismatchingKey(t *testing.T) {
@@ -446,9 +415,13 @@ func TestUnlockMismatchingKey(t *testing.T) {
 }
 
 func TestKeyCompression(t *testing.T) {
+	selfSig, err := keyTestEC.entity.PrimarySelfSignature(time.Time{})
+	if err != nil {
+		t.Fatal("no error expected, got: ", err)
+	}
 	assert.Equal(
 		t,
 		[]uint8{uint8(packet.CompressionNone), uint8(packet.CompressionZLIB)},
-		keyTestEC.entity.PrimaryIdentity().SelfSignature.PreferredCompression,
+		selfSig.PreferredCompression,
 	)
 }

@@ -1,74 +1,411 @@
-# GopenPGP V2
-[![Build Status](https://travis-ci.org/ProtonMail/gopenpgp.svg?branch=master)](https://travis-ci.org/ProtonMail/gopenpgp)
+# GopenPGP V3
 
-GopenPGP is a high-level OpenPGP library built on top of [a fork of the golang
-crypto library](https://github.com/ProtonMail/crypto).
+GopenPGP V3 is a high-level OpenPGP library built on top of [a fork of the golang
+crypto library](https://github.com/ProtonMail/go-crypto/tree/version-2).
 
 **Table of Contents**
 
 <!-- TOC depthFrom:2 -->
 
-- [Download/Install](#downloadinstall)
-- [Documentation](#documentation)
-- [Using with Go Mobile](#using-with-go-mobile)
-- [Full documentation](#full-documentation)
-- [Examples](#examples)
-    - [Set up](#set-up)
-    - [Encrypt / Decrypt with password](#encrypt--decrypt-with-password)
+- [GopenPGP V3](#gopenpgp-v3)
+  - [Download/Install](#downloadinstall)
+  - [Documentation](#documentation)
+  - [Examples](#examples)
+    - [Encrypt / Decrypt with a password](#encrypt--decrypt-with-a-password)
     - [Encrypt / Decrypt with PGP keys](#encrypt--decrypt-with-pgp-keys)
     - [Generate key](#generate-key)
-    - [Detached signatures for plain text messages](#detached-signatures-for-plain-text-messages)
-    - [Detached signatures for binary data](#detached-signatures-for-binary-data)
+    - [Detached and inline signatures](#detached-and-inline-signatures)
     - [Cleartext signed messages](#cleartext-signed-messages)
+    - [Encrypt with different outputs](#encrypt-with-different-outputs)
+  - [Using with Go Mobile](#using-with-go-mobile)
 
 <!-- /TOC -->
 
 ## Download/Install
-### Vendored install
-To use this library using [Go Modules](https://github.com/golang/go/wiki/Modules) just edit your
-`go.mod` configuration to contain:
-```gomod
-require (
-    ...
-    github.com/ProtonMail/gopenpgp/v2 v2.0.1
-)
-```
 
-It can then be installed by running:
-```sh
-go mod vendor
+To use GopenPGP with [Go Modules](https://github.com/golang/go/wiki/Modules) just run 
 ```
-Finally your software can include it in your software as follows:
+go get github.com/ProtonMail/gopenpgp/v3
+```
+in your project folder.
+
+Then, your code can include it as follows:
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/ProtonMail/gopenpgp/v2/crypto"
+	"github.com/ProtonMail/gopenpgp/v3/crypto"
 )
 
 func main() {
-	fmt.Println(crypto.GetUnixTime())
+	pgp := crypto.PGP()
 }
 ```
 
-### Git-Clone install
-To install for development mode, cloning the repository, it can be done in the following way:
-```bash
-cd $GOPATH
-mkdir -p src/github.com/ProtonMail/
-cd $GOPATH/src/github.com/ProtonMail/
-git clone git@github.com:ProtonMail/gopenpgp.git
-cd gopenpgp
-ln -s . v2
-go mod
+## Documentation
+
+A full overview of the API can be found here: https://pkg.go.dev/github.com/ProtonMail/gopenpgp/v3.
+
+## Examples
+
+A file of runnable examples can be found in [crypto_example_test.go](crypto/crypto_example_test.go).
+
+### Encrypt / Decrypt with a password
+
+```go
+import "github.com/ProtonMail/gopenpgp/v3/crypto"
+
+password := []byte("hunter2")
+
+pgp := crypto.PGP()
+// Encrypt data with a password
+encHandle, err := pgp.Encryption().Password(password).New()
+pgpMessage, err := encHandle.Encrypt([]byte("my message"))
+armored, err := pgpMessage.ArmorBytes()
+
+// Decrypt data with a password
+decHandle, err := pgp.Decryption().Password(password).New()
+decrypted, err := decHandle.Decrypt(armored, crypto.Armor)
+myMessage := decrypted.Bytes()
 ```
 
-## Documentation
-A full overview of the API can be found here:
-https://godoc.org/gopkg.in/ProtonMail/gopenpgp.v2/crypto
+To encrypt with the [latest proposed standard](https://www.ietf.org/archive/id/draft-ietf-openpgp-crypto-refresh-12.html):
+```go
+import "github.com/ProtonMail/gopenpgp/v3/profile"
 
-In this document examples are provided and the proper use of (almost) all functions is tested.
+// Use the default crypto refresh profile
+pgp := crypto.PGPWithProfile(profile.CryptoRefresh())
+// The default crypto refresh profile uses Argon2 for deriving
+// session keys and uses an AEAD for encryption (AES-256, OCB mode).
+// Encrypt data with password
+...
+// Decrypt data with password
+...
+```
+
+Use a custom or preset profile:
+```go
+import "github.com/ProtonMail/gopenpgp/v3/profile"
+
+// RFC4880 profile
+pgp4880 := crypto.PGPWithProfile(profile.RFC4880()) 
+// GnuPG profile
+gnuPG := crypto.PGPWithProfile(profile.GnuPG())
+// Crypto refresh profile
+pgpCryptoRefresh := crypto.PGPWithProfile(profile.CryptoRefresh())
+```
+
+### Encrypt / Decrypt with PGP keys
+
+```go
+// Put keys in backtick (``) to avoid errors caused by spaces or tabs
+const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+...
+-----END PGP PUBLIC KEY BLOCK-----`
+
+const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+...
+-----END PGP PRIVATE KEY BLOCK-----` // Encrypted private key
+
+const passphrase = []byte(`the passphrase of the private key`) // Passphrase of the privKey
+publicKey, err := crypto.NewKeyFromArmored(pubkey)
+privateKey, err := crypto.NewPrivateKeyFromArmored(privkey, passphrase)
+
+pgp := crypto.PGP()
+// Encrypt plaintext message using a public key
+encHandle, err := pgp.Encryption().Recipient(publicKey).New()
+pgpMessage, err := encHandle.Encrypt([]byte("my message"))
+armored, err := pgpMessage.ArmorBytes()
+
+// Decrypt armored encrypted message using the private key and obtain the plaintext
+decHandle, err := pgp.Decryption().DecryptionKey(privateKey).New()
+decrypted, err := decHandle.Decrypt(armored, crypto.Armor)
+myMessage := decrypted.Bytes()
+
+decHandle.ClearPrivateParams()
+```
+
+With signatures:
+```go
+pgp := crypto.PGP()
+aliceKeyPriv, err := pgp.KeyGeneration().
+  AddUserId("alice", "alice@alice.com").
+  New().
+  GenerateKey()
+aliceKeyPub, err := aliceKeyPriv.ToPublic()
+
+bobKeyPriv, err := pgp.KeyGeneration().
+  AddUserId("bob", "bob@bob.com").
+  New().
+  GenerateKey()
+bobKeyPub, err := bobKeyPriv.ToPublic()
+
+// Encrypt and sign plaintext message from alice to bob
+encHandle, err := pgp.Encryption().
+  Recipient(bobKeyPub).
+  SigningKey(aliceKeyPriv).
+  New()
+pgpMessage, err := encHandle.Encrypt([]byte("my message"))
+armored, err := pgpMessage.ArmorBytes()
+
+// Decrypt armored encrypted message using the private key and obtain plain text
+decHandle, err := pgp.Decryption().
+  DecryptionKey(bobKeyPriv).
+  VerificationKey(aliceKeyPub).
+  New()
+decrypted, err := decHandle.Decrypt(armored, crypto.Armor)
+if sigErr := decrypted.SignatureError(); sigErr != nil {
+  // Signature verification failed with sigErr
+}
+myMessage := decrypted.Bytes()
+
+encHandle.ClearPrivateParams()
+decHandle.ClearPrivateParams()
+```
+Encrypt towards multiple recipients:
+```go
+recipients, err := crypto.NewKeyRing(bobKeyPub)
+err = recipients.AddKey(carolKeyPub)
+// encrypt plain text message using a public key
+encHandle, err := pgp.Encryption().
+  Recipients(recipients).
+  SigningKey(aliceKeyPriv).
+  New()
+pgpMessage, err := encHandle.Encrypt([]byte("my message"))
+armored, err := pgpMessage.ArmorBytes()
+
+encHandle.ClearPrivateParams()
+```
+
+Encrypt towards an (anonymous) recipient:
+```go
+//...
+// The key fingerprint of bob's key is visible in the key packet and
+// is included in the signature's intended recipient list.
+// The key fingerprint of carols's key is not visible in the key packet ("anonymous" key packet), and
+// is not included in the signature's intended recipient list.
+encHandle, _ := pgp.Encryption().
+  Recipient(bobKeyPub).
+  HiddenRecipient(carolKeyPub).
+  SigningKey(aliceKeyPriv).
+  New()
+pgpMessage, _ := encHandle.Encrypt([]byte("my message"))
+
+// Decrypt checks if bobs key fingerprint is in the intended recipient list
+// of alice's signature in the message.
+decHandleBob, _ := pgp.Decryption().
+  DecryptionKey(bobKeyPriv).
+  VerificationKey(aliceKeyPub).
+  New()
+decryptedBob, _ := decHandleBob.Decrypt(pgpMessage.Bytes(), crypto.Bytes)
+fmt.Println(string(decryptedBob.Bytes()))
+
+// Disable intended recipient check, there is no info about carols key in the message.
+// The decryption function tries all supplied keys for decrypting the "anonymous" key packet.
+// If the check is not disabled, the decryption result would contain a signature error.
+decHandleCarol, _ := pgp.Decryption().
+  DecryptionKey(carolKeyPriv).
+  VerificationKey(aliceKeyPub).
+  DisableIntendedRecipients().
+  New()
+decryptedCarol, _ := decHandleCarol.Decrypt(pgpMessage.Bytes(), crypto.Bytes)
+```
+
+Encrypt and decrypt large messages with the streaming API:
+```go
+pgp := crypto.PGP()
+// ... See key generation above
+
+// Encrypt plain text stream and write the output to a file
+encHandle, err := pgp.Encryption().
+  Recipient(bobKeyPub).
+  SigningKey(aliceKeyPriv).
+  New()
+messageReader, err := os.Open("msg.txt")
+ciphertextWriter, err := os.Create("out.pgp")
+
+ptWriter, err := encHandle.EncryptingWriter(ciphertextWriter, crypto.Armor)
+_, err = io.Copy(ptWriter, messageReader)
+err = ptWriter.Close()
+err = messageReader.Close()
+err = ciphertextWriter.Close()
+
+ctFileRead, err := os.Open("out.pgp")
+defer ctFileRead.Close()
+// Decrypt stream and read the result to memory
+decHandle, err := pgp.Decryption().
+  DecryptionKey(bobKeyPriv).
+  VerificationKey(aliceKeyPub).
+  New()
+ptReader, err := decHandle.DecryptingReader(ctFileRead, crypto.Armor)
+decResult, err := ptReader.ReadAllAndVerifySignature()
+if sigErr := decResult.SignatureError(); sigErr != nil {
+  // Handle sigErr
+}
+// Access decrypted message with decResult.Bytes()
+```
+### Generate key
+Keys are generated with the `GenerateKey` function on the pgp handle.
+```go
+import "github.com/ProtonMail/gopenpgp/v3/constants"
+
+const (
+  name = "Max Mustermann"
+  email = "max.mustermann@example.com"
+  passphrase = []byte("LongSecret")
+)
+
+pgp4880 := crypto.PGPWithProfile(profile.RFC4880())
+gnuPG := crypto.PGPWithProfile(profile.GnuPG())
+pgpCryptoRefresh := crypto.PGPWithProfile(profile.CryptoRefresh())
+
+// Note that RSA keys should not be generated anymore according to
+// draft-ietf-openpgp-crypto-refresh
+
+keyGenHandle := pgp4880.KeyGeneration().AddUserId(name, email).New()
+// Generates rsa keys with 3072 bits
+rsaKey, err := keyGenHandle.GenerateKey()
+// Generates rsa keys with 4092 bits
+rsaKeyHigh, err := keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
+
+keyGenHandle = gnuPG.KeyGeneration().AddUserId(name, email).New()
+// Generates curve25519 keys with GnuPG compatibility
+ecKey, err := keyGenHandle.GenerateKey()
+// Generates curve448 keys with GnuPG compatibility
+ecKeyHigh, err := keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
+
+keyGenHandle = pgpCryptoRefresh.KeyGeneration().AddUserId(name, email).New()
+// Generates curve25519 keys with draft-ietf-openpgp-crypto-refresh
+ecKey, err = keyGenHandle.GenerateKey()
+// Generates curve448 keys with draft-ietf-openpgp-crypto-refresh
+ecKeyHigh, err = keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
+```
+
+Encrypt (lock) and decrypt (unlock) a secret key:
+```go
+password := []byte("password")
+
+pgp := crypto.PGP()
+// Encrypt key with password
+lockedKey, err := pgp.LockKey(aliceKeyPriv, password)
+// Decrypt key with password
+unlockedKey, err := lockedKey.Unlock(password)
+```
+
+### Detached and inline signatures
+
+Sign a plaintext with a private key and verify it with its public key using detached signatures: 
+
+```go
+pgp := crypto.PGP()
+// ... See generating keys 
+
+signingMessage := []byte("message to sign")
+
+signer, err := pgp.Sign().SigningKey(aliceKeyPriv).Detached().New()
+signature, err := signer.Sign(signingMessage, crypto.Armor)
+
+verifier, err := pgp.Verify().VerificationKey(aliceKeyPub).New()
+verifyResult, err := verifier.VerifyDetached(signingMessage, signature, crypto.Armor)
+if sigErr := verifyResult.SignatureError(); sigErr != nil {
+  // Handle sigErr
+}
+
+signer.ClearPrivateParams()
+```
+
+
+Sign a plaintext with a private key and verify it with its public key using inline signatures: 
+
+```go
+pgp := crypto.PGP()
+// ... See generating keys 
+
+signingMessage := []byte("message to sign")
+
+signer, err := pgp.Sign().SigningKey(aliceKeyPriv).New()
+signatureMessage, err := signer.Sign(signingMessage, crypto.Armor)
+
+verifier, err := pgp.Verify().VerificationKey(aliceKeyPub).New()
+verifyResult, err := verifier.VerifyInline(signatureMessage, crypto.Armor)
+if sigErr := verifyResult.SignatureError(); sigErr != nil {
+  // Handle sigErr
+}
+// Access signed data with verifyResult.Bytes()
+signer.ClearPrivateParams()
+```
+
+
+
+### Cleartext signed messages
+```go
+pgp := crypto.PGP()
+// ... See generating keys 
+
+signingMessage := []byte("message to sign")
+
+signer, err := pgp.Sign().SigningKey(aliceKeyPriv).New()
+cleartextArmored, err := signer.SignCleartext(signingMessage)
+// CleartextArmored has the form:
+// -----BEGIN PGP SIGNED MESSAGE-----
+// ...
+// -----BEGIN PGP SIGNATURE-----
+// ...
+// -----END PGP SIGNATURE-----
+
+verifier, err := pgp.Verify().VerificationKey(aliceKeyPub).New()
+verifyResult, err := verifier.VerifyCleartext(cleartextArmored)
+if sigErr := verifyResult.SignatureError(); sigErr != nil {
+  // Handle sigErr
+}
+
+signer.ClearPrivateParams()
+```
+
+### Encrypt with different outputs
+
+Split encrypted message into key packets and data packets 
+```go
+// Non-streaming
+pgpMessage, err := encHandle.Encrypt(...)
+keyPackets := pgpMessage.BinaryKeyPacket()
+dataPackets := pgpMessage.BinaryDataPacket()
+
+// Streaming 
+var keyPackets bytes.Buffer
+var dataPackets bytes.Buffer
+splitWriter := crypto.NewPGPSplitWriterKeyAndData(&keyPackets, &dataPackets)
+ptWriter, _ := encHandle.EncryptingWriter(splitWriter, crypto.Bytes)
+// ...
+// Key packets are written to keyPackets while data packets are written to dataPackets
+```
+
+Produce encrypted detached signatures instead of embedded signatures:
+```go
+// Non-streaming
+encHandle, err := pgp.Encryption().
+  Recipient(bobKeyPub).
+  SigningKey(aliceKeyPriv).
+  DetachedSignature().
+  New() // Enable the detached signature option
+pgpMessage, err := encHandle.Encrypt(...)
+pgpMessageEncSig, err := pgpMessage.EncryptedDetachedSignature()
+// pgpMessage.Bytes() encrypted message without an embedded signature
+// pgpMessageEncSig.Bytes() encrypted signature message
+// pgpMessage:        key packets|enc data packets
+// pgpMessageEncSig:  key packets|enc signature packet
+
+
+// Streaming 
+// ...
+var encSigDataPackets bytes.Buffer
+splitWriter := crypto.NewPGPSplitWriter(&keyPackets, &dataPackets, &encSigDataPackets)
+ptWriter, err := encHandle.EncryptingWriter(splitWriter, crypto.Bytes)
+// ...
+// Key packets are written to keyPackets, data packets are written to dataPackets ,and
+// Data packets of the encrypted signature to encSigDataPackets
+```
 
 ## Using with Go Mobile
 This library can be compiled with [Gomobile](https://github.com/golang/go/wiki/Mobile) too.
@@ -93,284 +430,3 @@ sh build.sh
 ```
 This script will build for both android and iOS at the same time,
 to filter one out you can comment out the line in the corresponding section.
-
-## Examples
-
-### Encrypt / Decrypt with password
-
-```go
-import "github.com/ProtonMail/gopenpgp/v2/helper"
-
-const password = []byte("hunter2")
-
-// Encrypt data with password
-armor, err := helper.EncryptMessageWithPassword(password, "my message")
-
-// Decrypt data with password
-message, err := helper.DecryptMessageWithPassword(password, armor)
-```
-
-To encrypt binary data or use more advanced modes:
-```go
-import "github.com/ProtonMail/gopenpgp/v2/constants"
-
-const password = []byte("hunter2")
-
-var message = crypto.NewPlainMessage(data)
-// Or
-message = crypto.NewPlainMessageFromString(string)
-
-// Encrypt data with password
-encrypted, err := EncryptMessageWithPassword(message, password)
-// Encrypted message in encrypted.GetBinary() or encrypted.GetArmored()
-
-// Decrypt data with password
-decrypted, err := DecryptMessageWithPassword(encrypted, password)
-
-//Original message in decrypted.GetBinary()
-```
-
-### Encrypt / Decrypt with PGP keys
-
-```go
-import "github.com/ProtonMail/gopenpgp/v2/helper"
-
-// put keys in backtick (``) to avoid errors caused by spaces or tabs
-const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
-...
------END PGP PUBLIC KEY BLOCK-----`
-
-const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
-...
------END PGP PRIVATE KEY BLOCK-----` // encrypted private key
-
-const passphrase = []byte(`the passphrase of the private key`) // Passphrase of the privKey
-
-// encrypt plain text message using public key
-armor, err := helper.EncryptMessageArmored(pubkey, "plain text")
-
-// decrypt armored encrypted message using the private key and obtain plain text
-decrypted, err := helper.DecryptMessageArmored(privkey, passphrase, armor)
-
-// encrypt binary message using public key
-armor, err := helper.EncryptBinaryMessageArmored(pubkey, []byte("plain text"))
-
-// decrypt armored encrypted message using the private key expecting binary data
-decrypted, err := helper.DecryptBinaryMessageArmored(privkey, passphrase, armor)
-```
-
-With signatures:
-```go
-// Keys initialization as before (omitted)
-
-// encrypt message using public key, sign with the private key
-armor, err := helper.EncryptSignMessageArmored(pubkey, privkey, passphrase, "plain text")
-
-// decrypt armored encrypted message using the private key, verify with the public key
-// err != nil if verification fails
-decrypted, err := helper.DecryptVerifyMessageArmored(pubkey, privkey, passphrase, armor)
-```
-
-For more advanced modes the full API (i.e. without helpers) can be used:
-```go
-// Keys initialization as before (omitted)
-var binMessage = crypto.NewPlainMessage(data)
-
-publicKeyObj, err := crypto.NewKeyFromArmored(publicKey)
-publicKeyRing, err := crypto.NewKeyRing(publicKeyObj)
-
-pgpMessage, err := publicKeyRing.Encrypt(binMessage, privateKeyRing)
-
-// Armored message in pgpMessage.GetArmored()
-// pgpMessage can be obtained from NewPGPMessageFromArmored(ciphertext)
-
-//pgpMessage can be obtained from a byte array
-var pgpMessage = crypto.NewPGPMessage([]byte)
-
-privateKeyObj, err := crypto.NewKeyFromArmored(privateKey)
-unlockedKeyObj = privateKeyObj.Unlock(passphrase)
-privateKeyRing, err := crypto.NewKeyRing(unlockedKeyObj)
-
-message, err := privateKeyRing.Decrypt(pgpMessage, publicKeyRing, crypto.GetUnixTime())
-
-privateKeyRing.ClearPrivateParams()
-
-// Original data in message.GetString()
-// `err` can be a SignatureVerificationError
-```
-
-### Generate key
-Keys are generated with the `GenerateKey` function, that returns the armored key as a string and a potential error.
-The library supports RSA with different key lengths or Curve25519 keys.
-
-```go
-const (
-  name = "Max Mustermann"
-  email = "max.mustermann@example.com"
-  passphrase = []byte("LongSecret")
-  rsaBits = 2048
-)
-
-// RSA, string
-rsaKey, err := helper.GenerateKey(name, email, passphrase, "rsa", rsaBits)
-
-// Curve25519, string
-ecKey, err := helper.GenerateKey(name, email, passphrase, "x25519", 0)
-
-// RSA, Key struct
-rsaKey, err := crypto.GenerateKey(name, email, "rsa", rsaBits)
-
-// Curve25519, Key struct
-ecKey, err := crypto.GenerateKey(name, email, "x25519", 0)
-```
-
-### Detached signatures for plain text messages
-
-To sign plain text data either an unlocked private keyring or a passphrase must be provided.
-The output is an armored signature.
-
-```go
-const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
-...
------END PGP PRIVATE KEY BLOCK-----` // Encrypted private key
-const passphrase = []byte("LongSecret") // Private key passphrase
-
-var message = crypto.NewPlaintextMessage("Verified message")
-
-privateKeyObj, err := crypto.NewKeyFromArmored(privkey)
-unlockedKeyObj = privateKeyObj.Unlock(passphrase)
-signingKeyRing, err := crypto.NewKeyRing(unlockedKeyObj)
-
-pgpSignature, err := signingKeyRing.SignDetached(message, trimNewlines)
-
-// The armored signature is in pgpSignature.GetArmored()
-// The signed text is in message.GetString()
-```
-
-To verify a signature either private or public keyring can be provided.
-
-```go
-const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
-...
------END PGP PUBLIC KEY BLOCK-----`
-
-const signature = `-----BEGIN PGP SIGNATURE-----
-...
------END PGP SIGNATURE-----`
-
-message := crypto.NewPlaintextMessage("Verified message")
-pgpSignature, err := crypto.NewPGPSignatureFromArmored(signature)
-
-publicKeyObj, err := crypto.NewKeyFromArmored(pubkey)
-signingKeyRing, err := crypto.NewKeyRing(publicKeyObj)
-
-err := signingKeyRing.VerifyDetached(message, pgpSignature, crypto.GetUnixTime())
-
-if err == nil {
-  // verification success
-}
-```
-
-### Detached signatures for binary data
-
-```go
-const privkey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
-...
------END PGP PRIVATE KEY BLOCK-----` // encrypted private key
-const passphrase = "LongSecret"
-
-var message = crypto.NewPlainMessage(data)
-
-privateKeyObj, err := crypto.NewKeyFromArmored(privkey)
-unlockedKeyObj := privateKeyObj.Unlock(passphrase)
-signingKeyRing, err := crypto.NewKeyRing(unlockedKeyObj)
-
-pgpSignature, err := signingKeyRing.SignDetached(message)
-
-// The armored signature is in pgpSignature.GetArmored()
-// The signed text is in message.GetBinary()
-```
-
-To verify a signature either private or public keyring can be provided.
-
-```go
-const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
-...
------END PGP PUBLIC KEY BLOCK-----`
-
-const signature = `-----BEGIN PGP SIGNATURE-----
-...
------END PGP SIGNATURE-----`
-
-message := crypto.NewPlainMessage("Verified message")
-pgpSignature, err := crypto.NewPGPSignatureFromArmored(signature)
-
-publicKeyObj, err := crypto.NewKeyFromArmored(pubkey)
-signingKeyRing, err := crypto.NewKeyRing(publicKeyObj)
-
-err := signingKeyRing.VerifyDetached(message, pgpSignature, crypto.GetUnixTime())
-
-if err == nil {
-  // verification success
-}
-```
-
-### Cleartext signed messages
-```go
-// Keys initialization as before (omitted)
-armored, err := helper.SignCleartextMessageArmored(privateKey, passphrase, plaintext)
-```
-
-To verify the message it has to be provided unseparated to the library.
-If verification fails an error will be returned.
-```go
-// Keys initialization as before (omitted)
-verifiedPlainText, err := helper.VerifyCleartextMessageArmored(publicKey, armored, crypto.GetUnixTime())
-```
-
-### Encrypting and decrypting session Keys
-A session key can be generated, encrypted to a Asymmetric/Symmetric key packet and obtained from it
-```go
-// Keys initialization as before (omitted)
-
-sessionKey, err := crypto.GenerateSessionKey()
-
-keyPacket, err := publicKeyRing.EncryptSessionKey(sessionKey) // Will encrypt to all the keys in the keyring
-keyPacketSymm, err := crypto.EncryptSessionKeyWithPassword(sessionKey, password)
-```
-`KeyPacket` is a `[]byte` containing the session key encrypted with the public key or password.
-
-```go
-decodedKeyPacket, err := privateKeyRing.DecryptSessionKey(keyPacket) // Will decode with the first valid key found
-decodedSymmKeyPacket, err := crypto.DecryptSessionKeyWithPassword(keyPacketSymm, password)
-```
-`decodedKeyPacket` and `decodedSymmKeyPacket` are objects of type `*SymmetricKey` that can
-be used to decrypt the corresponding symmetrically encrypted data packets:
-
-```go
-var message = crypto.NewPlainMessage(data)
-
-// Encrypt data with session key
-dataPacket, err := sessionKey.Encrypt(message)
-
-// Decrypt data with session key
-decrypted, err := sessionKey.Decrypt(password, dataPacket)
-
-//Original message in decrypted.GetBinary()
-```
-
-Note that it is not possible to process signatures when using data packets directly.
-Joining the data packet and a key packet gives us a valid PGP message:
-
-```go
-pgpSplitMessage := NewPGPSplitMessage(keyPacket, dataPacket)
-pgpMessage := pgpSplitMessage.GetPGPMessage()
-
-// And vice-versa
-newPGPSplitMessage, err := pgpMessage.SeparateKeyAndData()
-// Key Packet is in newPGPSplitMessage.GetBinaryKeyPacket()
-// Data Packet is in newPGPSplitMessage.GetBinaryDataPacket()
-```
-
-### Checking keys
-Keys are now checked on import and the explicit check via `Key#Check()` is deprecated and no longer necessary.

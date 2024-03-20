@@ -2,10 +2,11 @@ package crypto
 
 import (
 	"bytes"
+	"encoding/json"
 	"time"
 
-	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/pkg/errors"
 )
 
@@ -20,8 +21,8 @@ type KeyRing struct {
 
 // Identity contains the name and the email of a key holder.
 type Identity struct {
-	Name  string
-	Email string
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 // --- New keyrings
@@ -52,6 +53,7 @@ func (keyRing *KeyRing) AddKey(key *Key) error {
 // --- Extract keys from keyring
 
 // GetKeys returns openpgp keys contained in this KeyRing.
+// Not supported on go mobile clients.
 func (keyRing *KeyRing) GetKeys() []*Key {
 	keys := make([]*Key, keyRing.CountEntities())
 	for i, entity := range keyRing.entities {
@@ -68,39 +70,55 @@ func (keyRing *KeyRing) GetKey(n int) (*Key, error) {
 	return &Key{keyRing.entities[n]}, nil
 }
 
-// getSigningEntity returns first private unlocked signing entity from keyring.
-func (keyRing *KeyRing) getSigningEntity() (*openpgp.Entity, error) {
-	var signEntity *openpgp.Entity
-
+func (keyRing *KeyRing) signingEntities() ([]*openpgp.Entity, error) {
+	var signEntity []*openpgp.Entity
 	for _, e := range keyRing.entities {
 		// Entity.PrivateKey must be a signing key
-		if e.PrivateKey != nil {
-			if !e.PrivateKey.Encrypted {
-				signEntity = e
-				break
-			}
+		if e.PrivateKey != nil && !e.PrivateKey.Encrypted {
+			signEntity = append(signEntity, e)
+		} else {
+			return nil, errors.New("gopenpgp: signing entity does not contain unencrypted private key")
 		}
 	}
-	if signEntity == nil {
-		return nil, errors.New("gopenpgp: cannot sign message, unable to unlock signer key")
-	}
-
 	return signEntity, nil
+}
+
+// getEntities returns the internal EntityList if the key ring is not nil.
+func (keyRing *KeyRing) getEntities() openpgp.EntityList {
+	if keyRing == nil {
+		return nil
+	}
+	return keyRing.entities
 }
 
 // --- Extract info from key
 
 // CountEntities returns the number of entities in the keyring.
 func (keyRing *KeyRing) CountEntities() int {
+	if keyRing == nil {
+		return 0
+	}
 	return len(keyRing.entities)
 }
 
 // CountDecryptionEntities returns the number of entities in the keyring.
-func (keyRing *KeyRing) CountDecryptionEntities() int {
-	return len(keyRing.entities.DecryptionKeys())
+// Takes the current time for checking the keys in unix time format.
+// If the unix time is zero, time checks are ignored.
+func (keyRing *KeyRing) CountDecryptionEntities(unixTime int64) int {
+	var count int
+	var checkTime time.Time
+	if unixTime != 0 {
+		checkTime = time.Unix(unixTime, 0)
+	}
+	for _, entity := range keyRing.entities {
+		decryptionKeys := entity.DecryptionKeys(0, checkTime)
+		count += len(decryptionKeys)
+	}
+	return count
 }
 
 // GetIdentities returns the list of identities associated with this key ring.
+// Not supported on go-mobile clients use keyRing.GetIdentitiesJson() instead.
 func (keyRing *KeyRing) GetIdentities() []*Identity {
 	var identities []*Identity
 	for _, e := range keyRing.entities {
@@ -114,11 +132,22 @@ func (keyRing *KeyRing) GetIdentities() []*Identity {
 	return identities
 }
 
+// GetIdentitiesJson returns the list of identities associated with this key ring encoded as json.
+// Returns nil if an encoding error occurs.
+// Helper function for go-mobile clients.
+func (keyRing *KeyRing) GetIdentitiesJson() []byte {
+	identitiesJson, err := json.Marshal(keyRing.GetIdentities())
+	if err != nil {
+		return nil
+	}
+	return identitiesJson
+}
+
 // CanVerify returns true if any of the keys in the keyring can be used for verification.
-func (keyRing *KeyRing) CanVerify() bool {
+func (keyRing *KeyRing) CanVerify(unixTime int64) bool {
 	keys := keyRing.GetKeys()
 	for _, key := range keys {
-		if key.CanVerify() {
+		if key.CanVerify(unixTime) {
 			return true
 		}
 	}
@@ -126,10 +155,10 @@ func (keyRing *KeyRing) CanVerify() bool {
 }
 
 // CanEncrypt returns true if any of the keys in the keyring can be used for encryption.
-func (keyRing *KeyRing) CanEncrypt() bool {
+func (keyRing *KeyRing) CanEncrypt(unixTime int64) bool {
 	keys := keyRing.GetKeys()
 	for _, key := range keys {
-		if key.CanEncrypt() {
+		if key.CanEncrypt(unixTime) {
 			return true
 		}
 	}
@@ -137,12 +166,28 @@ func (keyRing *KeyRing) CanEncrypt() bool {
 }
 
 // GetKeyIDs returns array of IDs of keys in this KeyRing.
+// Not supported on go-mobile clients.
 func (keyRing *KeyRing) GetKeyIDs() []uint64 {
 	var res = make([]uint64, len(keyRing.entities))
 	for id, e := range keyRing.entities {
 		res[id] = e.PrimaryKey.KeyId
 	}
 	return res
+}
+
+// GetHexKeyIDsJson returns an IDs of keys in this KeyRing as a json array.
+// Key ids are encoded as hexadecimal and nil is returned if an error occurs.
+// Helper function for go-mobile clients.
+func (keyRing *KeyRing) GetHexKeyIDsJson() []byte {
+	var res = make([]string, len(keyRing.entities))
+	for id, e := range keyRing.entities {
+		res[id] = keyIDToHex(e.PrimaryKey.KeyId)
+	}
+	keyIdsJson, err := json.Marshal(res)
+	if err != nil {
+		return nil
+	}
+	return keyIdsJson
 }
 
 // --- Filter keyrings
@@ -152,7 +197,7 @@ func (keyRing *KeyRing) GetKeyIDs() []uint64 {
 // parts of these KeyRings.
 func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err error) {
 	now := time.Now()
-	hasExpiredEntity := false //nolint:ifshort
+	hasExpiredEntity := false
 	filteredKeys = make([]*KeyRing, 0)
 
 	for _, contactKeyRing := range contactKeys {
@@ -162,7 +207,11 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 			hasExpired := false
 			hasUnexpired := false
 			for _, subkey := range entity.Subkeys {
-				if subkey.PublicKey.KeyExpired(subkey.Sig, now) {
+				latestValid, err := subkey.LatestValidBindingSignature(now)
+				if err != nil {
+					hasExpired = true
+				}
+				if subkey.PublicKey.KeyExpired(latestValid, now) {
 					hasExpired = true
 				} else {
 					hasUnexpired = true

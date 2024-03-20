@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     name: Build library for Android with gomobile
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
     - name: Set up JDK 1.8

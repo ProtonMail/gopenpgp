@@ -18,5 +18,22 @@ const (
 	SIGNATURE_BAD_CONTEXT int = 4
 )
 
-const DefaultCompression = 2      // ZLIB
-const DefaultCompressionLevel = 6 // Corresponds to default -1 for ZLIB
+// SecurityLevel constants.
+// The type is int8 for compatibility with gomobile.
+const (
+	// StandardSecurity is the default security level.
+	StandardSecurity int8 = 0
+	// HighSecurity is the high security level.
+	HighSecurity int8 = 1
+)
+
+// Wraps the packet.CipherFunction enum from go-crypto
+// for go-mobile clients.
+// int8 type for go-mobile support.
+const (
+	Cipher3DES   int8 = 2
+	CipherCAST5  int8 = 3
+	CipherAES128 int8 = 7
+	CipherAES192 int8 = 8
+	CipherAES256 int8 = 9
+)

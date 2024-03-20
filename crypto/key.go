@@ -2,21 +2,20 @@ package crypto
 
 import (
 	"bytes"
-	"crypto"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
-	"math/big"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/ProtonMail/gopenpgp/v2/armor"
-	"github.com/ProtonMail/gopenpgp/v2/constants"
-	"github.com/pkg/errors"
-
-	openpgp "github.com/ProtonMail/go-crypto/openpgp"
 	packet "github.com/ProtonMail/go-crypto/openpgp/packet"
+	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
+	"github.com/ProtonMail/gopenpgp/v3/armor"
+	"github.com/ProtonMail/gopenpgp/v3/constants"
+	"github.com/pkg/errors"
 )
 
 // Key contains a single private or public key.
@@ -25,40 +24,81 @@ type Key struct {
 	entity *openpgp.Entity
 }
 
+type KeyEncryptionProfile interface {
+	KeyEncryptionConfig() *packet.Config
+}
+
 // --- Create Key object
 
-// NewKeyFromArmoredReader reads an armored data into a key.
-func NewKeyFromArmoredReader(r io.Reader) (key *Key, err error) {
-	key = &Key{}
-	err = key.readFrom(r, true)
-	if err != nil {
-		return nil, err
-	}
-
-	return key, nil
-}
-
-// NewKeyFromReader reads binary data into a Key object.
+// NewKeyFromReader reads binary or armored data into a Key object.
 func NewKeyFromReader(r io.Reader) (key *Key, err error) {
+	return NewKeyFromReaderExplicit(r, Auto)
+}
+
+// NewKeyFromReaderExplicit reads binary or armored data into a Key object.
+// Allows to set the encoding explicitly to avoid the armor check.
+func NewKeyFromReaderExplicit(r io.Reader, encoding int8) (key *Key, err error) {
+	var armored bool
 	key = &Key{}
-	err = key.readFrom(r, false)
+	switch encoding {
+	case Auto:
+		r, armored = armor.IsPGPArmored(r)
+	case Armor:
+		armored = true
+	case Bytes:
+		armored = false
+	default:
+		return nil, errors.New("gopenpgp: encoding is not supported")
+	}
+	err = key.readFrom(r, armored)
 	if err != nil {
 		return nil, err
 	}
-
 	return key, nil
 }
 
-// NewKey creates a new key from the first key in the unarmored binary data.
+// NewKey creates a new key from the first key in the unarmored or armored binary data.
+// Clones the binKeys data for go-mobile compatibility.
 func NewKey(binKeys []byte) (key *Key, err error) {
 	return NewKeyFromReader(bytes.NewReader(clone(binKeys)))
 }
 
-// NewKeyFromArmored creates a new key from the first key in an armored string.
-func NewKeyFromArmored(armored string) (key *Key, err error) {
-	return NewKeyFromArmoredReader(strings.NewReader(armored))
+// NewKeyWithCloneFlag creates a new key from the first key in the unarmored or armored binary data.
+func NewKeyWithCloneFlag(binKeys []byte, clone bool) (key *Key, err error) {
+	if clone {
+		return NewKey(binKeys)
+	}
+	return NewKeyFromReader(bytes.NewReader(binKeys))
 }
 
+// NewKeyFromArmored creates a new key from the first key in an armored string.
+func NewKeyFromArmored(armored string) (key *Key, err error) {
+	return NewKeyFromReader(strings.NewReader(armored))
+}
+
+// NewPrivateKeyFromArmored creates a new secret key from the first key in an armored string
+// and unlocks it with the password.
+func NewPrivateKeyFromArmored(armored string, password []byte) (key *Key, err error) {
+	lockedKey, err := NewKeyFromArmored(armored)
+	if err != nil {
+		return
+	}
+	isLocked, err := lockedKey.IsLocked()
+	if err != nil {
+		return
+	}
+	if isLocked {
+		key, err = lockedKey.Unlock(password)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		key = lockedKey
+	}
+	return
+}
+
+// NewKeyFromEntity creates a key from the provided go-crypto/openpgp entity.
 func NewKeyFromEntity(entity *openpgp.Entity) (*Key, error) {
 	if entity == nil {
 		return nil, errors.New("gopenpgp: nil entity provided")
@@ -66,20 +106,12 @@ func NewKeyFromEntity(entity *openpgp.Entity) (*Key, error) {
 	return &Key{entity: entity}, nil
 }
 
-// GenerateRSAKeyWithPrimes generates a RSA key using the given primes.
-func GenerateRSAKeyWithPrimes(
-	name, email string,
-	bits int,
-	primeone, primetwo, primethree, primefour []byte,
-) (*Key, error) {
-	return generateKey(name, email, "rsa", bits, primeone, primetwo, primethree, primefour)
-}
-
-// GenerateKey generates a key of the given keyType ("rsa" or "x25519").
-// If keyType is "rsa", bits is the RSA bitsize of the key.
-// If keyType is "x25519" bits is unused.
-func GenerateKey(name, email string, keyType string, bits int) (*Key, error) {
-	return generateKey(name, email, keyType, bits, nil, nil, nil, nil)
+// generateKey generates a key with the given key-generation profile and security-level.
+func generateKey(name, email string, clock Clock, profile KeyGenerationProfile, securityLevel int8, lifeTimeSec uint32) (*Key, error) {
+	config := profile.KeyGenerationConfig(securityLevel)
+	config.Time = NewConstantClock(clock().Unix())
+	config.KeyLifetimeSecs = lifeTimeSec
+	return generateKeyWithConfig(name, email, "", config)
 }
 
 // --- Operate on key
@@ -94,8 +126,8 @@ func (key *Key) Copy() (*Key, error) {
 	return NewKey(serialized)
 }
 
-// Lock locks a copy of the key.
-func (key *Key) Lock(passphrase []byte) (*Key, error) {
+// lock locks a copy of the key.
+func (key *Key) lock(passphrase []byte, profile KeyEncryptionProfile) (*Key, error) {
 	unlocked, err := key.IsUnlocked()
 	if err != nil {
 		return nil, err
@@ -114,19 +146,9 @@ func (key *Key) Lock(passphrase []byte) (*Key, error) {
 		return lockedKey, nil
 	}
 
-	if lockedKey.entity.PrivateKey != nil && !lockedKey.entity.PrivateKey.Dummy() {
-		err = lockedKey.entity.PrivateKey.Encrypt(passphrase)
-		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: error in locking key")
-		}
-	}
-
-	for _, sub := range lockedKey.entity.Subkeys {
-		if sub.PrivateKey != nil && !sub.PrivateKey.Dummy() {
-			if err := sub.PrivateKey.Encrypt(passphrase); err != nil {
-				return nil, errors.Wrap(err, "gopenpgp: error in locking sub key")
-			}
-		}
+	err = lockedKey.entity.EncryptPrivateKeys(passphrase, profile.KeyEncryptionConfig())
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: error in locking key")
 	}
 
 	locked, err := lockedKey.IsLocked()
@@ -159,19 +181,9 @@ func (key *Key) Unlock(passphrase []byte) (*Key, error) {
 		return nil, err
 	}
 
-	if unlockedKey.entity.PrivateKey != nil && !unlockedKey.entity.PrivateKey.Dummy() {
-		err = unlockedKey.entity.PrivateKey.Decrypt(passphrase)
-		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: error in unlocking key")
-		}
-	}
-
-	for _, sub := range unlockedKey.entity.Subkeys {
-		if sub.PrivateKey != nil && !sub.PrivateKey.Dummy() {
-			if err := sub.PrivateKey.Decrypt(passphrase); err != nil {
-				return nil, errors.Wrap(err, "gopenpgp: error in unlocking sub key")
-			}
-		}
+	err = unlockedKey.entity.DecryptPrivateKeys(passphrase)
+	if err != nil {
+		return nil, errors.New("gopenpgp: error in unlocking key")
 	}
 
 	isUnlocked, err := unlockedKey.IsUnlocked()
@@ -263,27 +275,32 @@ func (key *Key) GetPublicKey() (b []byte, err error) {
 // --- Key object properties
 
 // CanVerify returns true if any of the subkeys can be used for verification.
-func (key *Key) CanVerify() bool {
-	_, canVerify := key.entity.SigningKey(getNow())
+func (key *Key) CanVerify(unixTime int64) bool {
+	_, canVerify := key.entity.SigningKey(time.Unix(unixTime, 0), nil)
 	return canVerify
 }
 
 // CanEncrypt returns true if any of the subkeys can be used for encryption.
-func (key *Key) CanEncrypt() bool {
-	_, canEncrypt := key.entity.EncryptionKey(getNow())
+func (key *Key) CanEncrypt(unixTime int64) bool {
+	_, canEncrypt := key.entity.EncryptionKey(time.Unix(unixTime, 0), nil)
 	return canEncrypt
 }
 
 // IsExpired checks whether the key is expired.
-func (key *Key) IsExpired() bool {
-	i := key.entity.PrimaryIdentity()
-	return key.entity.PrimaryKey.KeyExpired(i.SelfSignature, getNow()) || // primary key has expired
-		i.SelfSignature.SigExpired(getNow()) // user ID self-signature has expired
+func (key *Key) IsExpired(unixTime int64) bool {
+	current := time.Unix(unixTime, 0)
+	sig, err := key.entity.PrimarySelfSignature(time.Time{})
+	if err != nil {
+		return true
+	}
+	return key.entity.PrimaryKey.KeyExpired(sig, current) || // primary key has expired
+		sig.SigExpired(current) // user ID self-signature has expired
 }
 
 // IsRevoked checks whether the key or the primary identity has a valid revocation signature.
-func (key *Key) IsRevoked() bool {
-	return key.entity.Revoked(getNow()) || key.entity.PrimaryIdentity().Revoked(getNow())
+func (key *Key) IsRevoked(unixTime int64) bool {
+	current := time.Unix(unixTime, 0)
+	return key.entity.Revoked(current)
 }
 
 // IsPrivate returns true if the key is private.
@@ -294,7 +311,7 @@ func (key *Key) IsPrivate() bool {
 // IsLocked checks if a private key is locked.
 func (key *Key) IsLocked() (bool, error) {
 	if key.entity.PrivateKey == nil {
-		return true, errors.New("gopenpgp: a public key cannot be locked")
+		return false, errors.New("gopenpgp: a public key cannot be locked")
 	}
 
 	encryptedKeys := 0
@@ -343,7 +360,11 @@ func (key *Key) Check() (bool, error) {
 // PrintFingerprints is a debug helper function that prints the key and subkey fingerprints.
 func (key *Key) PrintFingerprints() {
 	for _, subKey := range key.entity.Subkeys {
-		if !subKey.Sig.FlagsValid || subKey.Sig.FlagEncryptStorage || subKey.Sig.FlagEncryptCommunications {
+		binding, err := subKey.LatestValidBindingSignature(time.Time{})
+		if err != nil {
+			continue
+		}
+		if !binding.FlagsValid || binding.FlagEncryptStorage || binding.FlagEncryptCommunications {
 			fmt.Println("SubKey:" + hex.EncodeToString(subKey.PublicKey.Fingerprint))
 		}
 	}
@@ -356,6 +377,7 @@ func (key *Key) GetHexKeyID() string {
 }
 
 // GetKeyID returns the key ID, encoded as 8-byte int.
+// Does not work for go-mobile clients, use GetHexKeyID instead.
 func (key *Key) GetKeyID() uint64 {
 	return key.entity.PrimaryKey.KeyId
 }
@@ -363,6 +385,11 @@ func (key *Key) GetKeyID() uint64 {
 // GetFingerprint gets the fingerprint from the key.
 func (key *Key) GetFingerprint() string {
 	return hex.EncodeToString(key.entity.PrimaryKey.Fingerprint)
+}
+
+// GetFingerprintBytes gets the fingerprint from the key as a byte slice.
+func (key *Key) GetFingerprintBytes() []byte {
+	return key.entity.PrimaryKey.Fingerprint
 }
 
 // GetSHA256Fingerprints computes the SHA256 fingerprints of the key and subkeys.
@@ -374,9 +401,21 @@ func (key *Key) GetSHA256Fingerprints() (fingerprints []string) {
 	return
 }
 
+// GetJsonSHA256Fingerprints returns the SHA256 fingerprints of key and subkeys
+// encoded in JSON, for gomobile clients that cannot handle arrays.
+func (key *Key) GetJsonSHA256Fingerprints() ([]byte, error) {
+	return json.Marshal(key.GetSHA256Fingerprints())
+}
+
 // GetEntity gets x/crypto Entity object.
+// Not supported on go-mobile clients.
 func (key *Key) GetEntity() *openpgp.Entity {
 	return key.entity
+}
+
+// GetVersion returns the OpenPGP key packet version of this key.
+func (key *Key) GetVersion() int {
+	return key.entity.PrimaryKey.Version
 }
 
 // ToPublic returns the corresponding public key of the given private key.
@@ -411,6 +450,7 @@ func getSHA256FingerprintBytes(pk *packet.PublicKey) []byte {
 func (key *Key) readFrom(r io.Reader, armored bool) error {
 	var err error
 	var entities openpgp.EntityList
+
 	if armored {
 		entities, err = openpgp.ReadArmoredKeyRing(r)
 	} else {
@@ -432,46 +472,14 @@ func (key *Key) readFrom(r io.Reader, armored bool) error {
 	return nil
 }
 
-func generateKey(
-	name, email string,
-	keyType string,
-	bits int,
-	prime1, prime2, prime3, prime4 []byte,
+func generateKeyWithConfig(
+	name, email, comments string,
+	config *packet.Config,
 ) (*Key, error) {
 	if len(email) == 0 && len(name) == 0 {
 		return nil, errors.New("gopenpgp: neither name nor email set.")
 	}
-
-	comments := ""
-
-	cfg := &packet.Config{
-		Algorithm:              packet.PubKeyAlgoRSA,
-		RSABits:                bits,
-		Time:                   getKeyGenerationTimeGenerator(),
-		DefaultHash:            crypto.SHA256,
-		DefaultCipher:          packet.CipherAES256,
-		DefaultCompressionAlgo: packet.CompressionZLIB,
-	}
-
-	if keyType == "x25519" {
-		cfg.Algorithm = packet.PubKeyAlgoEdDSA
-	}
-
-	if prime1 != nil && prime2 != nil && prime3 != nil && prime4 != nil {
-		var bigPrimes [4]*big.Int
-		bigPrimes[0] = new(big.Int)
-		bigPrimes[0].SetBytes(prime1)
-		bigPrimes[1] = new(big.Int)
-		bigPrimes[1].SetBytes(prime2)
-		bigPrimes[2] = new(big.Int)
-		bigPrimes[2].SetBytes(prime3)
-		bigPrimes[3] = new(big.Int)
-		bigPrimes[3].SetBytes(prime4)
-
-		cfg.RSAPrimes = bigPrimes[:]
-	}
-
-	newEntity, err := openpgp.NewEntity(name, comments, email, cfg)
+	newEntity, err := openpgp.NewEntity(name, comments, email, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopengpp: error in encoding new entity")
 	}

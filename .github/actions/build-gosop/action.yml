@@ -2,6 +2,10 @@ name: 'build-gosop'
 description: 'Build gosop from the current branch'
 
 inputs:
+  gosop-ref: 
+      description: 'gosop branch tag or commit to build from'
+      required: false
+      default: 'main'
 
   gopenpgp-ref: 
     description: 'gopenpgp branch tag or commit to build from'
@@ -30,6 +34,7 @@ runs:
       uses: actions/checkout@v3
       with:
         repository: ProtonMail/gosop
+        ref: ${{ inputs.gosop-ref }}
         path: gosop
     - name: Cache go modules
       uses: actions/cache@v3

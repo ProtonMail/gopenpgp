@@ -3,7 +3,8 @@ package constants
 
 // Constants for armored data.
 const (
-	ArmorHeaderVersion = "GopenPGP 2.7.5"
+	ArmorHeaderEnabled = false // can be enabled for debugging at compile time only
+	ArmorHeaderVersion = "GopenPGP " + Version
 	ArmorHeaderComment = "https://gopenpgp.org"
 	PGPMessageHeader   = "PGP MESSAGE"
 	PGPSignatureHeader = "PGP SIGNATURE"
