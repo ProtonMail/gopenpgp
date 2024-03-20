@@ -37,7 +37,7 @@ func (kgb *KeyGenerationBuilder) AddUserId(name, email string) *KeyGenerationBui
 //
 // Allowed inputs (integer enum for go-mobile compatibility):
 // crypto.KeyGenerationRSA4096, crypto.KeyGenerationC25519, crypto.KeyGenerationC25519Refresh
-// crypto.KeyGenerationC448, crypto.KeyGenerationC448Refresh
+// crypto.KeyGenerationC448, crypto.KeyGenerationC448Refresh.
 func (kgb *KeyGenerationBuilder) OverrideProfileAlgorithm(algorithm int) *KeyGenerationBuilder {
 	kgb.handle.overrideAlgorithm = algorithm
 	return kgb
