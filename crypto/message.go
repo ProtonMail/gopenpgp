@@ -255,6 +255,27 @@ func (msg *PGPMessage) EncryptedDetachedSignature() *PGPMessage {
 	}
 }
 
+// GetNumberOfKeyPackets returns the number of keys packets in this message.
+func (msg *PGPMessage) GetNumberOfKeyPackets() (int, error) {
+	bytesReader := bytes.NewReader(msg.KeyPacket)
+	packets := packet.NewReader(bytesReader)
+	var keyPacketCount int
+	for {
+		p, err := packets.Next()
+		if goerrors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return 0, err
+		}
+		switch p.(type) {
+		case *packet.SymmetricKeyEncrypted, *packet.EncryptedKey:
+			keyPacketCount += 1
+		}
+	}
+	return keyPacketCount, nil
+}
+
 // splitMessage splits the message into key and data packet(s).
 func (msg *PGPMessage) splitMessage() (*PGPMessage, error) {
 	data := msg.DataPacket

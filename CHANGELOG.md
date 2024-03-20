@@ -23,6 +23,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `subtle` and `models` package.
 - Time management code for retrieving and setting timestamps.
 
+## [2.7.5] 2023-31-01
+
+### Added
+- API to get signature key IDs for mobile:
+	```go
+	func (msg *PGPMessage) GetHexSignatureKeyIDsJson() []byte
+	```
+- API to get encryption key IDs for mobile:
+	```go
+	func (msg *PGPMessage) GetHexEncryptionKeyIDsJson() []byte
+	```
+- API to get the number of key packets in a PGP message:
+	```go
+	func (msg *PGPSplitMessage) GetNumberOfKeyPackets() (int, error)
+	```
+- API in package `helper` to encrypt a PGP message to an additional key:
+	```go
+	func EncryptPGPMessageToAdditionalKey(messageToModify *crypto.PGPSplitMessage, keyRing *crypto.KeyRing, additionalKey *crypto.KeyRing) error
+	```
+
 ## [2.7.4] 2023-10-27
 ### Fixed
 - Ensure that `(SessionKey).Decrypt` functions return an error if no integrity protection is present in the encrypted input. To protect SEIPDv1 encrypted messages, SED packets must not be allowed in decryption.
