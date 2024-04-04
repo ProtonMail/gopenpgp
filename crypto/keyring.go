@@ -64,8 +64,7 @@ func NewKeyRingFromBinary(binKeys []byte) (*KeyRing, error) {
 			return nil, errors.Wrap(err, "gopenpgp: error in reading keyring")
 		}
 
-		err = keyring.AddKey(key)
-		if err != nil {
+		if err = keyring.AddKey(key); err != nil {
 			return nil, errors.Wrap(err, "gopenpgp: error in reading keyring")
 		}
 	}
