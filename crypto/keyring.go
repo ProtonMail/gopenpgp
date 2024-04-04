@@ -49,6 +49,30 @@ func (keyRing *KeyRing) AddKey(key *Key) error {
 	return nil
 }
 
+// NewKeyRingFromBinary creates a new keyring with all the keys contained in the unarmored binary data.
+// Note that it accepts only unlocked or public keys, as KeyRing cannot contain locked keys.
+func NewKeyRingFromBinary(binKeys []byte) (*KeyRing, error) {
+	entities, err := openpgp.ReadKeyRing(bytes.NewReader(binKeys))
+	if err != nil {
+		return nil, errors.Wrap(err, "gopenpgp: error in reading keyring")
+	}
+
+	keyring := &KeyRing{}
+	for _, entity := range entities {
+		key, err := NewKeyFromEntity(entity)
+		if err != nil {
+			return nil, errors.Wrap(err, "gopenpgp: error in reading keyring")
+		}
+
+		err = keyring.AddKey(key)
+		if err != nil {
+			return nil, errors.Wrap(err, "gopenpgp: error in reading keyring")
+		}
+	}
+
+	return keyring, nil
+}
+
 // --- Extract keys from keyring
 
 // GetKeys returns openpgp keys contained in this KeyRing.
@@ -86,6 +110,25 @@ func (keyRing *KeyRing) getSigningEntity() (*openpgp.Entity, error) {
 	}
 
 	return signEntity, nil
+}
+
+// Serialize serializes a KeyRing to binary data.
+func (keyRing *KeyRing) Serialize() ([]byte, error) {
+	var buffer bytes.Buffer
+
+	for _, entity := range keyRing.entities {
+		var err error
+		if entity.PrivateKey == nil {
+			err = entity.Serialize(&buffer)
+		} else {
+			err = entity.SerializePrivateWithoutSigning(&buffer, nil)
+		}
+		if err != nil {
+			return nil, errors.Wrap(err, "gopenpgp: error in serializing keyring")
+		}
+	}
+
+	return buffer.Bytes(), nil
 }
 
 // --- Extract info from key

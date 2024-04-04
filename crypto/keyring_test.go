@@ -148,6 +148,21 @@ func TestMultipleKeyRing(t *testing.T) {
 	assert.Exactly(t, 1, singleKeyRing.CountDecryptionEntities())
 }
 
+func TestSerializeParse(t *testing.T) {
+	serialized, err := keyRingTestMultiple.Serialize()
+	assert.Nil(t, err)
+
+	parsed, err := NewKeyRingFromBinary(serialized)
+	assert.Nil(t, err)
+
+	assert.Exactly(t, 3, len(parsed.GetKeys()))
+	for i, parsedKey := range parsed.GetKeys() {
+		expectedKey, err := keyRingTestMultiple.GetKey(i)
+		assert.Nil(t, err)
+		assert.Exactly(t, parsedKey.GetFingerprint(), expectedKey.GetFingerprint())
+	}
+}
+
 func TestClearPrivateKey(t *testing.T) {
 	keyRingCopy, err := keyRingTestMultiple.Copy()
 	if err != nil {
