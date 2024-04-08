@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- API to serialize KeyRings to binary data:
+	```go
+	func (keyRing *KeyRing) Serialize() ([]byte, error)
+	```
+- API to parse KeyRings from binary data:
+	```go
+	func NewKeyRingFromBinary(binKeys []byte) (*KeyRing, error)
+	```
+
 ## [2.7.5] 2023-31-01
 
 ### Added
