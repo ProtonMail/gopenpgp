@@ -114,6 +114,25 @@ func (keyRing *KeyRing) getEntities() openpgp.EntityList {
 	return keyRing.entities
 }
 
+// Serialize serializes a KeyRing to binary data.
+func (keyRing *KeyRing) Serialize() ([]byte, error) {
+	var buffer bytes.Buffer
+
+	for _, entity := range keyRing.entities {
+		var err error
+		if entity.PrivateKey == nil {
+			err = entity.Serialize(&buffer)
+		} else {
+			err = entity.SerializePrivateWithoutSigning(&buffer, nil)
+		}
+		if err != nil {
+			return nil, errors.Wrap(err, "gopenpgp: error in serializing keyring")
+		}
+	}
+
+	return buffer.Bytes(), nil
+}
+
 // --- Extract info from key
 
 // CountEntities returns the number of entities in the keyring.
