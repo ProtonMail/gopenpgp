@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [2.8.0-alpha.1] 2024-09-04
 
 ### Added
 - API to serialize KeyRings to binary data:
@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 	```go
 	func NewKeyRingFromBinary(binKeys []byte) (*KeyRing, error)
 	```
+
+## [2.8.0-alpha.0] 2024-28-02
+
+### Added 
+- Adds support for the OpenPGP crypto-refresh by updating the go-crypto dependency to `v1.1.0-alpha.1`.
+- Adapts the session key logic to handle PKESK/SKESK v6 packets without an algorithm attached
+- Updates the min go version to `1.17` as required by  go-crypto `v1.1.0-alpha.1`.
+- Update the cricl dependency to `1.3.7` matching go-crypto.
+
 
 ## [2.7.5] 2023-31-01
 
