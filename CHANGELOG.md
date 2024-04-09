@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.8.0-alpha.1] 2024-09-04
+## [2.8.0-alpha.1] 2024-04-09
 
 ### Added
 - API to serialize KeyRings to binary data:
@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 	func NewKeyRingFromBinary(binKeys []byte) (*KeyRing, error)
 	```
 
-## [2.8.0-alpha.0] 2024-28-02
+## [2.8.0-alpha.0] 2024-02-28
 
 ### Added 
 - Adds support for the OpenPGP crypto-refresh by updating the go-crypto dependency to `v1.1.0-alpha.1`.
