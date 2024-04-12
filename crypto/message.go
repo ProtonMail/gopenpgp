@@ -34,6 +34,8 @@ type PGPMessage struct {
 	// DetachedSignature stores the encrypted detached signature.
 	// Nil when the signature is embedded in the data packet or not present.
 	DetachedSignature []byte
+	// detachedSignatureIsPlain indicates if the detached signature is not encrypted.
+	detachedSignatureIsPlain bool
 }
 
 type PGPMessageBuffer struct {
@@ -246,13 +248,31 @@ func (msg *PGPMessage) BinaryKeyPacket() []byte {
 // as a PGPMessage where the data is the encrypted signature.
 // If no detached signature is present in this message, it returns nil.
 func (msg *PGPMessage) EncryptedDetachedSignature() *PGPMessage {
-	if msg.DetachedSignature == nil {
+	if msg.DetachedSignature == nil || msg.detachedSignatureIsPlain {
 		return nil
 	}
 	return &PGPMessage{
 		KeyPacket:  msg.KeyPacket,
 		DataPacket: msg.DetachedSignature,
 	}
+}
+
+// PlainDetachedSignature returns the plaintext detached signature of this message.
+// If no plaintext detached signature is present in this message, it returns an error.
+func (msg *PGPMessage) PlainDetachedSignature() ([]byte, error) {
+	if msg.DetachedSignature == nil || !msg.detachedSignatureIsPlain {
+		return nil, errors.New("gopenpgp: no plaintext detached signature found")
+	}
+	return msg.DetachedSignature, nil
+}
+
+// PlainDetachedSignatureArmor returns the armored plaintext detached signature of this message.
+// If no plaintext detached signature is present or armoring fails it returns an error.
+func (msg *PGPMessage) PlainDetachedSignatureArmor() ([]byte, error) {
+	if msg.DetachedSignature == nil || !msg.detachedSignatureIsPlain {
+		return nil, errors.New("gopenpgp: no plaintext detached signature found")
+	}
+	return armor.ArmorPGPSignatureBinary(msg.DetachedSignature)
 }
 
 // GetNumberOfKeyPackets returns the number of keys packets in this message.
@@ -335,6 +355,12 @@ func (mb *PGPMessageBuffer) Write(b []byte) (n int, err error) {
 
 // PGPMessage returns the PGPMessage extracted from the internal buffers.
 func (mb *PGPMessageBuffer) PGPMessage() *PGPMessage {
+	return mb.PGPMessageWithDetached(false)
+}
+
+// PGPMessageWithDetached returns the PGPMessage extracted from the internal buffers.
+// The isPlain flag indicates wether the detached signature is encrypted or plaintext, if any.
+func (mb *PGPMessageBuffer) PGPMessageWithDetached(isPlain bool) *PGPMessage {
 	var detachedSignature []byte
 	if mb.signature.Len() > 0 {
 		detachedSignature = mb.signature.Bytes()
@@ -345,9 +371,10 @@ func (mb *PGPMessageBuffer) PGPMessage() *PGPMessage {
 		return pgpMessage
 	}
 	return &PGPMessage{
-		KeyPacket:         mb.key.Bytes(),
-		DataPacket:        mb.data.Bytes(),
-		DetachedSignature: detachedSignature,
+		KeyPacket:                mb.key.Bytes(),
+		DataPacket:               mb.data.Bytes(),
+		DetachedSignature:        detachedSignature,
+		detachedSignatureIsPlain: isPlain,
 	}
 }
 

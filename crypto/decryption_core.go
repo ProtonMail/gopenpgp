@@ -221,10 +221,10 @@ Loop:
 	return decrypted, nil
 }
 
-func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryptedSignature Reader) (plainMessage *VerifyDataReader, err error) {
+func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryptedSignature Reader, isPlaintextSignature bool) (plainMessage *VerifyDataReader, err error) {
 	verifyTime := dh.clock().Unix()
 	var mdData *openpgp.MessageDetails
-	var signature io.Reader
+	signature := encryptedSignature
 	// Decrypt both messages
 	if len(dh.SessionKeys) > 0 {
 		// Decrypt with session key.
@@ -232,12 +232,14 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 		if err != nil {
 			return nil, errors.Wrap(err, "gopenpgp: error in reading data message")
 		}
-		// Decrypting reader for the encrypted signature
-		mdSig, _, err := dh.decryptStreamWithSessionAndParse(encryptedSignature)
-		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: error in reading detached signature message")
+		if !isPlaintextSignature {
+			// Decrypting reader for the encrypted signature
+			mdSig, _, err := dh.decryptStreamWithSessionAndParse(encryptedSignature)
+			if err != nil {
+				return nil, errors.Wrap(err, "gopenpgp: error in reading detached signature message")
+			}
+			signature = mdSig.UnverifiedBody
 		}
-		signature = mdSig.UnverifiedBody
 	} else {
 		// Password or private keys
 		checkPacketSequence := !dh.DisableStrictMessageParsing
@@ -275,15 +277,18 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 				return nil, errors.Wrap(err, "gopenpgp: error in reading data message")
 			}
 		}
-		// Decrypting reader for the encrypted signature
-		prompt := createPasswordPrompt(selectedPassword)
-		noCheckPacketSequence := false
-		config.CheckPacketSequence = &noCheckPacketSequence
-		mdSig, err := openpgp.ReadMessage(encryptedSignature, entries, prompt, config)
-		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: error in reading detached signature message")
+
+		if !isPlaintextSignature {
+			// Decrypting reader for the encrypted signature
+			prompt := createPasswordPrompt(selectedPassword)
+			noCheckPacketSequence := false
+			config.CheckPacketSequence = &noCheckPacketSequence
+			mdSig, err := openpgp.ReadMessage(encryptedSignature, entries, prompt, config)
+			if err != nil {
+				return nil, errors.Wrap(err, "gopenpgp: error in reading detached signature message")
+			}
+			signature = mdSig.UnverifiedBody
 		}
-		signature = mdSig.UnverifiedBody
 	}
 
 	checkIntendedRecipients := !dh.DisableIntendedRecipients

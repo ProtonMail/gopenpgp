@@ -51,7 +51,10 @@ type encryptionHandle struct {
 	// DetachedSignature indicates if a separate encrypted detached signature
 	// should be created
 	DetachedSignature bool
-	IsUTF8            bool
+	// PlainDetachedSignature indicates that the detached signature should not be encrypted.
+	// Is only considered if DetachedSignature is not set.
+	PlainDetachedSignature bool
+	IsUTF8                 bool
 	// ExternalSignature allows to include an external signature into
 	// the encrypted message.
 	ExternalSignature []byte
@@ -106,7 +109,7 @@ func (eh *encryptionHandle) Encrypt(message []byte) (*PGPMessage, error) {
 	if err != nil {
 		return nil, err
 	}
-	return pgpMessageBuffer.PGPMessage(), nil
+	return pgpMessageBuffer.PGPMessageWithDetached(eh.PlainDetachedSignature), nil
 }
 
 // EncryptSessionKey encrypts a session key with the encryption handle.
@@ -190,7 +193,8 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 		return nil, err
 	}
 
-	if eh.DetachedSignature && detachedSignature == nil {
+	doDetachedSignature := eh.DetachedSignature || eh.PlainDetachedSignature
+	if doDetachedSignature && detachedSignature == nil {
 		return nil, errors.New("gopenpgp: no output provided for the detached signature")
 	}
 
@@ -206,6 +210,12 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 		}
 		if eh.DetachedSignature {
 			armorSigWriter, err = armor.EncodeWithChecksumOption(detachedSignature, constants.PGPMessageHeader, eh.ArmorHeaders, false)
+			detachedSignature = armorSigWriter
+			if err != nil {
+				return nil, err
+			}
+		} else if eh.PlainDetachedSignature {
+			armorSigWriter, err = armor.EncodeWithChecksumOption(detachedSignature, constants.PGPSignatureHeader, eh.ArmorHeaders, false)
 			detachedSignature = armorSigWriter
 			if err != nil {
 				return nil, err
@@ -227,26 +237,26 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 	switch {
 	case eh.Recipients.CountEntities() > 0 || eh.HiddenRecipients.CountEntities() > 0:
 		// Encrypt towards recipients
-		if !eh.DetachedSignature {
+		if !doDetachedSignature {
 			// Signature is inside the ciphertext.
 			messageWriter, err = eh.encryptStream(keys, data, meta)
 		} else {
 			// Encrypted detached signature separate from the ciphertext.
-			messageWriter, err = eh.encryptSignDetachedStreamToRecipients(meta, detachedSignature, data, keys)
+			messageWriter, err = eh.encryptSignDetachedStreamToRecipients(meta, detachedSignature, data, keys, eh.DetachedSignature)
 		}
 	case eh.Password != nil:
 		// Encrypt with a password
-		if !eh.DetachedSignature {
+		if !doDetachedSignature {
 			messageWriter, err = eh.encryptStreamWithPassword(keys, data, meta)
 		} else {
-			messageWriter, err = eh.encryptSignDetachedStreamToRecipients(meta, detachedSignature, data, keys)
+			messageWriter, err = eh.encryptSignDetachedStreamToRecipients(meta, detachedSignature, data, keys, eh.DetachedSignature)
 		}
 	case eh.SessionKey != nil:
 		// Encrypt towards session key
-		if !eh.DetachedSignature {
+		if !doDetachedSignature {
 			messageWriter, err = eh.encryptStreamWithSessionKey(data, meta)
 		} else {
-			messageWriter, err = eh.encryptSignDetachedStreamWithSessionKey(meta, detachedSignature, data)
+			messageWriter, err = eh.encryptSignDetachedStreamWithSessionKey(meta, detachedSignature, data, eh.DetachedSignature)
 		}
 	default:
 		// No encryption material provided

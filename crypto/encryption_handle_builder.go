@@ -156,6 +156,16 @@ func (ehb *EncryptionHandleBuilder) DetachedSignature() *EncryptionHandleBuilder
 	return ehb
 }
 
+// PlainDetachedSignature indicates that the message should be signed,
+// but the signature should not be included in the same pgp message as the input data.
+// Instead the detached signature is a separate signature pgp message.
+// If DetachedSignature signature is set (i.e., the detached signature is encrypted), this option is ignored.
+// NOTE: A plaintext detached signature might reveal information about the encrypted plaintext. Thus, use with care.
+func (ehb *EncryptionHandleBuilder) PlainDetachedSignature() *EncryptionHandleBuilder {
+	ehb.handle.PlainDetachedSignature = true
+	return ehb
+}
+
 // IncludeExternalSignature indicates that the provided signature should be included
 // in the produced encrypted message.
 // Special feature: should not be used in normal use-cases,

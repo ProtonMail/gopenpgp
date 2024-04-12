@@ -7,6 +7,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
+	"github.com/ProtonMail/gopenpgp/v3/internal"
 	"github.com/pkg/errors"
 )
 
@@ -293,6 +294,7 @@ func (eh *encryptionHandle) encryptSignDetachedStreamWithSessionKey(
 	plainMessageMetadata *LiteralMetadata,
 	encryptedSignatureWriter io.Writer,
 	encryptedDataWriter io.Writer,
+	encryptSignature bool,
 ) (io.WriteCloser, error) {
 	signKeyRing := eh.SignKeyRing
 	eh.SignKeyRing = nil
@@ -304,10 +306,16 @@ func (eh *encryptionHandle) encryptSignDetachedStreamWithSessionKey(
 	if err != nil {
 		return nil, err
 	}
-	// Create a writer to encrypt the signature.
-	sigToCiphertextWriter, err := eh.encryptStreamWithSessionKey(encryptedSignatureWriter, nil)
-	if err != nil {
-		return nil, err
+	var sigToCiphertextWriter io.WriteCloser
+	if encryptSignature {
+		// Create a writer to encrypt the signature.
+		sigToCiphertextWriter, err = eh.encryptStreamWithSessionKey(encryptedSignatureWriter, nil)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// The signature is not encrypted
+		sigToCiphertextWriter = internal.NewNoOpWriteCloser(encryptedSignatureWriter)
 	}
 	// Create a writer to sign the message.
 	ptToEncSigWriter, err := signMessageDetachedWriter(
@@ -321,7 +329,6 @@ func (eh *encryptionHandle) encryptSignDetachedStreamWithSessionKey(
 	if err != nil {
 		return nil, err
 	}
-
 	// Return a wrapped plaintext writer that writes encrypted data and the encrypted signature.
 	return &encryptSignDetachedWriter{
 		ptToCiphertextWriter:  ptToCiphertextWriter,
@@ -336,6 +343,7 @@ func (eh *encryptionHandle) encryptSignDetachedStreamToRecipients(
 	encryptedSignatureWriter io.Writer,
 	encryptedDataWriter io.Writer,
 	keyPacketWriter io.Writer,
+	encryptSignature bool,
 ) (plaintextWriter io.WriteCloser, err error) {
 	configInput := eh.profile.EncryptionConfig()
 	configInput.Time = NewConstantClock(eh.clock().Unix())
@@ -393,6 +401,7 @@ func (eh *encryptionHandle) encryptSignDetachedStreamToRecipients(
 		plainMessageMetadata,
 		encryptedSignatureWriter,
 		encryptedDataWriter,
+		encryptSignature,
 	)
 	if err != nil {
 		return nil, err
