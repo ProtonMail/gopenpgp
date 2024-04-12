@@ -679,6 +679,87 @@ func TestSessionKeyEncryptDecryptDetached(t *testing.T) {
 	}
 }
 
+func TestEncryptDecryptPlaintextDetached(t *testing.T) {
+	for _, material := range testMaterialForProfiles {
+		t.Run(material.profileName, func(t *testing.T) {
+			encHandle, _ := material.pgp.Encryption().
+				Recipients(material.keyRingTestPublic).
+				SigningKeys(material.keyRingTestPrivate).
+				PlainDetachedSignature().
+				New()
+			decHandle, _ := material.pgp.Decryption().
+				DecryptionKeys(material.keyRingTestPrivate).
+				VerificationKeys(material.keyRingTestPublic).
+				PlainDetachedSignature().
+				New()
+			testEncryptSplitDecryptStream(
+				t,
+				[]byte(testMessageString),
+				nil,
+				encHandle,
+				decHandle,
+				splitWriterDetachedSignature,
+				len(material.keyRingTestPrivate.entities),
+				Bytes,
+			)
+		})
+	}
+}
+
+func TestPasswordEncryptDecryptPlaintextDetached(t *testing.T) {
+	for _, material := range testMaterialForProfiles {
+		t.Run(material.profileName, func(t *testing.T) {
+			encHandle, _ := material.pgp.Encryption().
+				Password(password).
+				SigningKeys(material.keyRingTestPrivate).
+				PlainDetachedSignature().
+				New()
+			decHandle, _ := material.pgp.Decryption().
+				Passwords(decPasswords).
+				VerificationKeys(material.keyRingTestPublic).
+				PlainDetachedSignature().
+				New()
+			testEncryptSplitDecryptStream(
+				t,
+				[]byte(testMessageString),
+				nil,
+				encHandle,
+				decHandle,
+				splitWriterDetachedSignature,
+				len(material.keyRingTestPrivate.entities),
+				Bytes,
+			)
+		})
+	}
+}
+
+func TestSessionKeyEncryptDecryptPlaintextDetached(t *testing.T) {
+	for _, material := range testMaterialForProfiles {
+		t.Run(material.profileName, func(t *testing.T) {
+			encHandle, _ := material.pgp.Encryption().
+				SessionKey(material.testSessionKey).
+				SigningKeys(material.keyRingTestPrivate).
+				PlainDetachedSignature().
+				New()
+			decHandle, _ := material.pgp.Decryption().
+				SessionKey(material.testSessionKey).
+				VerificationKeys(material.keyRingTestPublic).
+				PlainDetachedSignature().
+				New()
+			testEncryptSplitDecryptStream(
+				t,
+				[]byte(testMessageString),
+				nil,
+				encHandle,
+				decHandle,
+				splitWriterDetachedSignature,
+				len(material.keyRingTestPrivate.entities),
+				Bytes,
+			)
+		})
+	}
+}
+
 func TestPasswordEncryptDecryptStream(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		t.Run(material.profileName, func(t *testing.T) {
@@ -872,6 +953,54 @@ func TestEncryptCompressionApplied(t *testing.T) {
 			}
 			if len(compressedMessage.DataPacket) >= len(message.DataPacket) {
 				t.Fatal("Expected compressed encrypted message to be smaller than the encrypted message")
+			}
+		})
+	}
+}
+
+func TestEncryptDecryptPlaintextDetachedArmor(t *testing.T) {
+	for _, material := range testMaterialForProfiles {
+		t.Run(material.profileName, func(t *testing.T) {
+			var ciphertextBuf bytes.Buffer
+			var detachedSignature bytes.Buffer
+			encHandle, _ := material.pgp.Encryption().
+				Recipients(material.keyRingTestPublic).
+				SigningKeys(material.keyRingTestPrivate).
+				PlainDetachedSignature().
+				New()
+			decHandle, _ := material.pgp.Decryption().
+				DecryptionKeys(material.keyRingTestPrivate).
+				VerificationKeys(material.keyRingTestPublic).
+				PlainDetachedSignature().
+				New()
+			writer := NewPGPSplitWriterDetachedSignature(&ciphertextBuf, &detachedSignature)
+			ctWriter, err := encHandle.EncryptingWriter(writer, Armor)
+			if err != nil {
+				t.Fatal("Expected no error while encrypting message, got:", err)
+			}
+			if _, err := ctWriter.Write([]byte(testMessage)); err != nil {
+				t.Fatal(err)
+			}
+			if err := ctWriter.Close(); err != nil {
+				t.Fatal(err)
+			}
+			decryptionResult, err := decHandle.DecryptDetached(ciphertextBuf.Bytes(), detachedSignature.Bytes(), Armor)
+			if err != nil {
+				t.Fatal("Expected no error while decrypting message, got:", err)
+			}
+			if !bytes.Equal(decryptionResult.data, []byte(testMessage)) {
+				t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptionResult.data), testMessage)
+			}
+			if err := decryptionResult.SignatureError(); err != nil {
+				t.Fatal("Expected no signature error")
+			}
+			decHandleNotPlaintext, _ := material.pgp.Decryption().
+				DecryptionKeys(material.keyRingTestPrivate).
+				VerificationKeys(material.keyRingTestPublic).
+				New()
+			_, err = decHandleNotPlaintext.DecryptDetached(ciphertextBuf.Bytes(), detachedSignature.Bytes(), Armor)
+			if err == nil {
+				t.Fatal("Expected that decrypting an non encrypted plaintext signature fails")
 			}
 		})
 	}

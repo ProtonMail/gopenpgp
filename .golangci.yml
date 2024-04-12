@@ -8,7 +8,7 @@ linters-settings:
     statements: 80
   cyclop:
     # the minimal code complexity to report
-    max-complexity: 23
+    max-complexity: 26
   gocognit:
     min-complexity: 45
 

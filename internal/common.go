@@ -93,3 +93,22 @@ func (rr *ResetReader) Reset() (io.Reader, error) {
 	rr.buffer = bytes.NewBuffer(nil)
 	return rr.Reader, nil
 }
+
+type noOpWriteCloser struct {
+	writer io.Writer
+}
+
+// NewNoOpWriteCloser creates a WriteCloser form a Writer that performs no operation on close.
+func NewNoOpWriteCloser(writer io.Writer) io.WriteCloser {
+	return &noOpWriteCloser{
+		writer,
+	}
+}
+
+func (w *noOpWriteCloser) Write(p []byte) (n int, err error) {
+	return w.writer.Write(p)
+}
+
+func (w *noOpWriteCloser) Close() error {
+	return nil
+}

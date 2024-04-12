@@ -116,6 +116,13 @@ func (dpb *DecryptionHandleBuilder) Utf8() *DecryptionHandleBuilder {
 	return dpb
 }
 
+// PlainDetachedSignature indicates that the detached signature to verify is not decrypted
+// and can be verified as is.
+func (dpb *DecryptionHandleBuilder) PlainDetachedSignature() *DecryptionHandleBuilder {
+	dpb.handle.PlainDetachedSignature = true
+	return dpb
+}
+
 // DisableVerifyTimeCheck disables the check for comparing the signature creation time
 // against the verification time.
 func (dpb *DecryptionHandleBuilder) DisableVerifyTimeCheck() *DecryptionHandleBuilder {

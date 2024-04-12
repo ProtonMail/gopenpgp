@@ -30,6 +30,8 @@ type decryptionHandle struct {
 	// VerificationContext provides a verification context for the signature of the pgp message, if any.
 	// Only considered if VerifyKeyRing is not nil.
 	VerificationContext *VerificationContext
+	// PlainDetachedSignature indicates that all provided detached signatures are not encrypted.
+	PlainDetachedSignature bool
 	// DisableIntendedRecipients indicates if the signature verification should not check if
 	// the decryption key matches the intended recipients of the message.
 	// If disabled, the decryption throws no error in a non-matching case.
@@ -177,6 +179,14 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 				return nil, err
 			}
 			encryptedSignature = armoredBlock.Body
+			if dh.PlainDetachedSignature && armoredBlock.Type != "PGP SIGNATURE" {
+				err = errors.New("gopenpgp: detached signature is not plaintext")
+				return nil, err
+			}
+			if !dh.PlainDetachedSignature && armoredBlock.Type != "PGP MESSAGE" {
+				err = errors.New("gopenpgp: encrypted detached signature is not an encrypted pgp message")
+				return nil, err
+			}
 		}
 	}
 
@@ -184,7 +194,7 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 	if len(dh.SessionKeys) > 0 {
 		// Decrypt with session key.
 		if encryptedSignature != nil {
-			plainMessageReader, err = dh.decryptStreamAndVerifyDetached(encryptedMessage, encryptedSignature)
+			plainMessageReader, err = dh.decryptStreamAndVerifyDetached(encryptedMessage, encryptedSignature, dh.PlainDetachedSignature)
 		} else {
 			plainMessageReader, err = dh.decryptStreamWithSession(encryptedMessage)
 		}
@@ -193,7 +203,7 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 	if (!decryptionTried || err != nil) && dh.DecryptionKeyRing != nil {
 		// Decrypt with keyring.
 		if encryptedSignature != nil {
-			plainMessageReader, err = dh.decryptStreamAndVerifyDetached(encryptedMessage, encryptedSignature)
+			plainMessageReader, err = dh.decryptStreamAndVerifyDetached(encryptedMessage, encryptedSignature, dh.PlainDetachedSignature)
 		} else {
 			plainMessageReader, err = dh.decryptStream(encryptedMessage)
 		}
@@ -202,7 +212,7 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 	if (!decryptionTried || err != nil) && len(dh.Passwords) > 0 {
 		// Decrypt with password.
 		if encryptedSignature != nil {
-			plainMessageReader, err = dh.decryptStreamAndVerifyDetached(encryptedMessage, encryptedSignature)
+			plainMessageReader, err = dh.decryptStreamAndVerifyDetached(encryptedMessage, encryptedSignature, dh.PlainDetachedSignature)
 		} else {
 			plainMessageReader, err = dh.decryptStream(encryptedMessage)
 		}
