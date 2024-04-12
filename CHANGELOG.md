@@ -4,8 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
+## [3.0.0-alpha.2] 2024-04-12
 ### Added
 - API to serialize KeyRings to binary data:
 	```go
@@ -15,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 	```go
 	func NewKeyRingFromBinary(binKeys []byte) (*KeyRing, error)
 	```
+- API to a create/verify plaintext detached signatures on the encryption/decryption handle instead of just encrypted detached signatures.
 
 ## [3.0.0-alpha.1] 2024-03-20
 ### Added
@@ -23,7 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Update ProtonMail/go-crypto to 1.1.0-alpha.2
-
 
 ## [3.0.0-alpha.0] 2024-01-18
 ### Added
