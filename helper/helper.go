@@ -103,38 +103,55 @@ func DecryptMessageArmored(
 // plain data or an error on signature verification failure.
 func DecryptVerifyMessageArmored(
 	publicKey, privateKey string, passphrase []byte, ciphertext string,
-) (plaintext string, err error) {
+) (plainMessage string, err error) {
+	message, err := decryptVerifyDataArmored(publicKey, privateKey, passphrase, ciphertext)
+	return message.GetString(), err
+}
+
+// DecryptVerifyBinaryMessageArmored decrypts an armored PGP binary given a private
+// key and its passphrase and verifies the embedded signature. Returns the
+// binary data or an error on signature verification failure.
+func DecryptVerifyBinaryMessageArmored(
+	publicKey, privateKey string, passphrase []byte, data []byte,
+) (plainData []byte, err error) {
+	message, err := decryptVerifyDataArmored(publicKey, privateKey, passphrase, string(data))
+	return message.GetBinary(), err
+}
+
+func decryptVerifyDataArmored(
+	publicKey, privateKey string, passphrase []byte, ciphertext string,
+) (massage *crypto.PlainMessage, err error) {
 	var privateKeyObj, unlockedKeyObj *crypto.Key
 	var publicKeyRing, privateKeyRing *crypto.KeyRing
 	var pgpMessage *crypto.PGPMessage
 	var message *crypto.PlainMessage
 
 	if publicKeyRing, err = createPublicKeyRing(publicKey); err != nil {
-		return "", err
+		return message, err
 	}
 
 	if privateKeyObj, err = crypto.NewKeyFromArmored(privateKey); err != nil {
-		return "", errors.Wrap(err, "gopenpgp: unable to unarmor private key")
+		return message, errors.Wrap(err, "gopenpgp: unable to unarmor private key")
 	}
 
 	if unlockedKeyObj, err = privateKeyObj.Unlock(passphrase); err != nil {
-		return "", errors.Wrap(err, "gopenpgp: unable to unlock private key")
+		return message, errors.Wrap(err, "gopenpgp: unable to unlock private key")
 	}
 	defer unlockedKeyObj.ClearPrivateParams()
 
 	if privateKeyRing, err = crypto.NewKeyRing(unlockedKeyObj); err != nil {
-		return "", errors.Wrap(err, "gopenpgp: unable to create new keyring")
+		return message, errors.Wrap(err, "gopenpgp: unable to create new keyring")
 	}
 
 	if pgpMessage, err = crypto.NewPGPMessageFromArmored(ciphertext); err != nil {
-		return "", errors.Wrap(err, "gopenpgp: unable to unarmor ciphertext")
+		return message, errors.Wrap(err, "gopenpgp: unable to unarmor ciphertext")
 	}
 
 	if message, err = privateKeyRing.Decrypt(pgpMessage, publicKeyRing, crypto.GetUnixTime()); err != nil {
-		return "", errors.Wrap(err, "gopenpgp: unable to decrypt message")
+		return message, errors.Wrap(err, "gopenpgp: unable to decrypt message")
 	}
 
-	return message.GetString(), nil
+	return message, nil
 }
 
 // DecryptVerifyAttachment decrypts and verifies an attachment split into the
