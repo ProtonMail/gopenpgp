@@ -46,6 +46,15 @@ func (keyRing *KeyRing) EncryptWithContextAndCompression(message *PlainMessage, 
 	return asymmetricEncrypt(message, keyRing, privateKey, true, signingContext)
 }
 
+// EncryptWithOptions encrypts a PlainMessage to PGPMessage using public/private keys.
+// * message : The plain data as a PlainMessage.
+// * privateKey : (optional) an unlocked private keyring to include signature in the message.
+// * opts : (optional) options to specify compression type and signing context.
+// * output  : The encrypted data as PGPMessage.
+func (keyRing *KeyRing) EncryptWithOptions(message *PlainMessage, privateKey *KeyRing, opts ...EncryptionOption) (*PGPMessage, error) {
+	return asymmetricEncrypt(message, keyRing, privateKey, false, nil, opts...)
+}
+
 // Decrypt decrypts encrypted string using pgp keys, returning a PlainMessage
 // * message    : The encrypted input as a PGPMessage
 // * verifyKey  : Public key for signature verification (optional)
@@ -201,6 +210,7 @@ func asymmetricEncrypt(
 	publicKey, privateKey *KeyRing,
 	compress bool,
 	signingContext *SigningContext,
+	opts ...EncryptionOption,
 ) (*PGPMessage, error) {
 	var outBuf bytes.Buffer
 	var encryptWriter io.WriteCloser
@@ -212,7 +222,7 @@ func asymmetricEncrypt(
 		ModTime:  plainMessage.getFormattedTime(),
 	}
 
-	encryptWriter, err = asymmetricEncryptStream(hints, &outBuf, &outBuf, publicKey, privateKey, compress, signingContext)
+	encryptWriter, err = asymmetricEncryptStream(hints, &outBuf, &outBuf, publicKey, privateKey, compress, signingContext, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -238,6 +248,7 @@ func asymmetricEncryptStream(
 	publicKey, privateKey *KeyRing,
 	compress bool,
 	signingContext *SigningContext,
+	opts ...EncryptionOption,
 ) (encryptWriter io.WriteCloser, err error) {
 	config := &packet.Config{
 		DefaultCipher: packet.CipherAES256,
@@ -251,6 +262,11 @@ func asymmetricEncryptStream(
 
 	if signingContext != nil {
 		config.SignatureNotations = append(config.SignatureNotations, signingContext.getNotation())
+	}
+
+	// Overwrite defaults if EncryptionOptions are provided
+	for _, opt := range opts {
+		opt.apply(config)
 	}
 
 	var signEntity *openpgp.Entity
