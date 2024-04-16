@@ -4,6 +4,8 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,6 +65,30 @@ func TestTextMessageEncryptionWithSignatureAndContextAndCompression(t *testing.T
 	var testContext = "test-context"
 
 	ciphertext, err := keyRingTestPublic.EncryptWithContextAndCompression(message, keyRingTestPrivate, NewSigningContext(testContext, true))
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+
+	decrypted, err := keyRingTestPrivate.DecryptWithContext(
+		ciphertext,
+		keyRingTestPublic,
+		GetUnixTime(),
+		NewVerificationContext(testContext, true, 0),
+	)
+	if err != nil {
+		t.Fatal("Expected no error when decrypting, got:", err)
+	}
+	assert.Exactly(t, message.GetString(), decrypted.GetString())
+}
+
+func TestTextMessageEncryptionWithOptions(t *testing.T) {
+	var message = NewPlainMessageFromString("plain text")
+	var testContext = "test-context"
+
+	ciphertext, err := keyRingTestPublic.EncryptWithOptions(message, keyRingTestPrivate,
+		WithCompression(packet.CompressionZIP, &packet.CompressionConfig{Level: constants.DefaultCompressionLevel}),
+		WithCipher(packet.CipherAES256),
+		WithSigningContext(NewSigningContext(testContext, true)))
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
