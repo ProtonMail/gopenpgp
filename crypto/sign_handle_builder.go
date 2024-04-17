@@ -68,6 +68,13 @@ func (shb *SignHandleBuilder) Utf8() *SignHandleBuilder {
 	return shb
 }
 
+// TrimLines enables that each line in the input message is trimmed before encryption.
+// Trim removes trailing spaces, carriage returns and tabs from each line (separated by \n characters).
+func (shb *SignHandleBuilder) TrimLines() *SignHandleBuilder {
+	shb.handle.TrimLines = true
+	return shb
+}
+
 // SignTime sets the internal clock to always return
 // the supplied unix time for signing instead of the device time.
 func (shb *SignHandleBuilder) SignTime(unixTime int64) *SignHandleBuilder {

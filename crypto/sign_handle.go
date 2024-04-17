@@ -16,10 +16,13 @@ import (
 )
 
 type signatureHandle struct {
-	SignKeyRing  *KeyRing
-	SignContext  *SigningContext
-	IsUTF8       bool
-	Detached     bool
+	SignKeyRing *KeyRing
+	SignContext *SigningContext
+	IsUTF8      bool
+	Detached    bool
+	// TrimLines trims each end of the line in the input message before encryption.
+	// Remove trailing spaces, carriage returns and tabs from each line (separated by \n characters).
+	TrimLines    bool
 	ArmorHeaders map[string]string
 	profile      SignProfile
 	clock        Clock
@@ -88,6 +91,9 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding int8) (me
 		messageWriter = internal.NewUtf8CheckWriteCloser(
 			openpgp.NewCanonicalTextWriteCloser(messageWriter),
 		)
+	}
+	if sh.TrimLines {
+		messageWriter = internal.NewTrimWriteCloser(messageWriter)
 	}
 	return messageWriter, nil
 }
