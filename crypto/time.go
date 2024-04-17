@@ -43,7 +43,7 @@ func getNow() time.Time {
 		return time.Now()
 	}
 
-	return time.Unix(pgp.latestServerTime, 0)
+	return time.Unix(pgp.latestServerTime, 999999999)
 }
 
 // getTimeGenerator Returns a time generator function.
