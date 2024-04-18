@@ -36,6 +36,8 @@ type PGPMessage struct {
 	DetachedSignature []byte
 	// detachedSignatureIsPlain indicates if the detached signature is not encrypted.
 	detachedSignatureIsPlain bool
+	// Signals that no armor checksum must be appended when armoring
+	forceNoArmorChecksum bool
 }
 
 type PGPMessageBuffer struct {
@@ -139,6 +141,9 @@ func (msg *PGPMessage) Armor() (string, error) {
 	if msg.KeyPacket == nil {
 		return "", errors.New("gopenpgp: missing key packets in pgp message")
 	}
+	if msg.forceNoArmorChecksum {
+		return armor.ArmorPGPMessageChecksum(msg.Bytes(), false)
+	}
 	return armor.ArmorPGPMessage(msg.Bytes())
 }
 
@@ -147,12 +152,18 @@ func (msg *PGPMessage) ArmorBytes() ([]byte, error) {
 	if msg.KeyPacket == nil {
 		return nil, errors.New("gopenpgp: missing key packets in pgp message")
 	}
+	if msg.forceNoArmorChecksum {
+		return armor.ArmorPGPMessageBytesChecksum(msg.Bytes(), false)
+	}
 	return armor.ArmorPGPMessageBytes(msg.Bytes())
 }
 
 // ArmorWithCustomHeaders returns the armored message as a string, with
 // the given headers. Empty parameters are omitted from the headers.
 func (msg *PGPMessage) ArmorWithCustomHeaders(comment, version string) (string, error) {
+	if msg.forceNoArmorChecksum {
+		return armor.ArmorWithTypeAndCustomHeadersChecksum(msg.Bytes(), constants.PGPMessageHeader, version, comment, false)
+	}
 	return armor.ArmorWithTypeAndCustomHeaders(msg.Bytes(), constants.PGPMessageHeader, version, comment)
 }
 
@@ -355,12 +366,12 @@ func (mb *PGPMessageBuffer) Write(b []byte) (n int, err error) {
 
 // PGPMessage returns the PGPMessage extracted from the internal buffers.
 func (mb *PGPMessageBuffer) PGPMessage() *PGPMessage {
-	return mb.PGPMessageWithDetached(false)
+	return mb.PGPMessageWithOptions(false, false)
 }
 
-// PGPMessageWithDetached returns the PGPMessage extracted from the internal buffers.
+// PGPMessageWithOptions returns the PGPMessage extracted from the internal buffers.
 // The isPlain flag indicates wether the detached signature is encrypted or plaintext, if any.
-func (mb *PGPMessageBuffer) PGPMessageWithDetached(isPlain bool) *PGPMessage {
+func (mb *PGPMessageBuffer) PGPMessageWithOptions(isPlain, forceNoChecksum bool) *PGPMessage {
 	var detachedSignature []byte
 	if mb.signature.Len() > 0 {
 		detachedSignature = mb.signature.Bytes()
@@ -375,6 +386,7 @@ func (mb *PGPMessageBuffer) PGPMessageWithDetached(isPlain bool) *PGPMessage {
 		DataPacket:               mb.data.Bytes(),
 		DetachedSignature:        detachedSignature,
 		detachedSignatureIsPlain: isPlain,
+		forceNoArmorChecksum:     forceNoChecksum,
 	}
 }
 

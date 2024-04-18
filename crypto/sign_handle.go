@@ -46,19 +46,17 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding int8) (me
 	var armorWriter WriteCloser
 	armorOutput := armorOutput(encoding)
 	if armorOutput {
+		doChecksum := sh.doArmorChecksum()
 		var err error
 		header := constants.PGPMessageHeader
 		if sh.Detached {
 			header = constants.PGPSignatureHeader
-			// Append checksum for GnuPG detached signature compatibility
-			armorWriter, err = armor.EncodeWithChecksumOption(outputWriter, header, sh.ArmorHeaders, true)
-		} else {
-			armorWriter, err = armor.EncodeWithChecksumOption(outputWriter, header, sh.ArmorHeaders, false)
 		}
-		outputWriter = armorWriter
+		armorWriter, err = armor.EncodeWithChecksumOption(outputWriter, header, sh.ArmorHeaders, doChecksum)
 		if err != nil {
 			return nil, err
 		}
+		outputWriter = armorWriter
 	}
 	if sh.Detached {
 		// Detached signature
@@ -131,6 +129,18 @@ func (sh *signatureHandle) validate() error {
 		return errors.New("gopenpgp: no signing key provided")
 	}
 	return nil
+}
+
+func (sh *signatureHandle) doArmorChecksum() bool {
+	if sh.SignKeyRing == nil {
+		return constants.DoChecksum
+	}
+	for _, signer := range sh.SignKeyRing.entities {
+		if signer.PrimaryKey.Version != 6 {
+			return constants.DoChecksum
+		}
+	}
+	return false
 }
 
 func (sh *signatureHandle) signCleartext(message []byte) ([]byte, error) {

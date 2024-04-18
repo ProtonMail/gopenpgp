@@ -109,7 +109,8 @@ func (eh *encryptionHandle) Encrypt(message []byte) (*PGPMessage, error) {
 	if err != nil {
 		return nil, err
 	}
-	return pgpMessageBuffer.PGPMessageWithDetached(eh.PlainDetachedSignature), nil
+	checksum := eh.doArmorChecksum()
+	return pgpMessageBuffer.PGPMessageWithOptions(eh.PlainDetachedSignature, !checksum), nil
 }
 
 // EncryptSessionKey encrypts a session key with the encryption handle.
@@ -150,6 +151,39 @@ func (eh *encryptionHandle) validate() error {
 	return nil
 }
 
+// doArmorChecksum determines if an armor checksum should be appended or not.
+// The OpenPGP Crypto-Refresh mandates that no checksum should be appended with the new packets.
+func (eh *encryptionHandle) doArmorChecksum() bool {
+	encryptionConfig := eh.profile.EncryptionConfig()
+	if encryptionConfig.AEADConfig == nil {
+		return constants.DoChecksum
+	}
+	checkTime := eh.clock()
+	if eh.Recipients != nil {
+		for _, recipient := range eh.Recipients.entities {
+			primarySelfSignature, err := recipient.PrimarySelfSignature(checkTime)
+			if err != nil {
+				return constants.DoChecksum
+			}
+			if !primarySelfSignature.SEIPDv2 {
+				return constants.DoChecksum
+			}
+		}
+	}
+	if eh.HiddenRecipients != nil {
+		for _, recipient := range eh.HiddenRecipients.entities {
+			primarySelfSignature, err := recipient.PrimarySelfSignature(checkTime)
+			if err != nil {
+				return constants.DoChecksum
+			}
+			if !primarySelfSignature.SEIPDv2 {
+				return constants.DoChecksum
+			}
+		}
+	}
+	return false
+}
+
 type armoredWriteCloser struct {
 	armorWriter    WriteCloser
 	messageWriter  WriteCloser
@@ -185,11 +219,47 @@ func (eh *encryptionHandle) ClearPrivateParams() {
 	}
 }
 
+func (eh *encryptionHandle) handleArmor(keys, data, detachedSignature Writer) (
+	dataOut Writer,
+	detachedSignatureOut Writer,
+	armorWriter WriteCloser,
+	armorSigWriter WriteCloser,
+	err error,
+) {
+	doChecksum := eh.doArmorChecksum()
+	detachedSignatureOut = detachedSignature
+	// Wrap armored writer
+	if eh.ArmorHeaders == nil {
+		eh.ArmorHeaders = internal.ArmorHeaders
+	}
+	armorWriter, err = armor.EncodeWithChecksumOption(data, constants.PGPMessageHeader, eh.ArmorHeaders, doChecksum)
+	dataOut = armorWriter
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+	if eh.DetachedSignature {
+		armorSigWriter, err = armor.EncodeWithChecksumOption(detachedSignature, constants.PGPMessageHeader, eh.ArmorHeaders, doChecksum)
+		detachedSignatureOut = armorSigWriter
+		if err != nil {
+			return nil, nil, nil, nil, err
+		}
+	} else if eh.PlainDetachedSignature {
+		armorSigWriter, err = armor.EncodeWithChecksumOption(detachedSignature, constants.PGPSignatureHeader, eh.ArmorHeaders, doChecksum)
+		detachedSignatureOut = armorSigWriter
+		if err != nil {
+			return nil, nil, nil, nil, err
+		}
+	}
+	if keys != nil {
+		return nil, nil, nil, nil, errors.New("gopenpgp: armor is not allowed if key packets are written separately")
+	}
+	return dataOut, detachedSignatureOut, armorWriter, armorSigWriter, nil
+}
+
 func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writer, meta *LiteralMetadata, armorOutput bool) (messageWriter WriteCloser, err error) {
 	var armorWriter WriteCloser
 	var armorSigWriter WriteCloser
-	err = eh.validate()
-	if err != nil {
+	if err = eh.validate(); err != nil {
 		return nil, err
 	}
 
@@ -199,30 +269,9 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 	}
 
 	if armorOutput {
-		// Wrap armored writer
-		if eh.ArmorHeaders == nil {
-			eh.ArmorHeaders = internal.ArmorHeaders
-		}
-		armorWriter, err = armor.EncodeWithChecksumOption(data, constants.PGPMessageHeader, eh.ArmorHeaders, false)
-		data = armorWriter
+		data, detachedSignature, armorWriter, armorSigWriter, err = eh.handleArmor(keys, data, detachedSignature)
 		if err != nil {
 			return nil, err
-		}
-		if eh.DetachedSignature {
-			armorSigWriter, err = armor.EncodeWithChecksumOption(detachedSignature, constants.PGPMessageHeader, eh.ArmorHeaders, false)
-			detachedSignature = armorSigWriter
-			if err != nil {
-				return nil, err
-			}
-		} else if eh.PlainDetachedSignature {
-			armorSigWriter, err = armor.EncodeWithChecksumOption(detachedSignature, constants.PGPSignatureHeader, eh.ArmorHeaders, false)
-			detachedSignature = armorSigWriter
-			if err != nil {
-				return nil, err
-			}
-		}
-		if keys != nil {
-			return nil, errors.New("gopenpgp: armor is not allowed if key packets are written separately")
 		}
 	}
 	if keys == nil {

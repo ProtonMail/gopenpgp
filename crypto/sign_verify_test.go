@@ -178,6 +178,25 @@ func TestSignVerifyCleartext(t *testing.T) {
 	}
 }
 
+func TestSignArmor(t *testing.T) {
+	for _, material := range testMaterialForProfiles {
+		t.Run(material.profileName, func(t *testing.T) {
+			isV6 := material.keyRingTestPrivate.GetKeys()[0].isVersionSix()
+			signer, _ := material.pgp.Sign().
+				SigningKeys(material.keyRingTestPrivate).
+				New()
+			armoredSignature, err := signer.Sign([]byte(testMessageString), Armor)
+			if err != nil {
+				t.Fatal("Expected no error in singing, got:", err)
+			}
+			hasChecksum := containsChecksum(string(armoredSignature))
+			if isV6 && hasChecksum {
+				t.Fatalf("V6 messages should not have a checksum")
+			}
+		})
+	}
+}
+
 func testSignVerify(
 	t *testing.T,
 	signer PGPSign,

@@ -3,6 +3,7 @@ package constants
 
 // Constants for armored data.
 const (
+	DoChecksum         = true
 	ArmorHeaderEnabled = false // can be enabled for debugging at compile time only
 	ArmorHeaderVersion = "GopenPGP " + Version
 	ArmorHeaderComment = "https://gopenpgp.org"

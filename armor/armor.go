@@ -20,7 +20,14 @@ func ArmorKey(input []byte) (string, error) {
 // ArmorWriterWithType returns a io.WriteCloser which, when written to, writes
 // armored data to w with the given armorType.
 func ArmorWriterWithType(w io.Writer, armorType string) (io.WriteCloser, error) {
-	return armor.EncodeWithChecksumOption(w, armorType, internal.ArmorHeaders, false)
+	return armor.EncodeWithChecksumOption(w, armorType, internal.ArmorHeaders, constants.DoChecksum)
+}
+
+// ArmorWriterWithTypeChecksum returns a io.WriteCloser which, when written to, writes
+// armored data to w with the given armorType.
+// The checksum determines if an armor checksum is written at the end.
+func ArmorWriterWithTypeChecksum(w io.Writer, armorType string, checksum bool) (io.WriteCloser, error) {
+	return armor.EncodeWithChecksumOption(w, armorType, internal.ArmorHeaders, checksum)
 }
 
 // ArmorWriterWithTypeAndCustomHeaders returns a io.WriteCloser,
@@ -33,12 +40,18 @@ func ArmorWriterWithTypeAndCustomHeaders(w io.Writer, armorType, version, commen
 	if comment != "" {
 		headers["Comment"] = comment
 	}
-	return armor.EncodeWithChecksumOption(w, armorType, headers, false)
+	return armor.EncodeWithChecksumOption(w, armorType, headers, constants.DoChecksum)
 }
 
 // ArmorWithType armors input with the given armorType.
 func ArmorWithType(input []byte, armorType string) (string, error) {
-	buffer, err := armorWithTypeAndHeaders(input, armorType, internal.ArmorHeaders)
+	return ArmorWithTypeChecksum(input, armorType, constants.DoChecksum)
+}
+
+// ArmorWithTypeChecksum armors input with the given armorType.
+// The checksum option determines if an armor checksum is written at the end.
+func ArmorWithTypeChecksum(input []byte, armorType string, checksum bool) (string, error) {
+	buffer, err := armorWithTypeAndHeaders(input, armorType, internal.ArmorHeaders, checksum)
 	if err != nil {
 		return "", err
 	}
@@ -47,7 +60,12 @@ func ArmorWithType(input []byte, armorType string) (string, error) {
 
 // ArmorWithTypeBytes armors input with the given armorType.
 func ArmorWithTypeBytes(input []byte, armorType string) ([]byte, error) {
-	buffer, err := armorWithTypeAndHeaders(input, armorType, internal.ArmorHeaders)
+	return ArmorWithTypeBytesChecksum(input, armorType, constants.DoChecksum)
+}
+
+// ArmorWithTypeBytesChecksum armors input with the given armorType and checksum option.
+func ArmorWithTypeBytesChecksum(input []byte, armorType string, checksum bool) ([]byte, error) {
+	buffer, err := armorWithTypeAndHeaders(input, armorType, internal.ArmorHeaders, checksum)
 	if err != nil {
 		return nil, err
 	}
@@ -57,6 +75,12 @@ func ArmorWithTypeBytes(input []byte, armorType string) ([]byte, error) {
 // ArmorWithTypeAndCustomHeaders armors input with the given armorType and
 // headers.
 func ArmorWithTypeAndCustomHeaders(input []byte, armorType, version, comment string) (string, error) {
+	return ArmorWithTypeAndCustomHeadersChecksum(input, armorType, version, comment, constants.DoChecksum)
+}
+
+// ArmorWithTypeAndCustomHeadersChecksum armors input with the given armorType and
+// headers and checksum option.
+func ArmorWithTypeAndCustomHeadersChecksum(input []byte, armorType, version, comment string, checksum bool) (string, error) {
 	headers := make(map[string]string)
 	if version != "" {
 		headers["Version"] = version
@@ -64,7 +88,7 @@ func ArmorWithTypeAndCustomHeaders(input []byte, armorType, version, comment str
 	if comment != "" {
 		headers["Comment"] = comment
 	}
-	buffer, err := armorWithTypeAndHeaders(input, armorType, headers)
+	buffer, err := armorWithTypeAndHeaders(input, armorType, headers, checksum)
 	if err != nil {
 		return "", err
 	}
@@ -81,7 +105,7 @@ func ArmorWithTypeAndCustomHeadersBytes(input []byte, armorType, version, commen
 	if comment != "" {
 		headers["Comment"] = comment
 	}
-	buffer, err := armorWithTypeAndHeaders(input, armorType, headers)
+	buffer, err := armorWithTypeAndHeaders(input, armorType, headers, constants.DoChecksum)
 	if err != nil {
 		return nil, err
 	}
@@ -132,6 +156,14 @@ func ArmorPGPMessage(signature []byte) (string, error) {
 	return ArmorWithType(signature, constants.PGPMessageHeader)
 }
 
+func ArmorPGPMessageBytesChecksum(signature []byte, checksum bool) ([]byte, error) {
+	return ArmorWithTypeBytesChecksum(signature, constants.PGPMessageHeader, checksum)
+}
+
+func ArmorPGPMessageChecksum(signature []byte, checksum bool) (string, error) {
+	return ArmorWithTypeChecksum(signature, constants.PGPMessageHeader, checksum)
+}
+
 const armorPrefix = "-----BEGIN PGP"
 const maxGarbageBytes = 128
 
@@ -150,10 +182,10 @@ func IsPGPArmored(in io.Reader) (io.Reader, bool) {
 	return outReader, false
 }
 
-func armorWithTypeAndHeaders(input []byte, armorType string, headers map[string]string) (*bytes.Buffer, error) {
+func armorWithTypeAndHeaders(input []byte, armorType string, headers map[string]string, doChecksum bool) (*bytes.Buffer, error) {
 	var b bytes.Buffer
 
-	w, err := armor.EncodeWithChecksumOption(&b, armorType, headers, false)
+	w, err := armor.EncodeWithChecksumOption(&b, armorType, headers, doChecksum)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "armor: unable to encode armoring")
