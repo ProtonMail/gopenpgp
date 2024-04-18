@@ -35,7 +35,7 @@ func testTrimWriteCloser(t *testing.T, test string) {
 func TestTrimWriteCloser(t *testing.T) {
 	testTrimWriteCloser(t, "\n    \t     \r")
 	testTrimWriteCloser(t, "this is a test \n   \t \n\n")
-	testTrimWriteCloser(t, "sdf\n   \t sdf\n \r\rsd   \t fsdf\n")
+	testTrimWriteCloser(t, "sdf\n   \t sddf\n \r\rsd   \t fsdf\n")
 	testTrimWriteCloser(t, "BEGIN:VCARD\r\nVERSION:4.0\r\nFN;PREF=1:   \r\nEND:VCARD")
 	testTrimWriteCloser(t, strings.Repeat("\r \nthis is a test \n   \t \n\n)", 10000))
 }

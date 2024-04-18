@@ -224,10 +224,10 @@ func (key *Key) Armor() (string, error) {
 	}
 
 	if key.IsPrivate() {
-		return armor.ArmorWithType(serialized, constants.PrivateKeyHeader)
+		return armor.ArmorWithTypeChecksum(serialized, constants.PrivateKeyHeader, !key.isVersion(6))
 	}
 
-	return armor.ArmorWithType(serialized, constants.PublicKeyHeader)
+	return armor.ArmorWithTypeChecksum(serialized, constants.PublicKeyHeader, !key.isVersion(6))
 }
 
 // ArmorWithCustomHeaders returns the armored key as a string, with
@@ -238,7 +238,7 @@ func (key *Key) ArmorWithCustomHeaders(comment, version string) (string, error) 
 		return "", err
 	}
 
-	return armor.ArmorWithTypeAndCustomHeaders(serialized, constants.PrivateKeyHeader, version, comment)
+	return armor.ArmorWithTypeAndCustomHeadersChecksum(serialized, constants.PrivateKeyHeader, version, comment, !key.isVersion(6))
 }
 
 // GetArmoredPublicKey returns the armored public keys from this keyring.
@@ -248,7 +248,7 @@ func (key *Key) GetArmoredPublicKey() (s string, err error) {
 		return "", err
 	}
 
-	return armor.ArmorWithType(serialized, constants.PublicKeyHeader)
+	return armor.ArmorWithTypeChecksum(serialized, constants.PublicKeyHeader, !key.isVersion(6))
 }
 
 // GetArmoredPublicKeyWithCustomHeaders returns the armored public key as a string, with
@@ -259,7 +259,7 @@ func (key *Key) GetArmoredPublicKeyWithCustomHeaders(comment, version string) (s
 		return "", err
 	}
 
-	return armor.ArmorWithTypeAndCustomHeaders(serialized, constants.PublicKeyHeader, version, comment)
+	return armor.ArmorWithTypeAndCustomHeadersChecksum(serialized, constants.PublicKeyHeader, version, comment, !key.isVersion(6))
 }
 
 // GetPublicKey returns the unarmored public keys from this keyring.
@@ -431,6 +431,13 @@ func (key *Key) ToPublic() (publicKey *Key, err error) {
 
 	publicKey.ClearPrivateParams()
 	return
+}
+
+func (key *Key) isVersion(version int) bool {
+	if key == nil || key.entity == nil {
+		return false
+	}
+	return key.entity.PrimaryKey.Version == version
 }
 
 // --- Internal methods
