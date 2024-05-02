@@ -3,8 +3,6 @@ package helper
 import (
 	"io/ioutil"
 	"strings"
-
-	"github.com/ProtonMail/gopenpgp/v2/crypto"
 )
 
 const testTime = 1557754627 // 2019-05-13T13:37:07+00:00
@@ -24,5 +22,5 @@ func readTestFile(name string, trimNewlines bool) string {
 var testMailboxPassword = []byte("apple")
 
 func init() {
-	crypto.UpdateTime(testTime) // 2019-05-13T13:37:07+00:00
+	crypto.setFixedTime(testTime) // 2019-05-13T13:37:07+00:00
 }

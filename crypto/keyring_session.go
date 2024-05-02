@@ -84,7 +84,7 @@ func (keyRing *KeyRing) EncryptSessionKey(sk *SessionKey) ([]byte, error) {
 
 	pubKeys := make([]*packet.PublicKey, 0, len(keyRing.entities))
 	for _, e := range keyRing.entities {
-		encryptionKey, ok := e.EncryptionKey(getNow())
+		encryptionKey, ok := e.EncryptionKey(GetTime())
 		if !ok {
 			return nil, errors.New("gopenpgp: encryption key is unavailable for key id " + strconv.FormatUint(e.PrimaryKey.KeyId, 16))
 		}

@@ -306,7 +306,7 @@ func signMessageDetached(
 ) (*PGPSignature, error) {
 	config := &packet.Config{
 		DefaultHash: crypto.SHA512,
-		Time:        getTimeGenerator(),
+		Time:        GetTime,
 	}
 
 	signEntity, err := signKeyRing.getSigningEntity()

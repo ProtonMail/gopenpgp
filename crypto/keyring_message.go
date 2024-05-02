@@ -241,7 +241,7 @@ func asymmetricEncryptStream(
 ) (encryptWriter io.WriteCloser, err error) {
 	config := &packet.Config{
 		DefaultCipher: packet.CipherAES256,
-		Time:          getTimeGenerator(),
+		Time:          GetTime,
 	}
 
 	if compress {
@@ -337,7 +337,7 @@ func asymmetricDecryptStream(
 					but the caller will remove signature expiration errors later on.
 					See processSignatureExpiration().
 				*/
-				return getNow()
+				return GetTime()
 			}
 			return time.Unix(verifyTime, 0)
 		},

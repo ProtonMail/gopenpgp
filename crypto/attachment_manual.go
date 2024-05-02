@@ -95,7 +95,7 @@ func (keyRing *KeyRing) NewManualAttachmentProcessor(
 	// encryption config
 	config := &packet.Config{
 		DefaultCipher: packet.CipherAES256,
-		Time:          getTimeGenerator(),
+		Time:          GetTime,
 	}
 
 	// goroutine that reads the key packet
