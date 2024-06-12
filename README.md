@@ -8,6 +8,7 @@ crypto library](https://github.com/ProtonMail/go-crypto/tree/version-2).
 <!-- TOC depthFrom:2 -->
 
 - [GopenPGP V3](#gopenpgp-v3)
+  - [GopenPGP V2 support](#gopenpgp-v2-support)
   - [Download/Install](#downloadinstall)
   - [Documentation](#documentation)
   - [Examples](#examples)
@@ -20,6 +21,14 @@ crypto library](https://github.com/ProtonMail/go-crypto/tree/version-2).
   - [Using with Go Mobile](#using-with-go-mobile)
 
 <!-- /TOC -->
+
+##  GopenPGP V2 support
+
+While GopenPGP V3 introduces a new API with significant enhancements, it is not backward compatible with GopenPGP V2. 
+Although we recommend upgrading to V3 for the latest features and improvements, we continue to support GopenPGP V2. 
+Our support includes ongoing bug fixes and minor feature updates to ensure stability and functionality for existing users.
+
+You can access GopenPGP V2 on the [v2 branch of this repository](https://github.com/ProtonMail/gopenpgp/tree/v2).
 
 ## Download/Install
 
