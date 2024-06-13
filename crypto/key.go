@@ -224,10 +224,10 @@ func (key *Key) Armor() (string, error) {
 	}
 
 	if key.IsPrivate() {
-		return armor.ArmorWithTypeChecksum(serialized, constants.PrivateKeyHeader, !key.isVersionSix())
+		return armor.ArmorWithTypeChecksum(serialized, constants.PrivateKeyHeader, !key.isV6())
 	}
 
-	return armor.ArmorWithTypeChecksum(serialized, constants.PublicKeyHeader, !key.isVersionSix())
+	return armor.ArmorWithTypeChecksum(serialized, constants.PublicKeyHeader, !key.isV6())
 }
 
 // ArmorWithCustomHeaders returns the armored key as a string, with
@@ -238,7 +238,7 @@ func (key *Key) ArmorWithCustomHeaders(comment, version string) (string, error) 
 		return "", err
 	}
 
-	return armor.ArmorWithTypeAndCustomHeadersChecksum(serialized, constants.PrivateKeyHeader, version, comment, !key.isVersionSix())
+	return armor.ArmorWithTypeAndCustomHeadersChecksum(serialized, constants.PrivateKeyHeader, version, comment, !key.isV6())
 }
 
 // GetArmoredPublicKey returns the armored public keys from this keyring.
@@ -248,7 +248,7 @@ func (key *Key) GetArmoredPublicKey() (s string, err error) {
 		return "", err
 	}
 
-	return armor.ArmorWithTypeChecksum(serialized, constants.PublicKeyHeader, !key.isVersionSix())
+	return armor.ArmorWithTypeChecksum(serialized, constants.PublicKeyHeader, !key.isV6())
 }
 
 // GetArmoredPublicKeyWithCustomHeaders returns the armored public key as a string, with
@@ -259,7 +259,7 @@ func (key *Key) GetArmoredPublicKeyWithCustomHeaders(comment, version string) (s
 		return "", err
 	}
 
-	return armor.ArmorWithTypeAndCustomHeadersChecksum(serialized, constants.PublicKeyHeader, version, comment, !key.isVersionSix())
+	return armor.ArmorWithTypeAndCustomHeadersChecksum(serialized, constants.PublicKeyHeader, version, comment, !key.isV6())
 }
 
 // GetPublicKey returns the unarmored public keys from this keyring.
@@ -433,7 +433,7 @@ func (key *Key) ToPublic() (publicKey *Key, err error) {
 	return
 }
 
-func (key *Key) isVersionSix() bool {
+func (key *Key) isV6() bool {
 	if key == nil || key.entity == nil {
 		return false
 	}

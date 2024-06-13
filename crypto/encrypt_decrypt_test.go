@@ -1010,7 +1010,7 @@ func TestEncryptDecryptPlaintextDetachedArmor(t *testing.T) {
 func TestEncryptArmor(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		t.Run(material.profileName, func(t *testing.T) {
-			isV6 := material.keyRingTestPublic.GetKeys()[0].isVersionSix()
+			isV6 := material.keyRingTestPublic.GetKeys()[0].isV6()
 			encHandle, _ := material.pgp.Encryption().
 				Recipients(material.keyRingTestPublic).
 				SigningKeys(material.keyRingTestPrivate).

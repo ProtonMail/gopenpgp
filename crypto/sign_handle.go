@@ -46,13 +46,13 @@ func (sh *signatureHandle) SigningWriter(outputWriter Writer, encoding int8) (me
 	var armorWriter WriteCloser
 	armorOutput := armorOutput(encoding)
 	if armorOutput {
-		doChecksum := sh.doArmorChecksum()
+		writeChecksum := sh.armorChecksumRequired()
 		var err error
 		header := constants.PGPMessageHeader
 		if sh.Detached {
 			header = constants.PGPSignatureHeader
 		}
-		armorWriter, err = armor.EncodeWithChecksumOption(outputWriter, header, sh.ArmorHeaders, doChecksum)
+		armorWriter, err = armor.EncodeWithChecksumOption(outputWriter, header, sh.ArmorHeaders, writeChecksum)
 		if err != nil {
 			return nil, err
 		}
@@ -131,13 +131,18 @@ func (sh *signatureHandle) validate() error {
 	return nil
 }
 
-func (sh *signatureHandle) doArmorChecksum() bool {
+func (sh *signatureHandle) armorChecksumRequired() bool {
+	if !constants.ArmorChecksumSetting {
+		// If the default behavior is no checksum, we can ignore
+		// the logic for the crypto refresh check.
+		return false
+	}
 	if sh.SignKeyRing == nil {
-		return constants.DoChecksum
+		return true
 	}
 	for _, signer := range sh.SignKeyRing.entities {
 		if signer.PrimaryKey.Version != 6 {
-			return constants.DoChecksum
+			return true
 		}
 	}
 	return false

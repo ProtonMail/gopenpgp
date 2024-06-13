@@ -181,7 +181,7 @@ func TestSignVerifyCleartext(t *testing.T) {
 func TestSignArmor(t *testing.T) {
 	for _, material := range testMaterialForProfiles {
 		t.Run(material.profileName, func(t *testing.T) {
-			isV6 := material.keyRingTestPrivate.GetKeys()[0].isVersionSix()
+			isV6 := material.keyRingTestPrivate.GetKeys()[0].isV6()
 			signer, _ := material.pgp.Sign().
 				SigningKeys(material.keyRingTestPrivate).
 				New()

@@ -109,7 +109,7 @@ func (eh *encryptionHandle) Encrypt(message []byte) (*PGPMessage, error) {
 	if err != nil {
 		return nil, err
 	}
-	checksum := eh.doArmorChecksum()
+	checksum := eh.armorChecksumRequired()
 	return pgpMessageBuffer.PGPMessageWithOptions(eh.PlainDetachedSignature, !checksum), nil
 }
 
@@ -151,22 +151,27 @@ func (eh *encryptionHandle) validate() error {
 	return nil
 }
 
-// doArmorChecksum determines if an armor checksum should be appended or not.
+// armorChecksumRequired determines if an armor checksum should be appended or not.
 // The OpenPGP Crypto-Refresh mandates that no checksum should be appended with the new packets.
-func (eh *encryptionHandle) doArmorChecksum() bool {
+func (eh *encryptionHandle) armorChecksumRequired() bool {
+	if !constants.ArmorChecksumSetting {
+		// If the default behavior is no checksum, we can ignore
+		// the logic for the crypto refresh check.
+		return false
+	}
 	encryptionConfig := eh.profile.EncryptionConfig()
 	if encryptionConfig.AEADConfig == nil {
-		return constants.DoChecksum
+		return true
 	}
 	checkTime := eh.clock()
 	if eh.Recipients != nil {
 		for _, recipient := range eh.Recipients.entities {
 			primarySelfSignature, err := recipient.PrimarySelfSignature(checkTime)
 			if err != nil {
-				return constants.DoChecksum
+				return true
 			}
 			if !primarySelfSignature.SEIPDv2 {
-				return constants.DoChecksum
+				return true
 			}
 		}
 	}
@@ -174,10 +179,10 @@ func (eh *encryptionHandle) doArmorChecksum() bool {
 		for _, recipient := range eh.HiddenRecipients.entities {
 			primarySelfSignature, err := recipient.PrimarySelfSignature(checkTime)
 			if err != nil {
-				return constants.DoChecksum
+				return true
 			}
 			if !primarySelfSignature.SEIPDv2 {
-				return constants.DoChecksum
+				return true
 			}
 		}
 	}
@@ -226,25 +231,25 @@ func (eh *encryptionHandle) handleArmor(keys, data, detachedSignature Writer) (
 	armorSigWriter WriteCloser,
 	err error,
 ) {
-	doChecksum := eh.doArmorChecksum()
+	writeChecksum := eh.armorChecksumRequired()
 	detachedSignatureOut = detachedSignature
 	// Wrap armored writer
 	if eh.ArmorHeaders == nil {
 		eh.ArmorHeaders = internal.ArmorHeaders
 	}
-	armorWriter, err = armor.EncodeWithChecksumOption(data, constants.PGPMessageHeader, eh.ArmorHeaders, doChecksum)
+	armorWriter, err = armor.EncodeWithChecksumOption(data, constants.PGPMessageHeader, eh.ArmorHeaders, writeChecksum)
 	dataOut = armorWriter
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
 	if eh.DetachedSignature {
-		armorSigWriter, err = armor.EncodeWithChecksumOption(detachedSignature, constants.PGPMessageHeader, eh.ArmorHeaders, doChecksum)
+		armorSigWriter, err = armor.EncodeWithChecksumOption(detachedSignature, constants.PGPMessageHeader, eh.ArmorHeaders, writeChecksum)
 		detachedSignatureOut = armorSigWriter
 		if err != nil {
 			return nil, nil, nil, nil, err
 		}
 	} else if eh.PlainDetachedSignature {
-		armorSigWriter, err = armor.EncodeWithChecksumOption(detachedSignature, constants.PGPSignatureHeader, eh.ArmorHeaders, doChecksum)
+		armorSigWriter, err = armor.EncodeWithChecksumOption(detachedSignature, constants.PGPSignatureHeader, eh.ArmorHeaders, writeChecksum)
 		detachedSignatureOut = armorSigWriter
 		if err != nil {
 			return nil, nil, nil, nil, err
