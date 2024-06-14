@@ -20,7 +20,7 @@ func ArmorKey(input []byte) (string, error) {
 // ArmorWriterWithType returns a io.WriteCloser which, when written to, writes
 // armored data to w with the given armorType.
 func ArmorWriterWithType(w io.Writer, armorType string) (io.WriteCloser, error) {
-	return armor.EncodeWithChecksumOption(w, armorType, internal.ArmorHeaders, constants.ArmorChecksumSetting)
+	return armor.EncodeWithChecksumOption(w, armorType, internal.ArmorHeaders, constants.ArmorChecksumEnabled)
 }
 
 // ArmorWriterWithTypeChecksum returns a io.WriteCloser which, when written to, writes
@@ -40,12 +40,12 @@ func ArmorWriterWithTypeAndCustomHeaders(w io.Writer, armorType, version, commen
 	if comment != "" {
 		headers["Comment"] = comment
 	}
-	return armor.EncodeWithChecksumOption(w, armorType, headers, constants.ArmorChecksumSetting)
+	return armor.EncodeWithChecksumOption(w, armorType, headers, constants.ArmorChecksumEnabled)
 }
 
 // ArmorWithType armors input with the given armorType.
 func ArmorWithType(input []byte, armorType string) (string, error) {
-	return ArmorWithTypeChecksum(input, armorType, constants.ArmorChecksumSetting)
+	return ArmorWithTypeChecksum(input, armorType, constants.ArmorChecksumEnabled)
 }
 
 // ArmorWithTypeChecksum armors input with the given armorType.
@@ -60,7 +60,7 @@ func ArmorWithTypeChecksum(input []byte, armorType string, checksum bool) (strin
 
 // ArmorWithTypeBytes armors input with the given armorType.
 func ArmorWithTypeBytes(input []byte, armorType string) ([]byte, error) {
-	return ArmorWithTypeBytesChecksum(input, armorType, constants.ArmorChecksumSetting)
+	return ArmorWithTypeBytesChecksum(input, armorType, constants.ArmorChecksumEnabled)
 }
 
 // ArmorWithTypeBytesChecksum armors input with the given armorType and checksum option.
@@ -75,7 +75,7 @@ func ArmorWithTypeBytesChecksum(input []byte, armorType string, checksum bool) (
 // ArmorWithTypeAndCustomHeaders armors input with the given armorType and
 // headers.
 func ArmorWithTypeAndCustomHeaders(input []byte, armorType, version, comment string) (string, error) {
-	return ArmorWithTypeAndCustomHeadersChecksum(input, armorType, version, comment, constants.ArmorChecksumSetting)
+	return ArmorWithTypeAndCustomHeadersChecksum(input, armorType, version, comment, constants.ArmorChecksumEnabled)
 }
 
 // ArmorWithTypeAndCustomHeadersChecksum armors input with the given armorType and
@@ -105,7 +105,7 @@ func ArmorWithTypeAndCustomHeadersBytes(input []byte, armorType, version, commen
 	if comment != "" {
 		headers["Comment"] = comment
 	}
-	buffer, err := armorWithTypeAndHeaders(input, armorType, headers, constants.ArmorChecksumSetting)
+	buffer, err := armorWithTypeAndHeaders(input, armorType, headers, constants.ArmorChecksumEnabled)
 	if err != nil {
 		return nil, err
 	}

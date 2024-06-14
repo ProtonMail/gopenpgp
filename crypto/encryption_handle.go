@@ -154,7 +154,7 @@ func (eh *encryptionHandle) validate() error {
 // armorChecksumRequired determines if an armor checksum should be appended or not.
 // The OpenPGP Crypto-Refresh mandates that no checksum should be appended with the new packets.
 func (eh *encryptionHandle) armorChecksumRequired() bool {
-	if !constants.ArmorChecksumSetting {
+	if !constants.ArmorChecksumEnabled {
 		// If the default behavior is no checksum, we can ignore
 		// the logic for the crypto refresh check.
 		return false

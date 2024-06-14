@@ -3,13 +3,13 @@ package constants
 
 // Constants for armored data.
 const (
-	// ArmorChecksumSetting defines the default behavior for adding an armor checksum
+	// ArmorChecksumEnabled defines the default behavior for adding an armor checksum
 	// to an armored message.
 	//
 	// If set to true, an armor checksum is added to the message.
 	//
 	// If set to false, no armor checksum is added.
-	ArmorChecksumSetting = true
+	ArmorChecksumEnabled = true
 	ArmorHeaderEnabled   = false // can be enabled for debugging at compile time only
 	ArmorHeaderVersion   = "GopenPGP " + Version
 	ArmorHeaderComment   = "https://gopenpgp.org"

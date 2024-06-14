@@ -132,7 +132,7 @@ func (sh *signatureHandle) validate() error {
 }
 
 func (sh *signatureHandle) armorChecksumRequired() bool {
-	if !constants.ArmorChecksumSetting {
+	if !constants.ArmorChecksumEnabled {
 		// If the default behavior is no checksum, we can ignore
 		// the logic for the crypto refresh check.
 		return false
