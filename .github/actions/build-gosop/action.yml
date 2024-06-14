@@ -2,11 +2,6 @@ name: 'build-gosop'
 description: 'Build gosop from the current branch'
 
 inputs:
-  gosop-ref: 
-      description: 'gosop branch tag or commit to build from'
-      required: false
-      default: 'main'
-
   gopenpgp-ref: 
     description: 'gopenpgp branch tag or commit to build from'
     required: true
@@ -25,6 +20,12 @@ runs:
       with:
         ref: ${{ inputs.gopenpgp-ref }}
         path: gopenpgp
+    - name: Set env
+      run: echo "GOSOP_BRANCH_REF=$(./.github/test-suite/determine_gosop_branch.sh)" >> $GITHUB_ENV
+      shell: bash
+    - name: Print gosop branch
+      run: echo ${{ env.GOSOP_BRANCH_REF}}
+      shell: bash
     # Build gosop
     - name: Set up latest golang
       uses: actions/setup-go@v3
@@ -34,7 +35,7 @@ runs:
       uses: actions/checkout@v3
       with:
         repository: ProtonMail/gosop
-        ref: ${{ inputs.gosop-ref }}
+        ref: ${{ env.GOSOP_BRANCH_REF}}
         path: gosop
     - name: Cache go modules
       uses: actions/cache@v3
