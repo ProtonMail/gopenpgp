@@ -1,7 +1,7 @@
 # GopenPGP V3
 
 GopenPGP V3 is a high-level OpenPGP library built on top of [a fork of the golang
-crypto library](https://github.com/ProtonMail/go-crypto/tree/version-2).
+crypto library](https://github.com/ProtonMail/go-crypto).
 
 **Table of Contents**
 
