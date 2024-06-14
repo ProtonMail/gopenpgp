@@ -5,8 +5,8 @@
         "path": "__GOSOP_BRANCH__"
       },
       {
-        "id": "gosop-main",
-        "path": "__GOSOP_MAIN__"
+        "id": "gosop-target",
+        "path": "__GOSOP_TARGET__"
       },
       {
         "path": "__SQOP__"
