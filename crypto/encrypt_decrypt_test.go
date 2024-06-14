@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -1004,6 +1005,35 @@ func TestEncryptDecryptPlaintextDetachedArmor(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEncryptArmor(t *testing.T) {
+	for _, material := range testMaterialForProfiles {
+		t.Run(material.profileName, func(t *testing.T) {
+			isV6 := material.keyRingTestPublic.GetKeys()[0].isV6()
+			encHandle, _ := material.pgp.Encryption().
+				Recipients(material.keyRingTestPublic).
+				SigningKeys(material.keyRingTestPrivate).
+				New()
+			pgpMsg, err := encHandle.Encrypt([]byte(testMessageString))
+			if err != nil {
+				t.Fatal("Expected no error in encryption, got:", err)
+			}
+			armoredData, err := pgpMsg.Armor()
+			if err != nil {
+				t.Fatal("Armoring failed, got:", err)
+			}
+			hasChecksum := containsChecksum(armoredData)
+			if isV6 && hasChecksum {
+				t.Fatalf("V6 messages should not have a checksum")
+			}
+		})
+	}
+}
+
+func containsChecksum(armored string) bool {
+	re := regexp.MustCompile(`=([A-Za-z0-9+/]{4})\s*-----END PGP MESSAGE-----`)
+	return re.MatchString(armored)
 }
 
 func testEncryptDecrypt(
