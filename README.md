@@ -1,5 +1,8 @@
 # GopenPGP V3
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/ProtonMail/gopenpgp/v3)](https://goreportcard.com/report/github.com/ProtonMail/gopenpgp/v3)
+[![GoDoc](https://godoc.org/github.com/ProtonMail/gopenpgp/v3?status.svg)](https://godoc.org/github.com/ProtonMail/gopenpgp/v3)
+
 GopenPGP V3 is a high-level OpenPGP library built on top of [a fork of the golang
 crypto library](https://github.com/ProtonMail/go-crypto).
 
@@ -28,7 +31,7 @@ While GopenPGP V3 introduces a new API with significant enhancements, it is not 
 Although we recommend upgrading to V3 for the latest features and improvements, we continue to support GopenPGP V2. 
 Our support includes ongoing bug fixes and minor feature updates to ensure stability and functionality for existing users.
 
-You can access GopenPGP V2 on the [v2 branch of this repository](https://github.com/ProtonMail/gopenpgp/tree/v2).
+GopenPGP V2 can be accessed/modified via the [v2 branch of this repository](https://github.com/ProtonMail/gopenpgp/tree/v2).
 
 ## Download/Install
 
