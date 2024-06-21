@@ -164,19 +164,15 @@ func NewUtf8CheckWriteCloser(wrap io.WriteCloser) *Utf8CheckWriteCloser {
 }
 
 func (cw *Utf8CheckWriteCloser) Write(p []byte) (n int, err error) {
-	err = cw.check(p)
-	if err != nil {
-		return
+	if err = cw.check(p); err != nil {
+		return 0, err
 	}
-	n, err = cw.internal.Write(p)
-	return
+	return cw.internal.Write(p)
 }
 
 func (cw *Utf8CheckWriteCloser) Close() (err error) {
-	err = cw.close()
-	if err != nil {
-		return
+	if err = cw.close(); err != nil {
+		return err
 	}
-	err = cw.internal.Close()
-	return
+	return cw.internal.Close()
 }

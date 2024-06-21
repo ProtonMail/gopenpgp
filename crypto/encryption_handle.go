@@ -55,6 +55,9 @@ type encryptionHandle struct {
 	// Is only considered if DetachedSignature is not set.
 	PlainDetachedSignature bool
 	IsUTF8                 bool
+	// TrimLines trims each end of the line in the input message before encryption.
+	// Remove trailing spaces, carriage returns and tabs from each line (separated by \n characters).
+	TrimLines bool
 	// ExternalSignature allows to include an external signature into
 	// the encrypted message.
 	ExternalSignature []byte
@@ -331,6 +334,9 @@ func (eh *encryptionHandle) encryptingWriters(keys, data, detachedSignature Writ
 		messageWriter = internal.NewUtf8CheckWriteCloser(
 			openpgp.NewCanonicalTextWriteCloser(messageWriter),
 		)
+	}
+	if eh.TrimLines {
+		messageWriter = internal.NewTrimWriteCloser(messageWriter)
 	}
 	return messageWriter, nil
 }
