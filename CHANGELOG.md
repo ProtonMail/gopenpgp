@@ -4,8 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.8.0-alpha.1] 2024-04-09
+## [3.0.0-alpha.3] 2024-06-25
+### Added
+- API to armor data with the option to remove the checksum 
 
+### Changed
+- All armor functions append a checksum per default for compatibility with certain libraries although the crypto-refresh advises not to. 
+- `Encryption` and `Sign` handle now append a checksum when armoring. If the produced OpenPGP packets are crypto-refresh packets, the checksum is not appended as mandated by the crypto-refresh.
+
+## [3.0.0-alpha.2] 2024-04-12
 ### Added
 - API to serialize KeyRings to binary data:
 	```go
@@ -15,15 +22,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 	```go
 	func NewKeyRingFromBinary(binKeys []byte) (*KeyRing, error)
 	```
+- API to a create/verify plaintext detached signatures on the encryption/decryption handle instead of just encrypted detached signatures.
 
-## [2.8.0-alpha.0] 2024-02-28
+## [3.0.0-alpha.1] 2024-03-20
+### Added
+- Allow to override algorithm in key generation
+- Always create a verification result on signature verification
 
-### Added 
-- Adds support for the OpenPGP crypto-refresh by updating the go-crypto dependency to `v1.1.0-alpha.1`.
-- Adapts the session key logic to handle PKESK/SKESK v6 packets without an algorithm attached
-- Updates the min go version to `1.17` as required by  go-crypto `v1.1.0-alpha.1`.
-- Update the cricl dependency to `1.3.7` matching go-crypto.
+### Changed
+- Update ProtonMail/go-crypto to 1.1.0-alpha.2
 
+## [3.0.0-alpha.0] 2024-01-18
+### Added
+- New simplified API that is not backward compatible.
+- Full support for the crypto refresh.
+- Improved interoperability with other OpenPGP libraries.
+- Streaming support for all operations.
+- Introduces profiles for OpenPGP customization.
+- More documentation and examples.
+
+### Changed
+- Mobile specific code is moved to the `mobile` package.
+- Mime specific code is moved to the `mime` package.
+- Replaces the go-crypto v1 API with the v2 API.
+
+### Removed
+- The `helper` package, use the crypto package with the new API instead.
+- `subtle` and `models` package.
+- Time management code for retrieving and setting timestamps.
 
 ## [2.7.5] 2023-31-01
 
@@ -50,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ensure that `(SessionKey).Decrypt` functions return an error if no integrity protection is present in the encrypted input. To protect SEIPDv1 encrypted messages, SED packets must not be allowed in decryption.
   
 ## [2.7.3] 2023-08-28
-## Added
+### Added
 - Add `helper.QuickCheckDecrypt` function to the helper package. The function allows to check with high probability if a session key can decrypt a SEIPDv1 data packet given its 24-byte prefix.
 
 ## [2.7.2] 2023-07-17

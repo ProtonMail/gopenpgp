@@ -2,15 +2,12 @@ package crypto
 
 import (
 	"crypto/rsa"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
 	"github.com/ProtonMail/go-crypto/openpgp/eddsa"
-
-	"github.com/ProtonMail/gopenpgp/v2/constants"
 )
 
 var testSymmetricKey []byte
@@ -126,7 +123,7 @@ func TestKeyIds(t *testing.T) {
 func TestMultipleKeyRing(t *testing.T) {
 	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
 	assert.Exactly(t, 3, keyRingTestMultiple.CountEntities())
-	assert.Exactly(t, 3, keyRingTestMultiple.CountDecryptionEntities())
+	assert.Exactly(t, 3, keyRingTestMultiple.CountDecryptionEntities(testTime))
 
 	assert.Exactly(t, 3, len(keyRingTestMultiple.GetKeys()))
 
@@ -145,7 +142,7 @@ func TestMultipleKeyRing(t *testing.T) {
 	}
 	assert.Exactly(t, 1, len(singleKeyRing.entities))
 	assert.Exactly(t, 1, singleKeyRing.CountEntities())
-	assert.Exactly(t, 1, singleKeyRing.CountDecryptionEntities())
+	assert.Exactly(t, 1, singleKeyRing.CountDecryptionEntities(testTime))
 }
 
 func TestSerializeParse(t *testing.T) {
@@ -213,79 +210,5 @@ func TestClearPrivateParams(t *testing.T) {
 		assert.Nil(t, key.entity.PrivateKey)
 		assert.Nil(t, key.entity.Subkeys[0].PrivateKey)
 		assert.False(t, key.ClearPrivateParams())
-	}
-}
-
-func TestEncryptedDetachedSignature(t *testing.T) {
-	keyRingPrivate, err := keyRingTestPrivate.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	keyRingPublic, err := keyRingTestPublic.Copy()
-	if err != nil {
-		t.Fatal("Expected no error while copying keyring, got:", err)
-	}
-	message := NewPlainMessageFromString("Hello World!")
-	encSign, err := keyRingPrivate.SignDetachedEncrypted(message, keyRingPublic)
-	if err != nil {
-		t.Fatal("Expected no error while encryptedSigning, got:", err)
-	}
-	err = keyRingPublic.VerifyDetachedEncrypted(message, encSign, keyRingPrivate, 0)
-	if err != nil {
-		t.Fatal("Expected no error while verifying encSignature, got:", err)
-	}
-	message2 := NewPlainMessageFromString("Bye!")
-	err = keyRingPublic.VerifyDetachedEncrypted(message2, encSign, keyRingPrivate, 0)
-	if err == nil {
-		t.Fatal("Expected an error while verifying bad encSignature, got nil")
-	}
-}
-
-func TestKeyringCapabilities(t *testing.T) {
-	assert.True(t, keyRingTestPrivate.CanVerify())
-	assert.True(t, keyRingTestPrivate.CanEncrypt())
-	assert.True(t, keyRingTestPublic.CanVerify())
-	assert.True(t, keyRingTestPublic.CanEncrypt())
-	assert.True(t, keyRingTestMultiple.CanVerify())
-	assert.True(t, keyRingTestMultiple.CanEncrypt())
-}
-
-func TestVerificationTime(t *testing.T) {
-	message := NewPlainMessageFromString("Hello")
-	pgp.latestServerTime = 1632312383
-	defer func() {
-		pgp.latestServerTime = testTime
-	}()
-	enc, err := keyRingTestPublic.Encrypt(
-		message,
-		keyRingTestPrivate,
-	)
-
-	if err != nil {
-		t.Fatalf("Encryption error: %v", err)
-	}
-	_, err = keyRingTestPrivate.Decrypt(
-		enc,
-		keyRingTestPublic,
-		392039755,
-	)
-	if err == nil {
-		t.Fatal("No signature error")
-	}
-	castedErr := &SignatureVerificationError{}
-	isType := errors.As(err, castedErr)
-	if !isType {
-		t.Fatalf("No signature error %v", err)
-	}
-	if castedErr.Status != constants.SIGNATURE_FAILED {
-		t.Fatalf("Wrong status %v", castedErr)
-	}
-	_, err = keyRingTestPrivate.Decrypt(
-		enc,
-		keyRingTestPublic,
-		0,
-	)
-	if err != nil {
-		t.Fatalf("Got an error while decrypting %v", err)
 	}
 }
