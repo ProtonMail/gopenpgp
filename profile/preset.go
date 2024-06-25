@@ -79,12 +79,18 @@ func ProtonV1() *Custom {
 		SetKeyAlgorithm:      setKeyAlgorithm,
 		Hash:                 crypto.SHA512,
 		CipherEncryption:     packet.CipherAES256,
+		CipherKeyEncryption:  packet.CipherAES256,
 		CompressionAlgorithm: packet.CompressionZLIB,
 		KeyGenAeadEncryption: &packet.AEADConfig{
 			DefaultMode: packet.AEADModeGCM,
 		},
 		CompressionConfiguration: &packet.CompressionConfig{
 			Level: 6,
+		},
+		S2kKeyEncryption: &s2k.Config{
+			S2KMode:  s2k.IteratedSaltedS2K,
+			Hash:     crypto.SHA256,
+			S2KCount: 65536,
 		},
 		DisableIntendedRecipients:   true,
 		AllowAllPublicKeyAlgorithms: true,
