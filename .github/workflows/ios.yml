@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, v2 ]
 
 jobs:
   build:
@@ -12,10 +12,10 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Set up xcode 14.2
+      - name: Set up xcode 14.3
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: 14.2
+          xcode-version: 14.3
         id: xcode
 
       - name: Set up Go 1.x
@@ -31,9 +31,6 @@ jobs:
         env:
           platform: ${{ 'iOS Simulator' }}
         run: |
-          for d in $ANDROID_NDK_HOME/../23*; do
-            ANDROID_NDK_HOME=$d
-          done
           ./build.sh apple
           find dist
 

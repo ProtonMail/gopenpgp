@@ -5,8 +5,8 @@
         "path": "__GOSOP_BRANCH__"
       },
       {
-        "id": "gosop-main",
-        "path": "__GOSOP_MAIN__"
+        "id": "gosop-target",
+        "path": "__GOSOP_TARGET__"
       },
       {
         "path": "__SQOP__"
@@ -16,10 +16,6 @@
       },
       {
         "path": "__SOP_OPENPGPJS__"
-      },
-      {
-        "id": "gosop-v2",
-        "path": "__GOSOP_V2__"
       },
       {
         "path": "__RNP_SOP__"
