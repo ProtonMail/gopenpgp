@@ -328,7 +328,7 @@ func Test_SignDetachedWithNonCriticalContext(t *testing.T) {
 		t.Fatal("Packet was not a signature")
 	}
 	notations := sig.Notations
-	if len(notations) != 1 {
+	if len(notations) != 2 {
 		t.Fatal("Wrong number of notations")
 	}
 	notation := notations[0]
@@ -373,7 +373,7 @@ func Test_SignDetachedWithCriticalContext(t *testing.T) {
 		t.Fatal("Packet was not a signature")
 	}
 	notations := sig.Notations
-	if len(notations) != 1 {
+	if len(notations) != 2 {
 		t.Fatal("Wrong number of notations")
 	}
 	notation := notations[0]
