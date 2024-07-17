@@ -8,24 +8,6 @@ import (
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 )
 
-var nameToProfile = map[string]func() *Custom{
-	"default":                              Default,
-	"rfc4880":                              RFC4880,
-	"draft-koch-eddsa-for-openpgp-00":      GnuPG,
-	"draft-ietf-openpgp-crypto-refresh-10": CryptoRefresh,
-}
-
-// PresetProfiles returns the names of the available profiles.
-func PresetProfiles() []string {
-	profiles := make([]string, len(nameToProfile))
-	index := 0
-	for profile := range nameToProfile {
-		profiles[index] = profile
-		index++
-	}
-	return profiles
-}
-
 // Default returns a custom profile that support features
 // that are widely implemented.
 func Default() *Custom {
@@ -51,7 +33,7 @@ func Default() *Custom {
 }
 
 // RFC4880 returns a custom profile for this library
-// that conforms with the algorithms in rfc 4880.
+// that conforms with the algorithms in RFC4880.
 func RFC4880() *Custom {
 	setKeyAlgorithm := func(cfg *packet.Config, securityLevel int8) {
 		cfg.Algorithm = packet.PubKeyAlgoRSA
@@ -71,45 +53,21 @@ func RFC4880() *Custom {
 	}
 }
 
-// GnuPG returns a custom profile for this library
-// that conforms with the algorithms in GnuPG.
-// Use this profile for modern algorithms and GnuPG interoperability.
-func GnuPG() *Custom {
-	setKeyAlgorithm := func(cfg *packet.Config, securityLevel int8) {
-		cfg.Algorithm = packet.PubKeyAlgoEdDSA
-		switch securityLevel {
-		case constants.HighSecurity:
-			cfg.Curve = packet.Curve448
-			cfg.DefaultHash = crypto.SHA512
-		default:
-			cfg.Curve = packet.Curve25519
-		}
-	}
-	return &Custom{
-		Name:                 "draft-koch-eddsa-for-openpgp-00",
-		SetKeyAlgorithm:      setKeyAlgorithm,
-		Hash:                 crypto.SHA256,
-		CipherEncryption:     packet.CipherAES256,
-		CompressionAlgorithm: packet.CompressionZLIB,
-	}
-}
-
-// CryptoRefresh returns a custom profile for this library
-// that conforms with the algorithms in draft-ietf-openpgp-crypto-refresh.
-func CryptoRefresh() *Custom {
+// RFC9580 returns a custom profile for this library
+// that conforms with the algorithms in RFC9580 (crypto refresh).
+func RFC9580() *Custom {
 	setKeyAlgorithm := func(cfg *packet.Config, securityLevel int8) {
 		switch securityLevel {
 		case constants.HighSecurity:
 			cfg.Algorithm = packet.PubKeyAlgoEd448
-			cfg.DefaultHash = crypto.SHA512
 		default:
 			cfg.Algorithm = packet.PubKeyAlgoEd25519
 		}
 	}
 	return &Custom{
-		Name:                 "draft-ietf-openpgp-crypto-refresh",
+		Name:                 "rfc9580",
 		SetKeyAlgorithm:      setKeyAlgorithm,
-		Hash:                 crypto.SHA256,
+		Hash:                 crypto.SHA512,
 		CipherEncryption:     packet.CipherAES256,
 		CompressionAlgorithm: packet.CompressionZLIB,
 		AeadKeyEncryption:    &packet.AEADConfig{},
