@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.0.0-alpha.4] 2024-07-16
 ### Changed
 - Update go-crypto to `1.1.0-alpha.4`.
+- Remove logic to get a profile by name. 
+- Reduce preset profiles to `Default`, `RFC4880`, and `RFC9580`.
 
 ## [3.0.0-alpha.3] 2024-06-25
 ### Added

@@ -545,7 +545,7 @@ func ExamplePGPHandle_KeyGeneration_basic() {
 
 func ExamplePGPHandle_KeyGeneration_profile() {
 	// Generate a PGP key with the crypto-refresh profile
-	pgp := PGPWithProfile(profile.CryptoRefresh())
+	pgp := PGPWithProfile(profile.RFC9580())
 	genHandle := pgp.KeyGeneration().
 		AddUserId("Max Mustermann", "max.mustermann@example.com").
 		New()
@@ -559,7 +559,7 @@ func ExamplePGPHandle_KeyGeneration_profile() {
 func ExamplePGPHandle_KeyGeneration_level() {
 	// Generate a PGP key with the crypto-refresh profile
 	// higher security level (Curve448)
-	pgp := PGPWithProfile(profile.CryptoRefresh())
+	pgp := PGPWithProfile(profile.RFC9580())
 	genHandle := pgp.KeyGeneration().
 		AddUserId("Max Mustermann", "max.mustermann@example.com").
 		New()
