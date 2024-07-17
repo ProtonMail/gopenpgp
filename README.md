@@ -82,12 +82,12 @@ decrypted, err := decHandle.Decrypt(armored, crypto.Armor)
 myMessage := decrypted.Bytes()
 ```
 
-To encrypt with the [latest proposed standard](https://www.ietf.org/archive/id/draft-ietf-openpgp-crypto-refresh-12.html):
+To encrypt with the [latest proposed standard (RFC9580)](https://www.ietf.org/archive/id/draft-ietf-openpgp-crypto-refresh-13.html):
 ```go
 import "github.com/ProtonMail/gopenpgp/v3/profile"
 
-// Use the default crypto refresh profile
-pgp := crypto.PGPWithProfile(profile.CryptoRefresh())
+// Use the default crypto refresh profile that conforms with RFC9580.
+pgp := crypto.PGPWithProfile(profile.RFC9580())
 // The default crypto refresh profile uses Argon2 for deriving
 // session keys and uses an AEAD for encryption (AES-256, OCB mode).
 // Encrypt data with password
@@ -102,10 +102,8 @@ import "github.com/ProtonMail/gopenpgp/v3/profile"
 
 // RFC4880 profile
 pgp4880 := crypto.PGPWithProfile(profile.RFC4880()) 
-// GnuPG profile
-gnuPG := crypto.PGPWithProfile(profile.GnuPG())
-// Crypto refresh profile
-pgpCryptoRefresh := crypto.PGPWithProfile(profile.CryptoRefresh())
+// RFC9580 crypto refresh profile
+pgpCryptoRefresh := crypto.PGPWithProfile(profile.RFC9580())
 ```
 
 ### Encrypt / Decrypt with PGP keys
@@ -268,12 +266,12 @@ const (
   passphrase = []byte("LongSecret")
 )
 
+pgpDefault := crypto.PGPWithProfile(profile.Default())
 pgp4880 := crypto.PGPWithProfile(profile.RFC4880())
-gnuPG := crypto.PGPWithProfile(profile.GnuPG())
-pgpCryptoRefresh := crypto.PGPWithProfile(profile.CryptoRefresh())
+pgpCryptoRefresh := crypto.PGPWithProfile(profile.RFC9580())
 
 // Note that RSA keys should not be generated anymore according to
-// draft-ietf-openpgp-crypto-refresh
+// RFC9580 (crypto refresh).
 
 keyGenHandle := pgp4880.KeyGeneration().AddUserId(name, email).New()
 // Generates rsa keys with 3072 bits
@@ -281,16 +279,16 @@ rsaKey, err := keyGenHandle.GenerateKey()
 // Generates rsa keys with 4092 bits
 rsaKeyHigh, err := keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
 
-keyGenHandle = gnuPG.KeyGeneration().AddUserId(name, email).New()
-// Generates curve25519 keys with GnuPG compatibility
+keyGenHandle = pgpDefault.KeyGeneration().AddUserId(name, email).New()
+// Generates curve25519 v4 keys.
 ecKey, err := keyGenHandle.GenerateKey()
-// Generates curve448 keys with GnuPG compatibility
+// Generates curve448 v4 keys.
 ecKeyHigh, err := keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
 
 keyGenHandle = pgpCryptoRefresh.KeyGeneration().AddUserId(name, email).New()
-// Generates curve25519 keys with draft-ietf-openpgp-crypto-refresh
+// Generates curve25519 v6 keys with RFC9580 (crypto refresh).
 ecKey, err = keyGenHandle.GenerateKey()
-// Generates curve448 keys with draft-ietf-openpgp-crypto-refresh
+// Generates curve448 v6 keys with RFC9580 (crypto refresh).
 ecKeyHigh, err = keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
 ```
 

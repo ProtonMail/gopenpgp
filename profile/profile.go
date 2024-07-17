@@ -52,15 +52,6 @@ type Custom struct {
 	AllowWeakRSA bool
 }
 
-// WithName returns the custom profile with the given name.
-func WithName(name string) *Custom {
-	profileFunction, ok := nameToProfile[name]
-	if !ok {
-		return nil
-	}
-	return profileFunction()
-}
-
 // Custom implements the profile interfaces:
 // KeyGenerationProfile, KeyEncryptionProfile, EncryptionProfile, and SignProfile
 
