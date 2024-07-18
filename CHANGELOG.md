@@ -4,11 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.0-alpha.4] 2024-07-16
+## [3.0.0-alpha.4] 2024-07-18
 ### Changed
 - Update go-crypto to `1.1.0-alpha.4`.
 - Remove logic to get a profile by name. 
 - Reduce preset profiles to `Default`, `RFC4880`, and `RFC9580`.
+- Update go-crypto to check signature details of binding signatures.
 
 ## [3.0.0-alpha.3] 2024-06-25
 ### Added
