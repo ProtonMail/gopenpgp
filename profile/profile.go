@@ -83,6 +83,11 @@ func (p *Custom) EncryptionConfig() *packet.Config {
 		DefaultCipher: p.CipherEncryption,
 		AEADConfig:    p.AeadEncryption,
 		S2KConfig:     p.S2kEncryption,
+		RejectHashAlgorithms: map[crypto.Hash]bool{
+			crypto.SHA1:      true,
+			crypto.MD5:       true,
+			crypto.RIPEMD160: true,
+		},
 	}
 	if p.DisableIntendedRecipients {
 		intendedRecipients := false
@@ -109,6 +114,11 @@ func (p *Custom) KeyEncryptionConfig() *packet.Config {
 func (p *Custom) SignConfig() *packet.Config {
 	config := &packet.Config{
 		DefaultHash: p.Hash,
+		RejectHashAlgorithms: map[crypto.Hash]bool{
+			crypto.SHA1:      true,
+			crypto.MD5:       true,
+			crypto.RIPEMD160: true,
+		},
 	}
 	if p.SignHash != nil {
 		config.DefaultHash = *p.SignHash
