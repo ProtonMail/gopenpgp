@@ -350,7 +350,7 @@ func TestGetEntity(t *testing.T) {
 		t.Fatal("Cannot unarmor key:", err)
 	}
 	entity := publicKey.GetEntity()
-	selfSig, err := entity.PrimarySelfSignature(time.Unix(testTime, 0))
+	selfSig, err := entity.PrimarySelfSignature(time.Unix(testTime, 0), &packet.Config{})
 	if err != nil {
 		t.Fatal("Expected no error, got: ", err)
 	}
@@ -415,7 +415,7 @@ func TestUnlockMismatchingKey(t *testing.T) {
 }
 
 func TestKeyCompression(t *testing.T) {
-	selfSig, err := keyTestEC.entity.PrimarySelfSignature(time.Time{})
+	selfSig, err := keyTestEC.entity.PrimarySelfSignature(time.Time{}, &packet.Config{})
 	if err != nil {
 		t.Fatal("no error expected, got: ", err)
 	}

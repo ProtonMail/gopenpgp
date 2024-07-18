@@ -166,7 +166,7 @@ func (eh *encryptionHandle) armorChecksumRequired() bool {
 	checkTime := eh.clock()
 	if eh.Recipients != nil {
 		for _, recipient := range eh.Recipients.entities {
-			primarySelfSignature, err := recipient.PrimarySelfSignature(checkTime)
+			primarySelfSignature, err := recipient.PrimarySelfSignature(checkTime, encryptionConfig)
 			if err != nil {
 				return true
 			}
@@ -177,7 +177,7 @@ func (eh *encryptionHandle) armorChecksumRequired() bool {
 	}
 	if eh.HiddenRecipients != nil {
 		for _, recipient := range eh.HiddenRecipients.entities {
-			primarySelfSignature, err := recipient.PrimarySelfSignature(checkTime)
+			primarySelfSignature, err := recipient.PrimarySelfSignature(checkTime, encryptionConfig)
 			if err != nil {
 				return true
 			}

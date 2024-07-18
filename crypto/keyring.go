@@ -153,7 +153,7 @@ func (keyRing *KeyRing) CountDecryptionEntities(unixTime int64) int {
 		checkTime = time.Unix(unixTime, 0)
 	}
 	for _, entity := range keyRing.entities {
-		decryptionKeys := entity.DecryptionKeys(0, checkTime)
+		decryptionKeys := entity.DecryptionKeys(0, checkTime, &packet.Config{})
 		count += len(decryptionKeys)
 	}
 	return count
@@ -249,7 +249,7 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 			hasExpired := false
 			hasUnexpired := false
 			for _, subkey := range entity.Subkeys {
-				latestValid, err := subkey.LatestValidBindingSignature(now)
+				latestValid, err := subkey.LatestValidBindingSignature(now, &packet.Config{})
 				if err != nil {
 					hasExpired = true
 				}
