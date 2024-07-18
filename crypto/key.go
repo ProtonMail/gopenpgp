@@ -289,7 +289,7 @@ func (key *Key) CanEncrypt(unixTime int64) bool {
 // IsExpired checks whether the key is expired.
 func (key *Key) IsExpired(unixTime int64) bool {
 	current := time.Unix(unixTime, 0)
-	sig, err := key.entity.PrimarySelfSignature(time.Time{})
+	sig, err := key.entity.PrimarySelfSignature(time.Time{}, &packet.Config{})
 	if err != nil {
 		return true
 	}
@@ -360,7 +360,7 @@ func (key *Key) Check() (bool, error) {
 // PrintFingerprints is a debug helper function that prints the key and subkey fingerprints.
 func (key *Key) PrintFingerprints() {
 	for _, subKey := range key.entity.Subkeys {
-		binding, err := subKey.LatestValidBindingSignature(time.Time{})
+		binding, err := subKey.LatestValidBindingSignature(time.Time{}, &packet.Config{})
 		if err != nil {
 			continue
 		}
