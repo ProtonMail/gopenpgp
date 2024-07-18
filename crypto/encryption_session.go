@@ -34,7 +34,7 @@ Loop:
 			ek = p
 			unverifiedEntities := keyRing.entities.EntitiesById(p.KeyId)
 			for _, unverifiedEntity := range unverifiedEntities {
-				keys := unverifiedEntity.DecryptionKeys(p.KeyId, time.Time{})
+				keys := unverifiedEntity.DecryptionKeys(p.KeyId, time.Time{}, &packet.Config{})
 				for _, key := range keys {
 					priv := key.PrivateKey
 					if priv.Encrypted {
@@ -118,7 +118,7 @@ func encryptSessionKeyToWriter(
 		if !ok {
 			return errors.New("gopenpgp: encryption key is unavailable for key id " + strconv.FormatUint(e.PrimaryKey.KeyId, 16))
 		}
-		primarySelfSignature, _ := e.PrimarySelfSignature(date)
+		primarySelfSignature, _ := e.PrimarySelfSignature(date, config)
 		if primarySelfSignature == nil {
 			return errors.Wrap(err, "gopenpgp: entity without a self-signature")
 		}
