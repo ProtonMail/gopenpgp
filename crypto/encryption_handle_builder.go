@@ -148,6 +148,13 @@ func (ehb *EncryptionHandleBuilder) Utf8() *EncryptionHandleBuilder {
 	return ehb
 }
 
+// TrimLines enables that each line in the input message is trimmed before encryption.
+// Trim removes trailing spaces, carriage returns and tabs from each line (separated by \n characters).
+func (ehb *EncryptionHandleBuilder) TrimLines() *EncryptionHandleBuilder {
+	ehb.handle.TrimLines = true
+	return ehb
+}
+
 // DetachedSignature indicates that the message should be signed,
 // but the signature should not be included in the same pgp message as the input data.
 // Instead the detached signature is encrypted in a separate pgp message.
