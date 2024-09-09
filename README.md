@@ -282,8 +282,6 @@ rsaKeyHigh, err := keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
 keyGenHandle = pgpDefault.KeyGeneration().AddUserId(name, email).New()
 // Generates curve25519 v4 keys.
 ecKey, err := keyGenHandle.GenerateKey()
-// Generates curve448 v4 keys.
-ecKeyHigh, err := keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
 
 keyGenHandle = pgpCryptoRefresh.KeyGeneration().AddUserId(name, email).New()
 // Generates curve25519 v6 keys with RFC9580 (crypto refresh).
