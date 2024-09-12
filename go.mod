@@ -3,7 +3,7 @@ module github.com/ProtonMail/gopenpgp/v3
 go 1.22.0
 
 require (
-	github.com/ProtonMail/go-crypto v1.3.0
+	github.com/ProtonMail/go-crypto v1.3.1-0.20250527221502-355ec9cf3ce7
 	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f
 	github.com/stretchr/testify v1.10.0
 )
@@ -19,3 +19,5 @@ require (
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/cloudflare/circl v1.6.0 => github.com/ProtonMail/circl v0.0.0-20250505075934-8c9cec5c8dd7
