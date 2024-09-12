@@ -12,8 +12,14 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/ed448"
 	"github.com/ProtonMail/go-crypto/openpgp/eddsa"
 	"github.com/ProtonMail/go-crypto/openpgp/elgamal"
+	"github.com/ProtonMail/go-crypto/openpgp/mldsa_eddsa"
+	"github.com/ProtonMail/go-crypto/openpgp/mlkem_ecdh"
+	"github.com/ProtonMail/go-crypto/openpgp/slhdsa"
 	"github.com/ProtonMail/go-crypto/openpgp/x25519"
 	"github.com/ProtonMail/go-crypto/openpgp/x448"
+
+	"github.com/cloudflare/circl/sign/mldsa/mldsa65"
+	"github.com/cloudflare/circl/sign/mldsa/mldsa87"
 )
 
 // Clear zeroes the sensitive data in the session key.
@@ -75,6 +81,12 @@ func clearPrivateKey(privateKey interface{}) error {
 		return clearX448PrivateKey(priv)
 	case *ed448.PrivateKey:
 		return clearEd448PrivateKey(priv)
+	case *mlkem_ecdh.PrivateKey:
+		return clearMlKemECDHPrivateKey(priv)
+	case *mldsa_eddsa.PrivateKey:
+		return clearMlDsaEdDSAPrivateKey(priv)
+	case *slhdsa.PrivateKey:
+		return clearSlhDsaPrivateKey(priv)
 	default:
 		return errors.New("gopenpgp: unknown private key")
 	}
@@ -161,6 +173,44 @@ func clearX448PrivateKey(priv *x448.PrivateKey) error {
 
 func clearEd448PrivateKey(priv *ed448.PrivateKey) error {
 	clearMem(priv.Key[:ed448.SeedSize])
+
+	return nil
+}
+
+func clearMlKemECDHPrivateKey(priv *mlkem_ecdh.PrivateKey) error {
+	// Note: the priv.SecretMlkem type is internal in circl, so we can't clear its fields here.
+	// And, the key material is stored in a slice, so we can't overwrite it with zeros here.
+	// The best we can do is let the garbage collector clean it up.
+	priv.SecretMlkem = nil
+	clearMem(priv.SecretMlkemSeed)
+	clearMem(priv.SecretEc)
+
+	return nil
+}
+
+func clearMlDsaEdDSAPrivateKey(priv *mldsa_eddsa.PrivateKey) (err error) {
+	// Note: the priv.SecretMldsa type is internal in circl, so we can't clear its fields here.
+	// Instead, we overwrite the entire struct with zero values.
+	switch secretMldsa := priv.SecretMldsa.(type) {
+	case *mldsa65.PrivateKey:
+		*secretMldsa = mldsa65.PrivateKey{}
+	case *mldsa87.PrivateKey:
+		*secretMldsa = mldsa87.PrivateKey{}
+	default:
+		err = errors.New("gopenpgp: unexpected ML-DSA private key type")
+	}
+	priv.SecretMldsa = nil
+	clearMem(priv.SecretMldsaSeed)
+	clearMem(priv.SecretEc)
+
+	return
+}
+
+func clearSlhDsaPrivateKey(priv *slhdsa.PrivateKey) error {
+	// Note: the priv.SecretSlhdsa type is internal in circl, so we can't clear its fields here.
+	// And, the key material is stored in a slice, so we can't overwrite it with zeros here.
+	// The best we can do is let the garbage collector clean it up.
+	priv.SecretSlhdsa = nil
 
 	return nil
 }
