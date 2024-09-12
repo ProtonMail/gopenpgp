@@ -100,3 +100,45 @@ func ProtonV1() *Custom {
 		AllowWeakRSA:                true,
 	}
 }
+
+// ProtonV1 is the version 1 profile used in proton clients.
+func ProtonPQC() *Custom {
+	setKeyAlgorithm := func(cfg *packet.Config, securityLevel int8) {
+		cfg.Algorithm = packet.PubKeyAlgoMldsa65Ed25519
+		switch securityLevel {
+		case constants.HighSecurity:
+			cfg.Curve = packet.Curve25519
+		default:
+			cfg.Curve = packet.Curve25519
+		}
+	}
+	return &Custom{
+		Name:                 "proton-pqc",
+		SetKeyAlgorithm:      setKeyAlgorithm,
+		Hash:                 crypto.SHA512,
+		CipherEncryption:     packet.CipherAES256,
+		CipherKeyEncryption:  packet.CipherAES256,
+		CompressionAlgorithm: packet.CompressionZLIB,
+		AeadKeyEncryption: &packet.AEADConfig{
+			DefaultMode: packet.AEADModeGCM,
+		},
+		AeadEncryption: &packet.AEADConfig{
+			DefaultMode: packet.AEADModeGCM,
+		},
+		CompressionConfiguration: &packet.CompressionConfig{
+			Level: 6,
+		},
+		S2kKeyEncryption: &s2k.Config{
+			S2KMode:      s2k.Argon2S2K,
+			Argon2Config: &s2k.Argon2Config{},
+		},
+		S2kEncryption: &s2k.Config{
+			S2KMode:      s2k.Argon2S2K,
+			Argon2Config: &s2k.Argon2Config{},
+		},
+		DisableIntendedRecipients:   true,
+		AllowAllPublicKeyAlgorithms: true,
+		AllowWeakRSA:                true,
+		V6:                          true,
+	}
+}

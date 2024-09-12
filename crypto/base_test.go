@@ -34,7 +34,7 @@ func readTestFile(name string, trimNewlines bool) string {
 func init() {
 	testPGP = PGP()
 	testPGP.defaultTime = NewConstantClock(testTime) // 2019-05-13T13:37:07+00:00
-	testProfiles = []*profile.Custom{profile.Default(), profile.RFC4880(), profile.RFC9580()}
+	testProfiles = []*profile.Custom{profile.Default(), profile.RFC4880(), profile.RFC9580(), profile.ProtonPQC()}
 
 	initEncDecTest()
 	initGenerateKeys()
