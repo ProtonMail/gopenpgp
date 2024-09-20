@@ -30,7 +30,7 @@ jobs:
         link-to-sdk: true
 
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Build
       run: |
@@ -41,7 +41,7 @@ jobs:
         find dist
 
     - name: Upload Android artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: Android build
         path: dist/android
