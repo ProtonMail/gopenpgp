@@ -58,7 +58,7 @@ jobs:
         uses: actions/checkout@v4
       # Fetch gosop from target
       - name: Download gosop-target
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: gosop-target
       # Test gosop-target
@@ -68,7 +68,7 @@ jobs:
         run: ./gosop-target version --extended
       # Fetch gosop from branch
       - name: Download gosop-branch
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: gosop-${{ github.sha }}
       - name: Rename gosop-branch
@@ -113,7 +113,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Download test results json artifact
         id: download-test-results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test-suite-results.json
       - name: Compare with baseline
