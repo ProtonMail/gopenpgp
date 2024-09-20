@@ -392,18 +392,18 @@ func (key *Key) GetFingerprintBytes() []byte {
 	return key.entity.PrimaryKey.Fingerprint
 }
 
+// GetSHA256Fingerprint computes the SHA256 fingerprint of the primary key.
+func (key *Key) GetSHA256Fingerprint() (fingerprint string) {
+	return hex.EncodeToString(getSHA256FingerprintBytes(key.entity.PrimaryKey))
+}
+
 // GetSHA256Fingerprints computes the SHA256 fingerprints of the key and subkeys.
 func (key *Key) GetSHA256Fingerprints() (fingerprints []string) {
-	fingerprints = append(fingerprints, hex.EncodeToString(getSHA256FingerprintBytes(key.entity.PrimaryKey)))
+	fingerprints = append(fingerprints, key.GetSHA256Fingerprint())
 	for _, sub := range key.entity.Subkeys {
 		fingerprints = append(fingerprints, hex.EncodeToString(getSHA256FingerprintBytes(sub.PublicKey)))
 	}
 	return
-}
-
-// GetSHA256Fingerprint computes the SHA256 fingerprints of the primary key.
-func (key *Key) GetSHA256Fingerprint() (fingerprints string) {
-	return hex.EncodeToString(getSHA256FingerprintBytes(key.entity.PrimaryKey))
 }
 
 // GetJsonSHA256Fingerprints returns the SHA256 fingerprints of key and subkeys
