@@ -25,7 +25,7 @@ jobs:
         id: go
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Build
         env:
@@ -35,7 +35,7 @@ jobs:
           find dist
 
       - name: Upload xcframework
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: gopenpgp.xcframework
           path: dist/apple/gopenpgp.xcframework
