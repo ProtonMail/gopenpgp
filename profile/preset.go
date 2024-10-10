@@ -90,6 +90,10 @@ func ProtonV1() *Custom {
 		CompressionConfiguration: &packet.CompressionConfig{
 			Level: 6,
 		},
+		S2kKeyEncryption: &s2k.Config{
+			S2KMode:  s2k.IteratedSaltedS2K,
+			S2KCount: 65536,
+		},
 		DisableIntendedRecipients:   true,
 		AllowAllPublicKeyAlgorithms: true,
 		AllowWeakRSA:                true,
