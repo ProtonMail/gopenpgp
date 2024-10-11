@@ -26,7 +26,12 @@ type Custom struct {
 	// S2kKeyEncryption defines the s2k algorithm for key encryption.
 	S2kKeyEncryption *s2k.Config
 	// AeadEncryption defines the aead encryption algorithm for pgp encryption.
+	// If nil, aead is disabled even if the key supports it.
 	AeadEncryption *packet.AEADConfig
+	// KeyGenAeadEncryption defines if the output key in key generation
+	// advertises SEIPDv2 and aead algorithms in its key preferences.
+	// If nil, uses AeadEncryption as key preferences.
+	KeyGenAeadEncryption *packet.AEADConfig
 	// S2kEncryption defines the s2k algorithm for pgp encryption.
 	S2kEncryption *s2k.Config
 	// CompressionConfiguration defines the compression configuration to be used if any.
@@ -56,10 +61,14 @@ type Custom struct {
 // KeyGenerationProfile, KeyEncryptionProfile, EncryptionProfile, and SignProfile
 
 func (p *Custom) KeyGenerationConfig(securityLevel int8) *packet.Config {
+	aeadConfig := p.AeadEncryption
+	if p.KeyGenAeadEncryption != nil {
+		aeadConfig = p.KeyGenAeadEncryption
+	}
 	cfg := &packet.Config{
 		DefaultHash:            p.Hash,
 		DefaultCipher:          p.CipherEncryption,
-		AEADConfig:             p.AeadEncryption,
+		AEADConfig:             aeadConfig,
 		DefaultCompressionAlgo: p.CompressionAlgorithm,
 		CompressionConfig:      p.CompressionConfiguration,
 		V6Keys:                 p.V6,
