@@ -297,8 +297,6 @@ func createVerifyResult(
 			signatureError = newSignatureNoVerifier()
 		case signature.SignatureError != nil:
 			signatureError = newSignatureFailed(signature.SignatureError)
-		case signature.CorrespondingSig == nil:
-			signatureError = newSignatureInsecure()
 		case verificationContext != nil:
 			err := verificationContext.verifyContext(signature.CorrespondingSig)
 			if err != nil {
@@ -386,6 +384,9 @@ func findContext(notations []*packet.Notation) (string, error) {
 }
 
 func (context *VerificationContext) verifyContext(sig *packet.Signature) error {
+	if sig == nil {
+		return errors.New("gopenpgp: no signature packet found for signature")
+	}
 	signatureContext, err := findContext(sig.Notations)
 	if err != nil {
 		return err
