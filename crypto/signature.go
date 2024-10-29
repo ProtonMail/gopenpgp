@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"bytes"
-	"crypto"
 	"fmt"
 	"time"
 
@@ -13,13 +12,6 @@ import (
 
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 )
-
-var allowedHashesSet = map[crypto.Hash]struct{}{
-	crypto.SHA224: {},
-	crypto.SHA256: {},
-	crypto.SHA384: {},
-	crypto.SHA512: {},
-}
 
 // VerifiedSignature is a result of a signature verification.
 type VerifiedSignature struct {
@@ -305,7 +297,7 @@ func createVerifyResult(
 			signatureError = newSignatureNoVerifier()
 		case signature.SignatureError != nil:
 			signatureError = newSignatureFailed(signature.SignatureError)
-		case signature.CorrespondingSig == nil || !isHashAllowed(signature.CorrespondingSig.Hash):
+		case signature.CorrespondingSig == nil:
 			signatureError = newSignatureInsecure()
 		case verificationContext != nil:
 			err := verificationContext.verifyContext(signature.CorrespondingSig)
@@ -408,9 +400,4 @@ func (context *VerificationContext) verifyContext(sig *packet.Signature) error {
 	}
 
 	return nil
-}
-
-func isHashAllowed(h crypto.Hash) bool {
-	_, ok := allowedHashesSet[h]
-	return ok
 }
