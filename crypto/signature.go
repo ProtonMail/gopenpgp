@@ -22,6 +22,8 @@ var allowedHashes = []crypto.Hash{
 	crypto.SHA256,
 	crypto.SHA384,
 	crypto.SHA512,
+	crypto.SHA3_256,
+	crypto.SHA3_512,
 }
 
 // SignatureVerificationError is returned from Decrypt and VerifyDetached
