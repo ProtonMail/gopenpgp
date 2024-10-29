@@ -17,11 +17,15 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/internal"
 )
 
+// allowedHashes stores the allowed OpenPGP hashes that can be used in a
+// message signature hash.
 var allowedHashes = []crypto.Hash{
 	crypto.SHA224,
 	crypto.SHA256,
 	crypto.SHA384,
 	crypto.SHA512,
+	crypto.SHA3_256,
+	crypto.SHA3_512,
 }
 
 // SignatureVerificationError is returned from Decrypt and VerifyDetached
