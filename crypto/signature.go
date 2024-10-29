@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"bytes"
-	"crypto"
 	"fmt"
 	"time"
 
@@ -13,13 +12,6 @@ import (
 
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 )
-
-var allowedHashesSet = map[crypto.Hash]struct{}{
-	crypto.SHA224: {},
-	crypto.SHA256: {},
-	crypto.SHA384: {},
-	crypto.SHA512: {},
-}
 
 // VerifiedSignature is a result of a signature verification.
 type VerifiedSignature struct {
@@ -223,15 +215,6 @@ func newSignatureFailed(cause error) SignatureVerificationError {
 	}
 }
 
-// newSignatureInsecure creates a new SignatureVerificationError, type
-// SignatureFailed, with a message describing the signature as insecure.
-func newSignatureInsecure() SignatureVerificationError {
-	return SignatureVerificationError{
-		Status:  constants.SIGNATURE_FAILED,
-		Message: "Insecure signature",
-	}
-}
-
 // newSignatureNotSigned creates a new SignatureVerificationError, type
 // SignatureNotSigned.
 func newSignatureNotSigned() SignatureVerificationError {
@@ -305,8 +288,6 @@ func createVerifyResult(
 			signatureError = newSignatureNoVerifier()
 		case signature.SignatureError != nil:
 			signatureError = newSignatureFailed(signature.SignatureError)
-		case signature.CorrespondingSig == nil || !isHashAllowed(signature.CorrespondingSig.Hash):
-			signatureError = newSignatureInsecure()
 		case verificationContext != nil:
 			err := verificationContext.verifyContext(signature.CorrespondingSig)
 			if err != nil {
@@ -394,6 +375,9 @@ func findContext(notations []*packet.Notation) (string, error) {
 }
 
 func (context *VerificationContext) verifyContext(sig *packet.Signature) error {
+	if sig == nil {
+		return errors.New("gopenpgp: no signature packet found for signature")
+	}
 	signatureContext, err := findContext(sig.Notations)
 	if err != nil {
 		return err
@@ -408,9 +392,4 @@ func (context *VerificationContext) verifyContext(sig *packet.Signature) error {
 	}
 
 	return nil
-}
-
-func isHashAllowed(h crypto.Hash) bool {
-	_, ok := allowedHashesSet[h]
-	return ok
 }
