@@ -215,15 +215,6 @@ func newSignatureFailed(cause error) SignatureVerificationError {
 	}
 }
 
-// newSignatureInsecure creates a new SignatureVerificationError, type
-// SignatureFailed, with a message describing the signature as insecure.
-func newSignatureInsecure() SignatureVerificationError {
-	return SignatureVerificationError{
-		Status:  constants.SIGNATURE_FAILED,
-		Message: "Insecure signature",
-	}
-}
-
 // newSignatureNotSigned creates a new SignatureVerificationError, type
 // SignatureNotSigned.
 func newSignatureNotSigned() SignatureVerificationError {
