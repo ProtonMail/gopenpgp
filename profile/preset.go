@@ -52,7 +52,7 @@ func RFC4880() *Custom {
 }
 
 // RFC9580 returns a custom profile for this library
-// that conforms with the algorithms in RFC9580 (crypto refresh).
+// that conforms with the algorithms in RFC9580.
 func RFC9580() *Custom {
 	setKeyAlgorithm := func(cfg *packet.Config, securityLevel int8) {
 		switch securityLevel {
