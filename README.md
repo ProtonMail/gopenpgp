@@ -82,11 +82,11 @@ decrypted, err := decHandle.Decrypt(armored, crypto.Armor)
 myMessage := decrypted.Bytes()
 ```
 
-To encrypt with the [latest proposed standard (RFC9580-to-be)](https://www.ietf.org/archive/id/draft-ietf-openpgp-crypto-refresh-13.html):
+To encrypt with the [latest proposed OpenPGP standard (RFC9580)](https://www.ietf.org/archive/id/draft-ietf-openpgp-crypto-refresh-13.html):
 ```go
 import "github.com/ProtonMail/gopenpgp/v3/profile"
 
-// Use the profile that conforms with the crypto refresh (RFC9580-to-be).
+// Use the profile that conforms with the crypto refresh (RFC9580).
 pgp := crypto.PGPWithProfile(profile.RFC9580())
 // The default crypto refresh profile uses Argon2 for deriving
 // session keys and uses an AEAD for encryption (AES-256, OCB mode).
