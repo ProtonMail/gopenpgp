@@ -99,11 +99,13 @@ func updateConfig(config *packet.Config, algorithm int) {
 		config.Algorithm = packet.PubKeyAlgoRSA
 		config.RSABits = 4096
 	case KeyGenerationCurve25519Legacy:
+		config.V6Keys = false
 		config.Algorithm = packet.PubKeyAlgoEdDSA
 		config.Curve = packet.Curve25519
 	case KeyGenerationCurve25519:
 		config.Algorithm = packet.PubKeyAlgoEd25519
 	case KeyGenerationCurve448Legacy:
+		config.V6Keys = false
 		config.Algorithm = packet.PubKeyAlgoEdDSA
 		config.Curve = packet.Curve448
 	case KeyGenerationCurve448:
