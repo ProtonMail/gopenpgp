@@ -82,18 +82,17 @@ decrypted, err := decHandle.Decrypt(armored, crypto.Armor)
 myMessage := decrypted.Bytes()
 ```
 
-To encrypt with the [latest proposed OpenPGP standard (RFC9580)](https://www.ietf.org/archive/id/draft-ietf-openpgp-crypto-refresh-13.html):
+To encrypt with the [latest OpenPGP standard (RFC 9580)](https://www.rfc-editor.org/rfc/rfc9580.html):
 ```go
 import "github.com/ProtonMail/gopenpgp/v3/profile"
 
-// Use the profile that conforms with the crypto refresh (RFC9580).
+// Use the latest OpenPGP standard (RFC 9580).
 pgp := crypto.PGPWithProfile(profile.RFC9580())
-// The default crypto refresh profile uses Argon2 for deriving
-// session keys and uses an AEAD for encryption (AES-256, OCB mode).
-// Encrypt data with password
-...
-// Decrypt data with password
-...
+// The RFC9580 profile uses Argon2 for protecting encrypted keys and
+// messages encrypted using a passphrase, and uses AEAD for encryption
+// (AES-256, OCB mode).
+// Encrypt/Decrypt data with a password
+... // See code snippet above.
 ```
 
 Use a custom or preset profile:
@@ -102,7 +101,7 @@ import "github.com/ProtonMail/gopenpgp/v3/profile"
 
 // RFC4880 profile
 pgp4880 := crypto.PGPWithProfile(profile.RFC4880()) 
-// RFC9580 crypto refresh profile
+// RFC9580 profile
 pgpCryptoRefresh := crypto.PGPWithProfile(profile.RFC9580())
 ```
 
@@ -271,7 +270,7 @@ pgp4880 := crypto.PGPWithProfile(profile.RFC4880())
 pgpCryptoRefresh := crypto.PGPWithProfile(profile.RFC9580())
 
 // Note that RSA keys should not be generated anymore according to
-// RFC9580 (crypto refresh).
+// RFC9580.
 
 keyGenHandle := pgp4880.KeyGeneration().AddUserId(name, email).New()
 // Generates rsa keys with 3072 bits
@@ -284,9 +283,9 @@ keyGenHandle = pgpDefault.KeyGeneration().AddUserId(name, email).New()
 ecKey, err := keyGenHandle.GenerateKey()
 
 keyGenHandle = pgpCryptoRefresh.KeyGeneration().AddUserId(name, email).New()
-// Generates curve25519 v6 keys with RFC9580 (crypto refresh).
+// Generates curve25519 v6 keys with RFC9580.
 ecKey, err = keyGenHandle.GenerateKey()
-// Generates curve448 v6 keys with RFC9580 (crypto refresh).
+// Generates curve448 v6 keys with RFC9580.
 ecKeyHigh, err = keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
 ```
 
