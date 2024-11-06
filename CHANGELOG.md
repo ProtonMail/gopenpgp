@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.0.0-alpha.0] 2024-01-18
 ### Added
 - New simplified API that is not backward compatible.
-- Full support for RFC9580 .
+- Full support for RFC 9580.
 - Improved interoperability with other OpenPGP libraries.
 - Streaming support for all operations.
 - Introduces profiles for OpenPGP customization.
