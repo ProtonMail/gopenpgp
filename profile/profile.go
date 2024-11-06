@@ -16,8 +16,6 @@ const weakMinRSABits = 1023
 // Use one of the pre-defined profiles if possible.
 // i.e., profile.Default(), profile.RFC4880().
 type Custom struct {
-	// Name defines the name of the custom profile.
-	Name string
 	// SetKeyAlgorithm is a function that sets public key encryption
 	// algorithm in the config bases on the int8 security level.
 	SetKeyAlgorithm func(*packet.Config, int8)
