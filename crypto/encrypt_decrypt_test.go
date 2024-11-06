@@ -23,7 +23,7 @@ var password = []byte("password")
 var decPasswords = [][]byte{[]byte("wrongPassword"), password}
 var testMaterialForProfiles []*testMaterial
 
-func generateTestKeyMaterial(profile *profile.Custom) *testMaterial {
+func generateTestKeyMaterial(name string, profile *profile.Custom) *testMaterial {
 	handle := PGPWithProfile(profile)
 	testSessionKey, err := handle.GenerateSessionKey()
 	if err != nil {
@@ -57,7 +57,7 @@ func generateTestKeyMaterial(profile *profile.Custom) *testMaterial {
 		panic("Cannot generate key:" + err.Error())
 	}
 	return &testMaterial{
-		profileName:        profile.Name,
+		profileName:        name,
 		pgp:                handle,
 		keyRingTestPublic:  keyRingTestPublic,
 		keyRingTestPrivate: keyRingTestPrivate,
@@ -67,8 +67,8 @@ func generateTestKeyMaterial(profile *profile.Custom) *testMaterial {
 }
 
 func initEncDecTest() {
-	for _, profile := range testProfiles {
-		material := generateTestKeyMaterial(profile)
+	for ind, profile := range testProfiles {
+		material := generateTestKeyMaterial(testProfileNames[ind], profile)
 		testMaterialForProfiles = append(testMaterialForProfiles, material)
 	}
 	if len(testMaterialForProfiles) < 2 {

@@ -21,7 +21,6 @@ func Default() *Custom {
 		}
 	}
 	return &Custom{
-		Name:                 "default",
 		SetKeyAlgorithm:      setKeyAlgorithm,
 		Hash:                 crypto.SHA256,
 		CipherEncryption:     packet.CipherAES256,
@@ -45,7 +44,6 @@ func RFC4880() *Custom {
 		}
 	}
 	return &Custom{
-		Name:                 "rfc4880",
 		SetKeyAlgorithm:      setKeyAlgorithm,
 		Hash:                 crypto.SHA256,
 		CipherEncryption:     packet.CipherAES256,
@@ -65,7 +63,6 @@ func RFC9580() *Custom {
 		}
 	}
 	return &Custom{
-		Name:                 "rfc9580",
 		SetKeyAlgorithm:      setKeyAlgorithm,
 		Hash:                 crypto.SHA512,
 		CipherEncryption:     packet.CipherAES256,

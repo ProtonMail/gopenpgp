@@ -19,6 +19,7 @@ const testMessage = "Hello world!"
 
 var testPGP *PGPHandle
 var testProfiles []*profile.Custom
+var testProfileNames []string
 
 func readTestFile(name string, trimNewlines bool) string {
 	data, err := os.ReadFile("testdata/" + name) //nolint
@@ -35,7 +36,7 @@ func init() {
 	testPGP = PGP()
 	testPGP.defaultTime = NewConstantClock(testTime) // 2019-05-13T13:37:07+00:00
 	testProfiles = []*profile.Custom{profile.Default(), profile.RFC4880(), profile.RFC9580()}
-
+	testProfileNames = []string{"Default", "RFC4880", "RFC9580"}
 	initEncDecTest()
 	initGenerateKeys()
 	initArmoredKeys()
