@@ -8,14 +8,14 @@ import (
 const (
 	// KeyGenerationRSA4096 allows to override the output key algorithm in key generation to rsa 4096.
 	KeyGenerationRSA4096 int = 1
-	// KeyGenerationC25519 allows to override the output key algorithm in key generation to curve25519.
-	KeyGenerationC25519 int = 2
-	// KeyGenerationC25519 allows to override the output key algorithm in key generation to curve25519 RFC9580.
-	KeyGenerationC25519Refresh int = 3
-	// KeyGenerationC448 allows to override the output key algorithm in key generation to curve448.
-	KeyGenerationC448 int = 4
-	// KeyGenerationC448Refresh allows to override the output key algorithm in key generation to curve448 RFC9580.
-	KeyGenerationC448Refresh int = 5
+	// KeyGenerationCurve25519Legacy allows to override the output key algorithm in key generation to curve25519.
+	KeyGenerationCurve25519Legacy int = 2
+	// KeyGenerationCurve25519 allows to override the output key algorithm in key generation to curve25519 RFC9580.
+	KeyGenerationCurve25519 int = 3
+	// KeyGenerationCurve448Legacy allows to override the output key algorithm in key generation to curve448.
+	KeyGenerationCurve448Legacy int = 4
+	// KeyGenerationCurve448 allows to override the output key algorithm in key generation to curve448 RFC9580.
+	KeyGenerationCurve448 int = 5
 )
 
 type KeyGenerationProfile interface {
