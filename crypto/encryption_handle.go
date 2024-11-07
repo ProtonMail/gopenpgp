@@ -156,7 +156,7 @@ func (eh *encryptionHandle) validate() error {
 func (eh *encryptionHandle) armorChecksumRequired() bool {
 	if !constants.ArmorChecksumEnabled {
 		// If the default behavior is no checksum, we can ignore
-		// the logic for the crypto refresh check.
+		// the logic for the RFC9580 check.
 		return false
 	}
 	encryptionConfig := eh.profile.EncryptionConfig()

@@ -117,7 +117,7 @@ func (ehb *EncryptionHandleBuilder) Password(password []byte) *EncryptionHandleB
 // Compress indicates if the plaintext should be compressed before encryption.
 // Compression affects security and opens the door for side-channel attacks, which
 // might allow to extract the plaintext data without a decryption key.
-// The openpgp crypto refresh recommends to not use compression.
+// RFC9580 recommends to not use compression.
 func (ehb *EncryptionHandleBuilder) Compress() *EncryptionHandleBuilder {
 	ehb.handle.Compression = constants.DefaultCompression
 	return ehb
@@ -126,7 +126,7 @@ func (ehb *EncryptionHandleBuilder) Compress() *EncryptionHandleBuilder {
 // CompressWith indicates if the plaintext should be compressed before encryption.
 // Compression affects security and opens the door for side-channel attacks, which
 // might allow to extract the plaintext data without a decryption key.
-// The openpgp crypto refresh recommends to not use compression.
+// RFC9580 recommends to not use compression.
 // Allowed config options:
 // constants.NoCompression: none, constants.DefaultCompression: profile default
 // constants.ZIPCompression: zip, constants.ZLIBCompression: zlib.
