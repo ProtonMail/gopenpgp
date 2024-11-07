@@ -12,10 +12,10 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Set up xcode 14.3
+      - name: Set up xcode 15.3.0
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: 14.3
+          xcode-version: 15.3.0
         id: xcode
 
       - name: Set up Go 1.x
