@@ -221,7 +221,7 @@ func (vh *verifyHandle) verifyCleartext(cleartext []byte) (*VerifyCleartextResul
 	}
 	return &VerifyCleartextResult{
 		VerifyResult: *result,
-		cleartext:    block.Plaintext[:len(block.Plaintext)-1],
+		cleartext:    block.Plaintext,
 	}, nil
 }
 
