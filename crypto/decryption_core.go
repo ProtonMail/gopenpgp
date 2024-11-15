@@ -44,6 +44,7 @@ func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage
 		checkIntendedRecipients := !dh.DisableIntendedRecipients
 		config.CheckIntendedRecipients = &checkIntendedRecipients
 	}
+	config.InsecureAllowUnauthenticatedMessages = dh.DisableUnauthenticatedMessagesCheck
 	if dh.VerifyKeyRing != nil {
 		entries = append(entries, dh.VerifyKeyRing.entities...)
 	}
@@ -167,6 +168,7 @@ func (dh *decryptionHandle) decryptStreamWithSessionAndParse(messageReader io.Re
 	checkPacketSequence := false
 	config.CheckIntendedRecipients = &checkIntendedRecipients
 	config.CheckPacketSequence = &checkPacketSequence
+	config.InsecureAllowUnauthenticatedMessages = dh.DisableUnauthenticatedMessagesCheck
 	md, err := openpgp.ReadMessage(decrypted, keyring, nil, config)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "gopenpgp: unable to decode symmetric packet")
@@ -294,6 +296,7 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 	checkIntendedRecipients := !dh.DisableIntendedRecipients
 	config := dh.profile.EncryptionConfig()
 	config.CheckIntendedRecipients = &checkIntendedRecipients
+	config.InsecureAllowUnauthenticatedMessages = dh.DisableUnauthenticatedMessagesCheck
 
 	// Verifying reader that wraps the decryption readers to verify the signature
 	sigVerifyReader, err := verifyingDetachedReader(
