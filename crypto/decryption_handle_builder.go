@@ -154,6 +154,11 @@ func (dpb *DecryptionHandleBuilder) DisableAutomaticTextSanitize() *DecryptionHa
 	return dpb
 }
 
+func (dpb *DecryptionHandleBuilder) DisableUnauthenticatedMessagesCheck() *DecryptionHandleBuilder {
+	dpb.handle.DisableUnauthenticatedMessagesCheck = true
+	return dpb
+}
+
 // RetrieveSessionKey sets the flag to indicate if the session key used for decryption
 // should be returned to the caller of the decryption function.
 func (dpb *DecryptionHandleBuilder) RetrieveSessionKey() *DecryptionHandleBuilder {
