@@ -154,6 +154,20 @@ func (dpb *DecryptionHandleBuilder) DisableAutomaticTextSanitize() *DecryptionHa
 	return dpb
 }
 
+// DisableUnauthenticatedMessagesCheck enables to read
+// encrypted messages without Modification Detection Code (MDC).
+// MDC is mandated by the latest standard and has long been implemented
+// in most OpenPGP implementations. Messages without MDC are considered unnecessarily
+// insecure and should be prevented whenever possible.
+// In case one needs to deal with messages from very old OpenPGP implementations, there
+// might be no other way than to tolerate the missing MDC. Setting this flag, allows this
+// mode of operation. It should be considered a measure of last resort.
+// SECURITY HAZARD: Use with care.
+func (dpb *DecryptionHandleBuilder) DisableUnauthenticatedMessagesCheck() *DecryptionHandleBuilder {
+	dpb.handle.DisableUnauthenticatedMessagesCheck = true
+	return dpb
+}
+
 // RetrieveSessionKey sets the flag to indicate if the session key used for decryption
 // should be returned to the caller of the decryption function.
 func (dpb *DecryptionHandleBuilder) RetrieveSessionKey() *DecryptionHandleBuilder {
