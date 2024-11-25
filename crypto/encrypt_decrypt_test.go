@@ -924,6 +924,32 @@ func TestEncryptDecryptKey(t *testing.T) {
 	}
 }
 
+func TestEncryptDecryptStreamTrimmedLines(t *testing.T) {
+	for _, material := range testMaterialForProfiles {
+		t.Run(material.profileName, func(t *testing.T) {
+			encHandle, _ := material.pgp.Encryption().
+				Recipients(material.keyRingTestPublic).
+				SigningKeys(material.keyRingTestPrivate).
+				TrimLines().
+				New()
+			decHandle, _ := material.pgp.Decryption().
+				DecryptionKeys(material.keyRingTestPrivate).
+				VerificationKeys(material.keyRingTestPublic).
+				New()
+			testEncryptDecryptStreamWithExpected(
+				t,
+				[]byte("text with   \r \t \n trimmed\n   \t"),
+				[]byte("text with\n trimmed\n"),
+				nil,
+				encHandle,
+				decHandle,
+				len(material.keyRingTestPrivate.entities),
+				Bytes,
+			)
+		})
+	}
+}
+
 func TestEncryptCompressionApplied(t *testing.T) {
 	const numReplicas = 10
 	builder := strings.Builder{}
@@ -1170,6 +1196,28 @@ func testEncryptDecryptStream(
 	numberOfSigsToVerify int,
 	encoding int8,
 ) {
+	testEncryptDecryptStreamWithExpected(
+		t,
+		messageBytes,
+		messageBytes,
+		metadata,
+		encHandle,
+		decHandle,
+		numberOfSigsToVerify,
+		encoding,
+	)
+}
+
+func testEncryptDecryptStreamWithExpected(
+	t *testing.T,
+	messageBytes []byte,
+	expected []byte,
+	metadata *LiteralMetadata,
+	encHandle PGPEncryption,
+	decHandle PGPDecryption,
+	numberOfSigsToVerify int,
+	encoding int8,
+) {
 	messageReader := bytes.NewReader(messageBytes)
 	var ciphertextBuf bytes.Buffer
 	expectedMetadata := metadata
@@ -1200,7 +1248,7 @@ func testEncryptDecryptStream(
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
-	if !bytes.Equal(decryptedBytes, messageBytes) {
+	if !bytes.Equal(decryptedBytes, expected) {
 		t.Fatalf("Expected the decrypted data to be %s got %s", string(decryptedBytes), string(messageBytes))
 	}
 	if numberOfSigsToVerify > 0 {
