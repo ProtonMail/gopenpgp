@@ -48,6 +48,8 @@ type Custom struct {
 	DisableIntendedRecipients bool
 	// AllowWeakRSA is a flag to disable checks for weak rsa keys.
 	AllowWeakRSA bool
+	// AllowSingingKeyInDecryption is a flag to enable to decrypt with signing keys for compatibility reasons.
+	AllowSingingKeyInDecryption bool
 }
 
 // Custom implements the profile interfaces:
@@ -68,10 +70,11 @@ func (p *Custom) KeyGenerationConfig(securityLevel int8) *packet.Config {
 
 func (p *Custom) EncryptionConfig() *packet.Config {
 	config := &packet.Config{
-		DefaultHash:   p.Hash,
-		DefaultCipher: p.CipherEncryption,
-		AEADConfig:    p.AeadEncryption,
-		S2KConfig:     p.S2kEncryption,
+		DefaultHash:                            p.Hash,
+		DefaultCipher:                          p.CipherEncryption,
+		AEADConfig:                             p.AeadEncryption,
+		S2KConfig:                              p.S2kEncryption,
+		InsecureAllowDecryptionWithSigningKeys: p.AllowSingingKeyInDecryption,
 	}
 	if p.DisableIntendedRecipients {
 		intendedRecipients := false

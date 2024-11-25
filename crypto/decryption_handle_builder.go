@@ -168,6 +168,18 @@ func (dpb *DecryptionHandleBuilder) DisableUnauthenticatedMessagesCheck() *Decry
 	return dpb
 }
 
+// AllowSignOnlyDecryptionKeys enables decryption of messages using keys
+// that are designated solely as signing keys.
+// While using the same key for both encryption and signing is discouraged
+// due to reduced security, this flag is useful for decrypting legacy messages.
+// This is because some older libraries did not respect key flags when
+// selecting a key for encryption.
+// SECURITY HAZARD: Use with care.
+func (dpb *DecryptionHandleBuilder) AllowSignOnlyDecryptionKeys() *DecryptionHandleBuilder {
+	dpb.handle.DisableNoSignatureKeyForDecryption = true
+	return dpb
+}
+
 // RetrieveSessionKey sets the flag to indicate if the session key used for decryption
 // should be returned to the caller of the decryption function.
 func (dpb *DecryptionHandleBuilder) RetrieveSessionKey() *DecryptionHandleBuilder {

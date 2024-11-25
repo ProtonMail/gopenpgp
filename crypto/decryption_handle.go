@@ -40,6 +40,7 @@ type decryptionHandle struct {
 	DisableStrictMessageParsing         bool
 	DisableAutomaticTextSanitize        bool
 	DisableUnauthenticatedMessagesCheck bool
+	DisableNoSignatureKeyForDecryption  bool
 	RetrieveSessionKey                  bool
 	IsUTF8                              bool
 	clock                               Clock
