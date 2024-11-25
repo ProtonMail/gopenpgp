@@ -154,7 +154,7 @@ func (dpb *DecryptionHandleBuilder) DisableAutomaticTextSanitize() *DecryptionHa
 	return dpb
 }
 
-// DisableUnauthenticatedMessagesCheck enables to read
+// InsecureDisableUnauthenticatedMessagesCheck enables to read
 // encrypted messages without Modification Detection Code (MDC).
 // MDC is mandated by the latest standard and has long been implemented
 // in most OpenPGP implementations. Messages without MDC are considered unnecessarily
@@ -163,20 +163,20 @@ func (dpb *DecryptionHandleBuilder) DisableAutomaticTextSanitize() *DecryptionHa
 // might be no other way than to tolerate the missing MDC. Setting this flag, allows this
 // mode of operation. It should be considered a measure of last resort.
 // SECURITY HAZARD: Use with care.
-func (dpb *DecryptionHandleBuilder) DisableUnauthenticatedMessagesCheck() *DecryptionHandleBuilder {
-	dpb.handle.DisableUnauthenticatedMessagesCheck = true
+func (dpb *DecryptionHandleBuilder) InsecureDisableUnauthenticatedMessagesCheck() *DecryptionHandleBuilder {
+	dpb.handle.InsecureDisableUnauthenticatedMessagesCheck = true
 	return dpb
 }
 
-// AllowSignOnlyDecryptionKeys enables decryption of messages using keys
+// InsecureAllowDecryptionWithSigningKeys enables decryption of messages using keys
 // that are designated solely as signing keys.
 // While using the same key for both encryption and signing is discouraged
 // due to reduced security, this flag is useful for decrypting legacy messages.
 // This is because some older libraries did not respect key flags when
 // selecting a key for encryption.
 // SECURITY HAZARD: Use with care.
-func (dpb *DecryptionHandleBuilder) AllowSignOnlyDecryptionKeys() *DecryptionHandleBuilder {
-	dpb.handle.DisableNoSignatureKeyForDecryption = true
+func (dpb *DecryptionHandleBuilder) InsecureAllowDecryptionWithSigningKeys() *DecryptionHandleBuilder {
+	dpb.handle.InsecureAllowDecryptionWithSigningKeys = true
 	return dpb
 }
 

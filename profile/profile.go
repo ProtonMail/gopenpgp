@@ -46,10 +46,10 @@ type Custom struct {
 	AllowAllPublicKeyAlgorithms bool
 	// DisableIntendedRecipients is a flag to disable the intended recipients pgp feature from the crypto-refresh.
 	DisableIntendedRecipients bool
-	// AllowWeakRSA is a flag to disable checks for weak rsa keys.
-	AllowWeakRSA bool
-	// AllowSingingKeyInDecryption is a flag to enable to decrypt with signing keys for compatibility reasons.
-	AllowSingingKeyInDecryption bool
+	// InsecureAllowWeakRSA is a flag to disable checks for weak rsa keys.
+	InsecureAllowWeakRSA bool
+	// InsecureAllowDecryptionWithSigningKeys is a flag to enable to decrypt with signing keys for compatibility reasons.
+	InsecureAllowDecryptionWithSigningKeys bool
 }
 
 // Custom implements the profile interfaces:
@@ -74,7 +74,7 @@ func (p *Custom) EncryptionConfig() *packet.Config {
 		DefaultCipher:                          p.CipherEncryption,
 		AEADConfig:                             p.AeadEncryption,
 		S2KConfig:                              p.S2kEncryption,
-		InsecureAllowDecryptionWithSigningKeys: p.AllowSingingKeyInDecryption,
+		InsecureAllowDecryptionWithSigningKeys: p.InsecureAllowDecryptionWithSigningKeys,
 	}
 	if p.DisableIntendedRecipients {
 		intendedRecipients := false
@@ -83,7 +83,7 @@ func (p *Custom) EncryptionConfig() *packet.Config {
 	if p.AllowAllPublicKeyAlgorithms {
 		config.RejectPublicKeyAlgorithms = map[packet.PublicKeyAlgorithm]bool{}
 	}
-	if p.AllowWeakRSA {
+	if p.InsecureAllowWeakRSA {
 		config.MinRSABits = weakMinRSABits
 	}
 	return config
@@ -112,7 +112,7 @@ func (p *Custom) SignConfig() *packet.Config {
 	if p.AllowAllPublicKeyAlgorithms {
 		config.RejectPublicKeyAlgorithms = map[packet.PublicKeyAlgorithm]bool{}
 	}
-	if p.AllowWeakRSA {
+	if p.InsecureAllowWeakRSA {
 		config.MinRSABits = weakMinRSABits
 	}
 	return config

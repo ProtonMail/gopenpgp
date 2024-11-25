@@ -341,11 +341,11 @@ func (dh *decryptionHandle) decryptionConfig(configTime int64) *packet.Config {
 	config.CheckPacketSequence = &checkPacketSequence
 
 	// Allow message decryption of PGP messages with no integrity tag.
-	config.InsecureAllowUnauthenticatedMessages = dh.DisableUnauthenticatedMessagesCheck
+	config.InsecureAllowUnauthenticatedMessages = dh.InsecureDisableUnauthenticatedMessagesCheck
 
 	// Allow message decryption with signature keys.
-	if dh.DisableNoSignatureKeyForDecryption {
-		config.InsecureAllowDecryptionWithSigningKeys = dh.DisableNoSignatureKeyForDecryption
+	if dh.InsecureAllowDecryptionWithSigningKeys {
+		config.InsecureAllowDecryptionWithSigningKeys = dh.InsecureAllowDecryptionWithSigningKeys
 	}
 
 	// Should the session key be returned.
