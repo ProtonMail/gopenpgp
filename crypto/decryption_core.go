@@ -35,22 +35,16 @@ func NewPGPSplitReader(pgpMessage Reader, pgpEncryptedSignature Reader) *pgpSpli
 // decryptStream decrypts the stream either with the secret keys or a password.
 func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage *VerifyDataReader, err error) {
 	var entries openpgp.EntityList
-	checkPacketSequence := !dh.DisableStrictMessageParsing
-	config := dh.profile.EncryptionConfig()
-	config.CacheSessionKey = dh.RetrieveSessionKey
-	config.CheckPacketSequence = &checkPacketSequence
+
+	config := dh.decryptionConfig(dh.clock().Unix())
 	if dh.DecryptionKeyRing != nil {
 		entries = dh.DecryptionKeyRing.entities
-		checkIntendedRecipients := !dh.DisableIntendedRecipients
-		config.CheckIntendedRecipients = &checkIntendedRecipients
 	}
-	config.InsecureAllowUnauthenticatedMessages = dh.DisableUnauthenticatedMessagesCheck
+
 	if dh.VerifyKeyRing != nil {
 		entries = append(entries, dh.VerifyKeyRing.entities...)
 	}
-	verifyTime := dh.clock().Unix()
 
-	config.Time = NewConstantClock(verifyTime)
 	if dh.VerificationContext != nil {
 		config.KnownNotations = map[string]bool{constants.SignatureContextName: true}
 	}
@@ -150,8 +144,9 @@ func (dh *decryptionHandle) decryptStreamWithSessionAndParse(messageReader io.Re
 		return nil, 0, errors.Wrap(err, "gopenpgp: unable to decrypt message with session key")
 	}
 
-	config := dh.profile.EncryptionConfig()
-	config.Time = NewConstantClock(dh.clock().Unix())
+	config := dh.decryptionConfig(dh.clock().Unix())
+	checkPacketSequence := false
+	config.CheckPacketSequence = &checkPacketSequence
 
 	if dh.VerificationContext != nil {
 		config.KnownNotations = map[string]bool{constants.SignatureContextName: true}
@@ -164,11 +159,6 @@ func (dh *decryptionHandle) decryptStreamWithSessionAndParse(messageReader io.Re
 	if dh.DecryptionKeyRing != nil {
 		keyring = append(keyring, dh.DecryptionKeyRing.entities...)
 	}
-	checkIntendedRecipients := !dh.DisableIntendedRecipients
-	checkPacketSequence := false
-	config.CheckIntendedRecipients = &checkIntendedRecipients
-	config.CheckPacketSequence = &checkPacketSequence
-	config.InsecureAllowUnauthenticatedMessages = dh.DisableUnauthenticatedMessagesCheck
 	md, err := openpgp.ReadMessage(decrypted, keyring, nil, config)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "gopenpgp: unable to decode symmetric packet")
@@ -244,11 +234,7 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 		}
 	} else {
 		// Password or private keys
-		checkPacketSequence := !dh.DisableStrictMessageParsing
-		config := dh.profile.EncryptionConfig()
-		config.CacheSessionKey = dh.RetrieveSessionKey
-		config.Time = NewConstantClock(verifyTime)
-		config.CheckPacketSequence = &checkPacketSequence
+		config := dh.decryptionConfig(verifyTime)
 		var entries openpgp.EntityList
 		if dh.DecryptionKeyRing != nil {
 			entries = append(entries, dh.DecryptionKeyRing.entities...)
@@ -293,10 +279,7 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 		}
 	}
 
-	checkIntendedRecipients := !dh.DisableIntendedRecipients
-	config := dh.profile.EncryptionConfig()
-	config.CheckIntendedRecipients = &checkIntendedRecipients
-	config.InsecureAllowUnauthenticatedMessages = dh.DisableUnauthenticatedMessagesCheck
+	config := dh.decryptionConfig(verifyTime)
 
 	// Verifying reader that wraps the decryption readers to verify the signature
 	sigVerifyReader, err := verifyingDetachedReader(
@@ -344,4 +327,31 @@ func createPasswordPrompt(password []byte) func(keys []openpgp.Key, symmetric bo
 		// For most (but not all) cases, inputting a wrong passwords is expected to trigger this error.
 		return nil, errors.New("gopenpgp: wrong password in symmetric decryption")
 	}
+}
+
+func (dh *decryptionHandle) decryptionConfig(configTime int64) *packet.Config {
+	config := dh.profile.EncryptionConfig()
+
+	// Check intended recipients in signatures.
+	checkIntendedRecipients := !dh.DisableIntendedRecipients
+	config.CheckIntendedRecipients = &checkIntendedRecipients
+
+	// Check for valid packet sequence
+	checkPacketSequence := !dh.DisableStrictMessageParsing
+	config.CheckPacketSequence = &checkPacketSequence
+
+	// Allow message decryption of PGP messages with no integrity tag.
+	config.InsecureAllowUnauthenticatedMessages = dh.InsecureDisableUnauthenticatedMessagesCheck
+
+	// Allow message decryption with signature keys.
+	if dh.InsecureAllowDecryptionWithSigningKeys {
+		config.InsecureAllowDecryptionWithSigningKeys = dh.InsecureAllowDecryptionWithSigningKeys
+	}
+
+	// Should the session key be returned.
+	config.CacheSessionKey = dh.RetrieveSessionKey
+
+	// Set time.
+	config.Time = NewConstantClock(configTime)
+	return config
 }
