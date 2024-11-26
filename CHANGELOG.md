@@ -8,9 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add decryption option to allow disabling the integrity tag requirement.
 - Add option to decrypt with signature keys for legacy messages.
-- Fix naming `profile.Custom.AllowWeakRSA` to `profile.Custom.InsecureAllowWeakRSA` (breaking)
 
 ### Changed
+- Rename `profile.Custom.AllowWeakRSA` to `profile.Custom.InsecureAllowWeakRSA`
 - Update go-crypto to `1.1.3`.
 
 ## [3.0.0] 2024-10-07
