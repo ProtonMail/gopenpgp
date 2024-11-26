@@ -18,6 +18,8 @@ issues:
     - Using the variable on range scope `tt` in function literal
     - GetJsonSHA256Fingerprints should be GetJSONSHA256Fingerprints
     - ST1003  # CamelCase variables; see constants/cipher.go
+    - SA1019
+    - commentFormatting
 
 linters:
   enable-all: true
