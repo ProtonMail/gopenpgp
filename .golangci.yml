@@ -25,6 +25,7 @@ issues:
     - param max has same name as predeclared identifier
     - the methods of "SignatureCollector" use pointer receiver and non-pointer receiver
     - the methods of "Callbacks" use pointer receiver and non-pointer receiver.
+    - commentFormatting
 
 linters:
   enable-all: true
