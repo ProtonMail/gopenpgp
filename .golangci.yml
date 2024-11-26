@@ -25,6 +25,8 @@ issues:
     - param max has same name as predeclared identifier
     - G115
     - the methods of "signatureCollector"
+    - SA1019
+    - commentFormatting
   exclude-rules:
     - path: crypto/key_clear.go
       text: "SA1019"
