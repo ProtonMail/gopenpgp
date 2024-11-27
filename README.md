@@ -275,7 +275,7 @@ pgpCryptoRefresh := crypto.PGPWithProfile(profile.RFC9580())
 keyGenHandle := pgp4880.KeyGeneration().AddUserId(name, email).New()
 // Generates rsa keys with 3072 bits
 rsaKey, err := keyGenHandle.GenerateKey()
-// Generates rsa keys with 4092 bits
+// Generates rsa keys with 4096 bits
 rsaKeyHigh, err := keyGenHandle.GenerateKeyWithSecurity(constants.HighSecurity)
 
 keyGenHandle = pgpDefault.KeyGeneration().AddUserId(name, email).New()
