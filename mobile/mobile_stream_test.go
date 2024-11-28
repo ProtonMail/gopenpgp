@@ -139,11 +139,11 @@ type testMobileReader struct {
 	returnError bool
 }
 
-func (r *testMobileReader) Read(max int) (*MobileReadResult, error) {
+func (r *testMobileReader) Read(maxRead int) (*MobileReadResult, error) {
 	if r.returnError {
 		return nil, errors.New("gopenpgp: test - forced error while reading")
 	}
-	buf := make([]byte, max)
+	buf := make([]byte, maxRead)
 	n, err := r.reader.Read(buf)
 	eof := false
 	if err != nil {

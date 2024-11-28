@@ -114,7 +114,7 @@ func (sc *signatureCollector) Accept(
 }
 
 // GetSignature collected by Accept.
-func (sc signatureCollector) GetSignature() string {
+func (sc *signatureCollector) GetSignature() string {
 	return sc.signature
 }
 

@@ -69,7 +69,7 @@ func (w *Mobile2GoWriterWithSHA256) GetSHA256() []byte {
 // MobileReader is the interface that readers in the mobile runtime must use and implement.
 // This is a workaround to some of the gomobile limitations.
 type MobileReader interface {
-	Read(max int) (result *MobileReadResult, err error)
+	Read(maxRead int) (result *MobileReadResult, err error)
 }
 
 // MobileReadResult is what needs to be returned by MobileReader.Read.
@@ -164,8 +164,8 @@ func NewGo2IOSReader(reader crypto.Reader) *Go2IOSReader {
 }
 
 // Read reads at most <max> bytes from the wrapped Reader and returns the read data as a MobileReadResult.
-func (r *Go2IOSReader) Read(max int) (result *MobileReadResult, err error) {
-	b := make([]byte, max)
+func (r *Go2IOSReader) Read(maxRead int) (result *MobileReadResult, err error) {
+	b := make([]byte, maxRead)
 	n, err := r.reader.Read(b)
 	result = &MobileReadResult{}
 	if err != nil {

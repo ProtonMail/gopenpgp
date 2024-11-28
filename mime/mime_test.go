@@ -22,18 +22,18 @@ func (t *Callbacks) OnBody(body string, mimetype string) {
 	assert.Exactly(t.Testing, readTestFile("mime_decryptedBody", false), body)
 }
 
-func (t Callbacks) OnAttachment(headers string, data []byte) {
+func (t *Callbacks) OnAttachment(headers string, data []byte) {
 	assert.Exactly(t.Testing, 1, data)
 }
 
-func (t Callbacks) OnEncryptedHeaders(headers string) {
+func (t *Callbacks) OnEncryptedHeaders(headers string) {
 	assert.Exactly(t.Testing, "", headers)
 }
 
-func (t Callbacks) OnVerified(verified int) {
+func (t *Callbacks) OnVerified(verified int) {
 }
 
-func (t Callbacks) OnError(err error) {
+func (t *Callbacks) OnError(err error) {
 	t.Testing.Fatal("Error in decrypting MIME message: ", err)
 }
 
