@@ -20,11 +20,12 @@ issues:
     - ST1003  # CamelCase variables; see constants/cipher.go
     - missing output for example, go test can't validate it
     - variable 'hasExpiredEntity' is only used in the if-statement
+    - G115
   exclude-rules:
     - path: crypto/key_clear.go
       text: "SA1019"
-    - path: crypto/crypto_example_test.go
-      text: "G101: Potential hardcoded credentials"
+    - path: crypto/.*_test.go
+      text: "G101"
     - path: crypto/encrypt_decrypt_test.go
       text: "Using the variable on range scope"
     - path: crypto/encrypt_decrypt_err_test.go
@@ -63,3 +64,5 @@ linters:
     - nosnakecase       # Disallows snake case 
     - depguard
     - nestif
+    - mnd
+    - testifylint
