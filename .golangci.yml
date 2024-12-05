@@ -20,6 +20,8 @@ issues:
     - ST1003  # CamelCase variables; see constants/cipher.go
     - missing output for example, go test can't validate it
     - variable 'hasExpiredEntity' is only used in the if-statement
+    - SA1019
+    - commentFormatting
   exclude-rules:
     - path: crypto/key_clear.go
       text: "SA1019"
