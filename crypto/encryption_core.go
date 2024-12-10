@@ -91,7 +91,7 @@ func (eh *encryptionHandle) prepareEncryptAndSign(
 		ModTime:  time.Unix(plainMessageMetadata.Time(), 0),
 	}
 
-	config = eh.profile.EncryptionConfig()
+	config = eh.profile.EncryptionConfig(eh.messageSizeHint)
 	config.Time = eh.clock
 
 	compressionConfig := eh.selectCompression()
@@ -324,7 +324,7 @@ func (eh *encryptionHandle) encryptSignDetachedStreamWithSessionKey(
 		eh.IsUTF8,
 		eh.SigningContext,
 		eh.clock,
-		eh.profile.EncryptionConfig(),
+		eh.profile.EncryptionConfig(eh.messageSizeHint),
 	)
 	if err != nil {
 		return nil, err
@@ -345,7 +345,7 @@ func (eh *encryptionHandle) encryptSignDetachedStreamToRecipients(
 	keyPacketWriter io.Writer,
 	encryptSignature bool,
 ) (plaintextWriter io.WriteCloser, err error) {
-	configInput := eh.profile.EncryptionConfig()
+	configInput := eh.profile.EncryptionConfig(eh.messageSizeHint)
 	configInput.Time = NewConstantClock(eh.clock().Unix())
 	// Generate a session key for encryption.
 	if eh.SessionKey == nil {

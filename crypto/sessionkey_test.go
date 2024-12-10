@@ -104,7 +104,7 @@ func TestSymmetricKeyPacketWrongSize(t *testing.T) {
 
 	password := []byte("I like encryption")
 
-	_, err = encryptSessionKeyWithPassword(sk, password, testPGP.profile.EncryptionConfig())
+	_, err = encryptSessionKeyWithPassword(sk, password, testPGP.profile.EncryptionConfig(0))
 	if err == nil {
 		t.Fatal("Expected error while generating key packet with wrong sized key")
 	}
