@@ -68,13 +68,23 @@ func (p *Custom) KeyGenerationConfig(securityLevel int8) *packet.Config {
 	return cfg
 }
 
-func (p *Custom) EncryptionConfig() *packet.Config {
+func (p *Custom) EncryptionConfig(messageSizeHint uint64) *packet.Config {
 	config := &packet.Config{
 		DefaultHash:                            p.Hash,
 		DefaultCipher:                          p.CipherEncryption,
 		AEADConfig:                             p.AeadEncryption,
 		S2KConfig:                              p.S2kEncryption,
 		InsecureAllowDecryptionWithSigningKeys: p.InsecureAllowDecryptionWithSigningKeys,
+	}
+	if config.AEADConfig != nil && messageSizeHint != 0 {
+		chunkSize := config.AEADConfig.ChunkSize
+		if messageSizeHint*2 < 1<<(config.AEADConfig.ChunkSizeByte()+6) {
+			chunkSize = messageSizeHint * 2
+		}
+		config.AEADConfig = &packet.AEADConfig{
+			DefaultMode: config.AEADConfig.DefaultMode,
+			ChunkSize:   chunkSize,
+		}
 	}
 	if p.DisableIntendedRecipients {
 		intendedRecipients := false

@@ -330,7 +330,7 @@ func createPasswordPrompt(password []byte) func(keys []openpgp.Key, symmetric bo
 }
 
 func (dh *decryptionHandle) decryptionConfig(configTime int64) *packet.Config {
-	config := dh.profile.EncryptionConfig()
+	config := dh.profile.EncryptionConfig(0)
 
 	// Check intended recipients in signatures.
 	checkIntendedRecipients := !dh.DisableIntendedRecipients
