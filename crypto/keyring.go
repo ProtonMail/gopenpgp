@@ -7,6 +7,8 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
+	"github.com/ProtonMail/gopenpgp/v2/armor"
+	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/pkg/errors"
 )
 
@@ -131,6 +133,16 @@ func (keyRing *KeyRing) Serialize() ([]byte, error) {
 	}
 
 	return buffer.Bytes(), nil
+}
+
+// Armor returns the armored keyring as a string with default gopenpgp headers.
+func (keyRing *KeyRing) Armor() (string, error) {
+	serialized, err := keyRing.Serialize()
+	if err != nil {
+		return "", err
+	}
+
+	return armor.ArmorWithType(serialized, constants.PublicKeyHeader)
 }
 
 // --- Extract info from key

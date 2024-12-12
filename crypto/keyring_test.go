@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"crypto/rsa"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -158,6 +159,14 @@ func TestSerializeParse(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Exactly(t, parsedKey.GetFingerprint(), expectedKey.GetFingerprint())
 	}
+}
+
+func TestArmor(t *testing.T) {
+	armoredRing, err := keyRingTestMultiple.Armor()
+	assert.Nil(t, err)
+
+	rTest := regexp.MustCompile(`(?s)^-----BEGIN PGP PUBLIC KEY BLOCK-----.*Version: GopenPGP [0-9]+\.[0-9]+\.[0-9]+.*-----END PGP PUBLIC KEY BLOCK-----$`)
+	assert.Regexp(t, rTest, armoredRing)
 }
 
 func TestClearPrivateKey(t *testing.T) {
