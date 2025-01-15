@@ -3,7 +3,6 @@ package crypto
 import (
 	"crypto/dsa"
 	"crypto/rsa"
-	"errors"
 	"math/big"
 
 	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
@@ -76,7 +75,7 @@ func clearPrivateKey(privateKey interface{}) error {
 	case *ed448.PrivateKey:
 		return clearEd448PrivateKey(priv)
 	default:
-		return errors.New("gopenpgp: unknown private key")
+		return nil
 	}
 }
 
