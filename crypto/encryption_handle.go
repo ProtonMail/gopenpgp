@@ -62,6 +62,8 @@ type encryptionHandle struct {
 
 	encryptionTimeOverride Clock
 	clock                  Clock
+
+	messageSizeHint uint64
 }
 
 // --- Default decryption handle to build from
@@ -74,6 +76,13 @@ func defaultEncryptionHandle(profile EncryptionProfile, clock Clock) *encryption
 }
 
 // --- Implements PGPEncryption interface
+// SetMessageSizeHint gives the encryption handle a hint about the
+// expected size of the message, in order to set an appropriate chunk
+// size when using AEAD. Nothing will break when the message size hint
+// turns out to be wrong.
+func (eh *encryptionHandle) SetMessageSizeHint(messageSizeHint uint64) {
+	eh.messageSizeHint = messageSizeHint
+}
 
 // EncryptingWriter returns a wrapper around underlying output Writer,
 // such that any write-operation via the wrapper results in a write to an encrypted pgp message.
@@ -95,6 +104,7 @@ func (eh *encryptionHandle) EncryptingWriter(outputWriter Writer, encoding int8)
 
 // Encrypt encrypts a plaintext message.
 func (eh *encryptionHandle) Encrypt(message []byte) (*PGPMessage, error) {
+	eh.messageSizeHint = uint64(len(message))
 	pgpMessageBuffer := NewPGPMessageBuffer()
 	// Enforce that for a PGPMessage struct the output should not be armored.
 	encryptingWriter, err := eh.EncryptingWriter(pgpMessageBuffer, Bytes)
@@ -116,7 +126,7 @@ func (eh *encryptionHandle) Encrypt(message []byte) (*PGPMessage, error) {
 // EncryptSessionKey encrypts a session key with the encryption handle.
 // To encrypt a session key, the handle must contain either recipients or a password.
 func (eh *encryptionHandle) EncryptSessionKey(sessionKey *SessionKey) ([]byte, error) {
-	config := eh.profile.EncryptionConfig()
+	config := eh.profile.EncryptionConfig(0)
 	config.Time = NewConstantClock(eh.clock().Unix())
 	switch {
 	case eh.Password != nil:
@@ -159,7 +169,7 @@ func (eh *encryptionHandle) armorChecksumRequired() bool {
 		// the logic for the RFC9580 check.
 		return false
 	}
-	encryptionConfig := eh.profile.EncryptionConfig()
+	encryptionConfig := eh.profile.EncryptionConfig(0)
 	if encryptionConfig.AEADConfig == nil {
 		return true
 	}

@@ -3,13 +3,18 @@ package crypto
 import "github.com/ProtonMail/go-crypto/openpgp/packet"
 
 type EncryptionProfile interface {
-	EncryptionConfig() *packet.Config
+	EncryptionConfig(messageSizeHint uint64) *packet.Config
 	CompressionConfig() *packet.Config
 }
 
 // PGPEncryption is an interface for encrypting messages with GopenPGP.
 // Use an EncryptionHandleBuilder to create a PGPEncryption handle.
 type PGPEncryption interface {
+	// SetMessageSizeHint gives the encryption handle a hint about the
+	// expected size of the message, in order to set an appropriate chunk
+	// size when using AEAD. Nothing will break when the message size hint
+	// turns out to be wrong.
+	SetMessageSizeHint(messageSizeHint uint64)
 	// EncryptingWriter returns a wrapper around underlying output Writer,
 	// such that any write-operation via the wrapper results in a write to an encrypted pgp message.
 	// If the output Writer is of type PGPSplitWriter, the output can be split to multiple writers
