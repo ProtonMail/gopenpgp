@@ -117,7 +117,7 @@ jobs:
         with:
           name: test-suite-results.json
       - name: Compare with baseline
-        uses: ProtonMail/openpgp-interop-test-analyzer@v2.0.0
+        uses: ProtonMail/openpgp-interop-test-analyzer@v2.1.0
         with: 
           results: ${{ steps.download-test-results.outputs.download-path }}/test-suite-results.json
           output: baseline-comparison.json
