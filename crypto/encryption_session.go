@@ -128,6 +128,9 @@ func encryptSessionKeyToWriter(
 		}
 		pubKeys = append(pubKeys, encryptionKey.PublicKey)
 	}
+	if sk.v6 {
+		aeadSupport = true
+	}
 	if len(pubKeys) == 0 {
 		return errors.New("gopenpgp: cannot set key: no public key available")
 	}
@@ -201,10 +204,11 @@ func encryptSessionKeyWithPasswordToWriter(password []byte, sk *SessionKey, outp
 		cf = config.Cipher()
 	} else {
 		cf, err = sk.GetCipherFunc()
+		if err != nil {
+			return errors.Wrap(err, "gopenpgp: unable to encrypt session key with password")
+		}
 	}
-	if err != nil {
-		return errors.Wrap(err, "gopenpgp: unable to encrypt session key with password")
-	}
+	useAead := sk.v6
 
 	if len(password) == 0 {
 		return errors.New("gopenpgp: password can't be empty")
@@ -215,7 +219,7 @@ func encryptSessionKeyWithPasswordToWriter(password []byte, sk *SessionKey, outp
 	}
 	config.DefaultCipher = cf
 
-	err = packet.SerializeSymmetricKeyEncryptedReuseKey(outputWriter, sk.Key, password, config)
+	err = packet.SerializeSymmetricKeyEncryptedAEADReuseKey(outputWriter, sk.Key, password, useAead, config)
 	if err != nil {
 		return errors.Wrap(err, "gopenpgp: unable to encrypt session key with password")
 	}

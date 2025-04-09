@@ -1,12 +1,15 @@
 package crypto
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/hex"
 	"os"
 	"testing"
 
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
+	"github.com/ProtonMail/gopenpgp/v3/profile"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -372,4 +375,102 @@ func TestAsymmetricKeyPacketDecryptionFailure(t *testing.T) {
 	decryptor, _ := testPGP.Decryption().DecryptionKeys(ukr).New()
 	_, err = decryptor.DecryptSessionKey(keyPacket)
 	assert.Error(t, err, "gopenpgp: unable to decrypt session key")
+}
+
+func TestSessionKeyAeadHandling(t *testing.T) {
+	pgp := PGPWithProfile(profile.Default())
+	profileAead := profile.Default()
+	profileAead.AeadEncryption = &packet.AEADConfig{}
+	pgpAead := PGPWithProfile(profileAead)
+
+	keyDefault, err := pgp.KeyGeneration().AddUserId("nodeKey", "nodeKey").New().GenerateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keyAEAD, err := pgpAead.KeyGeneration().AddUserId("nodeKey", "nodeKey").New().GenerateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encHandle, _ := pgpAead.Encryption().Recipient(keyDefault).New()
+	encHandleAead, _ := pgpAead.Encryption().Recipient(keyAEAD).New()
+
+	sessionKey, err := encHandle.GenerateSessionKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sessionKeyAead, err := encHandleAead.GenerateSessionKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if sessionKey.IsV6() {
+		t.Error("Expected session key to be non-v6 compatible")
+	}
+	if !sessionKeyAead.IsV6() {
+		t.Error("Expected session key to be v6 compatible")
+	}
+
+	pkeskv3, err := encHandle.EncryptSessionKey(sessionKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pkeskv6, err := encHandle.EncryptSessionKey(sessionKeyAead)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	checkPKESK(t, pkeskv3, 3)
+	checkPKESK(t, pkeskv6, 6)
+
+	encHandle, _ = pgpAead.Encryption().SessionKey(sessionKey).New()
+	encHandleAead, _ = pgpAead.Encryption().SessionKey(sessionKeyAead).New()
+
+	seipdv1, err := encHandle.Encrypt([]byte("hello"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	seipdv2, err := encHandleAead.Encrypt([]byte("hello"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	checkSEIPD(t, seipdv1.DataPacket, 1)
+	checkSEIPD(t, seipdv2.DataPacket, 2)
+}
+
+func checkPKESK(t *testing.T, data []byte, version int) {
+	packets := packet.NewReader(bytes.NewReader(data))
+	p, err := packets.Next()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pk, ok := p.(*packet.EncryptedKey)
+	if !ok {
+		t.Fatal("Expected PKESK packet")
+	}
+
+	if pk.Version != version {
+		t.Errorf("Expected PKESK version %d, got %d", version, pk.Version)
+	}
+}
+
+func checkSEIPD(t *testing.T, data []byte, version int) {
+	packets := packet.NewReader(bytes.NewReader(data))
+	p, err := packets.Next()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pk, ok := p.(*packet.SymmetricallyEncrypted)
+	if !ok {
+		t.Fatal("Expected SEIPD packet")
+	}
+
+	if pk.Version != version {
+		t.Errorf("Expected SEIPD version %d, got %d", version, pk.Version)
+	}
 }

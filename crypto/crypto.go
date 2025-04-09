@@ -73,7 +73,9 @@ func (p *PGPHandle) LockKey(key *Key, passphrase []byte) (*Key, error) {
 }
 
 // GenerateSessionKey generates a random session key for the profile.
+// Use GenerateSessionKey on the encryption handle, if the PGP encryption keys are known.
+// This function only considers the profile to determine the session key type.
 func (p *PGPHandle) GenerateSessionKey() (*SessionKey, error) {
 	config := p.profile.EncryptionConfig()
-	return generateSessionKey(config)
+	return generateSessionKey(config, nil, nil)
 }

@@ -23,6 +23,9 @@ type PGPEncryption interface {
 	// EncryptSessionKey encrypts a session key with the encryption handle.
 	// To encrypt a session key, the handle must contain either recipients or a password.
 	EncryptSessionKey(sessionKey *SessionKey) ([]byte, error)
+	// GenerateSessionKey generates a random session key for the given encryption handle
+	// considering the algorithm preferences of the recipient keys.
+	GenerateSessionKey() (*SessionKey, error)
 	// ClearPrivateParams clears all private key material contained in EncryptionHandle from memory.
 	ClearPrivateParams()
 }
