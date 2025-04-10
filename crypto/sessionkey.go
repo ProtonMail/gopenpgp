@@ -19,7 +19,8 @@ type SessionKey struct {
 	// Algo defines the symmetric encryption algorithm used with this key.
 	// Only present if the key was not parsed from a v6 packet.
 	Algo string
-	// v6 is a flag to indicate that the session key was parsed from a v6 PKESK or SKESK packet
+	// v6 is a flag to indicate that the session key is capable
+	// to be used in v6 PKESK or SKESK, and SEIPDv2 packets
 	v6 bool
 }
 
@@ -66,8 +67,8 @@ func (cr checkReader) Read(buf []byte) (int, error) {
 // with this SessionKey.
 // Not supported in go-mobile clients use sk.GetCipherFuncInt instead.
 func (sk *SessionKey) GetCipherFunc() (packet.CipherFunction, error) {
-	if sk.v6 {
-		return 0, errors.New("gopenpgp: no cipher function available for a v6 session key")
+	if !sk.hasAlgorithm() {
+		return 0, errors.New("gopenpgp: no cipher function available for the session key")
 	}
 	cf, ok := symKeyAlgos[sk.Algo]
 	if !ok {
@@ -87,6 +88,11 @@ func (sk *SessionKey) GetCipherFuncInt() (int8, error) {
 // GetBase64Key returns the session key as base64 encoded string.
 func (sk *SessionKey) GetBase64Key() string {
 	return base64.StdEncoding.EncodeToString(sk.Key)
+}
+
+// IsV6 indicates if the session key can be used with SEIPDv2, PKESKv6/SKESKv6.
+func (sk *SessionKey) IsV6() bool {
+	return sk.v6
 }
 
 // RandomToken generates a random token with the specified key size.
@@ -118,13 +124,61 @@ func GenerateSessionKeyAlgo(algo string) (sk *SessionKey, err error) {
 	return sk, nil
 }
 
-// GenerateSessionKey generates a random key for the default cipher.
-func generateSessionKey(config *packet.Config) (*SessionKey, error) {
-	cf, ok := algosToSymKey[config.DefaultCipher]
+// GenerateSessionKey generates a random key.
+// Considers the cipher and aead preferences in recipients and hiddenRecipients for
+// session key generation.
+func generateSessionKey(config *packet.Config, recipients *KeyRing, hiddenRecipients *KeyRing) (*SessionKey, error) {
+	candidateCiphers := []uint8{
+		uint8(packet.CipherAES256),
+		uint8(packet.CipherAES128),
+	}
+
+	currentTime := config.Now()
+	aeadSupport := config.AEADConfig != nil
+	for _, e := range append(recipients.getEntities(), hiddenRecipients.getEntities()...) {
+		primarySelfSignature, _ := e.PrimarySelfSignature(currentTime, config)
+		if primarySelfSignature == nil {
+			continue
+		}
+
+		if !primarySelfSignature.SEIPDv2 {
+			aeadSupport = false
+		}
+
+		candidateCiphers = intersectPreferences(candidateCiphers, primarySelfSignature.PreferredSymmetric)
+	}
+
+	if len(candidateCiphers) == 0 {
+		candidateCiphers = []uint8{uint8(packet.CipherAES128)}
+	}
+	cipher := packet.CipherFunction(candidateCiphers[0])
+
+	// If the cipher specified by config is a candidate, we'll use that.
+	configuredCipher := config.Cipher()
+	for _, c := range candidateCiphers {
+		cipherFunc := packet.CipherFunction(c)
+		if cipherFunc == configuredCipher {
+			cipher = cipherFunc
+			break
+		}
+	}
+
+	algo, ok := algosToSymKey[cipher]
 	if !ok {
 		return nil, errors.New("gopenpgp: unsupported cipher function")
 	}
-	return GenerateSessionKeyAlgo(cf)
+
+	r, err := RandomToken(cipher.KeySize())
+	if err != nil {
+		return nil, err
+	}
+
+	sk := &SessionKey{
+		Key:  r,
+		Algo: algo,
+		v6:   aeadSupport,
+	}
+	return sk, nil
 }
 
 // NewSessionKeyFromToken creates a SessionKey struct with the given token and algorithm.
@@ -133,6 +187,16 @@ func NewSessionKeyFromToken(token []byte, algo string) *SessionKey {
 	return &SessionKey{
 		Key:  clone(token),
 		Algo: algo,
+	}
+}
+
+// NewSessionKeyFromTokenWithAead creates a SessionKey struct with the given token and algorithm.
+// If aead is set to true, the key is used with v6 PKESK or SKESK, and SEIPDv2 packets.
+func NewSessionKeyFromTokenWithAead(token []byte, algo string, aead bool) *SessionKey {
+	return &SessionKey{
+		Key:  clone(token),
+		Algo: algo,
+		v6:   aead,
 	}
 }
 
@@ -178,6 +242,10 @@ func (sk *SessionKey) checkSize() error {
 	return nil
 }
 
+func (sk *SessionKey) hasAlgorithm() bool {
+	return sk.Algo != ""
+}
+
 func getAlgo(cipher packet.CipherFunction) string {
 	algo := ""
 	for k, v := range symKeyAlgos {
@@ -187,4 +255,18 @@ func getAlgo(cipher packet.CipherFunction) string {
 		}
 	}
 	return algo
+}
+
+func intersectPreferences(a []uint8, b []uint8) (intersection []uint8) {
+	var currentIndex int
+	for _, valueFirst := range a {
+		for _, valueSecond := range b {
+			if valueFirst == valueSecond {
+				a[currentIndex] = valueFirst
+				currentIndex++
+				break
+			}
+		}
+	}
+	return a[:currentIndex]
 }

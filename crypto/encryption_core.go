@@ -216,7 +216,7 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 		return nil, nil, err
 	}
 
-	if !eh.SessionKey.v6 {
+	if eh.SessionKey.hasAlgorithm() {
 		config.DefaultCipher, err = eh.SessionKey.GetCipherFunc()
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "gopenpgp: unable to encrypt with session key")
@@ -226,7 +226,7 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 	encryptWriter, err = packet.SerializeSymmetricallyEncrypted(
 		dataPacketWriter,
 		config.Cipher(),
-		config.AEAD() != nil,
+		eh.SessionKey.v6,
 		packet.CipherSuite{Cipher: config.Cipher(), Mode: config.AEAD().Mode()},
 		eh.SessionKey.Key,
 		config,
@@ -349,7 +349,7 @@ func (eh *encryptionHandle) encryptSignDetachedStreamToRecipients(
 	configInput.Time = NewConstantClock(eh.clock().Unix())
 	// Generate a session key for encryption.
 	if eh.SessionKey == nil {
-		eh.SessionKey, err = generateSessionKey(configInput)
+		eh.SessionKey, err = eh.GenerateSessionKey()
 		if err != nil {
 			return nil, err
 		}

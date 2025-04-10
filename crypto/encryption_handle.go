@@ -131,6 +131,14 @@ func (eh *encryptionHandle) EncryptSessionKey(sessionKey *SessionKey) ([]byte, e
 	return nil, errors.New("gopenpgp: no password or recipients in encryption handle")
 }
 
+// GenerateSessionKey generates a random session key for the given encryption handle
+// considering the algorithm preferences of the recipient keys.
+func (eh *encryptionHandle) GenerateSessionKey() (*SessionKey, error) {
+	config := eh.profile.EncryptionConfig()
+	config.Time = NewConstantClock(eh.clock().Unix())
+	return generateSessionKey(config, eh.Recipients, eh.HiddenRecipients)
+}
+
 // --- Helper methods on encryption handle
 
 func (eh *encryptionHandle) validate() error {

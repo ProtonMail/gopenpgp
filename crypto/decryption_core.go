@@ -191,7 +191,7 @@ Loop:
 				}
 			}
 			var dc packet.CipherFunction
-			if !sessionKey.v6 {
+			if sessionKey.hasAlgorithm() {
 				dc, err = sessionKey.GetCipherFunc()
 				if err != nil {
 					return nil, errors.Wrap(err, "gopenpgp: unable to decrypt with session key")
