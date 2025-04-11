@@ -2,13 +2,13 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"time"
 
 	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
-	"github.com/pkg/errors"
 
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 )
@@ -119,7 +119,7 @@ func (vr *VerifyResult) Signature() ([]byte, error) {
 	}
 	var serializedSignature bytes.Buffer
 	if err := vr.selectedSignature.Signature.Serialize(&serializedSignature); err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: signature serialization failed")
+		return nil, fmt.Errorf("gopenpgp: signature serialization failed: %w", err)
 	}
 	return serializedSignature.Bytes(), nil
 }

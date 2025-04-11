@@ -20,6 +20,6 @@ type PGPSign interface {
 	// SignCleartext produces an armored cleartext message according to the specification.
 	// Returns an armored message even if the PGPSign is not configured for armored output.
 	SignCleartext(message []byte) ([]byte, error)
-	// ClearPrivateParams clears all secret key material contained in the PGPSign from memory,
+	// ClearPrivateParams clears all secret key material contained in the PGPSign from memory.
 	ClearPrivateParams()
 }

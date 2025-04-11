@@ -2,11 +2,11 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/ProtonMail/gopenpgp/v3/internal"
-
-	"github.com/pkg/errors"
 )
 
 // decryptionHandle collects the configuration parameters to decrypt a pgp message.
@@ -166,7 +166,7 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 		// Wrap encryptedMessage with decode armor reader.
 		armoredBlock, err = armor.Decode(encryptedMessage)
 		if err != nil {
-			err = errors.Wrap(err, "gopenpgp: unarmor failed for pgp message")
+			err = fmt.Errorf("gopenpgp: unarmor failed for pgp message: %w", err)
 			return nil, err
 		}
 		encryptedMessage = armoredBlock.Body
@@ -177,7 +177,7 @@ func (dh *decryptionHandle) decryptingReader(encryptedMessage Reader, encryptedS
 			// Wrap encryptedSignature with decode armor reader.
 			armoredBlock, err = armor.Decode(encryptedSignature)
 			if err != nil {
-				err = errors.Wrap(err, "gopenpgp: unarmor failed for pgp encrypted signature message")
+				err = fmt.Errorf("gopenpgp: unarmor failed for pgp encrypted signature message: %w", err)
 				return nil, err
 			}
 			encryptedSignature = armoredBlock.Body

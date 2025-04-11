@@ -1,10 +1,12 @@
 package crypto
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
-	"github.com/pkg/errors"
 )
 
 type identity struct {
@@ -62,7 +64,7 @@ func (kgh *keyGenerationHandle) GenerateKeyWithSecurity(security int8) (key *Key
 		)
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "gopengpp: error in creating new entity")
+		return nil, fmt.Errorf("gopengpp: error in creating new entity: %w", err)
 	}
 
 	for id := 1; id < len(kgh.identities); id++ {
@@ -76,7 +78,7 @@ func (kgh *keyGenerationHandle) GenerateKeyWithSecurity(security int8) (key *Key
 			config,
 		)
 		if err != nil {
-			return nil, errors.Wrap(err, "gopengpp: error in adding user id")
+			return nil, fmt.Errorf("gopengpp: error in adding user id: %w", err)
 		}
 	}
 

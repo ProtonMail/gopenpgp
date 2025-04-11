@@ -4,12 +4,12 @@ package armor
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/internal"
-	"github.com/pkg/errors"
 )
 
 // ArmorKey armors input as a public key.
@@ -126,7 +126,7 @@ func ArmorReader(in io.Reader) (io.Reader, error) {
 func Unarmor(input string) ([]byte, error) {
 	b, err := internal.Unarmor(input)
 	if err != nil {
-		return nil, errors.Wrap(err, "armor: unable to unarmor")
+		return nil, fmt.Errorf("armor: unable to unarmor: %w", err)
 	}
 	return io.ReadAll(b.Body)
 }
@@ -135,7 +135,7 @@ func Unarmor(input string) ([]byte, error) {
 func UnarmorBytes(input []byte) ([]byte, error) {
 	b, err := internal.UnarmorBytes(input)
 	if err != nil {
-		return nil, errors.Wrap(err, "armor: unable to unarmor")
+		return nil, fmt.Errorf("armor: unable to unarmor: %w", err)
 	}
 	return io.ReadAll(b.Body)
 }
@@ -188,13 +188,13 @@ func armorWithTypeAndHeaders(input []byte, armorType string, headers map[string]
 	w, err := armor.EncodeWithChecksumOption(&b, armorType, headers, writeChecksum)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "armor: unable to encode armoring")
+		return nil, fmt.Errorf("armor: unable to encode armoring: %w", err)
 	}
 	if _, err = w.Write(input); err != nil {
-		return nil, errors.Wrap(err, "armor: unable to write armored to buffer")
+		return nil, fmt.Errorf("armor: unable to write armored to buffer: %w", err)
 	}
 	if err := w.Close(); err != nil {
-		return nil, errors.Wrap(err, "armor: unable to close armor buffer")
+		return nil, fmt.Errorf("armor: unable to close armor buffer: %w", err)
 	}
 	return &b, nil
 }

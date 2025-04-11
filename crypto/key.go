@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -15,7 +16,6 @@ import (
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/ProtonMail/gopenpgp/v3/armor"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
-	"github.com/pkg/errors"
 )
 
 // Key contains a single private or public key.
@@ -148,7 +148,7 @@ func (key *Key) lock(passphrase []byte, profile KeyEncryptionProfile) (*Key, err
 
 	err = lockedKey.entity.EncryptPrivateKeys(passphrase, profile.KeyEncryptionConfig())
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in locking key")
+		return nil, fmt.Errorf("gopenpgp: error in locking key: %w", err)
 	}
 
 	locked, err := lockedKey.IsLocked()
@@ -210,7 +210,7 @@ func (key *Key) Serialize() ([]byte, error) {
 	}
 
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in serializing key")
+		return nil, fmt.Errorf("gopenpgp: error in serializing key: %w", err)
 	}
 
 	return buffer.Bytes(), nil
@@ -266,7 +266,7 @@ func (key *Key) GetArmoredPublicKeyWithCustomHeaders(comment, version string) (s
 func (key *Key) GetPublicKey() (b []byte, err error) {
 	var outBuf bytes.Buffer
 	if err = key.entity.Serialize(&outBuf); err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in serializing public key")
+		return nil, fmt.Errorf("gopenpgp: error in serializing public key: %w", err)
 	}
 
 	return outBuf.Bytes(), nil
@@ -469,7 +469,7 @@ func (key *Key) readFrom(r io.Reader, armored bool) error {
 		entities, err = openpgp.ReadKeyRing(r)
 	}
 	if err != nil {
-		return errors.Wrap(err, "gopenpgp: error in reading key ring")
+		return fmt.Errorf("gopenpgp: error in reading key ring: %w", err)
 	}
 
 	if len(entities) > 1 {
@@ -489,11 +489,11 @@ func generateKeyWithConfig(
 	config *packet.Config,
 ) (*Key, error) {
 	if len(email) == 0 && len(name) == 0 {
-		return nil, errors.New("gopenpgp: neither name nor email set.")
+		return nil, errors.New("gopenpgp: neither name nor email set")
 	}
 	newEntity, err := openpgp.NewEntity(name, comments, email, config)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopengpp: error in encoding new entity")
+		return nil, fmt.Errorf("gopengpp: error in encoding new entity: %w", err)
 	}
 
 	if newEntity.PrivateKey == nil {

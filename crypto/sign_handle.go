@@ -2,6 +2,8 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"time"
 	"unicode/utf8"
@@ -12,7 +14,6 @@ import (
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/internal"
-	"github.com/pkg/errors"
 )
 
 type signatureHandle struct {
@@ -227,7 +228,7 @@ func signMessageDetachedWriter(
 		Config:  config,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in signing")
+		return nil, fmt.Errorf("gopenpgp: error in signing: %w", err)
 	}
 	return ptWriter, nil
 }

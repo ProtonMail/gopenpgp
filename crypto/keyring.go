@@ -3,11 +3,12 @@ package crypto
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
-	"github.com/pkg/errors"
 )
 
 // KeyRing contains multiple private and public keys.
@@ -55,18 +56,18 @@ func (keyRing *KeyRing) AddKey(key *Key) error {
 func NewKeyRingFromBinary(binKeys []byte) (*KeyRing, error) {
 	entities, err := openpgp.ReadKeyRing(bytes.NewReader(binKeys))
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading keyring")
+		return nil, fmt.Errorf("gopenpgp: error in reading keyring: %w", err)
 	}
 
 	keyring := &KeyRing{}
 	for _, entity := range entities {
 		key, err := NewKeyFromEntity(entity)
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: error in reading keyring")
+			return nil, fmt.Errorf("gopenpgp: error in reading keyring: %w", err)
 		}
 
 		if err = keyring.AddKey(key); err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: error in reading keyring")
+			return nil, fmt.Errorf("gopenpgp: error in reading keyring: %w", err)
 		}
 	}
 
@@ -126,7 +127,7 @@ func (keyRing *KeyRing) Serialize() ([]byte, error) {
 			err = entity.SerializePrivateWithoutSigning(&buffer, nil)
 		}
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: error in serializing keyring")
+			return nil, fmt.Errorf("gopenpgp: error in serializing keyring: %w", err)
 		}
 	}
 
@@ -311,14 +312,14 @@ func (keyRing *KeyRing) Copy() (*KeyRing, error) {
 		}
 
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: unable to copy key: error in serializing entity")
+			return nil, fmt.Errorf("gopenpgp: unable to copy key: error in serializing entity: %w", err)
 		}
 
 		bt := buffer.Bytes()
 		entities[id], err = openpgp.ReadEntity(packet.NewReader(bytes.NewReader(bt)))
 
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: unable to copy key: error in reading entity")
+			return nil, fmt.Errorf("gopenpgp: unable to copy key: error in reading entity: %w", err)
 		}
 	}
 	newKeyRing.entities = entities
