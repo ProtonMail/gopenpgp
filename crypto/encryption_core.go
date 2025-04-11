@@ -1,6 +1,8 @@
 package crypto
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"time"
 
@@ -8,7 +10,6 @@ import (
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/internal"
-	"github.com/pkg/errors"
 )
 
 // pgpSplitWriter type implements the PGPSplitWriter
@@ -150,7 +151,7 @@ func (eh *encryptionHandle) encryptStream(
 		},
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
+		return nil, fmt.Errorf("gopenpgp: error in encrypting asymmetrically: %w", err)
 	}
 	return plainMessageWriter, nil
 }
@@ -182,7 +183,7 @@ func (eh *encryptionHandle) encryptStreamWithPassword(
 		},
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in encrypting asymmetrically")
+		return nil, fmt.Errorf("gopenpgp: error in encrypting asymmetrically: %w", err)
 	}
 	return plainMessageWriter, nil
 }
@@ -219,7 +220,7 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 	if eh.SessionKey.hasAlgorithm() {
 		config.DefaultCipher, err = eh.SessionKey.GetCipherFunc()
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "gopenpgp: unable to encrypt with session key")
+			return nil, nil, fmt.Errorf("gopenpgp: unable to encrypt with session key: %w", err)
 		}
 	}
 
@@ -233,13 +234,13 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 	)
 
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "gopenpgp: unable to encrypt")
+		return nil, nil, fmt.Errorf("gopenpgp: unable to encrypt: %w", err)
 	}
 
 	if algo := config.Compression(); algo != packet.CompressionNone {
 		encryptWriter, err = packet.SerializeCompressed(encryptWriter, algo, config.CompressionConfig)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "gopenpgp: error in compression")
+			return nil, nil, fmt.Errorf("gopenpgp: error in compression: %w", err)
 		}
 	}
 
@@ -251,7 +252,7 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 			Config:     config,
 		})
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "gopenpgp: unable to sign")
+			return nil, nil, fmt.Errorf("gopenpgp: unable to sign: %w", err)
 		}
 	} else {
 		encryptWriter, err = packet.SerializeLiteral(
@@ -261,7 +262,7 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 			uint32(plainMessageMetadata.Time()),
 		)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "gopenpgp: unable to serialize")
+			return nil, nil, fmt.Errorf("gopenpgp: unable to serialize: %w", err)
 		}
 	}
 	return encryptWriter, signWriter, nil

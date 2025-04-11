@@ -3,7 +3,8 @@ package crypto
 import (
 	"bytes"
 	"encoding/json"
-	goerrors "errors"
+	"errors"
+	"fmt"
 	"io"
 	"regexp"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/ProtonMail/gopenpgp/v3/armor"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/internal"
-	"github.com/pkg/errors"
 )
 
 // ---- MODELS -----
@@ -87,19 +87,19 @@ func NewPGPMessageWithCloneFlag(data []byte, doClone bool) *PGPMessage {
 func NewPGPMessageFromArmored(armored string) (*PGPMessage, error) {
 	encryptedIO, err := internal.Unarmor(armored)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in unarmoring message")
+		return nil, fmt.Errorf("gopenpgp: error in unarmoring message: %w", err)
 	}
 
 	message, err := io.ReadAll(encryptedIO.Body)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading armored message")
+		return nil, fmt.Errorf("gopenpgp: error in reading armored message: %w", err)
 	}
 	pgpMessage := &PGPMessage{
 		DataPacket: message,
 	}
 	pgpMessage, err = pgpMessage.splitMessage()
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in splitting message")
+		return nil, fmt.Errorf("gopenpgp: error in splitting message: %w", err)
 	}
 	return pgpMessage, nil
 }
@@ -177,7 +177,7 @@ func (msg *PGPMessage) EncryptionKeyIDs() ([]uint64, bool) {
 Loop:
 	for {
 		var p packet.Packet
-		if p, err = packets.Next(); goerrors.Is(err, io.EOF) {
+		if p, err = packets.Next(); errors.Is(err, io.EOF) {
 			break
 		}
 		switch p := p.(type) {
@@ -293,7 +293,7 @@ func (msg *PGPMessage) GetNumberOfKeyPackets() (int, error) {
 	var keyPacketCount int
 	for {
 		p, err := packets.Next()
-		if goerrors.Is(err, io.EOF) {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -316,7 +316,7 @@ func (msg *PGPMessage) splitMessage() (*PGPMessage, error) {
 Loop:
 	for {
 		p, err := packets.Next()
-		if goerrors.Is(err, io.EOF) {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -419,7 +419,7 @@ func SignatureKeyIDs(signature []byte) ([]uint64, bool) {
 Loop:
 	for {
 		var p packet.Packet
-		if p, err = packets.Next(); goerrors.Is(err, io.EOF) {
+		if p, err = packets.Next(); errors.Is(err, io.EOF) {
 			break
 		}
 		switch p := p.(type) {

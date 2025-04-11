@@ -2,13 +2,14 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/internal"
-	"github.com/pkg/errors"
 )
 
 type pgpSplitReader struct {
@@ -54,7 +55,7 @@ func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage
 		// Private key based decryption
 		messageDetails, err = openpgp.ReadMessage(encryptedMessage, entries, nil, config)
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: decrypting message with private keys failed")
+			return nil, fmt.Errorf("gopenpgp: decrypting message with private keys failed: %w", err)
 		}
 	} else {
 		// Password based decryption
@@ -70,7 +71,7 @@ func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage
 			}
 			if _, err := resetReader.Reset(); err != nil {
 				// Should not happen.
-				return nil, errors.Wrap(err, "gopenpgp: buffer reset failed")
+				return nil, fmt.Errorf("gopenpgp: buffer reset failed: %w", err)
 			}
 		}
 		if !foundPassword {
@@ -103,7 +104,7 @@ func (dh *decryptionHandle) decryptStream(encryptedMessage Reader) (plainMessage
 func (dh *decryptionHandle) decryptStreamWithSession(dataPacketReader Reader) (plainMessage *VerifyDataReader, err error) {
 	messageDetails, verifyTime, err := dh.decryptStreamWithSessionAndParse(dataPacketReader)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in reading message")
+		return nil, fmt.Errorf("gopenpgp: error in reading message: %w", err)
 	}
 
 	// Add utf8 sanitizer if signature has type packet.SigTypeText
@@ -141,7 +142,7 @@ func (dh *decryptionHandle) decryptStreamWithSessionAndParse(messageReader io.Re
 		}
 	}
 	if selectedSessionKey == nil {
-		return nil, 0, errors.Wrap(err, "gopenpgp: unable to decrypt message with session key")
+		return nil, 0, fmt.Errorf("gopenpgp: unable to decrypt message with session key: %w", err)
 	}
 
 	config := dh.decryptionConfig(dh.clock().Unix())
@@ -161,7 +162,7 @@ func (dh *decryptionHandle) decryptStreamWithSessionAndParse(messageReader io.Re
 	}
 	md, err := openpgp.ReadMessage(decrypted, keyring, nil, config)
 	if err != nil {
-		return nil, 0, errors.Wrap(err, "gopenpgp: unable to decode symmetric packet")
+		return nil, 0, fmt.Errorf("gopenpgp: unable to decode symmetric packet: %w", err)
 	}
 	md.SessionKey = selectedSessionKey.Key
 	md.UnverifiedBody = checkReader{decrypted, md.UnverifiedBody}
@@ -176,7 +177,7 @@ Loop:
 		packets := packet.NewReader(messageReader)
 		p, err := packets.Next()
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: unable to read symmetric packet")
+			return nil, fmt.Errorf("gopenpgp: unable to read symmetric packet: %w", err)
 		}
 
 		// Decrypt data packet
@@ -194,16 +195,16 @@ Loop:
 			if sessionKey.hasAlgorithm() {
 				dc, err = sessionKey.GetCipherFunc()
 				if err != nil {
-					return nil, errors.Wrap(err, "gopenpgp: unable to decrypt with session key")
+					return nil, fmt.Errorf("gopenpgp: unable to decrypt with session key: %w", err)
 				}
 			}
 			encryptedDataPacket, isDataPacket := p.(packet.EncryptedDataPacket)
 			if !isDataPacket {
-				return nil, errors.Wrap(err, "gopenpgp: unknown data packet")
+				return nil, fmt.Errorf("gopenpgp: unknown data packet: %w", err)
 			}
 			decrypted, err = encryptedDataPacket.Decrypt(dc, sessionKey.Key)
 			if err != nil {
-				return nil, errors.Wrap(err, "gopenpgp: unable to decrypt symmetric packet")
+				return nil, fmt.Errorf("gopenpgp: unable to decrypt symmetric packet: %w", err)
 			}
 			break Loop
 		default:
@@ -222,13 +223,13 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 		// Decrypt with session key.
 		mdData, _, err = dh.decryptStreamWithSessionAndParse(encryptedData)
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: error in reading data message")
+			return nil, fmt.Errorf("gopenpgp: error in reading data message: %w", err)
 		}
 		if !isPlaintextSignature {
 			// Decrypting reader for the encrypted signature
 			mdSig, _, err := dh.decryptStreamWithSessionAndParse(encryptedSignature)
 			if err != nil {
-				return nil, errors.Wrap(err, "gopenpgp: error in reading detached signature message")
+				return nil, fmt.Errorf("gopenpgp: error in reading detached signature message: %w", err)
 			}
 			signature = mdSig.UnverifiedBody
 		}
@@ -253,16 +254,16 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 				}
 				if _, err := resetReader.Reset(); err != nil {
 					// Should not happen
-					return nil, errors.Wrap(err, "gopenpgp: buffer reset failed")
+					return nil, fmt.Errorf("gopenpgp: buffer reset failed: %w", err)
 				}
 			}
 			if selectedPassword == nil {
-				return nil, errors.Wrap(err, "gopenpgp: error in reading data message: no password matched")
+				return nil, fmt.Errorf("gopenpgp: error in reading data message: no password matched: %w", err)
 			}
 		} else {
 			mdData, err = openpgp.ReadMessage(encryptedData, entries, nil, config)
 			if err != nil {
-				return nil, errors.Wrap(err, "gopenpgp: error in reading data message")
+				return nil, fmt.Errorf("gopenpgp: error in reading data message: %w", err)
 			}
 		}
 
@@ -273,7 +274,7 @@ func (dh *decryptionHandle) decryptStreamAndVerifyDetached(encryptedData, encryp
 			config.CheckPacketSequence = &noCheckPacketSequence
 			mdSig, err := openpgp.ReadMessage(encryptedSignature, entries, prompt, config)
 			if err != nil {
-				return nil, errors.Wrap(err, "gopenpgp: error in reading detached signature message")
+				return nil, fmt.Errorf("gopenpgp: error in reading detached signature message: %w", err)
 			}
 			signature = mdSig.UnverifiedBody
 		}
@@ -308,7 +309,7 @@ func getSignaturePacket(sig []byte) (*packet.Signature, error) {
 	}
 	sigPacket, ok := p.(*packet.Signature)
 	if !ok {
-		return nil, errors.Wrap(err, "gopenpgp: invalid signature packet")
+		return nil, fmt.Errorf("gopenpgp: invalid signature packet: %w", err)
 	}
 	return sigPacket, nil
 }

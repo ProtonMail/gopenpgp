@@ -2,6 +2,8 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
@@ -10,7 +12,6 @@ import (
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/internal"
-	"github.com/pkg/errors"
 )
 
 type verifyHandle struct {
@@ -52,7 +53,7 @@ func (vh *verifyHandle) VerifyingReader(detachedData, signatureMessage Reader, e
 		// Wrap with decode armor reader.
 		armoredBlock, err := armor.Decode(signatureMessage)
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: unarmor failed")
+			return nil, fmt.Errorf("gopenpgp: unarmor failed: %w", err)
 		}
 		signatureMessage = armoredBlock.Body
 	}
@@ -81,11 +82,11 @@ func (vh *verifyHandle) VerifyDetached(data, signature []byte, encoding int8) (v
 	detachedDataReader := bytes.NewReader(data)
 	ptReader, err := vh.VerifyingReader(detachedDataReader, signatureMessageReader, encoding)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: verifying signature failed")
+		return nil, fmt.Errorf("gopenpgp: verifying signature failed: %w", err)
 	}
 	_, err = io.Copy(io.Discard, ptReader)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: reading data to verify signature failed")
+		return nil, fmt.Errorf("gopenpgp: reading data to verify signature failed: %w", err)
 	}
 	return ptReader.VerifySignature()
 }
@@ -101,15 +102,15 @@ func (vh *verifyHandle) VerifyInline(message []byte, encoding int8) (verifyDataR
 	messageReader := bytes.NewReader(message)
 	ptReader, err = vh.VerifyingReader(nil, messageReader, encoding)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: verifying signature failed")
+		return nil, fmt.Errorf("gopenpgp: verifying signature failed: %w", err)
 	}
 	data, err := ptReader.ReadAll()
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: reading data to verify signature failed")
+		return nil, fmt.Errorf("gopenpgp: reading data to verify signature failed: %w", err)
 	}
 	verifyResult, err := ptReader.VerifySignature()
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: verifying signature failed")
+		return nil, fmt.Errorf("gopenpgp: verifying signature failed: %w", err)
 	}
 	verifyDataResult = &VerifiedDataResult{
 		data:         data,
@@ -143,11 +144,11 @@ func (vh *verifyHandle) verifyDetachedSignature(
 	signatureReader := bytes.NewReader(signature)
 	ptReader, err := vh.verifyingDetachedReader(origText, signatureReader)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: verify signature failed")
+		return nil, fmt.Errorf("gopenpgp: verify signature failed: %w", err)
 	}
 	_, err = io.Copy(io.Discard, ptReader)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: reading all data from plaintext reader failed")
+		return nil, fmt.Errorf("gopenpgp: reading all data from plaintext reader failed: %w", err)
 	}
 	return ptReader.VerifySignature()
 }
@@ -170,7 +171,7 @@ func (vh *verifyHandle) verifyingReader(
 		config,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: initialize signature reader failed")
+		return nil, fmt.Errorf("gopenpgp: initialize signature reader failed: %w", err)
 	}
 	return &VerifyDataReader{
 		md,
@@ -209,7 +210,7 @@ func (vh *verifyHandle) verifyCleartext(cleartext []byte) (*VerifyCleartextResul
 	}
 	signature, err := io.ReadAll(block.ArmoredSignature.Body)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: signature not parsable in cleartext")
+		return nil, fmt.Errorf("gopenpgp: signature not parsable in cleartext: %w", err)
 	}
 	reader := bytes.NewReader(block.Bytes)
 	result, err := vh.verifyDetachedSignature(
@@ -217,7 +218,7 @@ func (vh *verifyHandle) verifyCleartext(cleartext []byte) (*VerifyCleartextResul
 		signature,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: cleartext verify failed with non-signature error")
+		return nil, fmt.Errorf("gopenpgp: cleartext verify failed with non-signature error: %w", err)
 	}
 	return &VerifyCleartextResult{
 		VerifyResult: *result,
@@ -250,7 +251,7 @@ func verifyingDetachedReader(
 		config,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: verify signature reader failed")
+		return nil, fmt.Errorf("gopenpgp: verify signature reader failed: %w", err)
 	}
 	internalReader := md.UnverifiedBody
 	if len(md.SignatureCandidates) > 0 &&

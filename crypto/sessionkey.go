@@ -2,11 +2,11 @@ package crypto
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 
 	"github.com/ProtonMail/gopenpgp/v3/constants"
-	"github.com/pkg/errors"
 
 	pgpErrors "github.com/ProtonMail/go-crypto/openpgp/errors"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
@@ -100,7 +100,7 @@ func RandomToken(size int) ([]byte, error) {
 	config := &packet.Config{DefaultCipher: packet.CipherAES256}
 	symKey := make([]byte, size)
 	if _, err := io.ReadFull(config.Random(), symKey); err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: error in generating random token")
+		return nil, fmt.Errorf("gopenpgp: error in generating random token: %w", err)
 	}
 	return symKey, nil
 }
@@ -219,7 +219,7 @@ func newSessionKeyFromEncrypted(ek *packet.EncryptedKey) (*SessionKey, error) {
 	}
 	if ek.Version < 6 {
 		if err := sk.checkSize(); err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: unable to decrypt session key")
+			return nil, fmt.Errorf("gopenpgp: unable to decrypt session key: %w", err)
 		}
 	}
 	return sk, nil

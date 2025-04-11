@@ -3,13 +3,13 @@ package crypto
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"io"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 

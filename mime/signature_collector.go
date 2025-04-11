@@ -2,6 +2,8 @@ package mime
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"mime"
 	"net/textproto"
@@ -12,7 +14,6 @@ import (
 	"github.com/ProtonMail/gopenpgp/v3/internal"
 
 	gomime "github.com/ProtonMail/go-mime"
-	"github.com/pkg/errors"
 )
 
 // signatureCollector structure.
@@ -59,7 +60,7 @@ func (sc *signatureCollector) Accept(
 		sc.verified = newSignatureNotSigned()
 		// Invalid multipart/signed format just pass along
 		if _, err = io.ReadAll(rawBody); err != nil {
-			return errors.Wrap(err, "mime: error in reading raw message body")
+			return fmt.Errorf("mime: error in reading raw message body: %w", err)
 		}
 
 		for i, p := range multiparts {
@@ -73,12 +74,12 @@ func (sc *signatureCollector) Accept(
 	// actual multipart/signed format
 	err = sc.target.Accept(multiparts[0], multipartHeaders[0], hasPlainChild, true, true)
 	if err != nil {
-		return errors.Wrap(err, "mime: error in parsing body")
+		return fmt.Errorf("mime: error in parsing body: %w", err)
 	}
 
 	partData, err := io.ReadAll(multiparts[1])
 	if err != nil {
-		return errors.Wrap(err, "mime: error in ready part data")
+		return fmt.Errorf("mime: error in ready part data: %w", err)
 	}
 
 	decodedPart := gomime.DecodeContentEncoding(
@@ -87,12 +88,12 @@ func (sc *signatureCollector) Accept(
 
 	buffer, err := io.ReadAll(decodedPart)
 	if err != nil {
-		return errors.Wrap(err, "mime: error in reading decoded data")
+		return fmt.Errorf("mime: error in reading decoded data: %w", err)
 	}
 	mediaType, _, _ := mime.ParseMediaType(header.Get("Content-Type"))
 	buffer, err = gomime.DecodeCharset(buffer, mediaType, params)
 	if err != nil {
-		return errors.Wrap(err, "mime: error in decoding charset")
+		return fmt.Errorf("mime: error in decoding charset: %w", err)
 	}
 	sc.signature = string(buffer)
 	str, _ := io.ReadAll(rawBody)
@@ -103,7 +104,7 @@ func (sc *signatureCollector) Accept(
 			return newSignatureNoVerifier()
 		}
 		if err != nil {
-			return errors.Wrap(err, "mime: signature verification failed")
+			return fmt.Errorf("mime: signature verification failed: %w", err)
 		}
 		sc.verified = verifyResult.SignatureError()
 	} else {

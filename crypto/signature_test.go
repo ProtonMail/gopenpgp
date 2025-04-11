@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"io"
 	"os"
 	"regexp"
@@ -12,7 +13,6 @@ import (
 	"github.com/ProtonMail/gopenpgp/v3/armor"
 	"github.com/ProtonMail/gopenpgp/v3/constants"
 	"github.com/ProtonMail/gopenpgp/v3/internal"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 

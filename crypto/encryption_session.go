@@ -2,12 +2,13 @@ package crypto
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"strconv"
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/pkg/errors"
 )
 
 // decryptSessionKey returns the decrypted session key from one or multiple binary encrypted session key packets.
@@ -59,14 +60,14 @@ Loop:
 
 	if !hasPacket {
 		if err != nil {
-			return nil, errors.Wrap(err, "gopenpgp: couldn't find a session key packet")
+			return nil, fmt.Errorf("gopenpgp: couldn't find a session key packet: %w", err)
 		} else {
 			return nil, errors.New("gopenpgp: couldn't find a session key packet")
 		}
 	}
 
 	if decryptErr != nil {
-		return nil, errors.Wrap(decryptErr, "gopenpgp: error in decrypting")
+		return nil, fmt.Errorf("gopenpgp: error in decrypting: %w", decryptErr)
 	}
 
 	if ek == nil || ek.Key == nil {
@@ -109,7 +110,7 @@ func encryptSessionKeyToWriter(
 		cf, err = sk.GetCipherFunc()
 	}
 	if err != nil {
-		return errors.Wrap(err, "gopenpgp: unable to encrypt session key")
+		return fmt.Errorf("gopenpgp: unable to encrypt session key: %w", err)
 	}
 	pubKeys := make([]*packet.PublicKey, 0, len(recipients.getEntities())+len(hiddenRecipients.getEntities()))
 	aeadSupport := config.AEAD() != nil
@@ -120,7 +121,7 @@ func encryptSessionKeyToWriter(
 		}
 		primarySelfSignature, _ := e.PrimarySelfSignature(date, config)
 		if primarySelfSignature == nil {
-			return errors.Wrap(err, "gopenpgp: entity without a self-signature")
+			return fmt.Errorf("gopenpgp: entity without a self-signature: %w", err)
 		}
 
 		if !primarySelfSignature.SEIPDv2 {
@@ -139,7 +140,7 @@ func encryptSessionKeyToWriter(
 		isHidden := index >= len(recipients.getEntities())
 		err := packet.SerializeEncryptedKeyAEADwithHiddenOption(outputWriter, pub, cf, aeadSupport, sk.Key, isHidden, nil)
 		if err != nil {
-			return errors.Wrap(err, "gopenpgp: cannot set key")
+			return fmt.Errorf("gopenpgp: cannot set key: %w", err)
 		}
 	}
 	return nil
@@ -176,7 +177,7 @@ func decryptSessionKeyWithPassword(keyPacket, password []byte) (*SessionKey, err
 				}
 
 				if err = sk.checkSize(); !sk.v6 && err != nil {
-					return nil, errors.Wrap(err, "gopenpgp: unable to decrypt session key with password")
+					return nil, fmt.Errorf("gopenpgp: unable to decrypt session key with password: %w", err)
 				}
 
 				return sk, nil
@@ -205,7 +206,7 @@ func encryptSessionKeyWithPasswordToWriter(password []byte, sk *SessionKey, outp
 	} else {
 		cf, err = sk.GetCipherFunc()
 		if err != nil {
-			return errors.Wrap(err, "gopenpgp: unable to encrypt session key with password")
+			return fmt.Errorf("gopenpgp: unable to encrypt session key with password: %w", err)
 		}
 	}
 	useAead := sk.v6
@@ -215,13 +216,13 @@ func encryptSessionKeyWithPasswordToWriter(password []byte, sk *SessionKey, outp
 	}
 
 	if err = sk.checkSize(); !sk.v6 && err != nil {
-		return errors.Wrap(err, "gopenpgp: unable to encrypt session key with password")
+		return fmt.Errorf("gopenpgp: unable to encrypt session key with password: %w", err)
 	}
 	config.DefaultCipher = cf
 
 	err = packet.SerializeSymmetricKeyEncryptedAEADReuseKey(outputWriter, sk.Key, password, useAead, config)
 	if err != nil {
-		return errors.Wrap(err, "gopenpgp: unable to encrypt session key with password")
+		return fmt.Errorf("gopenpgp: unable to encrypt session key with password: %w", err)
 	}
 	return nil
 }

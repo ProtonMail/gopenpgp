@@ -1,10 +1,11 @@
 package crypto
 
 import (
+	"errors"
+	"fmt"
 	"io"
 
 	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
-	"github.com/pkg/errors"
 )
 
 // VerifyDataReader is used for reading data that should be verified with a signature.
@@ -72,7 +73,7 @@ func (msg *VerifyDataReader) DiscardAll() (err error) {
 func (msg *VerifyDataReader) DiscardAllAndVerifySignature() (vr *VerifyResult, err error) {
 	err = msg.DiscardAll()
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: discarding data from reader failed")
+		return nil, fmt.Errorf("gopenpgp: discarding data from reader failed: %w", err)
 	}
 	return msg.VerifySignature()
 }
@@ -83,7 +84,7 @@ func (msg *VerifyDataReader) DiscardAllAndVerifySignature() (vr *VerifyResult, e
 func (msg *VerifyDataReader) ReadAllAndVerifySignature() (*VerifiedDataResult, error) {
 	plaintext, err := msg.ReadAll()
 	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: reading all data from reader failed")
+		return nil, fmt.Errorf("gopenpgp: reading all data from reader failed: %w", err)
 	}
 	verifyResult, err := msg.VerifySignature()
 	return &VerifiedDataResult{
