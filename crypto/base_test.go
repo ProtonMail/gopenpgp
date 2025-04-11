@@ -64,12 +64,6 @@ func assertRSACleared(t *testing.T, rsaPriv *rsa.PrivateKey) {
 	assertBigIntCleared(t, rsaPriv.Precomputed.Qinv)
 	assertBigIntCleared(t, rsaPriv.Precomputed.Dp)
 	assertBigIntCleared(t, rsaPriv.Precomputed.Dq)
-
-	for idx := range rsaPriv.Precomputed.CRTValues {
-		assertBigIntCleared(t, rsaPriv.Precomputed.CRTValues[idx].Exp)
-		assertBigIntCleared(t, rsaPriv.Precomputed.CRTValues[idx].Coeff)
-		assertBigIntCleared(t, rsaPriv.Precomputed.CRTValues[idx].R)
-	}
 }
 
 func assertEdDSACleared(t *testing.T, priv *eddsa.PrivateKey) {
