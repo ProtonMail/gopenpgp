@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main, v3 ]
+    branches: [ main, Proton ]
 
 jobs:
   build:
@@ -18,9 +18,9 @@ jobs:
         java-version: 1.8
 
     - name: Set up Go 1.x
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v5
       with:
-        go-version: ^1.16
+        go-version: '^1.16'
       id: go
 
     - name: Install NDK
