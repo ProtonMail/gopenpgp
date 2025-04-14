@@ -50,6 +50,8 @@ type Custom struct {
 	InsecureAllowWeakRSA bool
 	// InsecureAllowDecryptionWithSigningKeys is a flag to enable to decrypt with signing keys for compatibility reasons.
 	InsecureAllowDecryptionWithSigningKeys bool
+	// InsecureAllowAllKeyFlagsWhenMissing is a flag to enable encryption even if flags are missing from the key.
+	InsecureAllowAllKeyFlagsWhenMissing bool
 }
 
 // Custom implements the profile interfaces:
@@ -75,6 +77,7 @@ func (p *Custom) EncryptionConfig() *packet.Config {
 		AEADConfig:                             p.AeadEncryption,
 		S2KConfig:                              p.S2kEncryption,
 		InsecureAllowDecryptionWithSigningKeys: p.InsecureAllowDecryptionWithSigningKeys,
+		InsecureAllowAllKeyFlagsWhenMissing:    p.InsecureAllowAllKeyFlagsWhenMissing,
 	}
 	if p.DisableIntendedRecipients {
 		intendedRecipients := false
