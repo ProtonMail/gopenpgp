@@ -237,14 +237,8 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 		return nil, nil, fmt.Errorf("gopenpgp: unable to encrypt: %w", err)
 	}
 
-	if algo := config.Compression(); algo != packet.CompressionNone {
-		encryptWriter, err = packet.SerializeCompressed(encryptWriter, algo, config.CompressionConfig)
-		if err != nil {
-			return nil, nil, fmt.Errorf("gopenpgp: error in compression: %w", err)
-		}
-	}
-
 	if signers != nil {
+		// SignWithParams handles compression.
 		signWriter, err = openpgp.SignWithParams(encryptWriter, signers, &openpgp.SignParams{
 			Hints:      hints,
 			TextSig:    eh.IsUTF8,
@@ -255,6 +249,13 @@ func (eh *encryptionHandle) encryptStreamWithSessionKeyHelper(
 			return nil, nil, fmt.Errorf("gopenpgp: unable to sign: %w", err)
 		}
 	} else {
+		// We need to handle compression outside of go-crypto.
+		if algo := config.Compression(); algo != packet.CompressionNone {
+			encryptWriter, err = packet.SerializeCompressed(encryptWriter, algo, config.CompressionConfig)
+			if err != nil {
+				return nil, nil, fmt.Errorf("gopenpgp: error in compression: %w", err)
+			}
+		}
 		encryptWriter, err = packet.SerializeLiteral(
 			encryptWriter,
 			!plainMessageMetadata.IsUtf8(),
