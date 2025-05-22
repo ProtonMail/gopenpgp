@@ -83,7 +83,12 @@ func RFC9580() *Custom {
 
 func PQC() *Custom {
 	setKeyAlgorithm := func(cfg *packet.Config, securityLevel int8) {
-		cfg.Algorithm = packet.PubKeyAlgoMldsa65Ed25519
+		switch securityLevel {
+		case constants.HighSecurity:
+			cfg.Algorithm = packet.PubKeyAlgoMldsa87Ed448
+		default:
+			cfg.Algorithm = packet.PubKeyAlgoMldsa65Ed25519
+		}
 	}
 	return &Custom{
 		SetKeyAlgorithm:      setKeyAlgorithm,
