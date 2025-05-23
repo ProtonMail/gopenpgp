@@ -352,6 +352,11 @@ func (dh *decryptionHandle) decryptionConfig(configTime int64) *packet.Config {
 	// Should the session key be returned.
 	config.CacheSessionKey = dh.RetrieveSessionKey
 
+	// Set max decompression size if set.
+	if dh.MaxDecompressedSize != 0 {
+		config.MaxDecompressedMessageSize = &dh.MaxDecompressedSize
+	}
+
 	// Set time.
 	config.Time = NewConstantClock(configTime)
 	return config
