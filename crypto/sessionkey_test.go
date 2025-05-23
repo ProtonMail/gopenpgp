@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
@@ -371,7 +371,7 @@ func TestAsymmetricKeyPacketDecryptionFailure(t *testing.T) {
 }
 
 func TestAEADDataPacketDecryption(t *testing.T) {
-	pgpMessageData, err := ioutil.ReadFile("testdata/gpg2.3-aead-pgp-message.pgp")
+	pgpMessageData, err := os.ReadFile("testdata/gpg2.3-aead-pgp-message.pgp")
 	if err != nil {
 		t.Fatal("Expected no error when reading message data, got:", err)
 	}
@@ -410,7 +410,7 @@ func TestAEADDataPacketDecryption(t *testing.T) {
 }
 
 func TestSEDDecryption(t *testing.T) {
-	pgpMessageData, err := ioutil.ReadFile("testdata/sed_message")
+	pgpMessageData, err := os.ReadFile("testdata/sed_message")
 	if err != nil {
 		t.Fatal("Expected no error when reading message data, got:", err)
 	}

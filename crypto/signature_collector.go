@@ -49,7 +49,7 @@ func (sc *SignatureCollector) Accept(
 	newPart, rawBody := gomime.GetRawMimePart(part, "--"+params["boundary"])
 	multiparts, multipartHeaders, err := gomime.GetMultipartParts(newPart, params)
 	if err != nil {
-		return
+		return err
 	}
 
 	hasPlainChild := false
@@ -66,10 +66,10 @@ func (sc *SignatureCollector) Accept(
 
 		for i, p := range multiparts {
 			if err = sc.target.Accept(p, multipartHeaders[i], hasPlainChild, true, true); err != nil {
-				return
+				return err
 			}
 		}
-		return
+		return nil
 	}
 
 	// actual multipart/signed format

@@ -225,7 +225,7 @@ func TestExplicitVerifyAllGoesWell(t *testing.T) {
 	}
 	_, err = io.ReadAll(reader)
 	if err != nil {
-		t.Fatalf("Expected no error while reading, got:", err)
+		t.Fatal("Expected no error while reading, got:", err)
 	}
 	sigErr, err := VerifySignatureExplicit(reader)
 	if sigErr != nil {
@@ -290,7 +290,7 @@ func TestExplicitVerifyNoSig(t *testing.T) {
 	}
 	_, err = io.ReadAll(reader)
 	if err != nil {
-		t.Fatalf("Expected no error while reading, got:", err)
+		t.Fatal("Expected no error while reading, got:", err)
 	}
 	sigErr, err := VerifySignatureExplicit(reader)
 	if sigErr == nil {
@@ -330,7 +330,7 @@ func TestExplicitVerifyWrongVerifier(t *testing.T) {
 	}
 	_, err = io.ReadAll(reader)
 	if err != nil {
-		t.Fatalf("Expected no error while reading, got:", err)
+		t.Fatal("Expected no error while reading, got:", err)
 	}
 	sigErr, err := VerifySignatureExplicit(reader)
 	if sigErr == nil {
