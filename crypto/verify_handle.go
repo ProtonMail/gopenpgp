@@ -17,6 +17,7 @@ import (
 type verifyHandle struct {
 	VerifyKeyRing                *KeyRing
 	VerificationContext          *VerificationContext
+	MaxDecompressedSize          int64
 	DisableVerifyTimeCheck       bool
 	DisableStrictMessageParsing  bool
 	DisableAutomaticTextSanitize bool
@@ -161,6 +162,9 @@ func (vh *verifyHandle) verifyingReader(
 	config.CheckPacketSequence = &checkPacketSequence
 	verifyTime := vh.clock().Unix()
 	config.Time = NewConstantClock(verifyTime)
+	if vh.MaxDecompressedSize != 0 {
+		config.MaxDecompressedMessageSize = &vh.MaxDecompressedSize
+	}
 	if vh.VerificationContext != nil {
 		config.KnownNotations = map[string]bool{constants.SignatureContextName: true}
 	}

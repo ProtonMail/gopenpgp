@@ -30,6 +30,9 @@ type decryptionHandle struct {
 	// VerificationContext provides a verification context for the signature of the pgp message, if any.
 	// Only considered if VerifyKeyRing is not nil.
 	VerificationContext *VerificationContext
+	// MaxDecompressedSize defines the maximum number of bytes allowed for a message
+	// after decompression. An error is thrown if the decompressed data exceeds this limit.
+	MaxDecompressedSize int64
 	// PlainDetachedSignature indicates that all provided detached signatures are not encrypted.
 	PlainDetachedSignature bool
 	// DisableIntendedRecipients indicates if the signature verification should not check if

@@ -80,6 +80,14 @@ func (vhb *VerifyHandleBuilder) DisableAutomaticTextSanitize() *VerifyHandleBuil
 	return vhb
 }
 
+// MaxDecompressedMessageSize specifies the maximum allowed size, in bytes,
+// for a message after decompression within an inline-signed message.
+// If the decompressed message exceeds this limit, an error is returned.
+func (vhb *VerifyHandleBuilder) MaxDecompressedMessageSize(size int64) *VerifyHandleBuilder {
+	vhb.handle.MaxDecompressedSize = size
+	return vhb
+}
+
 // New creates a VerifyHandle and checks that the given
 // combination of parameters is valid. If the parameters are invalid,
 // an error is returned.

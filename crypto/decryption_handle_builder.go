@@ -123,6 +123,13 @@ func (dpb *DecryptionHandleBuilder) PlainDetachedSignature() *DecryptionHandleBu
 	return dpb
 }
 
+// MaxDecompressedMessageSize defines the maximum number of bytes allowed for a message
+// after decompression. An error is thrown if the decompressed data exceeds this limit.
+func (dpb *DecryptionHandleBuilder) MaxDecompressedMessageSize(size int64) *DecryptionHandleBuilder {
+	dpb.handle.MaxDecompressedSize = size
+	return dpb
+}
+
 // DisableVerifyTimeCheck disables the check for comparing the signature creation time
 // against the verification time.
 func (dpb *DecryptionHandleBuilder) DisableVerifyTimeCheck() *DecryptionHandleBuilder {
