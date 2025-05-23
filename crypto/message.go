@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	goerrors "errors"
 	"io"
-	"io/ioutil"
 	"regexp"
 	"strings"
 	"time"
@@ -114,7 +113,7 @@ func NewPGPMessageFromArmored(armored string) (*PGPMessage, error) {
 		return nil, errors.Wrap(err, "gopenpgp: error in unarmoring message")
 	}
 
-	message, err := ioutil.ReadAll(encryptedIO.Body)
+	message, err := io.ReadAll(encryptedIO.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in reading armored message")
 	}
@@ -159,7 +158,7 @@ func NewPGPSignatureFromArmored(armored string) (*PGPSignature, error) {
 		return nil, errors.Wrap(err, "gopenpgp: error in unarmoring signature")
 	}
 
-	signature, err := ioutil.ReadAll(encryptedIO.Body)
+	signature, err := io.ReadAll(encryptedIO.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in reading armored signature")
 	}
@@ -186,7 +185,7 @@ func NewClearTextMessageFromArmored(signedMessage string) (*ClearTextMessage, er
 		return nil, errors.New("gopenpgp: extra data after modulus")
 	}
 
-	signature, err := ioutil.ReadAll(modulusBlock.ArmoredSignature.Body)
+	signature, err := io.ReadAll(modulusBlock.ArmoredSignature.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in reading cleartext message")
 	}

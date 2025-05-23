@@ -2,7 +2,7 @@ package crypto
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/mail"
 	"net/textproto"
 	"strings"
@@ -89,7 +89,7 @@ func parseMIME(
 	config := &packet.Config{DefaultCipher: packet.CipherAES256, Time: getTimeGenerator()}
 
 	h := textproto.MIMEHeader(mm.Header)
-	mmBodyData, err := ioutil.ReadAll(mm.Body)
+	mmBodyData, err := io.ReadAll(mm.Body)
 	if err != nil {
 		return nil, nil, nil, errors.Wrap(err, "gopenpgp: error in reading message body data")
 	}

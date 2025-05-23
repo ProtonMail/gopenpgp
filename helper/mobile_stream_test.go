@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"errors"
 	"io"
-	"io/ioutil"
 	"testing"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
@@ -224,9 +223,9 @@ func TestExplicitVerifyAllGoesWell(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Got an error while decrypting stream data: %v", err)
 	}
-	_, err = ioutil.ReadAll(reader)
+	_, err = io.ReadAll(reader)
 	if err != nil {
-		t.Fatalf("Got an error while reading decrypted data: %v", err)
+		t.Fatal("Expected no error while reading, got:", err)
 	}
 	sigErr, err := VerifySignatureExplicit(reader)
 	if sigErr != nil {
@@ -289,9 +288,9 @@ func TestExplicitVerifyNoSig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Got an error while decrypting stream data: %v", err)
 	}
-	_, err = ioutil.ReadAll(reader)
+	_, err = io.ReadAll(reader)
 	if err != nil {
-		t.Fatalf("Got an error while reading decrypted data: %v", err)
+		t.Fatal("Expected no error while reading, got:", err)
 	}
 	sigErr, err := VerifySignatureExplicit(reader)
 	if sigErr == nil {
@@ -329,9 +328,9 @@ func TestExplicitVerifyWrongVerifier(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Got an error while decrypting stream data: %v", err)
 	}
-	_, err = ioutil.ReadAll(reader)
+	_, err = io.ReadAll(reader)
 	if err != nil {
-		t.Fatalf("Got an error while reading decrypted data: %v", err)
+		t.Fatal("Expected no error while reading, got:", err)
 	}
 	sigErr, err := VerifySignatureExplicit(reader)
 	if sigErr == nil {

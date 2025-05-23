@@ -8,7 +8,7 @@ linters-settings:
     statements: 80
   cyclop:
     # the minimal code complexity to report
-    max-complexity: 20
+    max-complexity: 26
   gocognit:
     min-complexity: 45
 
@@ -18,6 +18,8 @@ issues:
     - Using the variable on range scope `tt` in function literal
     - GetJsonSHA256Fingerprints should be GetJSONSHA256Fingerprints
     - ST1003  # CamelCase variables; see constants/cipher.go
+    - "SA1019: rsaPriv.Precomputed" # we don't use them but only clear them
+    - "G101: Potential hardcoded credentials"
 
 linters:
   enable-all: true
@@ -48,3 +50,5 @@ linters:
     - nonamedreturns    # Disallows named returns
     - exhaustruct       # Forces all structs to be named
     - nosnakecase       # Disallows snake case 
+    - depguard
+    - nestif

@@ -3,7 +3,6 @@ package crypto
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"reflect"
 	"testing"
 
@@ -56,7 +55,7 @@ func TestSessionKey_EncryptDecryptStream(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while calling DecryptStream, got:", err)
 	}
-	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
@@ -105,7 +104,7 @@ func TestSessionKey_EncryptDecryptStreamWithContext(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while calling DecryptStream, got:", err)
 	}
-	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
@@ -154,7 +153,7 @@ func TestSessionKey_EncryptDecryptStreamWithContextAndCompression(t *testing.T) 
 	if err != nil {
 		t.Fatal("Expected no error while calling DecryptStream, got:", err)
 	}
-	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
@@ -273,7 +272,7 @@ func TestSessionKey_DecryptStreamCompatible(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while calling DecryptStream, got:", err)
 	}
-	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}

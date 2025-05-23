@@ -2,8 +2,8 @@ package crypto
 
 import (
 	"crypto/rsa"
-	"io/ioutil"
 	"math/big"
+	"os"
 	"strings"
 	"testing"
 
@@ -16,7 +16,7 @@ import (
 const testTime = 1557754627 // 2019-05-13T13:37:07+00:00
 
 func readTestFile(name string, trimNewlines bool) string {
-	data, err := ioutil.ReadFile("testdata/" + name) //nolint
+	data, err := os.ReadFile("testdata/" + name) //nolint
 	if err != nil {
 		panic(err)
 	}

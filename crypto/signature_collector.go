@@ -3,7 +3,6 @@ package crypto
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net/textproto"
 
@@ -50,7 +49,7 @@ func (sc *SignatureCollector) Accept(
 	newPart, rawBody := gomime.GetRawMimePart(part, "--"+params["boundary"])
 	multiparts, multipartHeaders, err := gomime.GetMultipartParts(newPart, params)
 	if err != nil {
-		return
+		return err
 	}
 
 	hasPlainChild := false
@@ -61,16 +60,16 @@ func (sc *SignatureCollector) Accept(
 	if len(multiparts) != 2 {
 		sc.verified = newSignatureNotSigned()
 		// Invalid multipart/signed format just pass along
-		if _, err = ioutil.ReadAll(rawBody); err != nil {
+		if _, err = io.ReadAll(rawBody); err != nil {
 			return errors.Wrap(err, "gopenpgp: error in reading raw message body")
 		}
 
 		for i, p := range multiparts {
 			if err = sc.target.Accept(p, multipartHeaders[i], hasPlainChild, true, true); err != nil {
-				return
+				return err
 			}
 		}
-		return
+		return nil
 	}
 
 	// actual multipart/signed format
@@ -79,7 +78,7 @@ func (sc *SignatureCollector) Accept(
 		return errors.Wrap(err, "gopenpgp: error in parsing body")
 	}
 
-	partData, err := ioutil.ReadAll(multiparts[1])
+	partData, err := io.ReadAll(multiparts[1])
 	if err != nil {
 		return errors.Wrap(err, "gopenpgp: error in ready part data")
 	}
@@ -88,7 +87,7 @@ func (sc *SignatureCollector) Accept(
 		bytes.NewReader(partData),
 		multipartHeaders[1].Get("Content-Transfer-Encoding"))
 
-	buffer, err := ioutil.ReadAll(decodedPart)
+	buffer, err := io.ReadAll(decodedPart)
 	if err != nil {
 		return errors.Wrap(err, "gopenpgp: error in reading decoded data")
 	}
@@ -98,7 +97,7 @@ func (sc *SignatureCollector) Accept(
 		return errors.Wrap(err, "gopenpgp: error in decoding charset")
 	}
 	sc.signature = string(buffer)
-	str, _ := ioutil.ReadAll(rawBody)
+	str, _ := io.ReadAll(rawBody)
 	canonicalizedBody := internal.Canonicalize(internal.TrimEachLine(string(str)))
 	rawBody = bytes.NewReader([]byte(canonicalizedBody))
 	if sc.keyring != nil {

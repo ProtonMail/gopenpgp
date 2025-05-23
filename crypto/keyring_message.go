@@ -3,7 +3,6 @@ package crypto
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
@@ -292,7 +291,7 @@ func asymmetricDecrypt(
 		return nil, err
 	}
 
-	body, err := ioutil.ReadAll(messageDetails.UnverifiedBody)
+	body, err := io.ReadAll(messageDetails.UnverifiedBody)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopenpgp: error in reading message body")
 	}

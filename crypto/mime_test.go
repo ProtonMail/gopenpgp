@@ -2,7 +2,7 @@ package crypto
 
 import (
 	"errors"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -121,7 +121,7 @@ func (tc *testMIMECallbacks) OnError(err error) {
 }
 
 func loadPrivateKeyRing(file string, passphrase string) (*KeyRing, error) {
-	armored, err := ioutil.ReadFile(filepath.Clean(file))
+	armored, err := os.ReadFile(filepath.Clean(file))
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func loadPrivateKeyRing(file string, passphrase string) (*KeyRing, error) {
 }
 
 func loadPublicKeyRing(file string) (*KeyRing, error) {
-	armored, err := ioutil.ReadFile(filepath.Clean(file))
+	armored, err := os.ReadFile(filepath.Clean(file))
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func loadPublicKeyRing(file string) (*KeyRing, error) {
 }
 
 func loadMessage(file string) (*PGPMessage, error) {
-	armored, err := ioutil.ReadFile(filepath.Clean(file))
+	armored, err := os.ReadFile(filepath.Clean(file))
 	if err != nil {
 		return nil, err
 	}

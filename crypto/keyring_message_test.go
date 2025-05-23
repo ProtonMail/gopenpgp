@@ -1,14 +1,14 @@
 package crypto
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAEADKeyRingDecryption(t *testing.T) {
-	pgpMessageData, err := ioutil.ReadFile("testdata/gpg2.3-aead-pgp-message.pgp")
+	pgpMessageData, err := os.ReadFile("testdata/gpg2.3-aead-pgp-message.pgp")
 	if err != nil {
 		t.Fatal("Expected no error when reading message data, got:", err)
 	}
