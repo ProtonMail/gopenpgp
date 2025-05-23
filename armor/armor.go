@@ -5,7 +5,6 @@ package armor
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/ProtonMail/gopenpgp/v2/constants"
@@ -48,7 +47,7 @@ func Unarmor(input string) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "gopengp: unable to unarmor")
 	}
-	return ioutil.ReadAll(b.Body)
+	return io.ReadAll(b.Body)
 }
 
 func armorWithTypeAndHeaders(input []byte, armorType string, headers map[string]string) (string, error) {

@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"io"
-	"io/ioutil"
 	"runtime"
 	"runtime/debug"
 	"sync"
@@ -104,7 +103,7 @@ func (keyRing *KeyRing) NewManualAttachmentProcessor(
 	attachmentProc.done.Add(1)
 	go func() {
 		defer attachmentProc.done.Done()
-		keyPacket, err := ioutil.ReadAll(keyReader)
+		keyPacket, err := io.ReadAll(keyReader)
 		if err != nil {
 			attachmentProc.err = err
 		} else {

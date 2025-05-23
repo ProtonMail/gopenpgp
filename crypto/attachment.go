@@ -3,7 +3,6 @@ package crypto
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"runtime"
 	"sync"
 	"time"
@@ -92,7 +91,7 @@ func (keyRing *KeyRing) newAttachmentProcessor(
 
 	go func() {
 		defer attachmentProc.done.Done()
-		ciphertext, _ := ioutil.ReadAll(reader)
+		ciphertext, _ := io.ReadAll(reader)
 		message := &PGPMessage{
 			Data: ciphertext,
 		}
@@ -171,7 +170,7 @@ func (keyRing *KeyRing) DecryptAttachment(message *PGPSplitMessage) (*PlainMessa
 	}
 
 	decrypted := md.UnverifiedBody
-	b, err := ioutil.ReadAll(decrypted)
+	b, err := io.ReadAll(decrypted)
 	if err != nil {
 		return nil, errors.Wrap(err, "gopengpp: unable to read attachment body")
 	}

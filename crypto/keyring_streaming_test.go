@@ -3,7 +3,6 @@ package crypto
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"reflect"
 	"testing"
 
@@ -68,7 +67,7 @@ func TestKeyRing_EncryptDecryptStream(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected an error while verifying the signature before reading the data, got nil")
 	}
-	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
@@ -91,7 +90,7 @@ func TestKeyRing_EncryptDecryptStream(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while calling decrypting stream with key ring, got:", err)
 	}
-	decryptedBytes, err = ioutil.ReadAll(decryptedReaderNoVerify)
+	decryptedBytes, err = io.ReadAll(decryptedReaderNoVerify)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
@@ -160,7 +159,7 @@ func TestKeyRing_EncryptDecryptStreamWithContext(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected an error while verifying the signature before reading the data, got nil")
 	}
-	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
@@ -183,7 +182,7 @@ func TestKeyRing_EncryptDecryptStreamWithContext(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while calling decrypting stream with key ring, got:", err)
 	}
-	decryptedBytes, err = ioutil.ReadAll(decryptedReaderNoVerify)
+	decryptedBytes, err = io.ReadAll(decryptedReaderNoVerify)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
@@ -252,7 +251,7 @@ func TestKeyRing_EncryptDecryptStreamWithContextAndCompression(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected an error while verifying the signature before reading the data, got nil")
 	}
-	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
@@ -275,7 +274,7 @@ func TestKeyRing_EncryptDecryptStreamWithContextAndCompression(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while calling decrypting stream with key ring, got:", err)
 	}
-	decryptedBytes, err = ioutil.ReadAll(decryptedReaderNoVerify)
+	decryptedBytes, err = io.ReadAll(decryptedReaderNoVerify)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
@@ -399,7 +398,7 @@ func TestKeyRing_DecryptStreamCompatible(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while calling decrypting stream with key ring, got:", err)
 	}
-	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
@@ -468,7 +467,7 @@ func TestKeyRing_EncryptDecryptSplitStream(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while decrypting split stream with key ring, got:", err)
 	}
-	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
@@ -523,7 +522,7 @@ func TestKeyRing_EncryptDecryptSplitStreamWithCont(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while decrypting split stream with key ring, got:", err)
 	}
-	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}
@@ -665,7 +664,7 @@ func TestKeyRing_DecryptSplitStreamCompatible(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected no error while decrypting split stream with key ring, got:", err)
 	}
-	decryptedBytes, err := ioutil.ReadAll(decryptedReader)
+	decryptedBytes, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		t.Fatal("Expected no error while reading the decrypted data, got:", err)
 	}

@@ -3,7 +3,7 @@ package crypto
 import (
 	"crypto/rsa"
 	"encoding/base64"
-	"io/ioutil"
+	"io"
 	"regexp"
 	"strings"
 	"testing"
@@ -309,14 +309,14 @@ func TestGetArmoredPublicKey(t *testing.T) {
 
 	assert.Exactly(t, expected.Type, block.Type)
 
-	b, err := ioutil.ReadAll(block.Body)
+	b, err := io.ReadAll(block.Body)
 	if err != nil {
-		t.Fatal("Expected no error while reading armored public key body, got:", err)
+		t.Fatal("Expected no error while reading armored key, got:", err)
 	}
 
-	eb, err := ioutil.ReadAll(expected.Body)
+	eb, err := io.ReadAll(expected.Body)
 	if err != nil {
-		t.Fatal("Expected no error while reading expected armored public key body, got:", err)
+		t.Fatal("Expected no error while reading expected armored key, got:", err)
 	}
 
 	assert.Exactly(t, eb, b)
