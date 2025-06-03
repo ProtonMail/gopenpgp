@@ -382,6 +382,18 @@ func (key *Key) GetKeyID() uint64 {
 	return key.entity.PrimaryKey.KeyId
 }
 
+// GetKeyIDs returns the key IDs of the primary and all subkeys
+// within this Key.
+// Does not work for go-mobile clients.
+func (key *Key) GetKeyIDs() []uint64 {
+	keyIds := make([]uint64, 0, len(key.entity.Subkeys)+1)
+	keyIds = append(keyIds, key.GetKeyID())
+	for _, subKey := range key.entity.Subkeys {
+		keyIds = append(keyIds, subKey.PublicKey.KeyId)
+	}
+	return keyIds
+}
+
 // GetFingerprint gets the fingerprint from the key.
 func (key *Key) GetFingerprint() string {
 	return hex.EncodeToString(key.entity.PrimaryKey.Fingerprint)
