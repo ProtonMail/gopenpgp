@@ -392,6 +392,20 @@ func (key *Key) GetFingerprintBytes() []byte {
 	return key.entity.PrimaryKey.Fingerprint
 }
 
+// GetFingerprints returns SHA-1 fingerprints of the primary key and its subkeys.
+func (key *Key) GetFingerprints() (fingerprints []string) {
+	fingerprints = append(fingerprints, hex.EncodeToString(key.entity.PrimaryKey.Fingerprint))
+	for _, sub := range key.entity.Subkeys {
+		fingerprints = append(fingerprints, hex.EncodeToString(sub.PublicKey.Fingerprint))
+	}
+	return fingerprints
+}
+
+// GetJsonFingerprints returns the same data as JSON (for gomobile).
+func (key *Key) GetJsonFingerprints() ([]byte, error) {
+     return json.Marshal(key.GetFingerprints())
+}
+
 // GetSHA256Fingerprint computes the SHA256 fingerprint of the primary key.
 func (key *Key) GetSHA256Fingerprint() (fingerprint string) {
 	return hex.EncodeToString(getSHA256FingerprintBytes(key.entity.PrimaryKey))
