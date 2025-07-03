@@ -50,6 +50,11 @@ type Custom struct {
 	InsecureAllowWeakRSA bool
 	// InsecureAllowDecryptionWithSigningKeys is a flag to enable to decrypt with signing keys for compatibility reasons.
 	InsecureAllowDecryptionWithSigningKeys bool
+	// InsecureAllowAllKeyFlagsWhenMissing determines how a key without valid key flags is handled.
+	// When set to true, a key without flags is treated as if all flags are enabled.
+	// Enabling this flag has security implications, as a cryptographic key should be used for
+	// only one type of operation.
+	InsecureAllowAllKeyFlagsWhenMissing bool
 	// MaxDecompressedMessageSize sets the maximum decompressed messages size that can be read
 	// before throwing an error.
 	MaxDecompressedMessageSize int64
@@ -78,6 +83,7 @@ func (p *Custom) EncryptionConfig() *packet.Config {
 		AEADConfig:                             p.AeadEncryption,
 		S2KConfig:                              p.S2kEncryption,
 		InsecureAllowDecryptionWithSigningKeys: p.InsecureAllowDecryptionWithSigningKeys,
+		InsecureAllowAllKeyFlagsWhenMissing:    p.InsecureAllowAllKeyFlagsWhenMissing,
 		MaxDecompressedMessageSize:             p.maxDecompressedMessageSize(),
 	}
 	if p.DisableIntendedRecipients {
@@ -104,8 +110,9 @@ func (p *Custom) KeyEncryptionConfig() *packet.Config {
 
 func (p *Custom) SignConfig() *packet.Config {
 	config := &packet.Config{
-		DefaultHash:                p.Hash,
-		MaxDecompressedMessageSize: p.maxDecompressedMessageSize(),
+		DefaultHash:                         p.Hash,
+		InsecureAllowAllKeyFlagsWhenMissing: p.InsecureAllowAllKeyFlagsWhenMissing,
+		MaxDecompressedMessageSize:          p.maxDecompressedMessageSize(),
 	}
 	if p.SignHash != nil {
 		config.DefaultHash = *p.SignHash
