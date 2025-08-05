@@ -397,6 +397,31 @@ func (key *Key) GetSHA256Fingerprint() (fingerprint string) {
 	return hex.EncodeToString(getSHA256FingerprintBytes(key.entity.PrimaryKey))
 }
 
+// IsForwardingKey checks if the given key is a Proton forwarding key.
+func (key *Key) IsForwardingKey() bool {
+	decryptionKeys := key.entity.DecryptionKeys(0, time.Time{}, nil)
+	allForwarding := len(decryptionKeys) > 0
+	for _, key := range decryptionKeys {
+		if !isForwardingKey(key) {
+			allForwarding = false
+			break
+		}
+	}
+	return allForwarding
+}
+
+// isForwardingKey determines if the given openpgp.Key is a forwarding key.
+func isForwardingKey(key openpgp.Key) bool {
+	curve, err := key.PublicKey.Curve()
+	keyCheck := key.PublicKey.IsSubkey &&
+		key.PublicKey.Version == 4 &&
+		key.PublicKey.PubKeyAlgo == packet.PubKeyAlgoECDH &&
+		err == nil && curve == packet.Curve25519
+	hasForwardFlag := key.SelfSignature != nil &&
+		key.SelfSignature.FlagForward
+	return keyCheck && hasForwardFlag
+}
+
 // GetSHA256Fingerprints computes the SHA256 fingerprints of the key and subkeys.
 func (key *Key) GetSHA256Fingerprints() (fingerprints []string) {
 	fingerprints = append(fingerprints, key.GetSHA256Fingerprint())
