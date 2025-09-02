@@ -1,9 +1,9 @@
 module github.com/ProtonMail/gopenpgp/v2
 
-go 1.22.0
+go 1.24.0
 
 require (
-	github.com/ProtonMail/go-crypto v1.3.0-proton
+	github.com/ProtonMail/go-crypto v1.3.1-0.20250902084212-ad1e42252904
 	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0
