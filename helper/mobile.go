@@ -3,6 +3,7 @@ package helper
 import (
 	"encoding/json"
 	goerrors "errors"
+	"runtime"
 	"runtime/debug"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
@@ -175,4 +176,9 @@ func EncryptSignBinaryDetachedMobile(
 // return the unused memory to the OS.
 func FreeOSMemory() {
 	debug.FreeOSMemory()
+}
+
+// GoMaxProcs sets the maximum number of CPU cores to use in the golang runtime.
+func GoMaxProcs(value int) {
+	runtime.GOMAXPROCS(value)
 }
