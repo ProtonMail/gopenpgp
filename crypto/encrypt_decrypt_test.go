@@ -30,31 +30,40 @@ func generateTestKeyMaterial(name string, profile *profile.Custom) *testMaterial
 		panic("Cannot generate session key:" + err.Error())
 	}
 
-	keyTest, err := handle.KeyGeneration().
-		AddUserId("test", "test@test.test").
+	keyBuilder := handle.KeyGeneration()
+	if !profile.V6 {
+		keyBuilder = keyBuilder.AddUserId("test", "test@test.test")
+	}
+	keyTest, err := keyBuilder.
 		New().
 		GenerateKey()
 	if err != nil {
 		panic("Cannot generate key:" + err.Error())
-	}
-	keyTestPublic, err := keyTest.ToPublic()
-	if err != nil {
-		panic("Cannot extract public key:" + err.Error())
 	}
 	keyRingTestPrivate, err := NewKeyRing(keyTest)
 	if err != nil {
 		panic("Cannot create keyring:" + err.Error())
 	}
-	keyRingTestPublic, err := NewKeyRing(keyTestPublic)
-	if err != nil {
-		panic("Cannot create keyring:" + err.Error())
-	}
-	keyWrong, err := handle.KeyGeneration().
-		AddUserId("testWrong", "testWrong@test.test").
-		New().
-		GenerateKey()
-	if err != nil {
-		panic("Cannot generate key:" + err.Error())
+	var keyRingTestPublic *KeyRing
+	var keyWrong *Key
+	if name == "Symmetric" {
+		keyRingTestPublic = keyRingTestPrivate
+	} else {
+		keyTestPublic, err := keyTest.ToPublic()
+		if err != nil {
+			panic("Cannot extract public key:" + err.Error())
+		}
+		keyRingTestPublic, err = NewKeyRing(keyTestPublic)
+		if err != nil {
+			panic("Cannot create keyring:" + err.Error())
+		}
+		keyWrong, err = handle.KeyGeneration().
+			AddUserId("testWrong", "testWrong@test.test").
+			New().
+			GenerateKey()
+		if err != nil {
+			panic("Cannot generate key:" + err.Error())
+		}
 	}
 	return &testMaterial{
 		profileName:        name,

@@ -308,6 +308,11 @@ func (key *Key) IsPrivate() bool {
 	return key.entity.PrivateKey != nil
 }
 
+// IsSymmetric returns true if the key is a persistent symmetric key.
+func (key *Key) IsSymmetric() bool {
+	return key.entity.PSK != nil
+}
+
 // IsLocked checks if a private key is locked.
 func (key *Key) IsLocked() (bool, error) {
 	if key.entity.PrivateKey == nil {
@@ -427,6 +432,9 @@ func (key *Key) GetVersion() int {
 func (key *Key) ToPublic() (publicKey *Key, err error) {
 	if !key.IsPrivate() {
 		return nil, errors.New("gopenpgp: key is already public")
+	}
+	if key.IsSymmetric() {
+		return nil, errors.New("gopenpgp: can't create public key of persistent symmetric key")
 	}
 
 	publicKey, err = key.Copy()

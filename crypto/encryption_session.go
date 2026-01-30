@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ProtonMail/go-crypto/openpgp/v2"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 )
 
@@ -112,33 +113,39 @@ func encryptSessionKeyToWriter(
 	if err != nil {
 		return fmt.Errorf("gopenpgp: unable to encrypt session key: %w", err)
 	}
-	pubKeys := make([]*packet.PublicKey, 0, len(recipients.getEntities())+len(hiddenRecipients.getEntities()))
+	keys := make([]*v2.Key, 0, len(recipients.getEntities())+len(hiddenRecipients.getEntities()))
 	aeadSupport := config.AEAD() != nil
 	for _, e := range append(recipients.getEntities(), hiddenRecipients.getEntities()...) {
 		encryptionKey, ok := e.EncryptionKey(date, config)
 		if !ok {
 			return errors.New("gopenpgp: encryption key is unavailable for key id " + strconv.FormatUint(e.PrimaryKey.KeyId, 16))
 		}
-		primarySelfSignature, _ := e.PrimarySelfSignature(date, config)
-		if primarySelfSignature == nil {
-			return fmt.Errorf("gopenpgp: entity without a self-signature: %w", err)
+		if encryptionKey.PSK == nil {
+			primarySelfSignature, _ := e.PrimarySelfSignature(date, config)
+			if primarySelfSignature == nil {
+				return fmt.Errorf("gopenpgp: entity without a self-signature: %w", err)
+			}
+			if !primarySelfSignature.SEIPDv2 {
+				aeadSupport = false
+			}
 		}
-
-		if !primarySelfSignature.SEIPDv2 {
-			aeadSupport = false
-		}
-		pubKeys = append(pubKeys, encryptionKey.PublicKey)
+		keys = append(keys, &encryptionKey)
 	}
 	if sk.v6 {
 		aeadSupport = true
 	}
-	if len(pubKeys) == 0 {
+	if len(keys) == 0 {
 		return errors.New("gopenpgp: cannot set key: no public key available")
 	}
 
-	for index, pub := range pubKeys {
+	for index, key := range keys {
 		isHidden := index >= len(recipients.getEntities())
-		err := packet.SerializeEncryptedKeyAEADwithHiddenOption(outputWriter, pub, cf, aeadSupport, sk.Key, isHidden, nil)
+		var err error
+		if key.PSK != nil {
+			err = packet.SerializeEncryptedKeyPSK(outputWriter, key.PSK, cf, aeadSupport, sk.Key, nil)
+		} else {
+			err = packet.SerializeEncryptedKeyAEADwithHiddenOption(outputWriter, key.PublicKey, cf, aeadSupport, sk.Key, isHidden, nil)
+		}
 		if err != nil {
 			return fmt.Errorf("gopenpgp: cannot set key: %w", err)
 		}

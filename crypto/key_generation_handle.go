@@ -46,7 +46,15 @@ func (kgh *keyGenerationHandle) GenerateKeyWithSecurity(security int8) (key *Key
 	config.KeyLifetimeSecs = kgh.keyLifetimeSecs
 	key = &Key{}
 
-	if len(kgh.identities) == 0 {
+	if config.Algorithm == packet.PubKeyAlgoAEAD {
+		if len(kgh.identities) != 0 {
+			return nil, errors.New("gopenpgp: persistent symmetric keys cannot have User IDs")
+		}
+		if !config.V6() {
+			return nil, errors.New("gopenpgp: persistent symmetric keys can only be v6")
+		}
+		key.entity, err = openpgp.NewSymmetricEntity(config)
+	} else if len(kgh.identities) == 0 {
 		if config.V6() {
 			key.entity, err = openpgp.NewEntityWithoutId(config)
 		} else {
