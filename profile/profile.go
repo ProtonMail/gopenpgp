@@ -55,6 +55,9 @@ type Custom struct {
 	// Enabling this flag has security implications, as a cryptographic key should be used for
 	// only one type of operation.
 	InsecureAllowAllKeyFlagsWhenMissing bool
+	// KeyGenSymmetric is a flag to generate persistent symmetric keys in key generation
+	// instead of asymmetric keys. Symmetric keys do not support user IDs or key lifetimes.
+	KeyGenSymmetric bool
 	// MaxDecompressedMessageSize sets the maximum decompressed messages size that can be read
 	// before throwing an error.
 	MaxDecompressedMessageSize int64
@@ -74,6 +77,11 @@ func (p *Custom) KeyGenerationConfig(securityLevel int8) *packet.Config {
 	}
 	p.SetKeyAlgorithm(cfg, securityLevel)
 	return cfg
+}
+
+// SymmetricKeyGeneration returns true if the profile generates persistent symmetric keys.
+func (p *Custom) SymmetricKeyGeneration() bool {
+	return p.KeyGenSymmetric
 }
 
 func (p *Custom) EncryptionConfig() *packet.Config {

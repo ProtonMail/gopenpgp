@@ -28,6 +28,8 @@ issues:
   exclude-rules:
     - path: crypto/key_clear.go
       text: "SA1019"
+    - path: crypto/key_generation_handle.go
+      text: "ifElseChain"
     - path: crypto/crypto_example_test.go
       text: "G101: Potential hardcoded credentials"
     - path: crypto/encrypt_decrypt_test.go
