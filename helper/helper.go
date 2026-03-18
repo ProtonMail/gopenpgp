@@ -264,9 +264,6 @@ func DecryptVerifyBinaryDetached(
 ) (plainData []byte, err error) {
 	// Some type casting
 	ciphertext := crypto.NewPGPMessage(encryptedData)
-	if err != nil {
-		return nil, errors.Wrap(err, "gopenpgp: unable to parse ciphertext")
-	}
 
 	// We decrypt and verify the encrypted signature
 	message, err := decryptVerifyObjDetached(publicKey, privateKey, passphrase, ciphertext, encryptedSignatureArmored)
