@@ -20,6 +20,11 @@ issues:
     - ST1003  # CamelCase variables; see constants/cipher.go
     - "SA1019: rsaPriv.Precomputed" # we don't use them but only clear them
     - "G101: Potential hardcoded credentials"
+    - "G115: integer overflow conversion int64 -> uint32"
+    - "Magic number:"
+    - param max has same name as predeclared identifier
+    - the methods of "SignatureCollector" use pointer receiver and non-pointer receiver
+    - the methods of "Callbacks" use pointer receiver and non-pointer receiver.
 
 linters:
   enable-all: true

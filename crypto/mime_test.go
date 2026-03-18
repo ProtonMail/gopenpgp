@@ -80,7 +80,7 @@ func TestParse(t *testing.T) {
 	bodyData, _ := body.GetBody()
 	assert.Exactly(t, readTestFile("mime_decodedBody", true), bodyData)
 	assert.Exactly(t, readTestFile("mime_decodedBodyHeaders", false), body.GetHeaders())
-	assert.Exactly(t, 2, len(atts))
+	assert.Len(t, atts, 2)
 }
 
 type testMIMECallbacks struct {

@@ -258,7 +258,6 @@ func (msg *PGPMessage) GetEncryptionKeyIDs() ([]uint64, bool) {
 	packets := packet.NewReader(bytes.NewReader(msg.Data))
 	var err error
 	var ids []uint64
-	var encryptedKey *packet.EncryptedKey
 Loop:
 	for {
 		var p packet.Packet
@@ -267,7 +266,7 @@ Loop:
 		}
 		switch p := p.(type) {
 		case *packet.EncryptedKey:
-			encryptedKey = p
+			encryptedKey := p
 			ids = append(ids, encryptedKey.KeyId)
 		case *packet.SymmetricallyEncrypted,
 			*packet.AEADEncrypted,
@@ -473,9 +472,6 @@ func getSignatureKeyIDs(data []byte) ([]uint64, bool) {
 	packets := packet.NewReader(bytes.NewReader(data))
 	var err error
 	var ids []uint64
-	var onePassSignaturePacket *packet.OnePassSignature
-	var signaturePacket *packet.Signature
-
 Loop:
 	for {
 		var p packet.Packet
@@ -484,10 +480,10 @@ Loop:
 		}
 		switch p := p.(type) {
 		case *packet.OnePassSignature:
-			onePassSignaturePacket = p
+			onePassSignaturePacket := p
 			ids = append(ids, onePassSignaturePacket.KeyId)
 		case *packet.Signature:
-			signaturePacket = p
+			signaturePacket := p
 			if signaturePacket.IssuerKeyId != nil {
 				ids = append(ids, *signaturePacket.IssuerKeyId)
 			}

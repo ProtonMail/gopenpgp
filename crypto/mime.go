@@ -51,7 +51,7 @@ func (keyRing *KeyRing) DecryptMIMEMessage(
 	bodyContent, bodyMimeType := body.GetBody()
 	bodyContentSanitized := sanitizeString(bodyContent)
 	callbacks.OnBody(bodyContentSanitized, bodyMimeType)
-	for i := 0; i < len(attachments); i++ {
+	for i := range attachments {
 		callbacks.OnAttachment(attachmentHeaders[i], []byte(attachments[i]))
 	}
 	callbacks.OnEncryptedHeaders("")
