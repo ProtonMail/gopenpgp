@@ -11,6 +11,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTextMessageEncryptionWithPassword(t *testing.T) {
@@ -31,7 +32,7 @@ func TestTextMessageEncryptionWithPassword(t *testing.T) {
 		}
 		sessionKey, ok := p.(*packet.SymmetricKeyEncrypted)
 		if ok {
-			assert.Equal(t, sessionKey.CipherFunc, packet.CipherAES256)
+			assert.Equal(t, packet.CipherAES256, sessionKey.CipherFunc)
 			foundSk = true
 			break
 		}
@@ -41,7 +42,7 @@ func TestTextMessageEncryptionWithPassword(t *testing.T) {
 	}
 	// Decrypt data with wrong password
 	_, err = DecryptMessageWithPassword(encrypted, []byte("Wrong password"))
-	assert.NotNil(t, err)
+	require.Error(t, err)
 
 	// Decrypt data with the good password
 	decrypted, err := DecryptMessageWithPassword(encrypted, testSymmetricKey)
@@ -62,7 +63,7 @@ func TestBinaryMessageEncryptionWithPassword(t *testing.T) {
 	}
 	// Decrypt data with wrong password
 	_, err = DecryptMessageWithPassword(encrypted, []byte("Wrong password"))
-	assert.NotNil(t, err)
+	require.Error(t, err)
 
 	// Decrypt data with the good password
 	decrypted, err := DecryptMessageWithPassword(encrypted, testSymmetricKey)
@@ -348,7 +349,7 @@ func TestSHA1SignedMessageDecryption(t *testing.T) {
 
 func TestMultipleKeyMessageEncryption(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
-	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
+	assert.Len(t, keyRingTestMultiple.entities, 3)
 
 	ciphertext, err := keyRingTestMultiple.Encrypt(message, keyRingTestPrivate)
 	if err != nil {
@@ -359,7 +360,7 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 	// followed by a single symmetrically encrypted data packet (tag 18)
 	var p packet.Packet
 	packets := packet.NewReader(bytes.NewReader(ciphertext.Data))
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		if p, err = packets.Next(); err != nil {
 			t.Fatal(err.Error())
 		}
@@ -384,14 +385,14 @@ func TestMultipleKeyMessageEncryption(t *testing.T) {
 
 func TestMessageGetEncryptionKeyIDs(t *testing.T) {
 	var message = NewPlainMessageFromString("plain text")
-	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
+	assert.Len(t, keyRingTestMultiple.entities, 3)
 
 	ciphertext, err := keyRingTestMultiple.Encrypt(message, keyRingTestPrivate)
 	if err != nil {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 	ids, ok := ciphertext.GetEncryptionKeyIDs()
-	assert.Exactly(t, 3, len(ids))
+	assert.Len(t, ids, 3)
 	assert.True(t, ok)
 	encKey, ok := keyRingTestMultiple.entities[0].EncryptionKey(time.Now())
 	assert.True(t, ok)
@@ -405,7 +406,7 @@ func TestMessageGetHexGetEncryptionKeyIDs(t *testing.T) {
 	}
 
 	ids, ok := ciphertext.GetHexEncryptionKeyIDs()
-	assert.Exactly(t, 2, len(ids))
+	assert.Len(t, ids, 2)
 	assert.True(t, ok)
 
 	assert.Exactly(t, "76ad736fa7e0e83c", ids[0])
@@ -421,7 +422,7 @@ func TestMessageGetSignatureKeyIDs(t *testing.T) {
 	}
 
 	ids, ok := signature.GetSignatureKeyIDs()
-	assert.Exactly(t, 1, len(ids))
+	assert.Len(t, ids, 1)
 	assert.True(t, ok)
 	signingKey, ok := keyRingTestPrivate.entities[0].SigningKey(time.Now())
 	assert.True(t, ok)
@@ -435,7 +436,7 @@ func TestMessageGetHexSignatureKeyIDs(t *testing.T) {
 	}
 
 	ids, ok := ciphertext.GetHexSignatureKeyIDs()
-	assert.Exactly(t, 2, len(ids))
+	assert.Len(t, ids, 2)
 	assert.True(t, ok)
 
 	assert.Exactly(t, "3eb6259edf21df24", ids[0])

@@ -6,6 +6,7 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMobileSignedMessageDecryption(t *testing.T) {
@@ -50,7 +51,7 @@ func TestMobileSignedMessageDecryption(t *testing.T) {
 	assert.Exactly(t, readTestFile("message_plaintext", true), decrypted.Message.GetString())
 
 	decrypted, err = DecryptExplicitVerify(pgpMessage, testPublicKeyRing, testPublicKeyRing, crypto.GetUnixTime())
-	assert.NotNil(t, err)
+	require.Error(t, err)
 	assert.Nil(t, decrypted)
 }
 

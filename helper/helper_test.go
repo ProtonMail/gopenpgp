@@ -6,6 +6,7 @@ import (
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAESEncryption(t *testing.T) {
@@ -36,7 +37,7 @@ func TestArmoredTextMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	assert.Exactly(t, true, crypto.IsPGPMessage(armored))
+	assert.True(t, crypto.IsPGPMessage(armored))
 
 	decrypted, err := DecryptMessageArmored(
 		readTestFile("keyring_privateKey", false),
@@ -63,7 +64,7 @@ func TestArmoredTextMessageEncryptionVerification(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	assert.Exactly(t, true, crypto.IsPGPMessage(armored))
+	assert.True(t, crypto.IsPGPMessage(armored))
 
 	_, err = DecryptVerifyMessageArmored(
 		readTestFile("mime_privateKey", false), // Wrong public key
@@ -71,7 +72,7 @@ func TestArmoredTextMessageEncryptionVerification(t *testing.T) {
 		testMailboxPassword, // Password defined in base_test
 		armored,
 	)
-	assert.EqualError(t, err, "gopenpgp: unable to decrypt message: Signature Verification Error: No matching signature")
+	require.EqualError(t, err, "gopenpgp: unable to decrypt message: Signature Verification Error: No matching signature")
 
 	decrypted, err := DecryptVerifyMessageArmored(
 		readTestFile("keyring_privateKey", false),
@@ -115,7 +116,7 @@ func TestAttachmentEncryptionVerification(t *testing.T) {
 		dataPacket,
 		armoredSig,
 	)
-	assert.EqualError(t, err, "gopenpgp: unable to verify attachment")
+	require.EqualError(t, err, "gopenpgp: unable to verify attachment")
 
 	decrypted, err := DecryptVerifyAttachment(
 		readTestFile("keyring_privateKey", false),
@@ -141,7 +142,7 @@ func TestArmoredBinaryMessageEncryption(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	assert.Exactly(t, true, crypto.IsPGPMessage(armored))
+	assert.True(t, crypto.IsPGPMessage(armored))
 
 	decrypted, err := DecryptBinaryMessageArmored(
 		readTestFile("keyring_privateKey", false),

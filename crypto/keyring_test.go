@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
 	"github.com/ProtonMail/go-crypto/openpgp/eddsa"
@@ -124,11 +125,11 @@ func TestKeyIds(t *testing.T) {
 }
 
 func TestMultipleKeyRing(t *testing.T) {
-	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
+	assert.Len(t, keyRingTestMultiple.entities, 3)
 	assert.Exactly(t, 3, keyRingTestMultiple.CountEntities())
 	assert.Exactly(t, 3, keyRingTestMultiple.CountDecryptionEntities())
 
-	assert.Exactly(t, 3, len(keyRingTestMultiple.GetKeys()))
+	assert.Len(t, keyRingTestMultiple.GetKeys(), 3)
 
 	testKey, err := keyRingTestMultiple.GetKey(1)
 	if err != nil {
@@ -137,28 +138,28 @@ func TestMultipleKeyRing(t *testing.T) {
 	assert.Exactly(t, keyTestEC, testKey)
 
 	_, err = keyRingTestMultiple.GetKey(3)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 
 	singleKeyRing, err := keyRingTestMultiple.FirstKey()
 	if err != nil {
 		t.Fatal("Expected no error while filtering the first key, got:", err)
 	}
-	assert.Exactly(t, 1, len(singleKeyRing.entities))
+	assert.Len(t, singleKeyRing.entities, 1)
 	assert.Exactly(t, 1, singleKeyRing.CountEntities())
 	assert.Exactly(t, 1, singleKeyRing.CountDecryptionEntities())
 }
 
 func TestSerializeParse(t *testing.T) {
 	serialized, err := keyRingTestMultiple.Serialize()
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	parsed, err := NewKeyRingFromBinary(serialized)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
-	assert.Exactly(t, 3, len(parsed.GetKeys()))
+	assert.Len(t, parsed.GetKeys(), 3)
 	for i, parsedKey := range parsed.GetKeys() {
 		expectedKey, err := keyRingTestMultiple.GetKey(i)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.Exactly(t, parsedKey.GetFingerprint(), expectedKey.GetFingerprint())
 	}
 }
@@ -170,7 +171,7 @@ func TestClearPrivateKey(t *testing.T) {
 	}
 
 	for _, key := range keyRingCopy.GetKeys() {
-		assert.Nil(t, clearPrivateKey(key.entity.PrivateKey.PrivateKey))
+		require.NoError(t, clearPrivateKey(key.entity.PrivateKey.PrivateKey))
 	}
 
 	keys := keyRingCopy.GetKeys()

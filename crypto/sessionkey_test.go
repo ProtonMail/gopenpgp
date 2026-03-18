@@ -9,6 +9,7 @@ import (
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var testSessionKey *SessionKey
@@ -71,12 +72,8 @@ func TestSymmetricKeyPacket(t *testing.T) {
 		t.Fatal("Expected no error while generating key packet, got:", err)
 	}
 
-	wrongSymmetricKey, err := DecryptSessionKeyWithPassword(keyPacket, []byte("Wrong password"))
-	if err != nil {
-		assert.EqualError(t, err, "gopenpgp: unable to decrypt any packet")
-	} else {
-		assert.NotEqual(t, testSessionKey, wrongSymmetricKey)
-	}
+	_, err = DecryptSessionKeyWithPassword(keyPacket, []byte("Wrong password"))
+	require.EqualError(t, err, "gopenpgp: unable to decrypt any packet")
 
 	outputSymmetricKey, err := DecryptSessionKeyWithPassword(keyPacket, password)
 	if err != nil {
@@ -123,7 +120,7 @@ func TestDataPacketEncryption(t *testing.T) {
 		Algo: constants.AES256,
 	}
 	_, err = wrongKey.Decrypt(dataPacket)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 
 	// Decrypt data with the good session key
 	decrypted, err := testSessionKey.Decrypt(dataPacket)
@@ -133,7 +130,7 @@ func TestDataPacketEncryption(t *testing.T) {
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
 
 	// Encrypt session key
-	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
+	assert.Len(t, keyRingTestMultiple.entities, 3)
 	keyPacket, err := keyRingTestMultiple.EncryptSessionKey(testSessionKey)
 	if err != nil {
 		t.Fatal("Unable to encrypt key packet, got:", err)
@@ -154,7 +151,7 @@ func TestDataPacketEncryption(t *testing.T) {
 	}
 	ids, ok := pgpMessage.GetEncryptionKeyIDs()
 	assert.True(t, ok)
-	assert.Exactly(t, 3, len(ids))
+	assert.Len(t, ids, 3)
 
 	// Test if final decryption succeeds
 	finalMessage, err := keyRingTestPrivate.Decrypt(pgpMessage, nil, 0)
@@ -182,7 +179,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 		Algo: constants.AES256,
 	}
 	_, err = wrongKey.Decrypt(dataPacket)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 
 	// Decrypt data with the good session key
 	decrypted, err := testSessionKey.Decrypt(dataPacket)
@@ -211,7 +208,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 	assert.Exactly(t, message.GetString(), decrypted.GetString())
 
 	// Encrypt session key
-	assert.Exactly(t, 3, len(keyRingTestMultiple.entities))
+	assert.Len(t, keyRingTestMultiple.entities, 3)
 	keyPacket, err := keyRingTestMultiple.EncryptSessionKey(testSessionKey)
 	if err != nil {
 		t.Fatal("Unable to encrypt key packet, got:", err)
@@ -232,7 +229,7 @@ func TestDataPacketEncryptionAndSignature(t *testing.T) {
 	}
 	ids, ok := pgpMessage.GetEncryptionKeyIDs()
 	assert.True(t, ok)
-	assert.Exactly(t, 3, len(ids))
+	assert.Len(t, ids, 3)
 
 	// Test with bad verification key succeeds
 	_, err = keyRingTestPrivate.Decrypt(pgpMessage, ecKeyRing, GetUnixTime())
@@ -313,7 +310,7 @@ func TestMDCFailDecryption(t *testing.T) {
 	sessionKey := NewSessionKeyFromToken(sk, "aes256")
 
 	_, err = sessionKey.Decrypt(split.GetBinaryDataPacket())
-	assert.NotNil(t, err)
+	assert.Error(t, err)
 }
 
 func TestSessionKeyClear(t *testing.T) {
