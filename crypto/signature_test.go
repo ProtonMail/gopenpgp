@@ -176,9 +176,6 @@ func Test_KeyRing_GetVerifiedSignatureTimestampSuccess(t *testing.T) {
 		t.Fatal(err)
 	}
 	actualTime := verificationResult.SignatureCreationTime()
-	if err != nil {
-		t.Errorf("Got an error while parsing the signature creation time: %v", err)
-	}
 	if timeLocal != actualTime {
 		t.Errorf("Expected creation time to be %d, got %d", timeLocal, actualTime)
 	}
@@ -226,9 +223,6 @@ func Test_KeyRing_GetVerifiedSignatureWithTwoKeysTimestampSuccess(t *testing.T) 
 	}
 	actualTime := verificationResult.SignatureCreationTime()
 	otherTime := verificationResult.Signatures[1].Signature.CreationTime.Unix()
-	if err != nil {
-		t.Errorf("Got an error while parsing the signature creation time: %v", err)
-	}
 
 	if time2 != otherTime {
 		t.Errorf("Expected creation time to be %d, got %d", otherTime, time2)
