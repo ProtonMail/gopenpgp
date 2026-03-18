@@ -285,6 +285,19 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 	return filteredKeys, nil
 }
 
+// WithoutForwardingKeys returns a new keyring containing only non-forwarding keys.
+func (keyRing *KeyRing) WithoutForwardingKeys() (*KeyRing, error) {
+	filtered := &KeyRing{}
+	for _, key := range keyRing.GetKeys() {
+		if !key.IsForwardingKey() {
+			if err := filtered.AddKey(key); err != nil {
+				return nil, fmt.Errorf("gopenpgp: failed to add key to filtered keyring: %w", err)
+			}
+		}
+	}
+	return filtered, nil
+}
+
 // FirstKey returns a KeyRing with only the first key of the original one.
 func (keyRing *KeyRing) FirstKey() (*KeyRing, error) {
 	if len(keyRing.entities) == 0 {
