@@ -23,7 +23,7 @@ func testStringSanitizeReader(t *testing.T, test string) {
 		n, err = reader.Read(smallBuff)
 		byteBuffer.Write(smallBuff[:n])
 	}
-	assert.Equal(t, byteBuffer.String(), expectedOutput(test))
+	assert.Equal(t, expectedOutput(test), byteBuffer.String())
 }
 
 func TestStringSanitizeReader(t *testing.T) {
