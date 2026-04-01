@@ -49,6 +49,17 @@ func GetEncryptedKeyFieldsFromMessage(pgpMessage *crypto.PGPMessage) (keyID uint
 	}
 }
 
+// GetEncryptedMPI1FromMessage extracts the first encrypted MPI field from
+// the first PKESK packet in a PGP message. For ECDH, this is the ephemeral
+// public key point needed by a hardware token to compute the shared secret.
+// For RSA, this is the encrypted session key.
+//
+// This is a gomobile-compatible wrapper around GetEncryptedKeyFieldsFromMessage.
+func GetEncryptedMPI1FromMessage(pgpMessage *crypto.PGPMessage) ([]byte, error) {
+	_, _, mpi1, _, err := GetEncryptedKeyFieldsFromMessage(pgpMessage)
+	return mpi1, err
+}
+
 // DecryptMessageWithECDHSharedSecret decrypts a PGP message encrypted to an
 // ECDH key, given the raw shared secret from an external Decaps operation
 // (e.g., a YubiKey PSO:DECIPHER command).
