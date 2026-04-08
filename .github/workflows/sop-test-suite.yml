@@ -22,7 +22,7 @@ jobs:
           binary-location: ./gosop-${{ github.sha }}
       # Upload as artifact
       - name: Upload gosop artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gosop-${{ github.sha }}
           path: ./gosop-${{ github.sha }}
@@ -40,7 +40,7 @@ jobs:
           binary-location: ./gosop-target
       # Upload as artifact
       - name: Upload gosop-target artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gosop-target
           path: ./gosop-target
@@ -98,12 +98,12 @@ jobs:
          RESULTS_HTML: .github/test-suite/test-suite-results.html
       # Upload results
       - name: Upload test results json artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-suite-results.json
           path: .github/test-suite/test-suite-results.json
       - name: Upload test results html artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-suite-results.html
           path: .github/test-suite/test-suite-results.html
