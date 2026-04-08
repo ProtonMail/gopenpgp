@@ -22,7 +22,7 @@ jobs:
         id: xcode
 
       - name: Set up Go 1.x
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v6
         with:
           go-version: ^1.16
         id: go
