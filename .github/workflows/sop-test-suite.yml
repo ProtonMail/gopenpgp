@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Build gosop from branch
         uses: ./.github/actions/build-gosop
         with: 
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Build gosop from branch
         uses: ./.github/actions/build-gosop
         with: 
@@ -59,7 +59,7 @@ jobs:
       - build-gosop-target
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       # Fetch gosop from target
       - name: Download gosop-target
         uses: actions/download-artifact@v4
@@ -114,7 +114,7 @@ jobs:
     needs: test-suite
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Download test results json artifact
         id: download-test-results
         uses: actions/download-artifact@v4
