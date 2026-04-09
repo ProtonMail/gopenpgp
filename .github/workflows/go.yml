@@ -6,8 +6,7 @@ on:
   pull_request:
     branches: [ main, Proton ]
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   test:
