@@ -4,6 +4,8 @@ on:
   pull_request:
     branches: [ main, v3 ]
 
+permissions: {}
+
 jobs:
 
   build-gosop:
@@ -11,14 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Build gosop from branch
         uses: ./.github/actions/build-gosop
         with: 
           binary-location: ./gosop-${{ github.sha }}
       # Upload as artifact
       - name: Upload gosop artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gosop-${{ github.sha }}
           path: ./gosop-${{ github.sha }}
@@ -28,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Build gosop from branch
         uses: ./.github/actions/build-gosop
         with: 
@@ -36,7 +38,7 @@ jobs:
           binary-location: ./gosop-target
       # Upload as artifact
       - name: Upload gosop-target artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gosop-target
           path: ./gosop-target
@@ -55,7 +57,7 @@ jobs:
       - build-gosop-target
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       # Fetch gosop from target
       - name: Download gosop-target
         uses: actions/download-artifact@v4
@@ -94,12 +96,12 @@ jobs:
          RESULTS_HTML: .github/test-suite/test-suite-results.html
       # Upload results
       - name: Upload test results json artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-suite-results.json
           path: .github/test-suite/test-suite-results.json
       - name: Upload test results html artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-suite-results.html
           path: .github/test-suite/test-suite-results.html
@@ -110,7 +112,7 @@ jobs:
     needs: test-suite
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Download test results json artifact
         id: download-test-results
         uses: actions/download-artifact@v4
