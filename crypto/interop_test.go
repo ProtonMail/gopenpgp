@@ -2,6 +2,9 @@ package crypto
 
 import (
 	"bytes"
+	"encoding/hex"
+	"errors"
+	"io"
 	"testing"
 
 	"github.com/ProtonMail/gopenpgp/v3/internal"
@@ -565,5 +568,43 @@ V6Zkmvzj3h9CucLSJw1Bo6ZJTDbkBQ==
 	}
 	if err = res.SignatureError(); err != nil {
 		t.Error("Should have signature error", err)
+	}
+}
+
+func TestVerificationReaderEOFBehaviour(t *testing.T) {
+	// Rust code translation into Go equivalent
+
+	sessionKeyHex := "b399a07cb400e5a3dcf4e5ae2ba9beb05b1144b729df4abe486fcdb8e95277c5"
+	sessionKeyBytes, err := hex.DecodeString(sessionKeyHex)
+	if err != nil {
+		t.Fatalf("failed to decode session key hex: %v", err)
+	}
+	sessionKey := NewSessionKeyFromToken(sessionKeyBytes, "aes256")
+
+	message := `-----BEGIN PGP MESSAGE-----
+
+wV4DJ7OpFgpxLJYSAQdAII/74N5Q0EOBuLJ2We6+Hv+TfZg8DF3TYiwAPSFwQkYw
+eYK2eKI17tlam9OxT1LvlKz7f5pH+FwNbGGc4At3zgQ4Gr+Z9i+DIjqvZhTcopdF
+0kEBRT4owwJHSFIYST1PFH3qibR1lOxepjJCNk0rLjeDvf72Q2TkS2usZyYmLpTp
+9RsNnMXgzflSajabRXiTYFunag==
+=CTgA
+-----END PGP MESSAGE-----`
+	pgp := PGP()
+	decryptor, err := pgp.Decryption().SessionKey(sessionKey).New()
+	if err != nil {
+		t.Fatalf("failed to create decryptor: %v", err)
+	}
+	reader, err := decryptor.DecryptingReader(bytes.NewReader([]byte(message)), Armor)
+	if err != nil {
+		t.Fatalf("failed to create decryptor: %v", err)
+	}
+	_, err = reader.ReadAll()
+	if err != nil {
+		t.Fatalf("failed to read plaintext: %v", err)
+	}
+
+	_, err = reader.Read(make([]byte, 16))
+	if !errors.Is(err, io.EOF) {
+		t.Fatalf("expected EOF, got %v", err)
 	}
 }
