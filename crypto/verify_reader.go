@@ -38,6 +38,9 @@ func (msg *VerifyDataReader) GetMetadata() *LiteralMetadata {
 // Read is used read data from the pgp message.
 // Makes VerifyDataReader implement the Reader interface.
 func (msg *VerifyDataReader) Read(b []byte) (n int, err error) {
+	if msg.readAll {
+		return 0, io.EOF
+	}
 	n, err = msg.internalReader.Read(b)
 	if errors.Is(err, io.EOF) {
 		msg.readAll = true
