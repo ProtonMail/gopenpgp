@@ -163,7 +163,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.7.0] 2023-04-14
 ### Changed
-- The `SignatureVerificationError` struct now has a `Cause error` field, which is returned by the the Unwrap function. The cause is also included in the error message.
+- The `SignatureVerificationError` struct now has a `Cause error` field, which is returned by the Unwrap function. The cause is also included in the error message.
 	NB: If the caller was relying on the exact message of the error, it might break the flow.
 - When a signature fails verification because of the signature context, it returns a `SignatureVerificationError` with 
 status `constants.SIGNATURE_BAD_CONTEXT` instead of `constants.SIGNATURE_FAILED`.
