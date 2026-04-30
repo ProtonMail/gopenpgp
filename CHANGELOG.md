@@ -786,7 +786,7 @@ This version comes with some design improvements, in particular the introduction
 - `Signature#KeyRing` function
 - `Signature#IsBy` function
 - `pmKeyObject` struct
-- `encodedLength` function, internal and and unused
+- `encodedLength` function, internal and unused
 - `EncryptCore` is now internal.
 - `RandomTokenWith`, `RandomToken` now takes a size
 - In the `KeyRing` struct:
