@@ -346,6 +346,19 @@ func TestGetSHA256FingerprintsV4(t *testing.T) {
 	assert.Exactly(t, "d9ac0b857da6d2c8be985b251a9e3db31e7a1d2d832d1f07ebe838a9edce9c24", publicKey.GetSHA256Fingerprint())
 }
 
+func TestGetFingerprints(t *testing.T) {
+	publicKey, err := NewKeyFromArmored(readTestFile("keyring_publicKey", false))
+	if err != nil {
+		t.Fatal("Cannot unarmor key:", err)
+	}
+
+	allFingerprints := publicKey.GetFingerprints()
+
+	assert.Len(t, allFingerprints, 2)
+	assert.Exactly(t, "6e8ba229b0cccaf6962f97953eb6259edf21df24", allFingerprints[0])
+	assert.Exactly(t, "37e4bcf09b36e34012d10c0247dc67b5cb8267f6", allFingerprints[1])
+}
+
 func TestGetEntity(t *testing.T) {
 	publicKey, err := NewKeyFromArmored(readTestFile("keyring_publicKey", false))
 	if err != nil {
