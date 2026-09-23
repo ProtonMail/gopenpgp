@@ -194,8 +194,9 @@ type KeyPacketSplitWriter struct {
 
 func NewKeyPacketSplitWriter(dataWriter crypto.Writer) *KeyPacketSplitWriter {
 	return &KeyPacketSplitWriter{
-		dataWriter: dataWriter,
-		keyPacket:  bytes.NewBuffer(nil),
+		dataWriter:           dataWriter,
+		keyPacket:            bytes.NewBuffer(nil),
+		encDetachedSignature: bytes.NewBuffer(nil),
 	}
 }
 
