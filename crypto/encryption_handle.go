@@ -153,7 +153,7 @@ func (eh *encryptionHandle) validate() error {
 		return errors.New("gopenpgp: no signing key but signing context provided")
 	}
 
-	if eh.SignKeyRing == nil && eh.DetachedSignature {
+	if eh.SignKeyRing == nil && (eh.DetachedSignature || eh.PlainDetachedSignature) {
 		return errors.New("gopenpgp: no signing key provided for detached signature")
 	}
 	return nil
