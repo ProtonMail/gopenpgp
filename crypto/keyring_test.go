@@ -1,14 +1,18 @@
 package crypto
 
 import (
+	"bytes"
 	"crypto/rsa"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ProtonMail/go-crypto/openpgp/ecdh"
 	"github.com/ProtonMail/go-crypto/openpgp/eddsa"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
+	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
 )
 
 var testSymmetricKey []byte
@@ -115,6 +119,22 @@ func TestFilterExpiredKeys(t *testing.T) {
 	assert.Exactly(t, unexpired[0].GetKeyIDs(), keyRingTestPrivate.GetKeyIDs())
 }
 
+func TestFilterExpiredKeysNoValidSubkeyBinding(t *testing.T) {
+	// Generate a key whose self-signatures (including the subkey binding) expired.
+	past := time.Now().Add(-48 * time.Hour)
+	config := &packet.Config{Time: func() time.Time { return past }, SigLifetimeSecs: 60}
+	entity, err := openpgp.NewEntity("expired", "", "expired@example.com", config)
+	require.NoError(t, err)
+	var serialized bytes.Buffer
+	require.NoError(t, entity.Serialize(&serialized))
+	keyRing, err := NewKeyRingFromBinary(serialized.Bytes())
+	require.NoError(t, err)
+
+	unexpired, err := FilterExpiredKeys([]*KeyRing{keyRing})
+	require.Error(t, err)
+	assert.Empty(t, unexpired)
+}
+
 func TestKeyIds(t *testing.T) {
 	keyIDs := keyRingTestPrivate.GetKeyIDs()
 	var assertKeyIDs = []uint64{4518840640391470884}
@@ -135,6 +155,9 @@ func TestMultipleKeyRing(t *testing.T) {
 	assert.Exactly(t, keyTestEC, testKey)
 
 	_, err = keyRingTestMultiple.GetKey(3)
+	require.Error(t, err)
+
+	_, err = keyRingTestMultiple.GetKey(-1)
 	require.Error(t, err)
 
 	singleKeyRing, err := keyRingTestMultiple.FirstKey()

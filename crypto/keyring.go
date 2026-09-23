@@ -88,7 +88,7 @@ func (keyRing *KeyRing) GetKeys() []*Key {
 
 // GetKey returns the n-th openpgp key contained in this KeyRing.
 func (keyRing *KeyRing) GetKey(n int) (*Key, error) {
-	if n >= keyRing.CountEntities() {
+	if n < 0 || n >= keyRing.CountEntities() {
 		return nil, errors.New("gopenpgp: out of bound when fetching key")
 	}
 	return &Key{keyRing.entities[n]}, nil
@@ -253,6 +253,7 @@ func FilterExpiredKeys(contactKeys []*KeyRing) (filteredKeys []*KeyRing, err err
 				latestValid, err := subkey.LatestValidBindingSignature(now, &packet.Config{})
 				if err != nil {
 					hasExpired = true
+					continue
 				}
 				if subkey.PublicKey.KeyExpired(latestValid, now) {
 					hasExpired = true
