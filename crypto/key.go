@@ -238,7 +238,11 @@ func (key *Key) ArmorWithCustomHeaders(comment, version string) (string, error) 
 		return "", err
 	}
 
-	return armor.ArmorWithTypeAndCustomHeadersChecksum(serialized, constants.PrivateKeyHeader, version, comment, !key.isV6())
+	header := constants.PublicKeyHeader
+	if key.IsPrivate() {
+		header = constants.PrivateKeyHeader
+	}
+	return armor.ArmorWithTypeAndCustomHeadersChecksum(serialized, header, version, comment, !key.isV6())
 }
 
 // GetArmoredPublicKey returns the armored public keys from this keyring.
