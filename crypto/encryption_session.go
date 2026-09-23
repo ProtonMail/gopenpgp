@@ -38,7 +38,7 @@ Loop:
 				keys := unverifiedEntity.DecryptionKeys(p.KeyId, time.Time{}, &packet.Config{})
 				for _, key := range keys {
 					priv := key.PrivateKey
-					if priv.Encrypted {
+					if priv == nil || priv.Encrypted {
 						continue
 					}
 

@@ -378,6 +378,32 @@ func TestAsymmetricKeyPacketDecryptionFailure(t *testing.T) {
 	assert.Error(t, err, "gopenpgp: unable to decrypt session key")
 }
 
+func TestAsymmetricKeyPacketDecryptionMissingPrivateKey(t *testing.T) {
+	privateKey, err := testPGP.KeyGeneration().AddUserId("test", "test@example.com").New().GenerateKey()
+	require.NoError(t, err)
+	publicKey, err := privateKey.ToPublic()
+	require.NoError(t, err)
+	encryptor, err := testPGP.Encryption().Recipient(publicKey).New()
+	require.NoError(t, err)
+	pgpMessage, err := encryptor.Encrypt([]byte("message"))
+	require.NoError(t, err)
+
+	// Public key used as a decryption key.
+	decryptor, err := testPGP.Decryption().DecryptionKey(publicKey).New()
+	require.NoError(t, err)
+	_, err = decryptor.DecryptSessionKey(pgpMessage.BinaryKeyPacket())
+	assert.Error(t, err)
+
+	// Private key whose encryption subkey has no secret key material.
+	partialKey, err := privateKey.Copy()
+	require.NoError(t, err)
+	partialKey.entity.Subkeys[0].PrivateKey = nil
+	decryptor, err = testPGP.Decryption().DecryptionKey(partialKey).New()
+	require.NoError(t, err)
+	_, err = decryptor.DecryptSessionKey(pgpMessage.BinaryKeyPacket())
+	assert.Error(t, err)
+}
+
 func TestSessionKeyAeadHandling(t *testing.T) {
 	pgp := PGPWithProfile(profile.Default())
 	profileAead := profile.Default()
