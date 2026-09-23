@@ -110,7 +110,9 @@ func (eh *encryptionHandle) Encrypt(message []byte) (*PGPMessage, error) {
 		return nil, err
 	}
 	checksum := eh.armorChecksumRequired()
-	return pgpMessageBuffer.PGPMessageWithOptions(eh.PlainDetachedSignature, !checksum), nil
+	// PlainDetachedSignature is ignored if DetachedSignature is set.
+	isPlainDetachedSignature := eh.PlainDetachedSignature && !eh.DetachedSignature
+	return pgpMessageBuffer.PGPMessageWithOptions(isPlainDetachedSignature, !checksum), nil
 }
 
 // EncryptSessionKey encrypts a session key with the encryption handle.
