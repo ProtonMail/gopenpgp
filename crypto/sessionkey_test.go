@@ -392,7 +392,7 @@ func TestAsymmetricKeyPacketDecryptionMissingPrivateKey(t *testing.T) {
 	decryptor, err := testPGP.Decryption().DecryptionKey(publicKey).New()
 	require.NoError(t, err)
 	_, err = decryptor.DecryptSessionKey(pgpMessage.BinaryKeyPacket())
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	// Private key whose encryption subkey has no secret key material.
 	partialKey, err := privateKey.Copy()
@@ -401,7 +401,7 @@ func TestAsymmetricKeyPacketDecryptionMissingPrivateKey(t *testing.T) {
 	decryptor, err = testPGP.Decryption().DecryptionKey(partialKey).New()
 	require.NoError(t, err)
 	_, err = decryptor.DecryptSessionKey(pgpMessage.BinaryKeyPacket())
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestSessionKeyAeadHandling(t *testing.T) {
