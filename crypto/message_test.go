@@ -164,7 +164,17 @@ func TestTextMessageEncryptionWithCompression(t *testing.T) {
 		t.Fatal("Expected no error when splitting, got:", err)
 	}
 
-	assert.Len(t, split.GetBinaryDataPacket(), 117) // Assert uncompressed encrypted body length
+	uncompressedCiphertext, err := keyRingTestPublic.Encrypt(message, nil)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+
+	uncompressedSplit, err := uncompressedCiphertext.SplitMessage()
+	if err != nil {
+		t.Fatal("Expected no error when splitting, got:", err)
+	}
+
+	assert.Less(t, len(split.GetBinaryDataPacket()), len(uncompressedSplit.GetBinaryDataPacket()))
 
 	decrypted, err := keyRingTestPrivate.Decrypt(ciphertext, nil, 0)
 	if err != nil {

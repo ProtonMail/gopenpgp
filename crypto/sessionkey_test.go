@@ -329,7 +329,12 @@ func TestDataPacketEncryptionWithCompression(t *testing.T) {
 		t.Fatal("Expected no error when encrypting, got:", err)
 	}
 
-	assert.Len(t, dataPacket, 117) // Assert compressed encrypted body length
+	uncompressedDataPacket, err := testSessionKey.Encrypt(message)
+	if err != nil {
+		t.Fatal("Expected no error when encrypting, got:", err)
+	}
+
+	assert.Less(t, len(dataPacket), len(uncompressedDataPacket))
 
 	// Decrypt data with the good session key
 	decrypted, err := testSessionKey.Decrypt(dataPacket)
