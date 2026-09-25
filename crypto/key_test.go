@@ -106,6 +106,18 @@ func TestArmorKeysWithCustomHeader(t *testing.T) {
 
 	assert.Contains(t, armored, "Comment: "+comment)
 	assert.Contains(t, armored, "Version: "+version)
+	assert.True(t, strings.HasPrefix(armored, "-----BEGIN "+constants.PrivateKeyHeader+"-----"))
+
+	publicKey, err := keyTestRSA.ToPublic()
+	if err != nil {
+		t.Fatal("Could not extract the public key:", err)
+	}
+	armored, err = publicKey.ArmorWithCustomHeaders(comment, version)
+	if err != nil {
+		t.Fatal("Could not armor the public key:", err)
+	}
+	assert.True(t, strings.HasPrefix(armored, "-----BEGIN "+constants.PublicKeyHeader+"-----"))
+	assert.Contains(t, armored, "Comment: "+comment)
 }
 
 func TestLockUnlockKeys(t *testing.T) {

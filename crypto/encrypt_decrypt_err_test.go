@@ -235,3 +235,16 @@ func testVerificationSuccess(
 		t.Fatal("Expected no signature failure")
 	}
 }
+
+func TestEncryptPlainDetachedSignatureNoSigningKey(t *testing.T) {
+	for _, material := range testMaterialForProfiles {
+		t.Run(material.profileName, func(t *testing.T) {
+			if _, err := material.pgp.Encryption().
+				Recipients(material.keyRingTestPublic).
+				PlainDetachedSignature().
+				New(); err == nil {
+				t.Fatal("should not create a plain detached signature handle without signing key")
+			}
+		})
+	}
+}

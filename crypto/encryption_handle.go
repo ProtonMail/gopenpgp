@@ -110,7 +110,9 @@ func (eh *encryptionHandle) Encrypt(message []byte) (*PGPMessage, error) {
 		return nil, err
 	}
 	checksum := eh.armorChecksumRequired()
-	return pgpMessageBuffer.PGPMessageWithOptions(eh.PlainDetachedSignature, !checksum), nil
+	// PlainDetachedSignature is ignored if DetachedSignature is set.
+	isPlainDetachedSignature := eh.PlainDetachedSignature && !eh.DetachedSignature
+	return pgpMessageBuffer.PGPMessageWithOptions(isPlainDetachedSignature, !checksum), nil
 }
 
 // EncryptSessionKey encrypts a session key with the encryption handle.
@@ -153,7 +155,7 @@ func (eh *encryptionHandle) validate() error {
 		return errors.New("gopenpgp: no signing key but signing context provided")
 	}
 
-	if eh.SignKeyRing == nil && eh.DetachedSignature {
+	if eh.SignKeyRing == nil && (eh.DetachedSignature || eh.PlainDetachedSignature) {
 		return errors.New("gopenpgp: no signing key provided for detached signature")
 	}
 	return nil

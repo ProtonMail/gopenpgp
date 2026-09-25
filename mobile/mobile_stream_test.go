@@ -237,9 +237,6 @@ func TestExplicitVerifyAllGoesWell(t *testing.T) {
 	if err = sigErr.SignatureError(); err != nil {
 		t.Fatalf("Got a signature error while verifying embedded sig: %v", err)
 	}
-	if err != nil {
-		t.Fatalf("Got an error while verifying embedded sig: %v", err)
-	}
 }
 
 func TestExplicitVerifyTooEarly(t *testing.T) {
@@ -341,5 +338,54 @@ func TestExplicitVerifyWrongVerifier(t *testing.T) {
 	}
 	if sigErr.SignatureErrorExplicit().Status != constants.SIGNATURE_NO_VERIFIER {
 		t.Fatal("Signature error status was not SIGNATURE_NO_VERIFIER")
+	}
+}
+
+func TestKeyPacketSplitWriterDetachedSignature(t *testing.T) {
+	data := []byte("hello")
+	pgpHandle, pubKR, privKR, err := setUpTestKeyRing()
+	if err != nil {
+		t.Fatalf("Got an error while loading test key: %v", err)
+	}
+	defer privKR.ClearPrivateParams()
+	encHandle, err := pgpHandle.Encryption().Recipients(pubKR).SigningKeys(privKR).DetachedSignature().New()
+	if err != nil {
+		t.Fatalf("Got an error while creating encryption handle: %v", err)
+	}
+	var dataPackets bytes.Buffer
+	splitWriter := NewKeyPacketSplitWriter(&dataPackets)
+	ptWriter, err := encHandle.EncryptingWriter(splitWriter, crypto.Bytes)
+	if err != nil {
+		t.Fatalf("Got an error while creating encrypting writer: %v", err)
+	}
+	if _, err = ptWriter.Write(data); err != nil {
+		t.Fatalf("Got an error while writing data: %v", err)
+	}
+	if err = ptWriter.Close(); err != nil {
+		t.Fatalf("Got an error while closing encrypting writer: %v", err)
+	}
+	decHandle, _ := pgpHandle.Decryption().DecryptionKeys(privKR).VerificationKeys(pubKR).New()
+	splitReader := NewDetachedSignaturePGPSplitReader(
+		splitWriter.KeyPackets(),
+		bytes.NewReader(dataPackets.Bytes()),
+		splitWriter.EncryptedDetachedSignature(),
+	)
+	reader, err := decHandle.DecryptingReader(splitReader, crypto.Bytes)
+	if err != nil {
+		t.Fatalf("Got an error while decrypting stream data: %v", err)
+	}
+	decrypted, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatalf("Got an error while reading decrypted data: %v", err)
+	}
+	if !bytes.Equal(decrypted, data) {
+		t.Fatalf("Decrypted data does not match: %q", decrypted)
+	}
+	verifyResult, err := reader.VerifySignature()
+	if err != nil {
+		t.Fatalf("Got an error while verifying: %v", err)
+	}
+	if err = verifyResult.SignatureError(); err != nil {
+		t.Fatalf("Got a signature error while verifying detached sig: %v", err)
 	}
 }
