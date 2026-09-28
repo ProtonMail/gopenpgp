@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.11.0] 2026-09-28
 ### Changed
 - Update go-crypto to `1.5.2`.
-- Improve tests
+- Improve tests.
 
 ## [2.10.0] 2026-03-18
 ### Changed
