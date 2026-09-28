@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved robustness against malicious input
 
 ### Changed
-- Upgraded `go-crypto` fork to **v1.5.2**.
+- Update go-crypto to `1.5.2`.
 
 ## [3.4.1] – 2026-04-29
 ### Fixed
