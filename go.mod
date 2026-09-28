@@ -3,7 +3,7 @@ module github.com/ProtonMail/gopenpgp/v2
 go 1.23.0
 
 require (
-	github.com/ProtonMail/go-crypto v1.4.1
+	github.com/ProtonMail/go-crypto v1.5.2
 	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0
@@ -11,7 +11,7 @@ require (
 )
 
 require (
-	github.com/cloudflare/circl v1.6.2 // indirect
+	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/davecgh/go-spew v1.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect
