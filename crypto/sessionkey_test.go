@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/ProtonMail/gopenpgp/v2/constants"
@@ -320,7 +321,7 @@ func TestSessionKeyClear(t *testing.T) {
 
 func TestDataPacketEncryptionWithCompression(t *testing.T) {
 	var message = NewPlainMessageFromString(
-		"The secret code is... 1, 2, 3, 4, 5. I repeat: the secret code is... 1, 2, 3, 4, 5",
+		strings.Repeat("The secret code is... 1, 2, 3, 4, 5. ", 20),
 	)
 
 	// Encrypt data with session key

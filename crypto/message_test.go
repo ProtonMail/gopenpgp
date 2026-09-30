@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -151,7 +152,7 @@ func TestTextMessageEncryptionWithNonCanonicalLinebreak(t *testing.T) {
 
 func TestTextMessageEncryptionWithCompression(t *testing.T) {
 	var message = NewPlainMessageFromString(
-		"The secret code is... 1, 2, 3, 4, 5. I repeat: the secret code is... 1, 2, 3, 4, 5",
+		strings.Repeat("The secret code is... 1, 2, 3, 4, 5. ", 20),
 	)
 
 	ciphertext, err := keyRingTestPublic.EncryptWithCompression(message, nil)
