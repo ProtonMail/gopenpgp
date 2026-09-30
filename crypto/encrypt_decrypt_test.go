@@ -925,7 +925,7 @@ func TestEncryptDecryptKey(t *testing.T) {
 }
 
 func TestEncryptCompressionApplied(t *testing.T) {
-	const numReplicas = 10
+	const numReplicas = 1000
 	builder := strings.Builder{}
 	for range numReplicas {
 		builder.WriteString(testMessage)
