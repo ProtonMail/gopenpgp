@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.2] – 2026-09-30
+### Fixed
+- Fixed compression tests for Go 1.27.
+
+## [3.5.1] – 2026-09-29
+### Added
+- Post-quantum (PQC) key support: clearing of ML-KEM, ML-DSA and SLH-DSA private keys.
+- `profile.PQC()` preset for generating post-quantum keys (ML-DSA+EdDSA / ML-KEM+ECDH).
+
 ## [3.5.0] – 2026-09-28
 ### Fixed
 - Improved robustness against malicious input
