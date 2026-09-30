@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.5.1] – 2026-09-29
 ### Added
 - Post-quantum (PQC) key support: clearing of ML-KEM, ML-DSA and SLH-DSA private keys.
-- `profile.PQC()` preset for generating post-quantum keys (ML-DSA + EdDSA).
+- `profile.PQC()` preset for generating post-quantum keys (ML-DSA+EdDSA / ML-KEM+ECDH).
 
 ## [3.5.0] – 2026-09-28
 ### Fixed
