@@ -415,7 +415,7 @@ ptWriter, err := encHandle.EncryptingWriter(splitWriter, crypto.Bytes)
 ```
 
 ## Using with Go Mobile
-This library can be compiled with [Gomobile](https://github.com/golang/go/wiki/Mobile) too.
+This library can be compiled with [Gomobile](https://go.dev/wiki/Mobile) too.
 First ensure you have a working installation of gomobile:
 ```bash
 gomobile version
