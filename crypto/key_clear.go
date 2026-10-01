@@ -14,6 +14,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/elgamal"
 	"github.com/ProtonMail/go-crypto/openpgp/mldsa_eddsa"
 	"github.com/ProtonMail/go-crypto/openpgp/mlkem_ecdh"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/ProtonMail/go-crypto/openpgp/slhdsa"
 	"github.com/ProtonMail/go-crypto/openpgp/x25519"
 	"github.com/ProtonMail/go-crypto/openpgp/x448"
@@ -32,6 +33,7 @@ func (sk *SessionKey) Clear() (ok bool) {
 func (key *Key) ClearPrivateParams() (ok bool) {
 	num := key.clearPrivateWithSubkeys()
 	key.entity.PrivateKey = nil
+	key.entity.PSK = nil
 
 	for k := range key.entity.Subkeys {
 		key.entity.Subkeys[k].PrivateKey = nil
@@ -61,6 +63,8 @@ func (key *Key) clearPrivateWithSubkeys() (num int) {
 
 func clearPrivateKey(privateKey interface{}) error {
 	switch priv := privateKey.(type) {
+	case *packet.PersistentSymmetricKeyPrivateFields:
+		return clearAEADPrivateKey(priv)
 	case *rsa.PrivateKey:
 		return clearRSAPrivateKey(priv)
 	case *dsa.PrivateKey:
@@ -103,6 +107,12 @@ func clearMem(w []byte) {
 	for k := range w {
 		w[k] = 0x00
 	}
+}
+
+func clearAEADPrivateKey(priv *packet.PersistentSymmetricKeyPrivateFields) error {
+	clearMem(priv.Key)
+
+	return nil
 }
 
 func clearRSAPrivateKey(rsaPriv *rsa.PrivateKey) error {

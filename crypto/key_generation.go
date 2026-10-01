@@ -14,10 +14,19 @@ const (
 	KeyGenerationCurve25519 int = 3
 	// KeyGenerationCurve448 allows to override the output key algorithm in key generation to curve448 (as defined in RFC9580).
 	KeyGenerationCurve448 int = 4
+	// KeyGenerationSymmetric allows to override the output key in key generation to a
+	// persistent symmetric key. Symmetric keys do not support user ids or key lifetimes.
+	KeyGenerationSymmetric int = 5
 )
 
 type KeyGenerationProfile interface {
 	KeyGenerationConfig(securityLevel int8) *packet.Config
+}
+
+// SymmetricKeyGenerationProfile is an optional interface a KeyGenerationProfile
+// can implement to request persistent symmetric keys in key generation.
+type SymmetricKeyGenerationProfile interface {
+	SymmetricKeyGeneration() bool
 }
 
 // PGPKeyGeneration is an interface for generating pgp keys with GopenPGP.

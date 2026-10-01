@@ -46,7 +46,18 @@ func (kgh *keyGenerationHandle) GenerateKeyWithSecurity(security int8) (key *Key
 	config.KeyLifetimeSecs = kgh.keyLifetimeSecs
 	key = &Key{}
 
-	if len(kgh.identities) == 0 {
+	if kgh.isSymmetric() {
+		if len(kgh.identities) != 0 {
+			return nil, errors.New("gopenpgp: persistent symmetric keys cannot have User IDs")
+		}
+		if kgh.keyLifetimeSecs != 0 {
+			return nil, errors.New("gopenpgp: persistent symmetric keys do not support a key lifetime")
+		}
+		if !config.V6() {
+			return nil, errors.New("gopenpgp: persistent symmetric keys can only be v6")
+		}
+		key.entity, err = openpgp.NewSymmetricEntity(config)
+	} else if len(kgh.identities) == 0 {
 		if config.V6() {
 			key.entity, err = openpgp.NewEntityWithoutId(config)
 		} else {
@@ -88,6 +99,15 @@ func (kgh *keyGenerationHandle) GenerateKeyWithSecurity(security int8) (key *Key
 	return key, nil
 }
 
+// isSymmetric returns true if the handle should generate a persistent symmetric key.
+func (kgh *keyGenerationHandle) isSymmetric() bool {
+	if kgh.overrideAlgorithm != 0 {
+		return kgh.overrideAlgorithm == KeyGenerationSymmetric
+	}
+	symmetricProfile, ok := kgh.profile.(SymmetricKeyGenerationProfile)
+	return ok && symmetricProfile.SymmetricKeyGeneration()
+}
+
 func (id identity) valid() error {
 	if len(id.email) == 0 && len(id.name) == 0 {
 		return errors.New("gopenpgp: neither name nor email set in user id")
@@ -108,5 +128,8 @@ func updateConfig(config *packet.Config, algorithm int) {
 		config.Algorithm = packet.PubKeyAlgoEd25519
 	case KeyGenerationCurve448:
 		config.Algorithm = packet.PubKeyAlgoEd448
+	case KeyGenerationSymmetric:
+		config.V6Keys = true
+		config.Algorithm = packet.PubKeyAlgoAEAD
 	}
 }

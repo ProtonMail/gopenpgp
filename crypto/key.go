@@ -292,6 +292,10 @@ func (key *Key) CanEncrypt(unixTime int64) bool {
 
 // IsExpired checks whether the key is expired.
 func (key *Key) IsExpired(unixTime int64) bool {
+	if key.entity.PSK != nil {
+		// Persistent symmetric keys have no self-signature and never expire.
+		return false
+	}
 	current := time.Unix(unixTime, 0)
 	sig, err := key.entity.PrimarySelfSignature(time.Time{}, &packet.Config{})
 	if err != nil {
@@ -310,6 +314,11 @@ func (key *Key) IsRevoked(unixTime int64) bool {
 // IsPrivate returns true if the key is private.
 func (key *Key) IsPrivate() bool {
 	return key.entity.PrivateKey != nil
+}
+
+// IsSymmetric returns true if the key is a persistent symmetric key.
+func (key *Key) IsSymmetric() bool {
+	return key.entity.PSK != nil
 }
 
 // IsLocked checks if a private key is locked.
@@ -401,6 +410,31 @@ func (key *Key) GetSHA256Fingerprint() (fingerprint string) {
 	return hex.EncodeToString(getSHA256FingerprintBytes(key.entity.PrimaryKey))
 }
 
+// IsForwardingKey checks if the given key is a Proton forwarding key.
+func (key *Key) IsForwardingKey() bool {
+	decryptionKeys := key.entity.DecryptionKeys(0, time.Time{}, nil)
+	allForwarding := len(decryptionKeys) > 0
+	for _, key := range decryptionKeys {
+		if !isForwardingKey(key) {
+			allForwarding = false
+			break
+		}
+	}
+	return allForwarding
+}
+
+// isForwardingKey determines if the given openpgp.Key is a forwarding key.
+func isForwardingKey(key openpgp.Key) bool {
+	curve, err := key.PublicKey.Curve()
+	keyCheck := key.PublicKey.IsSubkey &&
+		key.PublicKey.Version == 4 &&
+		key.PublicKey.PubKeyAlgo == packet.PubKeyAlgoECDH &&
+		err == nil && curve == packet.Curve25519
+	hasForwardFlag := key.SelfSignature != nil &&
+		key.SelfSignature.FlagForward
+	return keyCheck && hasForwardFlag
+}
+
 // GetSHA256Fingerprints computes the SHA256 fingerprints of the key and subkeys.
 func (key *Key) GetSHA256Fingerprints() (fingerprints []string) {
 	fingerprints = append(fingerprints, key.GetSHA256Fingerprint())
@@ -431,6 +465,9 @@ func (key *Key) GetVersion() int {
 func (key *Key) ToPublic() (publicKey *Key, err error) {
 	if !key.IsPrivate() {
 		return nil, errors.New("gopenpgp: key is already public")
+	}
+	if key.IsSymmetric() {
+		return nil, errors.New("gopenpgp: can't create public key of persistent symmetric key")
 	}
 
 	publicKey, err = key.Copy()

@@ -24,7 +24,12 @@ type Custom struct {
 	// S2kKeyEncryption defines the s2k algorithm for key encryption.
 	S2kKeyEncryption *s2k.Config
 	// AeadEncryption defines the aead encryption algorithm for pgp encryption.
+	// If nil, aead is disabled even if the key supports it.
 	AeadEncryption *packet.AEADConfig
+	// KeyGenAeadEncryption defines if the output key in key generation
+	// advertises SEIPDv2 and aead algorithms in its key preferences.
+	// If nil, uses AeadEncryption as key preferences.
+	KeyGenAeadEncryption *packet.AEADConfig
 	// S2kEncryption defines the s2k algorithm for pgp encryption.
 	S2kEncryption *s2k.Config
 	// CompressionConfiguration defines the compression configuration to be used if any.
@@ -55,6 +60,9 @@ type Custom struct {
 	// Enabling this flag has security implications, as a cryptographic key should be used for
 	// only one type of operation.
 	InsecureAllowAllKeyFlagsWhenMissing bool
+	// KeyGenSymmetric is a flag to generate persistent symmetric keys in key generation
+	// instead of asymmetric keys. Symmetric keys do not support user IDs or key lifetimes.
+	KeyGenSymmetric bool
 	// MaxDecompressedMessageSize sets the maximum decompressed messages size that can be read
 	// before throwing an error.
 	MaxDecompressedMessageSize int64
@@ -64,16 +72,25 @@ type Custom struct {
 // KeyGenerationProfile, KeyEncryptionProfile, EncryptionProfile, and SignProfile
 
 func (p *Custom) KeyGenerationConfig(securityLevel int8) *packet.Config {
+	aeadConfig := p.AeadEncryption
+	if p.KeyGenAeadEncryption != nil {
+		aeadConfig = p.KeyGenAeadEncryption
+	}
 	cfg := &packet.Config{
 		DefaultHash:            p.Hash,
 		DefaultCipher:          p.CipherEncryption,
-		AEADConfig:             p.AeadEncryption,
+		AEADConfig:             aeadConfig,
 		DefaultCompressionAlgo: p.CompressionAlgorithm,
 		CompressionConfig:      p.CompressionConfiguration,
 		V6Keys:                 p.V6,
 	}
 	p.SetKeyAlgorithm(cfg, securityLevel)
 	return cfg
+}
+
+// SymmetricKeyGeneration returns true if the profile generates persistent symmetric keys.
+func (p *Custom) SymmetricKeyGeneration() bool {
+	return p.KeyGenSymmetric
 }
 
 func (p *Custom) EncryptionConfig() *packet.Config {
