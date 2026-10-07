@@ -32,7 +32,7 @@ type Custom struct {
 	// Hash defines hash algorithm to be used.
 	Hash crypto.Hash
 	// SignHash defines if a different hash algorithm should be used for signing.
-	// If nil, the a above field Hash is used.
+	// If nil, the above field Hash is used.
 	SignHash *crypto.Hash
 	// CipherKeyEncryption defines the cipher to be used for key encryption.
 	CipherKeyEncryption packet.CipherFunction
