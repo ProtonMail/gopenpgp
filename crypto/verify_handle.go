@@ -177,9 +177,15 @@ func (vh *verifyHandle) verifyingReader(
 	if err != nil {
 		return nil, fmt.Errorf("gopenpgp: initialize signature reader failed: %w", err)
 	}
+	internalReader := md.UnverifiedBody
+	if len(md.SignatureCandidates) > 0 &&
+		!vh.DisableAutomaticTextSanitize &&
+		md.SignatureCandidates[0].SigType == packet.SigTypeText {
+		internalReader = internal.NewSanitizeReader(internalReader)
+	}
 	return &VerifyDataReader{
 		md,
-		md.UnverifiedBody,
+		internalReader,
 		vh.VerifyKeyRing,
 		verifyTime,
 		vh.DisableVerifyTimeCheck,
